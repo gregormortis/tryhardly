@@ -1,0 +1,298 @@
+// Prisma Schema for Tryhardly - Guild-Inspired Quest Gig Marketplace
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String
+  displayName   String
+  avatar        String?
+  bio           String?
+  
+  // Gamification
+  level         Int      @default(1)
+  xp            Int      @default(0)
+  class         UserClass @default(WARRIOR)
+  
+  // Reputation
+  reputation    Int      @default(0)
+  
+  // Stats
+  questsPosted      Int      @default(0)
+  questsCompleted   Int      @default(0)
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  postedQuests      Quest[]   @relation("QuestPoster")
+  acceptedQuests    Quest[]   @relation("QuestTaker")
+  applications      Application[]
+  guildMemberships  GuildMember[]
+  achievements      UserAchievement[]
+  messages          Message[]
+  reviews           Review[]
+  notifications     Notification[]
+  
+  @@index([email])
+  @@index([username])
+}
+
+enum UserClass {
+  WARRIOR      // Developer
+  MAGE         // Designer
+  ROGUE        // Writer
+  CLERIC       // Support
+}
+
+// Quest Model
+model Quest {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  category        QuestCategory
+  difficulty      QuestDifficulty
+  
+  // Payment
+  budget          Decimal
+  currency        String   @default("USD")
+  
+  // Status
+  status          QuestStatus @default(OPEN)
+  
+  // XP Reward
+  xpReward        Int
+  
+  // Relations
+  posterId        String
+  poster          User     @relation("QuestPoster", fields: [posterId], references: [id])
+  
+  takerId         String?
+  taker           User?    @relation("QuestTaker", fields: [takerId], references: [id])
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deadline        DateTime?
+  completedAt     DateTime?
+  
+  // Relations
+  applications    Application[]
+  milestones      Milestone[]
+  reviews         Review[]
+  
+  @@index([posterId])
+  @@index([takerId])
+  @@index([status])
+  @@index([category])
+}
+
+enum QuestCategory {
+  WEB_DEVELOPMENT
+  MOBILE_DEV
+  DESIGN
+  WRITING
+  MARKETING
+  DATA_SCIENCE
+  OTHER
+}
+
+enum QuestDifficulty {
+  NOVICE
+  APPRENTICE
+  JOURNEYMAN
+  EXPERT
+  MASTER
+  LEGENDARY
+}
+
+enum QuestStatus {
+  OPEN
+  IN_PROGRESS
+  IN_REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+// Application Model
+model Application {
+  id          String   @id @default(uuid())
+  questId     String
+  quest       Quest    @relation(fields: [questId], references: [id])
+  applicantId String
+  applicant   User     @relation(fields: [applicantId], references: [id])
+  
+  coverLetter String
+  proposedBudget Decimal?
+  status      ApplicationStatus @default(PENDING)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([questId])
+  @@index([applicantId])
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// Guild Model
+model Guild {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  avatar      String?
+  banner      String?
+  
+  level       Int      @default(1)
+  xp          Int      @default(0)
+  reputation  Int      @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  members     GuildMember[]
+}
+
+model GuildMember {
+  id        String   @id @default(uuid())
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  role      GuildRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+  
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@index([userId])
+}
+
+enum GuildRole {
+  LEADER
+  OFFICER
+  MEMBER
+}
+
+// Milestone Model
+model Milestone {
+  id          String   @id @default(uuid())
+  questId     String
+  quest       Quest    @relation(fields: [questId], references: [id])
+  
+  title       String
+  description String
+  amount      Decimal
+  
+  status      MilestoneStatus @default(PENDING)
+  completedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([questId])
+}
+
+enum MilestoneStatus {
+  PENDING
+  COMPLETED
+  PAID
+}
+
+// Review Model
+model Review {
+  id          String   @id @default(uuid())
+  questId     String
+  quest       Quest    @relation(fields: [questId], references: [id])
+  reviewerId  String
+  reviewer    User     @relation(fields: [reviewerId], references: [id])
+  
+  rating      Int
+  comment     String
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([questId])
+  @@index([reviewerId])
+}
+
+// Achievement Model
+model Achievement {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  icon        String
+  xpReward    Int
+  
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  
+  unlockedAt    DateTime @default(now())
+  
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+// Message Model
+model Message {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id])
+  recipientId String
+  
+  content     String
+  read        Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([senderId])
+  @@index([recipientId])
+}
+
+// Notification Model
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([read])
+}
+
+enum NotificationType {
+  QUEST_APPLICATION
+  QUEST_ACCEPTED
+  QUEST_COMPLETED
+  MILESTONE_COMPLETED
+  NEW_MESSAGE
+  ACHIEVEMENT_UNLOCKED
+  LEVEL_UP
+}
