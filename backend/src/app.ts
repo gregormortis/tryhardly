@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
+import authRoutes from './routes/authRoutes';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -36,8 +37,7 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-// TODO: Add route imports here
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 // app.use('/api/users', userRoutes);
 // app.use('/api/quests', questRoutes);
 // app.use('/api/guilds', guildRoutes);

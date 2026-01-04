@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../app';
+import { AuthRequest } from '../middleware/auth';
 
 // Register new user
 export const register = async (req: Request, res: Response) => {
@@ -99,9 +100,9 @@ export const login = async (req: Request, res: Response) => {
 };
 
 // Get current user
-export const getCurrentUser = async (req: Request, res: Response) => {
+export const getCurrentUser = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
