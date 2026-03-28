@@ -64,13 +64,9 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/how-it-works" className="hover:text-white transition-colors">
-                  How It Works
-                </Link>
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="hover:text-white transition-colors">
+              <Link href="/how-it-works" className="hover:text-white transition-colors">                  How It Works
+                How It Works              </Link>
+            </li>              <Link href="/about" className="hover:text-white transition-colors">
                 About Us
               </Link>
             </li>
