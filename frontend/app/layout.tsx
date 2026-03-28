@@ -1,37 +1,27 @@
-import Link from "next/link";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import Navbar from '../components/Navbar';
 
-export const metadata = {
-  title: "Tryhardly",
-  description: "Guild-inspired quest gig marketplace",
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'Tryhardly - Guild-Inspired Quest Marketplace',
+  description: 'Transform your work into epic adventures. Post quests, join guilds, level up as an adventurer.',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "12px 24px",
-            borderBottom: "1px solid #eee",
-          }}
-        >
-          <div>
-            <strong>Tryhardly</strong>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen`}>
+        <Navbar />
+        <main className="min-h-screen">{children}</main>
+        <footer className="bg-gray-900 border-t border-gray-800 py-8 mt-16">
+          <div className="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
+            <p className="text-amber-400 font-semibold mb-1">⚔️ Tryhardly</p>
+            <p>Guild-Inspired Quest Marketplace &copy; {new Date().getFullYear()}</p>
           </div>
-          <nav style={{ display: "flex", gap: 16 }}>
-            <Link href="/">Home</Link>
-            <Link href="/quests">Quests</Link>
-            <Link href="/auth">Login</Link>
-          </nav>
-        </header>
-        <main style={{ padding: "24px" }}>{children}</main>
+        </footer>
       </body>
     </html>
   );
