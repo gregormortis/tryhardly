@@ -14,8 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen`}>
-        <AuthProvider>
+      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen antialiased`}>        <AuthProvider>
           <Navbar />
           <main className="min-h-screen">{children}</main>
           <footer className="bg-gray-900 border-t border-gray-800 py-8 mt-16">
