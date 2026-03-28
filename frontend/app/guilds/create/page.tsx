@@ -51,7 +51,7 @@ export default function CreateGuildPage() {
 
     setLoading(true);
     try {
-      const data = await api.post('/guilds', form);
+      const data = await api.post('/guilds', form) as { id: string };
       router.push(`/guilds/${data.id}`);
     } catch (err: any) {
       setError(err.message || 'Failed to create guild');
