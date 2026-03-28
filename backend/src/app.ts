@@ -4,6 +4,9 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/authRoutes';
+import questRoutes from './routes/questRoutes';
+import userRoutes from './routes/userRoutes';
+import guildRoutes from './routes/guildRoutes';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -13,7 +16,7 @@ const app: Application = express();
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(morgan('dev')); // HTTP request logger
@@ -28,20 +31,25 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// API Routes
+// API Root
 app.get('/', (req: Request, res: Response) => {
   res.json({
     message: '🏰 Welcome to Tryhardly API',
     version: '1.0.0',
-    documentation: '/api/docs'
+    endpoints: {
+      auth: '/api/auth',
+      quests: '/api/quests',
+      users: '/api/users',
+      guilds: '/api/guilds',
+    },
   });
 });
 
+// API Routes
 app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/quests', questRoutes);
-// app.use('/api/guilds', guildRoutes);
-// app.use('/api/applications', applicationRoutes);
+app.use('/api/quests', questRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/guilds', guildRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
