@@ -80,6 +80,37 @@
   }
   
   @keyframes pulse-glow {
+
+/* Enhanced card hover effects */
+.quest-card {
+  @apply transition-all duration-300;
+}
+
+.quest-card:hover {
+  @apply transform -translate-y-1;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-amber-600 to-amber-800 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply from-amber-500 to-amber-700;
+}
     0%, 100% {
       box-shadow: 0 0 20px rgba(167, 139, 250, 0.4);
     }
