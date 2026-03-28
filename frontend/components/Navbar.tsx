@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/guilds', label: 'Guilds' },
   { href: '/post-quest', label: 'Post Quest' },
   { href: '/about', label: 'About' },
+  { href: '/pricing', label: 'Pricing' },
 ];
 
 export default function Navbar() {
