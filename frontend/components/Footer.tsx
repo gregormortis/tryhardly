@@ -63,25 +63,28 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Resources</h3>
             <ul className="space-y-2 text-sm">
-            <li>
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="hover:text-white transition-colors">
-                About Us
-              </Link>
-            </li>
-            <li>
-              <Link href="/pricing" className="hover:text-white transition-colors">
-                Pricing
-              </Link>
-            </li>
-            <li>
-              <Link href="/terms" className="hover:text-white transition-colors">
-                Terms of Service
-              </Link>
-            </li>
-          </ul>
+              <li>
+                <Link href="/how-it-works" className="hover:text-white transition-colors">
+                  How It Works
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="hover:text-white transition-colors">
+                  Pricing
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:text-white transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/support" className="hover:text-white transition-colors">
+                  Support
+                </Link>
+              </li>
+            </ul>
+          </div>
 
           {/* Legal Column */}
           <div>
