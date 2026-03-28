@@ -9,6 +9,7 @@ const navLinks = [
   { href: '/questboard', label: 'Questboard' },
   { href: '/guilds', label: 'Guilds' },
   { href: '/post-quest', label: 'Post Quest' },
+  { href: '/about', label: 'About' },
 ];
 
 export default function Navbar() {
