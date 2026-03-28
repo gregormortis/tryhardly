@@ -30,8 +30,7 @@ export default function LeaderboardPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const data = await api.get(`/leaderboard?range=${timeRange}&category=${category}`);
-        setUsers(data);
+        const data = await api.get(`/leaderboard?range=${timeRange}&category=${category}`) as any[];        setUsers(data);
       } catch {
         setUsers(MOCK_LEADERBOARD);
       } finally {
