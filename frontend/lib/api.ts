@@ -11,25 +11,24 @@ export const api = {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_URL}${endpoint}`;
-    
-    const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
     };
 
     // Add auth token if available
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       if (token) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${token}`,
-        };
+        headers['Authorization'] = `Bearer ${token}`;
       }
     }
+
+    const config: RequestInit = {
+      ...options,
+      headers,
+    };
 
     const response = await fetch(url, config);
 
@@ -43,11 +42,27 @@ export const api = {
     return response.json();
   },
 
+  get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint);
+  },
+
   post<T>(endpoint: string, data: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
-};
 
+  put<T>(endpoint: string, data: unknown): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+    });
+  },
+};
