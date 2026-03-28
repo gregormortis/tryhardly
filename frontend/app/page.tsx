@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import QuestList from '@/components/QuestList';
 
 const STATS = [
   { label: 'Active Quests', value: '2,400+', icon: '📜' },
@@ -172,6 +173,9 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+              {/* Live Quest Feed from API */}
+      <QuestList />
       </section>
     </div>
   );
