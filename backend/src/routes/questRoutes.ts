@@ -11,6 +11,8 @@ router.post('/', authenticate, createQuest);
 router.put('/:id', authenticate, updateQuest);
 router.delete('/:id', authenticate, deleteQuest);
 router.post('/:id/complete', authenticate, completeQuest);
+
+// Applications nested under quests
 router.post('/:questId/apply', authenticate, applyToQuest);
 router.get('/:questId/applications', authenticate, getQuestApplications);
 

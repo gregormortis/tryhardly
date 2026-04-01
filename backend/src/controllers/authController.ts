@@ -2,41 +2,38 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../app';
-import { AuthRequest } from '../middleware/auth';
+import { AuthRequest } from '../middleware/authMiddleware';
 
-// Register new user
-export const register = async (req: Request, res: Response) => {
+// POST /api/auth/register
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, username, displayName, password, userClass } = req.body;
+    const { email, username, displayName, password, adventurerClass } = req.body;
 
-    // Check if user exists
     const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] }
+      where: { OR: [{ email }, { username }] },
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      res.status(400).json({ error: 'User already exists' });
+      return;
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await prisma.user.create({
       data: {
         email,
         username,
         displayName,
         passwordHash,
-        class: userClass || 'WARRIOR',
+        adventurerClass: adventurerClass || 'WARRIOR',
       },
     });
 
-    // Generate JWT
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
     );
 
     res.status(201).json({
@@ -47,7 +44,7 @@ export const register = async (req: Request, res: Response) => {
         displayName: user.displayName,
         level: user.level,
         xp: user.xp,
-        class: user.class,
+        adventurerClass: user.adventurerClass,
       },
       token,
     });
@@ -57,28 +54,27 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-// Login user
-export const login = async (req: Request, res: Response) => {
+// POST /api/auth/login
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
-    // Find user
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
 
-    // Verify password
     const validPassword = await bcrypt.compare(password, user.passwordHash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
 
-    // Generate JWT
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
     );
 
     res.json({
@@ -89,7 +85,7 @@ export const login = async (req: Request, res: Response) => {
         displayName: user.displayName,
         level: user.level,
         xp: user.xp,
-        class: user.class,
+        adventurerClass: user.adventurerClass,
       },
       token,
     });
@@ -99,31 +95,33 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-// Get current user
-export const getCurrentUser = async (req: AuthRequest, res: Response) => {
+// GET /api/auth/me
+export const getCurrentUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: req.user!.id },
       select: {
         id: true,
         email: true,
         username: true,
         displayName: true,
-        avatar: true,
+        avatarUrl: true,
         bio: true,
         level: true,
         xp: true,
-        class: true,
-        reputation: true,
-        questsPosted: true,
-        questsCompleted: true,
+        adventurerClass: true,
+        reputationScore: true,
+        totalQuestsPosted: true,
+        totalQuestsCompleted: true,
+        verified: true,
+        role: true,
         createdAt: true,
       },
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      res.status(404).json({ error: 'User not found' });
+      return;
     }
 
     res.json(user);

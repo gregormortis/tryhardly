@@ -5,20 +5,21 @@ import Link from 'next/link';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useRouter } from 'next/navigation';
+import type { Quest, Application } from '../../lib/types';
 
 const XP_PER_LEVEL = 1000;
 
 interface DashboardData {
-  activeQuests: Array<{ id: string; title: string; status: string; reward: number; xpReward: number }>;
-  postedQuests: Array<{ id: string; title: string; status: string; _count: { applications: number } }>;
-  recentActivity: Array<{ type: string; description: string; createdAt: string }>;
-  stats: { totalEarned: number; questsCompleted: number; applicationsSubmitted: number };
+  postedQuests: Quest[];
+  applications: Application[];
 }
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth/login');
@@ -26,19 +27,49 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return;
-    api.get<DashboardData>('/users/dashboard').then(setData).catch(() => {});
+    async function fetchDashboard() {
+      setDataLoading(true);
+      try {
+        // Fetch user's posted quests and applications in parallel
+        const [questsRes, applicationsRes] = await Promise.all([
+          api.get<{ quests: Quest[] }>('/quests?status=OPEN&limit=50').catch(() => ({ quests: [] })),
+          api.get<Application[]>('/users/me/applications').catch(() => []),
+        ]);
+
+        // Filter to only this user's posted quests
+        const postedQuests = (questsRes.quests || []).filter(
+          q => q.questGiverId === user.id || q.questGiver?.id === user.id
+        );
+
+        setData({
+          postedQuests,
+          applications: Array.isArray(applicationsRes) ? applicationsRes : [],
+        });
+      } catch (err: any) {
+        setError(err.message || 'Failed to load dashboard');
+      } finally {
+        setDataLoading(false);
+      }
+    }
+    fetchDashboard();
   }, [user]);
 
   if (loading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Loading...</p>
+        </div>
       </div>
     );
   }
 
   const xpProgress = user.xp % XP_PER_LEVEL;
   const xpPercent = (xpProgress / XP_PER_LEVEL) * 100;
+
+  const activeApps = data?.applications?.filter(a => a.status === 'ACCEPTED') || [];
+  const pendingApps = data?.applications?.filter(a => a.status === 'PENDING') || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -50,13 +81,19 @@ export default function DashboardPage() {
         <p className="text-gray-400 mt-1">Your adventurer dashboard</p>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Level', value: user.level, icon: '⚔️', color: 'text-amber-400' },
           { label: 'Total XP', value: user.xp.toLocaleString(), icon: '⭐', color: 'text-yellow-400' },
-          { label: 'Quests Done', value: data?.stats?.questsCompleted ?? 0, icon: '✅', color: 'text-green-400' },
-          { label: 'Total Earned', value: `$${(data?.stats?.totalEarned ?? 0).toLocaleString()}`, icon: '💰', color: 'text-emerald-400' },
+          { label: 'Active Quests', value: activeApps.length, icon: '📜', color: 'text-green-400' },
+          { label: 'Applications', value: data?.applications?.length ?? 0, icon: '📤', color: 'text-blue-400' },
         ].map(stat => (
           <div key={stat.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-2xl mb-1">{stat.icon}</p>
@@ -82,27 +119,39 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Active quests */}
+        {/* My Applications */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-200">📜 Active Quests</h2>
-            <Link href="/questboard" className="text-xs text-amber-400 hover:text-amber-300">Browse more</Link>
+            <h2 className="font-semibold text-gray-200">📜 My Applications</h2>
+            <Link href="/questboard" className="text-xs text-amber-400 hover:text-amber-300">Browse quests</Link>
           </div>
-          {data?.activeQuests?.length ? (
+          {dataLoading ? (
             <div className="space-y-3">
-              {data.activeQuests.map(q => (
-                <div key={q.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-200">{q.title}</p>
-                    <p className="text-xs text-gray-500">${q.reward} • +{q.xpReward} XP</p>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-16 bg-gray-800 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : data?.applications?.length ? (
+            <div className="space-y-3">
+              {data.applications.slice(0, 5).map(app => (
+                <Link key={app.id} href={`/questboard/${app.questId}`}>
+                  <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors">
+                    <div>
+                      <p className="text-sm font-medium text-gray-200">{app.quest?.title || 'Quest'}</p>
+                      <p className="text-xs text-gray-500">${app.quest?.reward?.toLocaleString()} • {app.quest?.difficulty}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      app.status === 'ACCEPTED' ? 'bg-green-500/20 text-green-400' :
+                      app.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
+                      'bg-yellow-500/20 text-yellow-400'
+                    }`}>{app.status}</span>
                   </div>
-                  <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">{q.status}</span>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 text-sm">No active quests yet.</p>
+              <p className="text-gray-600 text-sm">No applications yet.</p>
               <Link href="/questboard" className="text-amber-400 text-sm hover:underline mt-2 block">
                 Find a quest to apply
               </Link>
@@ -116,16 +165,29 @@ export default function DashboardPage() {
             <h2 className="font-semibold text-gray-200">📤 My Posted Quests</h2>
             <Link href="/post-quest" className="text-xs text-amber-400 hover:text-amber-300">+ Post new</Link>
           </div>
-          {data?.postedQuests?.length ? (
+          {dataLoading ? (
             <div className="space-y-3">
-              {data.postedQuests.map(q => (
-                <div key={q.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-200">{q.title}</p>
-                    <p className="text-xs text-gray-500">{q._count.applications} applicant{q._count.applications !== 1 ? 's' : ''}</p>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-16 bg-gray-800 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : data?.postedQuests?.length ? (
+            <div className="space-y-3">
+              {data.postedQuests.slice(0, 5).map(q => (
+                <Link key={q.id} href={`/questboard/${q.id}`}>
+                  <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors">
+                    <div>
+                      <p className="text-sm font-medium text-gray-200">{q.title}</p>
+                      <p className="text-xs text-gray-500">{q._count?.applications || 0} applicant{(q._count?.applications || 0) !== 1 ? 's' : ''}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      q.status === 'OPEN' ? 'bg-green-500/20 text-green-400' :
+                      q.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400' :
+                      q.status === 'COMPLETED' ? 'bg-blue-500/20 text-blue-400' :
+                      'bg-gray-500/20 text-gray-400'
+                    }`}>{q.status}</span>
                   </div>
-                  <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">{q.status}</span>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

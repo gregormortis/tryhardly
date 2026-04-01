@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import Link from 'next/link';
@@ -45,15 +46,19 @@ export default function PostQuestPage() {
     setSubmitting(true);
     setError('');
     try {
-      const quest = await api.post<{ quest: { id: string } }>('/quests', {
+      const quest = await api.post<any>('/quests', {
         ...form,
         reward: parseFloat(form.reward),
         xpReward: form.xpReward ? parseInt(form.xpReward) : Math.floor(parseFloat(form.reward) / 5),
         deadline: form.deadline || undefined,
       });
-      router.push(`/questboard/${quest.quest.id}`);
+      const questId = (quest as any).id || (quest as any).quest?.id;
+      toast.success('Quest posted successfully!');
+      router.push(`/questboard/${questId}`);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to post quest');
+      const msg = err instanceof Error ? err.message : 'Failed to post quest';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }

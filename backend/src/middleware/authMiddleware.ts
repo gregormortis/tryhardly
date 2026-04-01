@@ -24,7 +24,7 @@ export const authenticate = async (
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
 
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
     if (!user) {
@@ -34,7 +34,7 @@ export const authenticate = async (
 
     req.user = { id: user.id, email: user.email, username: user.username, role: user.role };
     next();
-  } catch (error) {
+  } catch (_error) {
     res.status(401).json({ error: 'Unauthorized', message: 'Invalid token' });
   }
 };
@@ -51,7 +51,7 @@ export const optionalAuth = async (
       return;
     }
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
     if (user) {
       req.user = { id: user.id, email: user.email, username: user.username, role: user.role };

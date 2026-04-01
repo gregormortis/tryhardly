@@ -7,6 +7,8 @@ import authRoutes from './routes/authRoutes';
 import questRoutes from './routes/questRoutes';
 import userRoutes from './routes/userRoutes';
 import guildRoutes from './routes/guildRoutes';
+import gamificationRoutes from './routes/gamificationRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -17,6 +19,10 @@ const app: Application = express();
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+
+// Stripe webhook needs raw body for signature verification — must come before express.json()
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(morgan('dev')); // HTTP request logger
@@ -41,6 +47,8 @@ app.get('/', (req: Request, res: Response) => {
       quests: '/api/quests',
       users: '/api/users',
       guilds: '/api/guilds',
+      payments: '/api/payments',
+      gamification: '/api/gamification',
     },
   });
 });
@@ -50,6 +58,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/quests', questRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/guilds', guildRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/gamification', gamificationRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
