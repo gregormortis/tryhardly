@@ -15,10 +15,10 @@ A gamified gig marketplace — freelance work reframed as quests, teams as guild
 
 | Layer | Tech |
 |-------|------|
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, Zustand, Shadcn/ui |
+| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, Zustand, React Query |
 | Backend | Express.js, TypeScript, Prisma ORM, JWT auth |
 | Database | PostgreSQL (Neon on Vercel Storage) |
-| Payments | Stripe Connect (planned, dep installed) |
+| Payments | Stripe Connect (escrow service built) |
 | Real-time | Socket.io (planned, dep installed) |
 | Cache | Redis / ioredis (planned, dep installed) |
 
@@ -26,75 +26,87 @@ A gamified gig marketplace — freelance work reframed as quests, teams as guild
 
 ## What's Built ✅
 
-### Frontend Pages (20 routes)
+### Frontend (20 routes, all wired to API)
 - **Marketing:** Home, About, Pricing, FAQ, Contact, Terms, Privacy
-- **Core:** Questboard (list + detail), Post Quest, Guilds (list + detail + create), Leaderboard, Dashboard, Profile
-- **Auth:** Login, Register
+- **Core:** Questboard (list + detail + filters), Post Quest (form → API), Guilds (list + detail + create), Leaderboard (API + podium), Dashboard (my quests/apps/stats), Profile (view + edit)
+- **Auth:** Login, Register — fully wired to backend via AuthProvider
+- **Components:** Auth-aware Navbar (user menu, level, logout), ProtectedRoute, QuestList (real API)
+- **Types:** Full TypeScript interfaces for Quest, User, Guild, Application, Achievement, Milestone
 
-### Backend API
-- **Auth:** POST `/api/auth/register`, POST `/api/auth/login`, GET `/api/auth/me`
-- **Quests:** Full CRUD + complete + apply + list applications
-- **Users:** Routes exist (controller present)
-- **Guilds:** Routes exist (controller present)
+### Backend API (complete)
+- **Auth:** Register, Login, Get Current User (JWT)
+- **Quests:** Full CRUD + complete + apply + list applications + accept application
+- **Users:** Public profile, get/update self, leaderboard, my applications
+- **Guilds:** CRUD + join + leave
+- **Payments:** Stripe Connect onboarding, escrow init, milestone release, quest complete/cancel, webhook
+- **Gamification:** XP progress, achievements (catalog + user), leaderboard, reputation, stats
 
-### Database Schema (Prisma)
-- User (with level, XP, class, reputation)
-- Quest (categories, difficulty tiers, budget, status lifecycle)
-- Application (cover letter, proposed budget, status)
-- Guild + GuildMember (with roles: Leader/Officer/Member)
-- Milestone (per-quest, with payment amounts + status)
+### Backend Services (6 service modules)
+- `stripeService.ts` — Stripe Connect accounts, PaymentIntents, transfers, refunds
+- `escrowService.ts` — Full escrow lifecycle (init → fund → milestone release → complete/refund)
+- `xpService.ts` — Level curve (1-100), XP awards, progress calculation
+- `achievementService.ts` — 20 achievements with auto-check trigger system
+- `reputationService.ts` — Score calculation + 6 reputation tiers
+- `gamificationService.ts` — Orchestrator (onQuestCompleted, onReviewReceived, onGuildJoined, etc.)
+
+### Database Schema (Prisma — fully aligned)
+- User (level, XP, class, reputation, Stripe IDs, guild)
+- Quest (categories, difficulty, reward, tags, escrow status, milestones)
+- Application (cover letter, proposed rate, status)
+- Guild + GuildMember (tag, leader, public/private, reputation)
+- Milestone (per-quest, amounts, completion tracking)
 - Achievement + UserAchievement
-- Message (direct messaging)
-- Notification (typed: quest events, level up, achievements)
+- Message, Notification, Review
+- Enums: EscrowStatus, QuestStatus, QuestDifficulty, QuestCategory, UserClass, etc.
 
-### Infrastructure
-- API client (`lib/api.ts`) with JWT token handling
-- Auth context (`lib/auth.tsx`)
-- Navbar + Footer components
-- Dark gaming theme with amber/gold accents
-- Docker Compose config
-
----
-
-## What's Missing / Needs Work 🔧
-
-### Critical Path (MVP)
-- [ ] **Auth flow end-to-end** — Frontend forms exist but need wiring to backend
-- [ ] **Quest posting flow** — Form → API → DB → display on questboard
-- [ ] **Quest application flow** — Apply → notify poster → accept/reject
-- [ ] **Escrow/payment integration** — Stripe Connect setup, milestone-based releases
-- [ ] **User profiles** — Display level, XP, achievements, quest history
-- [ ] **Dashboard** — Real data (my quests, my applications, earnings, XP)
-
-### Phase 2 (Enhancement)
-- [ ] Guild functionality — Create, join, manage members, guild quests
-- [ ] Achievement system — Trigger + award logic
-- [ ] XP/leveling engine — Calculate and award on quest completion
-- [ ] Messaging — Real-time with Socket.io
-- [ ] Notifications — In-app + email (SendGrid)
-- [ ] Quest matching/search — Filters, sorting, smart recommendations
-- [ ] Leaderboard — Pull from real user data
-
-### Phase 3 (Scale)
-- [ ] Mobile apps
-- [ ] Advanced skill trees
-- [ ] Seasonal events
-- [ ] NFT badges (optional)
+### Seed Data
+- 5 users (Alice, Bob, Carol, David, Eve) with varied levels/classes
+- 10 quests across all categories and difficulties
+- 2 guilds with members
+- 10 achievements, awarded to users
+- Milestones, applications, reviews
 
 ---
 
-## Key Design Decisions (from Perplexity context)
+## What Still Needs Work 🔧
+
+### High Priority
+- [ ] **Deploy backend** — Set up Railway/Docker, connect to Neon DB
+- [ ] **Environment setup** — Stripe keys, JWT secret, DB URL in production
+- [ ] **Stripe Connect onboarding UI** — Frontend flow for adventurers to set up payouts
+- [ ] **Real-time messaging** — Socket.io integration for chat + notifications
+- [ ] **Email notifications** — SendGrid for quest updates, achievements, etc.
+
+### Medium Priority
+- [ ] **Quest search/filter** — Frontend filter bar works, needs URL params + debounce
+- [ ] **Image uploads** — Avatars, guild badges (S3/Cloudinary)
+- [ ] **Quest application management** — UI for quest giver to accept/reject apps
+- [ ] **Review system UI** — Rate adventurer after quest completion
+- [ ] **Mobile responsive** — Test and fix breakpoints
+
+### Nice to Have
+- [ ] **Socket.io notifications** — Real-time toast notifications
+- [ ] **Activity feed** — Timeline of user actions
+- [ ] **Quest chains** — Linked multi-part projects
+- [ ] **Seasonal events** — Time-limited bonus XP
+- [ ] **Advanced analytics** — PostHog / Sentry integration
+
+---
+
+## Key Design Decisions
 - **Quest difficulty tiers:** Novice → Apprentice → Journeyman → Expert → Master → Legendary
 - **User classes:** Warrior (Dev), Mage (Designer), Rogue (Writer), Cleric (Support)
-- **Guild roles:** Leader, Officer, Member
-- **Platform fee:** 12% commission
-- **Quest types:** Side Quest ($50-500), Main Quest ($500-2000), Epic Quest ($2000+), Daily Quest, Guild Quest
-- **Escrow model:** Funds locked on quest acceptance, released on completion approval (milestone-based)
+- **Reputation tiers:** Untrusted → Newcomer → Reliable → Trusted → Elite → Legendary
+- **Platform fee:** 12% commission on escrow release
+- **XP curve:** `xpForLevel(n) = floor(100 * n^1.5)` — Level 10 needs ~3,162 XP, Level 50 needs ~35,355
+- **Escrow lifecycle:** NONE → PENDING → FUNDED → PARTIALLY_RELEASED → RELEASED (or REFUNDED)
 
 ---
 
-## Git History Summary
-- 20 commits, mostly frontend page creation and styling
-- Recent commits: PostCSS/Tailwind fixes, dark theme, page scaffolding
-- No backend deployment commits yet
-- No test commits yet
+## Test Credentials
+All seeded accounts use password: `password123`
+- alice@tryhardly.com (Warrior, Level 15)
+- bob@tryhardly.com (Mage, Level 12)
+- carol@tryhardly.com (Rogue, Level 10)
+- david@tryhardly.com (Warrior, Level 5 — quest giver)
+- eve@tryhardly.com (Cleric, Level 8)
