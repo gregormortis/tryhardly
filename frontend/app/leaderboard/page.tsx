@@ -4,41 +4,42 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 
-const MOCK_LEADERBOARD = [
-  { id: '1', username: 'ShadowNinja', avatar: '🥷', level: 42, xp: 28500, questsCompleted: 127, rank: 1 },
-  { id: '2', username: 'CodeWarrior', avatar: '⚔️', level: 38, xp: 22100, questsCompleted: 98, rank: 2 },
-  { id: '3', username: 'PixelMage', avatar: '✨', level: 35, xp: 19800, questsCompleted: 89, rank: 3 },
-  { id: '4', username: 'DataDruid', avatar: '🌿', level: 34, xp: 18200, questsCompleted: 76, rank: 4 },
-  { id: '5', username: 'BugSlayer', avatar: '🐞', level: 33, xp: 17500, questsCompleted: 71, rank: 5 },
-  { id: '6', username: 'CloudArchitect', avatar: '☁️', level: 31, xp: 15900, questsCompleted: 65, rank: 6 },
-  { id: '7', username: 'APIWizard', avatar: '🧙', level: 30, xp: 15000, questsCompleted: 62, rank: 7 },
-  { id: '8', username: 'FrontendFox', avatar: '🦊', level: 29, xp: 14200, questsCompleted: 58, rank: 8 },
-  { id: '9', username: 'BackendBear', avatar: '🐻', level: 28, xp: 13700, questsCompleted: 55, rank: 9 },
-  { id: '10', username: 'DevOpsLion', avatar: '🦁', level: 27, xp: 13000, questsCompleted: 51, rank: 10 },
-];
+interface LeaderboardUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl?: string;
+  level: number;
+  xp: number;
+  adventurerClass: string;
+  reputationScore: number;
+  totalQuestsCompleted: number;
+}
 
-type TimeRange = 'week' | 'month' | 'alltime';
-type Category = 'overall' | 'quests' | 'guilds';
+const CLASS_ICONS: Record<string, string> = {
+  WARRIOR: '⚔️',
+  MAGE: '📜',
+  ROGUE: '🗡️',
+  CLERIC: '✨',
+};
 
 export default function LeaderboardPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<TimeRange>('alltime');
-  const [category, setCategory] = useState<Category>('overall');
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+    async function load() {
       try {
-        const data = await api.get(`/leaderboard?range=${timeRange}&category=${category}`) as any[];        setUsers(data);
+        const data = await api.get<LeaderboardUser[]>('/users/leaderboard');
+        setUsers(data);
       } catch {
-        setUsers(MOCK_LEADERBOARD);
+        setUsers([]);
       } finally {
         setLoading(false);
       }
-    };
+    }
     load();
-  }, [timeRange, category]);
+  }, []);
 
   const getRankColor = (rank: number) => {
     if (rank === 1) return 'text-amber-400';
@@ -63,41 +64,6 @@ export default function LeaderboardPage() {
           <p className="text-gray-400">Top adventurers competing for glory and rewards</p>
         </div>
 
-        {/* Filters */}
-        <div className="mb-8 flex flex-wrap gap-4 justify-center">
-          <div className="flex gap-2 bg-gray-900 border border-gray-800 rounded-lg p-1">
-            {(['week', 'month', 'alltime'] as TimeRange[]).map(range => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
-                  timeRange === range
-                    ? 'bg-amber-500 text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {range === 'alltime' ? 'All Time' : range}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-2 bg-gray-900 border border-gray-800 rounded-lg p-1">
-            {(['overall', 'quests', 'guilds'] as Category[]).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
-                  category === cat
-                    ? 'bg-amber-500 text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Leaderboard */}
         {loading ? (
           <div className="space-y-4">
@@ -113,54 +79,92 @@ export default function LeaderboardPage() {
               </div>
             ))}
           </div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <div className="text-4xl mb-3">🏆</div>
+            <p className="text-gray-400">No adventurers ranked yet. Be the first!</p>
+            <Link href="/auth/register" className="text-amber-400 hover:underline mt-2 inline-block">
+              Create an account →
+            </Link>
+          </div>
         ) : (
-          <div className="space-y-3">
-            {users.map(user => (
-              <Link
-                key={user.id}
-                href={`/profile/${user.id}`}
-                className="block bg-gray-900 border border-gray-800 hover:border-amber-500/30 rounded-xl p-6 transition-colors group"
-              >
-                <div className="flex items-center gap-4">
-                  {/* Rank */}
-                  <div className={`text-3xl font-bold w-12 text-center ${getRankColor(user.rank)}`}>
-                    {getRankIcon(user.rank)}
-                  </div>
+          <>
+            {/* Top 3 podium */}
+            {users.length >= 3 && (
+              <div className="grid grid-cols-3 gap-4 mb-10">
+                {/* 2nd place */}
+                <div className="bg-gray-900 border border-gray-500/30 rounded-xl p-6 text-center mt-6">
+                  <div className="text-4xl mb-2">🥈</div>
+                  <div className="text-3xl mb-2">{CLASS_ICONS[users[1].adventurerClass] || '⚔️'}</div>
+                  <div className="font-bold text-white text-lg">{users[1].displayName}</div>
+                  <div className="text-gray-500 text-sm">@{users[1].username}</div>
+                  <div className="text-amber-400 font-bold mt-2">Level {users[1].level}</div>
+                  <div className="text-green-400 text-sm">{users[1].xp.toLocaleString()} XP</div>
+                </div>
+                {/* 1st place */}
+                <div className="bg-gray-900 border border-amber-500/40 rounded-xl p-6 text-center shadow-lg shadow-amber-900/20">
+                  <div className="text-4xl mb-2">🥇</div>
+                  <div className="text-3xl mb-2">{CLASS_ICONS[users[0].adventurerClass] || '⚔️'}</div>
+                  <div className="font-bold text-white text-lg">{users[0].displayName}</div>
+                  <div className="text-gray-500 text-sm">@{users[0].username}</div>
+                  <div className="text-amber-400 font-bold mt-2">Level {users[0].level}</div>
+                  <div className="text-green-400 text-sm">{users[0].xp.toLocaleString()} XP</div>
+                </div>
+                {/* 3rd place */}
+                <div className="bg-gray-900 border border-amber-700/30 rounded-xl p-6 text-center mt-6">
+                  <div className="text-4xl mb-2">🥉</div>
+                  <div className="text-3xl mb-2">{CLASS_ICONS[users[2].adventurerClass] || '⚔️'}</div>
+                  <div className="font-bold text-white text-lg">{users[2].displayName}</div>
+                  <div className="text-gray-500 text-sm">@{users[2].username}</div>
+                  <div className="text-amber-400 font-bold mt-2">Level {users[2].level}</div>
+                  <div className="text-green-400 text-sm">{users[2].xp.toLocaleString()} XP</div>
+                </div>
+              </div>
+            )}
 
-                  {/* Avatar & Info */}
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="text-4xl">{user.avatar}</div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-white group-hover:text-amber-400 transition-colors">
-                        {user.username}
-                      </h3>
-                      <p className="text-sm text-gray-400">Level {user.level}</p>
+            {/* Full list */}
+            <div className="space-y-3">
+              {users.map((user, i) => {
+                const rank = i + 1;
+                return (
+                  <div
+                    key={user.id}
+                    className="bg-gray-900 border border-gray-800 hover:border-amber-500/30 rounded-xl p-5 flex items-center gap-4 transition-colors"
+                  >
+                    {/* Rank */}
+                    <div className={`text-2xl font-bold w-12 text-center ${getRankColor(rank)}`}>
+                      {getRankIcon(rank)}
                     </div>
-                  </div>
 
-                  {/* Stats */}
-                  <div className="hidden sm:flex gap-8 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-green-400">{user.xp.toLocaleString()}</div>
+                    {/* Avatar */}
+                    <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/30 rounded-full flex items-center justify-center text-lg">
+                      {CLASS_ICONS[user.adventurerClass] || '⚔️'}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white">{user.displayName}</span>
+                        <span className="text-gray-600 text-sm">@{user.username}</span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Level {user.level} • {user.totalQuestsCompleted} quests completed • ⭐ {user.reputationScore} rep
+                      </div>
+                    </div>
+
+                    {/* XP */}
+                    <div className="text-right hidden sm:block">
+                      <div className="text-xl font-bold text-green-400">{user.xp.toLocaleString()}</div>
                       <div className="text-xs text-gray-500">XP</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-blue-400">{user.questsCompleted}</div>
-                      <div className="text-xs text-gray-500">Quests</div>
-                    </div>
                   </div>
-
-                  {/* Arrow */}
-                  <div className="text-gray-600 group-hover:text-amber-400 transition-colors">
-                    →
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
-        {/* Call to Action */}
+        {/* CTA */}
         <div className="mt-12 text-center bg-gray-900 border border-gray-800 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-white mb-2">Think you can climb higher?</h2>
           <p className="text-gray-400 mb-6">Complete more quests, level up, and dominate the leaderboard!</p>

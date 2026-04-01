@@ -34,6 +34,10 @@ model User {
   totalQuestsPosted    Int @default(0)
   totalQuestsCompleted Int @default(0)
 
+  // Stripe integration
+  stripeAccountId   String?
+  stripeCustomerId  String?
+
   // Guild membership (optional)
   guildId       String?
   guild         Guild?   @relation("GuildMembers", fields: [guildId], references: [id])
@@ -79,6 +83,10 @@ model Quest {
 
   // Status
   status          QuestStatus     @default(OPEN)
+
+  // Escrow / payment tracking
+  escrowStatus    EscrowStatus    @default(NONE)
+  paymentIntentId String?
 
   // XP Reward
   xpReward        Int
@@ -136,6 +144,15 @@ enum QuestStatus {
   IN_REVIEW
   COMPLETED
   CANCELLED
+}
+
+enum EscrowStatus {
+  NONE
+  PENDING
+  FUNDED
+  PARTIALLY_RELEASED
+  RELEASED
+  REFUNDED
 }
 
 // ─── Application ─────────────────────────────────────────────────────────────
