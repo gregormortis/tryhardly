@@ -22,7 +22,7 @@ export interface User {
 export interface Quest {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   category: string;
   difficulty: string;
   reward: number;

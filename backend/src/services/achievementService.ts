@@ -53,7 +53,8 @@ export const ACHIEVEMENT_CATALOG: AchievementDef[] = [
 ];
 
 // Lookup helpers
-const CATALOG_BY_KEY = new Map(ACHIEVEMENT_CATALOG.map((a) => [a.key, a]));
+// Achievement catalog indexed by key for lookups
+// const CATALOG_BY_KEY = new Map(ACHIEVEMENT_CATALOG.map((a) => [a.key, a]));
 const CATALOG_BY_TRIGGER = new Map<string, AchievementDef[]>();
 for (const a of ACHIEVEMENT_CATALOG) {
   for (const t of a.triggers) {

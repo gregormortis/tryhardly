@@ -98,7 +98,7 @@ export async function onReviewReceived(
 
 /**
  * Called when a user posts a new quest.
- * - Increments questsPosted counter
+ * - Increments totalQuestsPosted counter
  * - Checks for poster-related achievements (e.g. Mentor)
  */
 export async function onQuestPosted(
@@ -110,7 +110,7 @@ export async function onQuestPosted(
   // Increment posts counter
   await prisma.user.update({
     where: { id: userId },
-    data: { questsPosted: { increment: 1 } },
+    data: { totalQuestsPosted: { increment: 1 } },
   });
 
   const achievementsUnlocked = await checkAchievements(userId, {
@@ -183,7 +183,7 @@ export interface GamificationStats {
     adventurerClass: string;
     reputationScore: number;
     totalQuestsCompleted: number;
-    questsPosted: number;
+    totalQuestsPosted: number;
   };
   xpProgress: {
     xpForCurrentLevel: number;
@@ -214,7 +214,7 @@ export async function getFullStats(userId: string): Promise<GamificationStats> {
         adventurerClass: true,
         reputationScore: true,
         totalQuestsCompleted: true,
-        questsPosted: true,
+        totalQuestsPosted: true,
       },
     }),
     getXPProgress(userId),

@@ -30,10 +30,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
+    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
+      { expiresIn: expiresIn as any },
     );
 
     res.status(201).json({
@@ -71,10 +72,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
+      { expiresIn: expiresIn as any },
     );
 
     res.json({

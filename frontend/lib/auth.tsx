@@ -7,10 +7,17 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  displayName?: string;
   xp: number;
   level: number;
-  avatar?: string;
+  avatarUrl?: string;
   bio?: string;
+  adventurerClass?: string;
+  reputationScore?: number;
+  totalQuestsCompleted?: number;
+  totalQuestsPosted?: number;
+  verified?: boolean;
+  role?: string;
   guild?: { id: string; name: string; tag: string };
 }
 

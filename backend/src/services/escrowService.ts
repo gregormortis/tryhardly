@@ -52,16 +52,15 @@ export async function initializeEscrow(questId: string): Promise<{
   const quest = await prisma.quest.findUniqueOrThrow({
     where: { id: questId },
     include: {
-      poster: true,
-      taker: true,
+      questGiver: true,
+      assignedAdventurer: true,
     },
   });
 
-  // Resolve poster/taker — the schema uses different relation names in different versions
-  const poster = (quest as any).poster || (quest as any).questGiver;
-  const taker = (quest as any).taker || (quest as any).assignedAdventurer;
-  const posterId = poster?.id || (quest as any).posterId || (quest as any).questGiverId;
-  const takerId = taker?.id || (quest as any).takerId || (quest as any).assignedAdventurerId;
+  const poster = (quest as any).questGiver;
+  const taker = (quest as any).assignedAdventurer;
+  const posterId = poster?.id || (quest as any).questGiverId;
+  const takerId = taker?.id || (quest as any).assignedAdventurerId;
 
   if (!takerId) {
     throw new Error('Quest has no assigned adventurer');

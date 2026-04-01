@@ -63,7 +63,7 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
 };
 
 // GET /api/users/leaderboard
-export const getLeaderboard = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getLeaderboard = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const users = await prisma.user.findMany({
       orderBy: { xp: 'desc' },
