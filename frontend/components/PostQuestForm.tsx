@@ -161,7 +161,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   // Auth gate
   useEffect(() => {
     if (!currentUserId) {
-      window.location.href = '/login?redirect=/post-quest';
+      window.location.href = '/auth/login?redirect=/post-quest';
     }
   }, [currentUserId]);
 
