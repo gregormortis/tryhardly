@@ -11,6 +11,7 @@ const dmMono = DM_Mono({
   weight: ["400", "500"],
   variable: "--font-dm-mono",
 });
+
 const syne = Syne({
   subsets: ["latin"],
   weight: ["400", "600", "700", "800"],
@@ -19,8 +20,7 @@ const syne = Syne({
 
 export const metadata: Metadata = {
   title: "Tryhardly — Local gigs, real people",
-  description:
-    "The marketplace AI can't touch. Post local jobs or find paid work near you.",
+  description: "The marketplace AI can't touch. Post local jobs or find paid work near you.",
 };
 
 export default function RootLayout({
@@ -29,12 +29,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`dark ${dmMono.variable} ${syne.variable}`}
-    >
+    <html lang="en" className={`dark ${dmMono.variable} ${syne.variable}`}>
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
-        <AuthProvider><Script defer data-domain="tryhardly.com" src="https://plausible.io/js/script.js" />
+        <AuthProvider>
+          {/* Plausible Analytics */}
+          <Script
+            defer
+            data-domain="tryhardly.com"
+            src="https://plausible.io/js/script.js"
+          />
+          {/* Google Analytics */}
+          <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-68P7FQSY7L"
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-68P7FQSY7L');
+            `}
+          </Script>
           <Navbar />
           <main>{children}</main>
           <Footer />
