@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { QuestStatus } from "@prisma/client";
 
 export async function getQuests(req: Request, res: Response) {
   try {
@@ -15,7 +16,7 @@ export async function getQuests(req: Request, res: Response) {
     const skip = (Math.max(parseInt(page) || 1, 1) - 1) * take;
 
     const where: any = {
-      status: "open",
+      status: QuestStatus.OPEN,
       ...(city && { city: { equals: city, mode: "insensitive" } }),
       ...(category && { category: { equals: category, mode: "insensitive" } }),
     };
@@ -57,7 +58,7 @@ export async function createQuest(req: Request, res: Response) {
   try {
     const user = (req as any).user;
     const quest = await prisma.quest.create({
-      data: { ...req.body, posterId: user.id },
+      data: { ...req.body, questGiverId: user.id },
     });
     res.status(201).json(quest);
   } catch (error) {
@@ -70,7 +71,7 @@ export async function updateQuest(req: Request, res: Response) {
     const user = (req as any).user;
     const quest = await prisma.quest.findUnique({ where: { id: req.params.id } });
     if (!quest) return res.status(404).json({ error: "Quest not found" });
-    if (quest.posterId !== user.id) return res.status(403).json({ error: "Forbidden" });
+    if (quest.questGiverId !== user.id) return res.status(403).json({ error: "Forbidden" });
     const updated = await prisma.quest.update({ where: { id: req.params.id }, data: req.body });
     res.json(updated);
   } catch (error) {
@@ -83,7 +84,7 @@ export async function deleteQuest(req: Request, res: Response) {
     const user = (req as any).user;
     const quest = await prisma.quest.findUnique({ where: { id: req.params.id } });
     if (!quest) return res.status(404).json({ error: "Quest not found" });
-    if (quest.posterId !== user.id) return res.status(403).json({ error: "Forbidden" });
+    if (quest.questGiverId !== user.id) return res.status(403).json({ error: "Forbidden" });
     await prisma.quest.delete({ where: { id: req.params.id } });
     res.json({ message: "Quest deleted" });
   } catch (error) {
@@ -96,10 +97,10 @@ export async function completeQuest(req: Request, res: Response) {
     const user = (req as any).user;
     const quest = await prisma.quest.findUnique({ where: { id: req.params.id } });
     if (!quest) return res.status(404).json({ error: "Quest not found" });
-    if (quest.posterId !== user.id) return res.status(403).json({ error: "Forbidden" });
+    if (quest.questGiverId !== user.id) return res.status(403).json({ error: "Forbidden" });
     const updated = await prisma.quest.update({
       where: { id: req.params.id },
-      data: { status: "completed" },
+      data: { status: QuestStatus.COMPLETED },
     });
     res.json(updated);
   } catch (error) {
