@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { DM_Mono, Syne } from 'next/font/google';
 import './globals.css';
 import Navbar from '../components/Navbar';
 import { AuthProvider } from '../lib/auth';
 
-const inter = Inter({ subsets: ['latin'] });
+const dmMono = DM_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm-mono' });
+const syne   = Syne({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-syne' });
 
 export const metadata: Metadata = {
   title: 'Tryhardly - Guild-Inspired Quest Marketplace',
@@ -13,15 +14,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen`}>
+    <html lang="en" className={`dark ${dmMono.variable} ${syne.variable}`}>
+      <body className="bg-gray-950 text-gray-100 min-h-screen">
         <AuthProvider>
           <Navbar />
           <main className="min-h-screen">{children}</main>
           <footer className="bg-gray-900 border-t border-gray-800 py-8 mt-16">
             <div className="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
-              <p className="text-amber-400 font-semibold mb-1">⚔ Tryhardly</p>
-              <p>Guild-Inspired Quest Marketplace © {new Date().getFullYear()}</p>
+              <p className="text-amber-400 font-semibold mb-1">X Tryhardly</p>
+              <p>Guild-Inspired Quest Marketplace &copy; {new Date().getFullYear()}</p>
             </div>
           </footer>
         </AuthProvider>
