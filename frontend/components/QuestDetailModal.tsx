@@ -1,6 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { X, MapPin, Clock, Users, Zap, Star, Wrench, ChevronRight } from 'lucide-react';
+import clsx from 'clsx';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
 
 interface QuestGiver {
   id: string;
@@ -14,111 +20,84 @@ interface Quest {
   id: string;
   title: string;
   category: string;
-  tier: string;
+  tier: TierKey;
   city: string;
   neighborhood: string;
   pay: number;
-  payType: "flat" | "hourly";
+  payType: 'flat' | 'hourly';
   description: string;
   xpReward: number;
   applicantCount: number;
-  deadline: string; // ISO date string
+  deadline: string;
   tools: string[];
   postedBy: QuestGiver;
-  status: "open" | "claimed" | "completed";
+  status: 'open' | 'claimed' | 'completed';
   createdAt: string;
 }
 
-interface QuestDetailModalProps {
+export interface QuestDetailModalProps {
   questId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  currentUserId?: string | null; // null = not logged in
+  currentUserId?: string | null;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TIERS: Record<string, { label: string; color: string; bg: string }> = {
-  novice:     { label: "NOVICE",     color: "#4ade80", bg: "rgba(74,222,128,0.1)"  },
-  apprentice: { label: "APPRENTICE", color: "#60a5fa", bg: "rgba(96,165,250,0.1)"  },
-  journeyman: { label: "JOURNEYMAN", color: "#f59e0b", bg: "rgba(245,158,11,0.1)"  },
-  expert:     { label: "EXPERT",     color: "#f97316", bg: "rgba(249,115,22,0.1)"  },
-  master:     { label: "MASTER",     color: "#a78bfa", bg: "rgba(167,139,250,0.1)" },
-  legendary:  { label: "LEGENDARY",  color: "#f43f5e", bg: "rgba(244,63,94,0.1)"  },
+const TIERS: Record<TierKey, { label: string; classes: string }> = {
+  novice:     { label: 'NOVICE',     classes: 'text-green-400 bg-green-400/10 border-green-400/20'    },
+  apprentice: { label: 'APPRENTICE', classes: 'text-blue-400 bg-blue-400/10 border-blue-400/20'       },
+  journeyman: { label: 'JOURNEYMAN', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/20'    },
+  expert:     { label: 'EXPERT',     classes: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
+  master:     { label: 'MASTER',     classes: 'text-violet-400 bg-violet-400/10 border-violet-400/20' },
+  legendary:  { label: 'LEGENDARY',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20'       },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  yard:      "Lawn & Yard",
-  hauling:   "Hauling & Junk",
-  moving:    "Moving Help",
-  handyman:  "Handyman",
-  cleaning:  "Cleaning",
-  painting:  "Painting",
-  pressure:  "Pressure Washing",
-  other:     "Odd Jobs",
+  yard:     'Lawn & Yard',     hauling: 'Hauling & Junk',
+  moving:   'Moving Help',     handyman: 'Handyman',
+  cleaning: 'Cleaning',        painting: 'Painting',
+  pressure: 'Pressure Washing',other:   'Odd Jobs',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDeadline(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function daysUntil(iso: string): number {
-  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000));
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
 }
 
-function payDisplay(pay: number, payType: string): string {
-  return payType === "hourly" ? `$${pay}/hr` : `$${pay}`;
+function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : 'Something went wrong';
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Badge({ label, color, bg }: { label: string; color: string; bg: string }) {
+function Badge({ label, classes }: { label: string; classes: string }) {
   return (
-    <span style={{
-      fontFamily: "'DM Mono', monospace",
-      fontSize: "9px", fontWeight: 600, letterSpacing: "0.12em",
-      color, background: bg,
-      border: `1px solid ${color}33`,
-      borderRadius: "3px", padding: "3px 8px",
-      whiteSpace: "nowrap",
-    }}>{label}</span>
+    <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5 whitespace-nowrap', classes)}>
+      {label}
+    </span>
   );
 }
 
-function StatBlock({ value, label }: { value: string; label: string }) {
+function StatBlock({ value, label, warn = false }: { value: string; label: string; warn?: boolean }) {
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", gap: "3px",
-      padding: "14px 20px",
-      background: "rgba(255,255,255,0.02)",
-      border: "1px solid rgba(255,255,255,0.06)",
-      borderRadius: "8px",
-      flex: 1,
-    }}>
-      <span style={{
-        fontFamily: "'Syne', sans-serif",
-        fontSize: "20px", fontWeight: 700, color: "#f5b942", lineHeight: 1,
-      }}>{value}</span>
-      <span style={{
-        fontFamily: "'DM Mono', monospace",
-        fontSize: "10px", color: "#6b6460",
-        letterSpacing: "0.06em", textTransform: "uppercase",
-      }}>{label}</span>
+    <div className="flex flex-col gap-1 px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-lg flex-1">
+      <span className={clsx('font-bold text-xl leading-none', warn ? 'text-rose-400' : 'text-amber-400')}>
+        {value}
+      </span>
+      <span className="font-mono text-[10px] text-stone-600 tracking-widest uppercase">{label}</span>
     </div>
   );
 }
 
-function SkeletonLine({ width = "100%", height = "14px" }: { width?: string; height?: string }) {
+function SkeletonLine({ wide = false }: { wide?: boolean }) {
   return (
-    <div style={{
-      width, height,
-      background: "rgba(255,255,255,0.05)",
-      borderRadius: "4px",
-      animation: "shimmer 1.6s ease-in-out infinite",
-    }} />
+    <div className={clsx('h-3.5 bg-white/[0.05] rounded animate-pulse', wide ? 'w-full' : 'w-3/5')} />
   );
 }
 
@@ -130,22 +109,22 @@ export default function QuestDetailModal({
   onClose,
   currentUserId = null,
 }: QuestDetailModalProps) {
-  const [quest, setQuest] = useState<Quest | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [quest,    setQuest]    = useState<Quest | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
-  const [claimed, setClaimed] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [claimed,  setClaimed]  = useState(false);
+  const [visible,  setVisible]  = useState(false);
 
-  // Animate in/out
+  // Animate in/out + body scroll lock
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
       requestAnimationFrame(() => setVisible(true));
     } else {
       setVisible(false);
       const t = setTimeout(() => {
-        document.body.style.overflow = "";
+        document.body.style.overflow = '';
         setQuest(null);
         setError(null);
         setClaimed(false);
@@ -154,26 +133,25 @@ export default function QuestDetailModal({
     }
   }, [isOpen]);
 
-  // Fetch quest
+  // Fetch quest data
   useEffect(() => {
     if (!questId || !isOpen) return;
     setLoading(true);
     setError(null);
     fetch(`/api/quests/${questId}`)
-      .then(r => { if (!r.ok) throw new Error("Quest not found"); return r.json(); })
-      .then(data => setQuest(data))
-      .catch(e => setError(e.message))
+      .then((r) => { if (!r.ok) throw new Error('Quest not found'); return r.json() as Promise<Quest>; })
+      .then(setQuest)
+      .catch((e: unknown) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, [questId, isOpen]);
 
-  // Escape key
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
+    if (e.key === 'Escape') onClose();
   }, [onClose]);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
   function handleClaim() {
@@ -183,13 +161,13 @@ export default function QuestDetailModal({
     }
     setClaiming(true);
     fetch(`/api/quests/${questId}/claim`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: currentUserId }),
     })
-      .then(r => { if (!r.ok) throw new Error("Claim failed"); return r.json(); })
+      .then((r) => { if (!r.ok) throw new Error('Claim failed'); return r.json(); })
       .then(() => setClaimed(true))
-      .catch(e => setError(e.message))
+      .catch((e: unknown) => setError(errorMessage(e)))
       .finally(() => setClaiming(false));
   }
 
@@ -200,282 +178,163 @@ export default function QuestDetailModal({
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500;600&display=swap');
-        @keyframes shimmer {
-          0%, 100% { opacity: 0.6; }
-          50%       { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { transform: translateY(24px); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
-      `}</style>
-
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: "fixed", inset: 0, zIndex: 900,
-          background: "rgba(0,0,0,0.75)",
-          backdropFilter: "blur(4px)",
-          opacity: visible ? 1 : 0,
-          transition: "opacity 0.28s ease",
-        }}
+        className={clsx(
+          'fixed inset-0 z-[900] bg-black/75 backdrop-blur-sm transition-opacity duration-300',
+          visible ? 'opacity-100' : 'opacity-0',
+        )}
       />
 
       {/* Drawer */}
-      <div
-        style={{
-          position: "fixed", inset: 0, zIndex: 901,
-          display: "flex", alignItems: "flex-end", justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
+      <div className="fixed inset-0 z-[901] flex items-end justify-center pointer-events-none">
         <div
-          style={{
-            width: "100%", maxWidth: "720px",
-            maxHeight: "92vh",
-            background: "#111009",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderBottom: "none",
-            borderRadius: "16px 16px 0 0",
-            display: "flex", flexDirection: "column",
-            pointerEvents: "all",
-            transform: visible ? "translateY(0)" : "translateY(32px)",
-            opacity: visible ? 1 : 0,
-            transition: "transform 0.28s cubic-bezier(0.32,0.72,0,1), opacity 0.28s ease",
-            overflow: "hidden",
-          }}
+          className={clsx(
+            'pointer-events-auto w-full max-w-2xl max-h-[92vh] bg-zinc-950 border border-white/[0.08] border-b-0 rounded-t-2xl flex flex-col transition-all duration-300',
+            visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0',
+          )}
         >
           {/* Handle */}
-          <div style={{
-            width: "36px", height: "4px",
-            background: "rgba(255,255,255,0.12)",
-            borderRadius: "2px",
-            margin: "12px auto 0",
-            flexShrink: 0,
-          }} />
+          <div className="w-9 h-1 bg-white/10 rounded-full mx-auto mt-3 flex-shrink-0" />
 
           {/* Close button */}
           <button
             onClick={onClose}
-            style={{
-              position: "absolute", top: "20px", right: "20px",
-              width: "32px", height: "32px",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "6px",
-              color: "#8b8578", fontSize: "16px",
-              cursor: "pointer", display: "flex",
-              alignItems: "center", justifyContent: "center",
-              fontFamily: "monospace", lineHeight: 1,
-            }}
-          >×</button>
+            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center bg-white/[0.05] border border-white/10 rounded-md text-stone-500 hover:text-stone-300 transition-colors"
+          >
+            <X size={15} />
+          </button>
 
           {/* Scrollable body */}
-          <div style={{
-            overflowY: "auto", flex: 1,
-            padding: "24px 32px 32px",
-          }}>
-            {/* ── Loading state ── */}
+          <div className="overflow-y-auto flex-1 px-8 pt-6 pb-8">
+
+            {/* Loading */}
             {loading && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px", paddingTop: "8px" }}>
-                <SkeletonLine width="60%" height="28px" />
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <SkeletonLine width="90px" height="22px" />
-                  <SkeletonLine width="110px" height="22px" />
+              <div className="flex flex-col gap-3.5 pt-2">
+                <div className="h-7 w-3/5 bg-white/[0.05] rounded animate-pulse" />
+                <div className="flex gap-2">
+                  <div className="h-5 w-20 bg-white/[0.05] rounded animate-pulse" />
+                  <div className="h-5 w-24 bg-white/[0.05] rounded animate-pulse" />
                 </div>
-                <SkeletonLine width="40%" height="14px" />
-                <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                  {[1,2,3,4].map(i => <SkeletonLine key={i} height="60px" />)}
+                <SkeletonLine />
+                <div className="flex gap-2.5 mt-2">
+                  {[1,2,3,4].map((i) => <div key={i} className="h-14 flex-1 bg-white/[0.05] rounded-lg animate-pulse" />)}
                 </div>
-                <SkeletonLine height="120px" />
+                <div className="h-28 w-full bg-white/[0.05] rounded-lg animate-pulse mt-1" />
               </div>
             )}
 
-            {/* ── Error state ── */}
+            {/* Error */}
             {error && !loading && (
-              <div style={{
-                textAlign: "center", paddingTop: "48px",
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "13px", color: "#f43f5e",
-              }}>
-                {error}
-              </div>
+              <div className="text-center pt-12 font-mono text-[13px] text-rose-400">{error}</div>
             )}
 
-            {/* ── Quest content ── */}
+            {/* Content */}
             {quest && !loading && (
-              <div style={{ animation: "slideUp 0.3s ease both" }}>
+              <div className="animate-[fadeSlideUp_0.3s_ease_both]">
 
-                {/* Title row */}
-                <div style={{ marginBottom: "14px", paddingRight: "40px" }}>
-                  <h2 style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: "22px", fontWeight: 700,
-                    color: "#f5f0e8", lineHeight: 1.25,
-                    margin: "0 0 10px",
-                  }}>{quest.title}</h2>
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                    {tier && <Badge label={tier.label} color={tier.color} bg={tier.bg} />}
+                {/* Title + badges */}
+                <div className="mb-4 pr-10">
+                  <h2 className="font-bold text-2xl text-stone-100 leading-snug mb-2.5">{quest.title}</h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {tier && <Badge label={tier.label} classes={tier.classes} />}
                     <Badge
                       label={CATEGORY_LABELS[quest.category] ?? quest.category}
-                      color="#c9c4bc"
-                      bg="rgba(255,255,255,0.06)"
+                      classes="text-stone-400 bg-white/[0.06] border-white/10"
                     />
-                    {quest.status === "open" && (
-                      <Badge label="OPEN" color="#4ade80" bg="rgba(74,222,128,0.08)" />
+                    {quest.status === 'open' && (
+                      <Badge label="OPEN" classes="text-green-400 bg-green-400/[0.08] border-green-400/20" />
                     )}
-                    <span style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: "11px", color: "#6b6460",
-                    }}>📍 {quest.neighborhood}, {quest.city}</span>
+                    <span className="font-mono text-[11px] text-stone-600 flex items-center gap-1">
+                      <MapPin size={10} /> {quest.neighborhood}, {quest.city}
+                    </span>
                   </div>
                 </div>
 
-                {/* Stats grid */}
-                <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
-                  <StatBlock value={payDisplay(quest.pay, quest.payType)} label={quest.payType === "hourly" ? "Per hour" : "Flat rate"} />
+                {/* Stats */}
+                <div className="flex gap-2.5 mb-5 flex-wrap">
+                  <StatBlock value={quest.payType === 'hourly' ? `$${quest.pay}/hr` : `$${quest.pay}`} label={quest.payType === 'hourly' ? 'Per hour' : 'Flat rate'} />
                   <StatBlock value={`${quest.xpReward} XP`} label="XP reward" />
-                  <StatBlock value={`${quest.applicantCount}`} label="Applicants" />
-                  <StatBlock value={`${days}d`} label={days <= 3 ? "⚠ Days left" : "Days left"} />
+                  <StatBlock value={String(quest.applicantCount)} label="Applicants" />
+                  <StatBlock value={`${days}d`} label={days <= 3 ? '⚠ Days left' : 'Days left'} warn={days <= 3} />
                 </div>
 
                 {/* Deadline */}
-                <div style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  marginBottom: "20px",
-                  fontFamily: "'DM Mono', monospace", fontSize: "11px", color: "#6b6460",
-                }}>
-                  <span style={{ color: days <= 3 ? "#f43f5e" : "#6b6460" }}>
-                    Deadline: {formatDeadline(quest.deadline)}
-                    {days <= 3 && " — Closing soon"}
-                  </span>
-                </div>
+                <p className={clsx('font-mono text-[11px] mb-5', days <= 3 ? 'text-rose-400' : 'text-stone-600')}>
+                  <Clock size={10} className="inline mr-1" />
+                  Deadline: {formatDeadline(quest.deadline)}
+                  {days <= 3 && ' — Closing soon'}
+                </p>
 
                 {/* Description */}
-                <div style={{ marginBottom: "24px" }}>
-                  <div style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "10px", fontWeight: 600,
-                    letterSpacing: "0.1em", color: "#5c5750",
-                    marginBottom: "8px",
-                  }}>QUEST DESCRIPTION</div>
-                  <p style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "13px", color: "#a09a92",
-                    lineHeight: 1.8, margin: 0,
-                    whiteSpace: "pre-wrap",
-                  }}>{quest.description}</p>
+                <div className="mb-6">
+                  <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-2">
+                    Quest Description
+                  </p>
+                  <p className="font-mono text-[13px] text-stone-500 leading-relaxed whitespace-pre-wrap">
+                    {quest.description}
+                  </p>
                 </div>
 
-                {/* Tools required */}
-                {quest.tools?.length > 0 && (
-                  <div style={{ marginBottom: "24px" }}>
-                    <div style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: "10px", fontWeight: 600,
-                      letterSpacing: "0.1em", color: "#5c5750",
-                      marginBottom: "8px",
-                    }}>TOOLS / REQUIREMENTS</div>
-                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                      {quest.tools.map(t => (
-                        <span key={t} style={{
-                          fontFamily: "'DM Mono', monospace",
-                          fontSize: "11px", color: "#8b8578",
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: "4px", padding: "4px 10px",
-                        }}>{t}</span>
+                {/* Tools */}
+                {quest.tools.length > 0 && (
+                  <div className="mb-6">
+                    <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-2 flex items-center gap-1">
+                      <Wrench size={10} /> Tools / Requirements
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {quest.tools.map((t) => (
+                        <span key={t} className="font-mono text-[11px] text-stone-500 bg-white/[0.04] border border-white/[0.08] rounded px-2.5 py-1">
+                          {t}
+                        </span>
                       ))}
                     </div>
                   </div>
                 )}
 
                 {/* Quest giver */}
-                <div style={{
-                  display: "flex", alignItems: "center", gap: "14px",
-                  padding: "16px 20px",
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: "10px",
-                  marginBottom: "28px",
-                }}>
-                  <div style={{
-                    width: "44px", height: "44px", borderRadius: "50%",
-                    background: "rgba(245,158,11,0.12)",
-                    border: "1px solid rgba(245,158,11,0.25)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: "14px", fontWeight: 700, color: "#f5b942",
-                    flexShrink: 0,
-                  }}>{quest.postedBy.avatarInitials}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: "14px", fontWeight: 600, color: "#f5f0e8",
-                      marginBottom: "3px",
-                    }}>{quest.postedBy.username}</div>
-                    <div style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: "11px", color: "#6b6460",
-                    }}>
-                      {"★".repeat(Math.min(5, Math.round(quest.postedBy.reputationScore / 20)))}
-                      {"☆".repeat(Math.max(0, 5 - Math.round(quest.postedBy.reputationScore / 20)))}
-                      {" "}· {quest.postedBy.reputationScore}/100 rep · {quest.postedBy.questsPosted} quests posted
-                    </div>
+                <div className="flex items-center gap-3.5 p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl mb-7">
+                  <div className="w-11 h-11 rounded-full bg-amber-400/10 border border-amber-400/25 flex items-center justify-content-center flex-shrink-0">
+                    <span className="flex items-center justify-center w-full h-full font-bold text-sm text-amber-400">
+                      {quest.postedBy.avatarInitials}
+                    </span>
                   </div>
-                  <span style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "10px", color: "#5c5750",
-                  }}>Quest Giver</span>
+                  <div className="flex-1">
+                    <p className="font-semibold text-[14px] text-stone-100 mb-0.5">{quest.postedBy.username}</p>
+                    <p className="font-mono text-[11px] text-stone-600">
+                      <Star size={10} className="inline mr-0.5" />
+                      {quest.postedBy.reputationScore}/100 rep · {quest.postedBy.questsPosted} quests posted
+                    </p>
+                  </div>
+                  <span className="font-mono text-[10px] text-stone-700">Quest Giver</span>
                 </div>
 
                 {/* CTA */}
                 {claimed ? (
-                  <div style={{
-                    width: "100%", padding: "16px",
-                    background: "rgba(74,222,128,0.08)",
-                    border: "1px solid rgba(74,222,128,0.3)",
-                    borderRadius: "8px", textAlign: "center",
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "13px", fontWeight: 600,
-                    color: "#4ade80", letterSpacing: "0.06em",
-                  }}>
+                  <div className="w-full p-4 bg-green-400/[0.08] border border-green-400/30 rounded-lg text-center font-mono text-[13px] font-semibold text-green-400 tracking-wider">
                     ✓ QUEST CLAIMED — CHECK YOUR DASHBOARD
                   </div>
                 ) : (
                   <button
                     onClick={handleClaim}
                     disabled={claiming}
-                    style={{
-                      width: "100%", padding: "16px",
-                      background: claiming ? "rgba(245,158,11,0.15)" : "#f5b942",
-                      border: "none", borderRadius: "8px",
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: "13px", fontWeight: 600,
-                      letterSpacing: "0.08em",
-                      color: claiming ? "#f5b942" : "#0d0c0b",
-                      cursor: claiming ? "default" : "pointer",
-                      transition: "all 0.18s ease",
-                    }}
+                    className={clsx(
+                      'w-full py-4 rounded-lg font-mono text-[13px] font-semibold tracking-widest transition-all duration-200 flex items-center justify-center gap-2',
+                      claiming
+                        ? 'bg-amber-400/15 text-amber-400 border border-amber-400/40 cursor-default'
+                        : 'bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer',
+                    )}
                   >
-                    {claiming
-                      ? "CLAIMING…"
-                      : currentUserId
-                        ? "CLAIM THIS QUEST"
-                        : "LOG IN TO CLAIM"}
+                    {claiming ? 'CLAIMING…' : currentUserId ? (
+                      <><span>CLAIM THIS QUEST</span><ChevronRight size={14} /></>
+                    ) : 'LOG IN TO CLAIM'}
                   </button>
                 )}
 
                 {!currentUserId && (
-                  <p style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "10px", color: "#5c5750",
-                    textAlign: "center", marginTop: "10px",
-                  }}>
-                    You'll be redirected to log in, then returned here.
+                  <p className="font-mono text-[10px] text-stone-700 text-center mt-2.5">
+                    You&apos;ll be redirected to log in, then returned here.
                   </p>
                 )}
               </div>
