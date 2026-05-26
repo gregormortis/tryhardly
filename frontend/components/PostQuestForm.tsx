@@ -1,127 +1,121 @@
-import { useState, useEffect, useCallback } from "react";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ChevronRight, ChevronLeft, CheckCircle, Zap } from 'lucide-react';
+import clsx from 'clsx';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface PostQuestFormProps {
+type PayType = 'flat' | 'hourly';
+type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
+
+interface FormData {
+  title: string;
+  category: string;
+  city: string;
+  neighborhood: string;
+  description: string;
+  reward: string;
+  payType: PayType;
+  deadline: string;
+  xpReward: number;
+}
+
+export interface PostQuestFormProps {
   currentUserId?: string | null;
   onSuccess?: (questId: string) => void;
   onCancel?: () => void;
 }
 
-interface FormData {
-  // Step 1
-  title: string;
-  category: string;
-  city: string;
-  neighborhood: string;
-  // Step 2
-  description: string;
-  reward: string;
-  deadline: string;
-  xpReward: number;
-  // Meta
-  payType: "flat" | "hourly";
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { id: "yard",     label: "Lawn & Yard"       },
-  { id: "hauling",  label: "Hauling & Junk"    },
-  { id: "moving",   label: "Moving Help"       },
-  { id: "handyman", label: "Handyman"          },
-  { id: "cleaning", label: "Cleaning"         },
-  { id: "painting", label: "Painting"         },
-  { id: "pressure", label: "Pressure Washing" },
-  { id: "other",    label: "Odd Jobs"         },
+  { id: 'yard',     label: 'Lawn & Yard'       },
+  { id: 'hauling',  label: 'Hauling & Junk'    },
+  { id: 'moving',   label: 'Moving Help'       },
+  { id: 'handyman', label: 'Handyman'          },
+  { id: 'cleaning', label: 'Cleaning'         },
+  { id: 'painting', label: 'Painting'         },
+  { id: 'pressure', label: 'Pressure Washing' },
+  { id: 'other',    label: 'Odd Jobs'         },
 ];
 
-const TIER_MAP: { min: number; max: number; tier: string; color: string }[] = [
-  { min: 0,   max: 49,  tier: "Novice",     color: "#4ade80" },
-  { min: 50,  max: 99,  tier: "Apprentice", color: "#60a5fa" },
-  { min: 100, max: 199, tier: "Journeyman", color: "#f59e0b" },
-  { min: 200, max: 499, tier: "Expert",     color: "#f97316" },
-  { min: 500, max: 999, tier: "Master",     color: "#a78bfa" },
-  { min: 1000, max: Infinity, tier: "Legendary", color: "#f43f5e" },
+const TIER_MAP: { min: number; max: number; tier: TierKey; classes: string }[] = [
+  { min: 0,    max: 49,       tier: 'novice',     classes: 'text-green-400 bg-green-400/10 border-green-400/20'    },
+  { min: 50,   max: 99,       tier: 'apprentice', classes: 'text-blue-400 bg-blue-400/10 border-blue-400/20'       },
+  { min: 100,  max: 199,      tier: 'journeyman', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/20'    },
+  { min: 200,  max: 499,      tier: 'expert',     classes: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
+  { min: 500,  max: 999,      tier: 'master',     classes: 'text-violet-400 bg-violet-400/10 border-violet-400/20' },
+  { min: 1000, max: Infinity, tier: 'legendary',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20'       },
 ];
 
-function getTierFromReward(reward: number): { tier: string; color: string } {
-  return TIER_MAP.find(t => reward >= t.min && reward <= t.max) ?? TIER_MAP[0];
-}
-
-const STEPS = ["Details", "Quest Info", "Review"];
-const MIN_DATE = new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0]; // 2 days from now
+const STEP_LABELS = ['Details', 'Quest Info', 'Review'];
+const MIN_DATE = new Date(Date.now() + 86_400_000 * 2).toISOString().split('T')[0];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function getTier(reward: number) {
+  return TIER_MAP.find((t) => reward >= t.min && reward <= t.max) ?? TIER_MAP[0];
+}
+
 function formatDate(iso: string): string {
-  if (!iso) return "—";
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
-    month: "long", day: "numeric", year: "numeric",
+  if (!iso) return '—';
+  return new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
   });
 }
 
 function validate(step: number, data: FormData): string[] {
-  const errors: string[] = [];
+  const errs: string[] = [];
   if (step === 1) {
-    if (!data.title.trim() || data.title.length < 10) errors.push("Title must be at least 10 characters.");
-    if (!data.category) errors.push("Please select a category.");
-    if (!data.city.trim()) errors.push("City is required.");
-    if (!data.neighborhood.trim()) errors.push("Neighborhood is required.");
+    if (data.title.trim().length < 10)  errs.push('Title must be at least 10 characters.');
+    if (!data.category)                 errs.push('Please select a category.');
+    if (!data.city.trim())              errs.push('City is required.');
+    if (!data.neighborhood.trim())      errs.push('Neighborhood is required.');
   }
   if (step === 2) {
-    if (!data.description.trim() || data.description.length < 30) errors.push("Description must be at least 30 characters.");
+    if (data.description.trim().length < 30) errs.push('Description must be at least 30 characters.');
     const r = parseFloat(data.reward);
-    if (!data.reward || isNaN(r) || r < 10) errors.push("Reward must be at least $10.");
-    if (!data.deadline) errors.push("Deadline is required.");
+    if (!data.reward || isNaN(r) || r < 10)  errs.push('Reward must be at least $10.');
+    if (!data.deadline)                      errs.push('Deadline is required.');
   }
-  return errors;
+  return errs;
+}
+
+function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : 'Something went wrong';
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
+function StepIndicator({ current }: { current: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: "32px" }}>
-      {STEPS.map((label, i) => {
-        const idx = i + 1;
-        const done = idx < current;
+    <div className="flex items-center mb-8">
+      {STEP_LABELS.map((label, i) => {
+        const idx   = i + 1;
+        const done  = idx < current;
         const active = idx === current;
         return (
-          <div key={label} style={{ display: "flex", alignItems: "center", flex: i < total - 1 ? 1 : undefined }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-              <div style={{
-                width: "28px", height: "28px", borderRadius: "50%",
-                background: done
-                  ? "#f5b942"
-                  : active
-                    ? "rgba(245,158,11,0.15)"
-                    : "rgba(255,255,255,0.04)",
-                border: `1px solid ${done ? "#f5b942" : active ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.1)"}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "11px", fontWeight: 600,
-                color: done ? "#0d0c0b" : active ? "#f5b942" : "#4a4740",
-                transition: "all 0.2s ease",
-              }}>
-                {done ? "✓" : idx}
+          <div key={label} className={clsx('flex items-center', i < STEP_LABELS.length - 1 && 'flex-1')}>
+            <div className="flex flex-col items-center gap-1.5">
+              <div className={clsx(
+                'w-7 h-7 rounded-full flex items-center justify-center font-mono text-[11px] font-semibold border transition-all duration-200',
+                done   ? 'bg-amber-400 border-amber-400 text-zinc-950'
+                       : active ? 'bg-amber-400/15 border-amber-500/50 text-amber-400'
+                                : 'bg-white/[0.04] border-white/10 text-stone-700',
+              )}>
+                {done ? '✓' : idx}
               </div>
-              <span style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "9px", fontWeight: 600,
-                letterSpacing: "0.08em",
-                color: active ? "#f5b942" : done ? "#8b8578" : "#4a4740",
-                whiteSpace: "nowrap",
-              }}>{label.toUpperCase()}</span>
+              <span className={clsx(
+                'font-mono text-[9px] font-semibold tracking-widest uppercase whitespace-nowrap',
+                active ? 'text-amber-400' : done ? 'text-stone-500' : 'text-stone-700',
+              )}>{label}</span>
             </div>
-            {i < total - 1 && (
-              <div style={{
-                flex: 1, height: "1px",
-                background: done ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.06)",
-                margin: "0 8px",
-                marginBottom: "22px",
-                transition: "background 0.2s ease",
-              }} />
+            {i < STEP_LABELS.length - 1 && (
+              <div className={clsx(
+                'flex-1 h-px mx-2 mb-5 transition-all duration-200',
+                done ? 'bg-amber-500/50' : 'bg-white/[0.06]',
+              )} />
             )}
           </div>
         );
@@ -130,111 +124,55 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
   );
 }
 
+const inputCls = 'w-full font-mono text-[13px] px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.09] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors';
+const labelCls = 'block font-mono text-[10px] font-semibold tracking-widest text-stone-600 uppercase mb-2';
+
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label style={{
-      display: "block",
-      fontFamily: "'DM Mono', monospace",
-      fontSize: "10px", fontWeight: 600,
-      letterSpacing: "0.1em", color: "#6b6460",
-      marginBottom: "8px",
-      textTransform: "uppercase",
-    }}>
+    <label className={labelCls}>
       {children}
-      {required && <span style={{ color: "#f43f5e", marginLeft: "4px" }}>*</span>}
+      {required && <span className="text-rose-500 ml-1">*</span>}
     </label>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  fontFamily: "'DM Mono', monospace",
-  fontSize: "13px",
-  padding: "11px 14px",
-  background: "rgba(255,255,255,0.03)",
-  border: "1px solid rgba(255,255,255,0.09)",
-  borderRadius: "6px",
-  color: "#c9c4bc",
-  outline: "none",
-  boxSizing: "border-box",
-  transition: "border-color 0.15s ease",
-};
-
-function TextInput({
-  value, onChange, placeholder, maxLength,
-}: {
-  value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number;
-}) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      maxLength={maxLength}
-      style={inputStyle}
-      onFocus={e => { e.target.style.borderColor = "rgba(245,158,11,0.4)"; }}
-      onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.09)"; }}
-    />
   );
 }
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-      padding: "12px 0",
-      borderBottom: "1px solid rgba(255,255,255,0.05)",
-    }}>
-      <span style={{
-        fontFamily: "'DM Mono', monospace",
-        fontSize: "10px", fontWeight: 600,
-        letterSpacing: "0.08em", color: "#5c5750",
-        textTransform: "uppercase",
-        flexShrink: 0, marginRight: "16px",
-      }}>{label}</span>
-      <span style={{
-        fontFamily: "'DM Mono', monospace",
-        fontSize: "12px", color: "#c9c4bc",
-        textAlign: "right",
-      }}>{value}</span>
+    <div className="flex justify-between items-start py-3 border-b border-white/[0.05] last:border-b-0">
+      <span className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase flex-shrink-0 mr-4">{label}</span>
+      <span className="font-mono text-[12px] text-stone-400 text-right">{value}</span>
     </div>
   );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function PostQuestForm({
-  currentUserId = null,
-  onSuccess,
-  onCancel,
-}: PostQuestFormProps) {
-  const [step, setStep] = useState(1);
-  const [errors, setErrors] = useState<string[]>([]);
+export default function PostQuestForm({ currentUserId = null, onSuccess, onCancel }: PostQuestFormProps) {
+  const [step,       setStep]       = useState(1);
+  const [errors,     setErrors]     = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted,  setSubmitted]  = useState(false);
 
   const [data, setData] = useState<FormData>({
-    title: "", category: "", city: "", neighborhood: "",
-    description: "", reward: "", deadline: "", xpReward: 0,
-    payType: "flat",
+    title: '', category: '', city: '', neighborhood: '',
+    description: '', reward: '', payType: 'flat', deadline: '', xpReward: 0,
   });
 
   // Auth gate
   useEffect(() => {
     if (!currentUserId) {
-      window.location.href = `/login?redirect=/post-quest`;
+      window.location.href = '/login?redirect=/post-quest';
     }
   }, [currentUserId]);
 
-  // Auto-calc XP whenever reward changes
+  // Auto-calc XP
   useEffect(() => {
     const r = parseFloat(data.reward);
-    setData(prev => ({ ...prev, xpReward: isNaN(r) ? 0 : Math.round(r * 10) }));
+    setData((prev) => ({ ...prev, xpReward: isNaN(r) ? 0 : Math.round(r * 10) }));
   }, [data.reward]);
 
-  function update(field: keyof FormData, value: string | number) {
-    setData(prev => ({ ...prev, [field]: value }));
+  function update<K extends keyof FormData>(field: K, value: FormData[K]) {
+    setData((prev) => ({ ...prev, [field]: value }));
     setErrors([]);
   }
 
@@ -242,13 +180,12 @@ export default function PostQuestForm({
     const errs = validate(step, data);
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
-    setStep(s => s + 1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setStep((s) => s + 1);
   }
 
   function handleBack() {
     setErrors([]);
-    setStep(s => s - 1);
+    setStep((s) => s - 1);
   }
 
   async function handleSubmit() {
@@ -256,447 +193,297 @@ export default function PostQuestForm({
     if (errs.length) { setErrors(errs); return; }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/quests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/quests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: data.title.trim(),
-          category: data.category,
-          city: data.city.trim(),
+          title:        data.title.trim(),
+          category:     data.category,
+          city:         data.city.trim(),
           neighborhood: data.neighborhood.trim(),
-          description: data.description.trim(),
-          reward: parseFloat(data.reward),
-          payType: data.payType,
-          deadline: data.deadline,
-          xpReward: data.xpReward,
-          postedBy: currentUserId,
+          description:  data.description.trim(),
+          reward:       parseFloat(data.reward),
+          payType:      data.payType,
+          deadline:     data.deadline,
+          xpReward:     data.xpReward,
+          postedBy:     currentUserId,
         }),
       });
-      if (!res.ok) throw new Error("Failed to post quest. Please try again.");
-      const quest = await res.json();
+      if (!res.ok) throw new Error('Failed to post quest. Please try again.');
+      const quest = await res.json() as { id: string };
       setSubmitted(true);
       onSuccess?.(quest.id);
-    } catch (e: any) {
-      setErrors([e.message]);
+    } catch (e: unknown) {
+      setErrors([errorMessage(e)]);
     } finally {
       setSubmitting(false);
     }
   }
 
   const rewardNum = parseFloat(data.reward) || 0;
-  const tierInfo = getTierFromReward(rewardNum);
+  const tierInfo  = getTier(rewardNum);
 
-  // ── Success screen ──
   if (submitted) {
     return (
-      <div style={{ textAlign: "center", padding: "64px 32px" }}>
-        <div style={{
-          fontSize: "40px", marginBottom: "16px",
-          animation: "popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both",
-        }}>⚔</div>
-        <h2 style={{
-          fontFamily: "'Syne', sans-serif",
-          fontSize: "22px", fontWeight: 700,
-          color: "#f5f0e8", marginBottom: "8px",
-        }}>Quest Posted</h2>
-        <p style={{
-          fontFamily: "'DM Mono', monospace",
-          fontSize: "12px", color: "#6b6460",
-          lineHeight: 1.7, marginBottom: "28px",
-        }}>
-          Your quest is live on the board.<br />Adventurers can start applying now.
-        </p>
-        <button
-          onClick={() => window.location.href = "/quests"}
-          style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "12px", fontWeight: 600,
-            letterSpacing: "0.08em",
-            padding: "12px 28px",
-            background: "#f5b942", color: "#0d0c0b",
-            border: "none", borderRadius: "6px", cursor: "pointer",
-          }}
-        >VIEW QUEST BOARD</button>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-center px-8">
+          <CheckCircle size={48} className="text-green-400 mx-auto mb-4" />
+          <h2 className="font-bold text-2xl text-stone-100 mb-2">Quest Posted</h2>
+          <p className="font-mono text-[12px] text-stone-600 leading-relaxed mb-7">
+            Your quest is live on the board.<br />Adventurers can start applying now.
+          </p>
+          <button
+            onClick={() => { window.location.href = '/quests'; }}
+            className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+          >
+            VIEW QUEST BOARD
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500;600&display=swap');
-        @keyframes popIn {
-          from { transform: scale(0.5); opacity: 0; }
-          to   { transform: scale(1);   opacity: 1; }
-        }
-        @keyframes fadeSlide {
-          from { opacity: 0; transform: translateX(12px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        select option { background: #1a1916; color: #c9c4bc; }
-        textarea:focus, input:focus, select:focus { outline: none; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-      `}</style>
+    <div className="min-h-screen bg-zinc-950 text-stone-400 py-10 px-6">
+      <div className="max-w-xl mx-auto">
 
-      <div style={{
-        background: "#0d0c0b",
-        minHeight: "100vh",
-        fontFamily: "'DM Mono', monospace",
-        color: "#c9c4bc",
-        padding: "40px 24px",
-      }}>
-        <div style={{ maxWidth: "580px", margin: "0 auto" }}>
-
-          {/* Header */}
-          <div style={{ marginBottom: "32px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-              <h1 style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "24px", fontWeight: 800,
-                color: "#f5f0e8", margin: 0,
-              }}>Post a Quest</h1>
-              {onCancel && (
-                <button
-                  onClick={onCancel}
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "11px", color: "#5c5750",
-                    background: "transparent", border: "none",
-                    cursor: "pointer", padding: 0,
-                  }}
-                >Cancel ×</button>
-              )}
-            </div>
-            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", color: "#5c5750", margin: 0 }}>
+        {/* Header */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="font-bold text-2xl text-stone-100 tracking-tight">Post a Quest</h1>
+            <p className="font-mono text-[11px] text-stone-700 mt-1">
               Describe what you need done. Adventurers in your area will apply.
             </p>
           </div>
+          {onCancel && (
+            <button onClick={onCancel} className="font-mono text-[11px] text-stone-700 hover:text-stone-500 transition-colors">
+              Cancel ×
+            </button>
+          )}
+        </div>
 
-          <StepIndicator current={step} total={3} />
+        <StepIndicator current={step} />
 
-          {/* ── Step 1: Basic details ── */}
-          {step === 1 && (
-            <div style={{ animation: "fadeSlide 0.25s ease both" }}>
-              <div style={{ marginBottom: "20px" }}>
-                <FieldLabel required>Quest title</FieldLabel>
-                <TextInput
-                  value={data.title}
-                  onChange={v => update("title", v)}
-                  placeholder="e.g. Weekly lawn mowing — front & back yard"
-                  maxLength={100}
+        {/* ── Step 1 ── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <div>
+              <FieldLabel required>Quest title</FieldLabel>
+              <input
+                type="text"
+                value={data.title}
+                onChange={(e) => update('title', e.target.value)}
+                placeholder="e.g. Weekly lawn mowing — front & back yard"
+                maxLength={100}
+                className={inputCls}
+              />
+              <p className="font-mono text-[9px] text-stone-800 mt-1.5 text-right">{data.title.length}/100</p>
+            </div>
+
+            <div>
+              <FieldLabel required>Category</FieldLabel>
+              <select
+                value={data.category}
+                onChange={(e) => update('category', e.target.value)}
+                className={clsx(inputCls, 'cursor-pointer')}
+              >
+                <option value="">Select a category…</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <FieldLabel required>City</FieldLabel>
+                <input
+                  type="text"
+                  value={data.city}
+                  onChange={(e) => update('city', e.target.value)}
+                  placeholder="e.g. Rocklin, CA"
+                  className={inputCls}
                 />
-                <div style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "9px", color: "#4a4740",
-                  marginTop: "5px", textAlign: "right",
-                }}>{data.title.length}/100</div>
               </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <FieldLabel required>Category</FieldLabel>
-                <select
-                  value={data.category}
-                  onChange={e => update("category", e.target.value)}
-                  style={{ ...inputStyle, cursor: "pointer" }}
-                  onFocus={e => { e.target.style.borderColor = "rgba(245,158,11,0.4)"; }}
-                  onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.09)"; }}
-                >
-                  <option value="">Select a category…</option>
-                  {CATEGORIES.map(c => (
-                    <option key={c.id} value={c.id}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
-                <div>
-                  <FieldLabel required>City</FieldLabel>
-                  <TextInput
-                    value={data.city}
-                    onChange={v => update("city", v)}
-                    placeholder="e.g. Rocklin, CA"
-                  />
-                </div>
-                <div>
-                  <FieldLabel required>Neighborhood</FieldLabel>
-                  <TextInput
-                    value={data.neighborhood}
-                    onChange={v => update("neighborhood", v)}
-                    placeholder="e.g. Whitney Ranch"
-                  />
-                </div>
+              <div>
+                <FieldLabel required>Neighborhood</FieldLabel>
+                <input
+                  type="text"
+                  value={data.neighborhood}
+                  onChange={(e) => update('neighborhood', e.target.value)}
+                  placeholder="e.g. Whitney Ranch"
+                  className={inputCls}
+                />
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* ── Step 2: Quest info ── */}
-          {step === 2 && (
-            <div style={{ animation: "fadeSlide 0.25s ease both" }}>
-              <div style={{ marginBottom: "20px" }}>
-                <FieldLabel required>Description</FieldLabel>
-                <textarea
-                  value={data.description}
-                  onChange={e => update("description", e.target.value)}
-                  placeholder="Describe exactly what needs to be done, any special instructions, and what to expect on the job…"
-                  rows={5}
-                  maxLength={1000}
-                  style={{
-                    ...inputStyle,
-                    resize: "vertical", minHeight: "120px",
-                    lineHeight: 1.7,
-                  }}
-                  onFocus={e => { (e.target as HTMLElement).style.borderColor = "rgba(245,158,11,0.4)"; }}
-                  onBlur={e => { (e.target as HTMLElement).style.borderColor = "rgba(255,255,255,0.09)"; }}
-                />
-                <div style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "9px", color: "#4a4740",
-                  marginTop: "5px", textAlign: "right",
-                }}>{data.description.length}/1000</div>
+        {/* ── Step 2 ── */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <div>
+              <FieldLabel required>Description</FieldLabel>
+              <textarea
+                value={data.description}
+                onChange={(e) => update('description', e.target.value)}
+                placeholder="Describe exactly what needs to be done, any special instructions, and what to expect on the job…"
+                rows={5}
+                maxLength={1000}
+                className={clsx(inputCls, 'resize-y min-h-[120px] leading-relaxed')}
+              />
+              <p className="font-mono text-[9px] text-stone-800 mt-1.5 text-right">{data.description.length}/1000</p>
+            </div>
+
+            {/* Pay type */}
+            <div>
+              <FieldLabel>Pay type</FieldLabel>
+              <div className="flex gap-2">
+                {(['flat', 'hourly'] as PayType[]).map((pt) => (
+                  <button
+                    key={pt}
+                    type="button"
+                    onClick={() => update('payType', pt)}
+                    className={clsx(
+                      'font-mono text-[11px] font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
+                      data.payType === pt
+                        ? 'text-amber-400 border-amber-500/60 bg-amber-400/10'
+                        : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                    )}
+                  >
+                    {pt === 'flat' ? 'Flat rate' : 'Hourly'}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Pay type toggle */}
-              <div style={{ marginBottom: "20px" }}>
-                <FieldLabel>Pay type</FieldLabel>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  {(["flat", "hourly"] as const).map(pt => (
-                    <button
-                      key={pt}
-                      onClick={() => update("payType", pt)}
-                      style={{
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: "11px", fontWeight: 600,
-                        letterSpacing: "0.06em",
-                        padding: "8px 20px",
-                        borderRadius: "20px",
-                        border: `1px solid ${data.payType === pt ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.08)"}`,
-                        background: data.payType === pt ? "rgba(245,158,11,0.1)" : "transparent",
-                        color: data.payType === pt ? "#f5b942" : "#6b6460",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {pt === "flat" ? "Flat rate" : "Hourly"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Reward */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
-                <div>
-                  <FieldLabel required>Reward amount ($)</FieldLabel>
-                  <div style={{ position: "relative" }}>
-                    <span style={{
-                      position: "absolute", left: "14px", top: "50%",
-                      transform: "translateY(-50%)",
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: "15px", fontWeight: 700,
-                      color: rewardNum > 0 ? "#f5b942" : "#3a3730",
-                    }}>$</span>
-                    <input
-                      type="number"
-                      value={data.reward}
-                      onChange={e => update("reward", e.target.value)}
-                      placeholder="0"
-                      min="10"
-                      step="5"
-                      style={{ ...inputStyle, paddingLeft: "28px" }}
-                      onFocus={e => { e.target.style.borderColor = "rgba(245,158,11,0.4)"; }}
-                      onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.09)"; }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <FieldLabel>Deadline</FieldLabel>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <FieldLabel required>Reward amount ($)</FieldLabel>
+                <div className="relative">
+                  <span className={clsx(
+                    'absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-base',
+                    rewardNum > 0 ? 'text-amber-400' : 'text-stone-800',
+                  )}>$</span>
                   <input
-                    type="date"
-                    value={data.deadline}
-                    min={MIN_DATE}
-                    onChange={e => update("deadline", e.target.value)}
-                    style={{ ...inputStyle, colorScheme: "dark" }}
-                    onFocus={e => { e.target.style.borderColor = "rgba(245,158,11,0.4)"; }}
-                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.09)"; }}
+                    type="number"
+                    value={data.reward}
+                    onChange={(e) => update('reward', e.target.value)}
+                    placeholder="0"
+                    min="10"
+                    step="5"
+                    className={clsx(inputCls, 'pl-7')}
                   />
                 </div>
               </div>
-
-              {/* XP preview */}
-              {rewardNum > 0 && (
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "12px 16px",
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: "8px",
-                }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                    <span style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: "10px", color: "#5c5750",
-                      letterSpacing: "0.08em",
-                    }}>XP REWARD (auto-calculated)</span>
-                    <span style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: "18px", fontWeight: 700, color: "#f5b942",
-                    }}>{data.xpReward} XP</span>
-                  </div>
-                  <span style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "9px", fontWeight: 600,
-                    letterSpacing: "0.1em",
-                    color: tierInfo.color,
-                    background: `${tierInfo.color}18`,
-                    border: `1px solid ${tierInfo.color}33`,
-                    borderRadius: "3px", padding: "3px 8px",
-                  }}>{tierInfo.tier.toUpperCase()} TIER</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Step 3: Review ── */}
-          {step === 3 && (
-            <div style={{ animation: "fadeSlide 0.25s ease both" }}>
-              <div style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: "10px",
-                padding: "20px 24px",
-                marginBottom: "24px",
-              }}>
-                <h3 style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: "16px", fontWeight: 700,
-                  color: "#f5f0e8", margin: "0 0 4px",
-                }}>{data.title}</h3>
-                <div style={{
-                  display: "flex", gap: "8px", flexWrap: "wrap",
-                  marginBottom: "16px",
-                }}>
-                  <span style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "9px", fontWeight: 600,
-                    letterSpacing: "0.1em",
-                    color: tierInfo.color,
-                    background: `${tierInfo.color}18`,
-                    border: `1px solid ${tierInfo.color}33`,
-                    borderRadius: "3px", padding: "2px 8px",
-                  }}>{tierInfo.tier.toUpperCase()}</span>
-                  <span style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "9px", color: "#6b6460",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: "3px", padding: "2px 8px",
-                  }}>{CATEGORIES.find(c => c.id === data.category)?.label}</span>
-                </div>
-
-                <ReviewRow label="Location" value={`${data.neighborhood}, ${data.city}`} />
-                <ReviewRow label="Pay" value={`$${data.reward} ${data.payType === "hourly" ? "/ hour" : "flat"}`} />
-                <ReviewRow label="XP reward" value={`${data.xpReward} XP`} />
-                <ReviewRow label="Deadline" value={formatDate(data.deadline)} />
-                <div style={{ paddingTop: "12px" }}>
-                  <span style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "10px", fontWeight: 600,
-                    letterSpacing: "0.08em", color: "#5c5750",
-                    textTransform: "uppercase",
-                    display: "block", marginBottom: "8px",
-                  }}>Description</span>
-                  <p style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "12px", color: "#8b8578",
-                    lineHeight: 1.7, margin: 0,
-                    whiteSpace: "pre-wrap",
-                    maxHeight: "120px",
-                    overflowY: "auto",
-                  }}>{data.description}</p>
-                </div>
+              <div>
+                <FieldLabel>Deadline</FieldLabel>
+                <input
+                  type="date"
+                  value={data.deadline}
+                  min={MIN_DATE}
+                  onChange={(e) => update('deadline', e.target.value)}
+                  className={clsx(inputCls, '[color-scheme:dark]')}
+                />
               </div>
-
-              <p style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "10px", color: "#4a4740",
-                lineHeight: 1.7, marginBottom: "20px",
-              }}>
-                By posting, you agree to TryHardly's terms. Payment will be held in escrow and released when you confirm the quest is complete.
-              </p>
             </div>
-          )}
 
-          {/* ── Errors ── */}
-          {errors.length > 0 && (
-            <div style={{
-              background: "rgba(244,63,94,0.07)",
-              border: "1px solid rgba(244,63,94,0.25)",
-              borderRadius: "8px", padding: "12px 16px",
-              marginBottom: "20px",
-            }}>
-              {errors.map(e => (
-                <div key={e} style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "11px", color: "#f43f5e",
-                  lineHeight: 1.6,
-                }}>· {e}</div>
-              ))}
-            </div>
-          )}
-
-          {/* ── Navigation ── */}
-          <div style={{ display: "flex", gap: "10px", justifyContent: "space-between" }}>
-            {step > 1 ? (
-              <button
-                onClick={handleBack}
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "11px", fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  padding: "13px 24px",
-                  background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "6px", color: "#6b6460",
-                  cursor: "pointer",
-                }}
-              >← BACK</button>
-            ) : <div />}
-
-            {step < 3 ? (
-              <button
-                onClick={handleNext}
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "11px", fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  padding: "13px 28px",
-                  background: "#f5b942", color: "#0d0c0b",
-                  border: "none", borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >NEXT →</button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "11px", fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  padding: "13px 28px",
-                  background: submitting ? "rgba(245,158,11,0.2)" : "#f5b942",
-                  color: submitting ? "#f5b942" : "#0d0c0b",
-                  border: submitting ? "1px solid rgba(245,158,11,0.4)" : "none",
-                  borderRadius: "6px",
-                  cursor: submitting ? "default" : "pointer",
-                  transition: "all 0.18s ease",
-                }}
-              >{submitting ? "POSTING…" : "POST QUEST ⚔"}</button>
+            {/* XP preview */}
+            {rewardNum > 0 && (
+              <div className="flex items-center justify-between p-3.5 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                <div>
+                  <p className="font-mono text-[10px] text-stone-700 tracking-widest uppercase mb-1 flex items-center gap-1">
+                    <Zap size={10} /> XP reward (auto-calculated)
+                  </p>
+                  <p className="font-bold text-xl text-amber-400">{data.xpReward} XP</p>
+                </div>
+                <span className={clsx(
+                  'font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5',
+                  tierInfo.classes,
+                )}>
+                  {tierInfo.tier.toUpperCase()} TIER
+                </span>
+              </div>
             )}
           </div>
+        )}
 
+        {/* ── Step 3: Review ── */}
+        {step === 3 && (
+          <div>
+            <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-6 mb-6">
+              <h3 className="font-bold text-base text-stone-100 mb-1.5">{data.title}</h3>
+              <div className="flex gap-2 flex-wrap mb-4">
+                <span className={clsx(
+                  'font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5',
+                  tierInfo.classes,
+                )}>{tierInfo.tier.toUpperCase()}</span>
+                <span className="font-mono text-[9px] text-stone-500 bg-white/[0.05] border border-white/[0.08] rounded-sm px-2 py-0.5">
+                  {CATEGORIES.find((c) => c.id === data.category)?.label}
+                </span>
+              </div>
+              <ReviewRow label="Location" value={`${data.neighborhood}, ${data.city}`} />
+              <ReviewRow label="Pay"      value={`$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`} />
+              <ReviewRow label="XP"       value={`${data.xpReward} XP`} />
+              <ReviewRow label="Deadline" value={formatDate(data.deadline)} />
+              <div className="pt-3">
+                <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-2">Description</p>
+                <p className="font-mono text-[12px] text-stone-500 leading-relaxed line-clamp-4">{data.description}</p>
+              </div>
+            </div>
+            <p className="font-mono text-[10px] text-stone-800 leading-relaxed mb-5">
+              By posting, you agree to TryHardly&apos;s terms. Payment will be held in escrow and released when you confirm the quest is complete.
+            </p>
+          </div>
+        )}
+
+        {/* Errors */}
+        {errors.length > 0 && (
+          <div className="mt-5 p-3.5 bg-rose-400/[0.07] border border-rose-400/25 rounded-lg space-y-1">
+            {errors.map((e) => (
+              <p key={e} className="font-mono text-[11px] text-rose-400">· {e}</p>
+            ))}
+          </div>
+        )}
+
+        {/* Nav buttons */}
+        <div className="flex justify-between mt-6">
+          {step > 1 ? (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="font-mono text-[11px] font-semibold tracking-widest px-6 py-3 border border-white/10 rounded-md text-stone-600 hover:text-stone-400 hover:border-white/20 transition-all flex items-center gap-1"
+            >
+              <ChevronLeft size={13} /> BACK
+            </button>
+          ) : <div />}
+
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 bg-amber-400 text-zinc-950 rounded-md hover:bg-amber-300 transition-colors flex items-center gap-1"
+            >
+              NEXT <ChevronRight size={13} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className={clsx(
+                'font-mono text-[11px] font-semibold tracking-widest px-7 py-3 rounded-md transition-all flex items-center gap-1',
+                submitting
+                  ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40 cursor-default'
+                  : 'bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer',
+              )}
+            >
+              {submitting ? 'POSTING…' : 'POST QUEST ⚔'}
+            </button>
+          )}
         </div>
+
       </div>
-    </>
+    </div>
   );
 }
