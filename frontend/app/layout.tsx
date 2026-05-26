@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthProvider } from "../lib/auth";
+import Script from 'next/script';
 
 const dmMono = DM_Mono({
   subsets: ["latin"],
@@ -33,7 +34,7 @@ export default function RootLayout({
       className={`dark ${dmMono.variable} ${syne.variable}`}
     >
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
-        <AuthProvider>
+        <AuthProvider><Script defer data-domain="tryhardly.com" src="https://plausible.io/js/script.js" />
           <Navbar />
           <main>{children}</main>
           <Footer />
