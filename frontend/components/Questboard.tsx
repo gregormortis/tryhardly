@@ -1,79 +1,101 @@
-import { useState, useEffect, useRef } from "react";
+'use client';
 
-// ─── Data ────────────────────────────────────────────────────────────────────
+import { useState, useEffect, useRef } from 'react';
+import { MapPin, Clock, AlertTriangle, Search, ChevronDown } from 'lucide-react';
+import clsx from 'clsx';
 
-const TIERS = {
-  novice:      { label: "NOVICE",      color: "#4ade80", bg: "rgba(74,222,128,0.1)"  },
-  apprentice:  { label: "APPRENTICE",  color: "#60a5fa", bg: "rgba(96,165,250,0.1)"  },
-  journeyman:  { label: "JOURNEYMAN",  color: "#f59e0b", bg: "rgba(245,158,11,0.1)"  },
-  expert:      { label: "EXPERT",      color: "#f97316", bg: "rgba(249,115,22,0.1)"  },
-  master:      { label: "MASTER",      color: "#a78bfa", bg: "rgba(167,139,250,0.1)" },
-  legendary:   { label: "LEGENDARY",   color: "#f43f5e", bg: "rgba(244,63,94,0.1)"   },
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type PayType = 'flat' | 'hourly';
+type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
+type SortKey = 'newest' | 'pay_high' | 'pay_low' | 'nearby';
+
+interface Quest {
+  id: number;
+  category: string;
+  tier: TierKey;
+  title: string;
+  neighborhood: string;
+  city: string;
+  pay: number;
+  payType: PayType;
+  posted: number; // minutes ago
+  urgent: boolean;
+  tools: string[];
+  postedBy: string;
+  jobsPosted: number;
+}
+
+interface TierConfig {
+  label: string;
+  classes: string;        // Tailwind badge classes
+  accentColor: string;    // dynamic — hex only used for left-border inline style
+  iconBg: string;         // dynamic bg for category icon
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const TIERS: Record<TierKey, TierConfig> = {
+  novice:     { label: 'NOVICE',     classes: 'text-green-400 bg-green-400/10 border-green-400/20',   accentColor: '#4ade80', iconBg: 'rgba(74,222,128,0.1)'  },
+  apprentice: { label: 'APPRENTICE', classes: 'text-blue-400 bg-blue-400/10 border-blue-400/20',      accentColor: '#60a5fa', iconBg: 'rgba(96,165,250,0.1)'  },
+  journeyman: { label: 'JOURNEYMAN', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/20',   accentColor: '#f59e0b', iconBg: 'rgba(245,158,11,0.1)'  },
+  expert:     { label: 'EXPERT',     classes: 'text-orange-400 bg-orange-400/10 border-orange-400/20',accentColor: '#f97316', iconBg: 'rgba(249,115,22,0.1)'  },
+  master:     { label: 'MASTER',     classes: 'text-violet-400 bg-violet-400/10 border-violet-400/20',accentColor: '#a78bfa', iconBg: 'rgba(167,139,250,0.1)' },
+  legendary:  { label: 'LEGENDARY',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20',      accentColor: '#f43f5e', iconBg: 'rgba(244,63,94,0.1)'   },
 };
 
 const CATEGORIES = [
-  { id: "all",       label: "All Quests",      icon: "◈" },
-  { id: "yard",      label: "Lawn & Yard",      icon: "⬡" },
-  { id: "hauling",   label: "Hauling & Junk",   icon: "⬟" },
-  { id: "moving",    label: "Moving Help",      icon: "⬠" },
-  { id: "handyman",  label: "Handyman",         icon: "⬡" },
-  { id: "cleaning",  label: "Cleaning",         icon: "⬟" },
-  { id: "painting",  label: "Painting",         icon: "⬠" },
-  { id: "pressure",  label: "Pressure Washing", icon: "⬡" },
-  { id: "other",     label: "Odd Jobs",         icon: "⬟" },
+  { id: 'all',      label: 'All Quests'       },
+  { id: 'yard',     label: 'Lawn & Yard'      },
+  { id: 'hauling',  label: 'Hauling & Junk'   },
+  { id: 'moving',   label: 'Moving Help'      },
+  { id: 'handyman', label: 'Handyman'         },
+  { id: 'cleaning', label: 'Cleaning'        },
+  { id: 'painting', label: 'Painting'        },
+  { id: 'pressure', label: 'Pressure Washing'},
+  { id: 'other',    label: 'Odd Jobs'        },
 ];
 
-const SORT_OPTIONS = [
-  { id: "newest",   label: "Newest first"   },
-  { id: "pay_high", label: "Highest pay"    },
-  { id: "pay_low",  label: "Lowest pay"     },
-  { id: "nearby",   label: "Nearest to me" },
+const SORT_OPTIONS: { id: SortKey; label: string }[] = [
+  { id: 'newest',   label: 'Newest first'  },
+  { id: 'pay_high', label: 'Highest pay'   },
+  { id: 'pay_low',  label: 'Lowest pay'    },
+  { id: 'nearby',   label: 'Nearest to me' },
 ];
 
-const SAMPLE_QUESTS = [
-  { id: 1,  category: "yard",     tier: "novice",     title: "Weekly lawn mowing — front & back yard",       neighborhood: "East Rocklin",   city: "Rocklin, CA",        pay: 45,  payType: "flat",    posted: 8,   urgent: false, tools: ["Mower provided"],               postedBy: "Karen R.", jobsPosted: 14 },
-  { id: 2,  category: "hauling",  tier: "apprentice", title: "Furniture removal — 2 couches + dresser",      neighborhood: "West Roseville", city: "Roseville, CA",      pay: 120, payType: "flat",    posted: 34,  urgent: true,  tools: ["Truck needed"],                 postedBy: "Mike T.",  jobsPosted: 3  },
-  { id: 3,  category: "moving",   tier: "journeyman", title: "1BR apartment move — need 2 people, 4 hrs",   neighborhood: "Oak Park",       city: "Folsom, CA",         pay: 240, payType: "flat",    posted: 71,  urgent: false, tools: ["Dolly helpful"],                postedBy: "Aisha M.", jobsPosted: 7  },
-  { id: 4,  category: "yard",     tier: "novice",     title: "Leaf cleanup + bag haul — large yard",         neighborhood: "Whitney Ranch",  city: "Rocklin, CA",        pay: 60,  payType: "flat",    posted: 15,  urgent: false, tools: ["Rake & bags provided"],         postedBy: "Tom H.",   jobsPosted: 22 },
-  { id: 5,  category: "handyman", tier: "journeyman", title: "Install ceiling fan, mount TV, fix door",     neighborhood: "Stone Creek",    city: "El Dorado Hills, CA",pay: 35,  payType: "hourly",  posted: 120, urgent: false, tools: ["Basic tools needed"],           postedBy: "Linda S.", jobsPosted: 5  },
-  { id: 6,  category: "pressure", tier: "apprentice", title: "Driveway + fence pressure wash",              neighborhood: "South Placer",   city: "Auburn, CA",         pay: 95,  payType: "flat",    posted: 55,  urgent: false, tools: ["Pressure washer provided"],     postedBy: "Dave P.",  jobsPosted: 9  },
-  { id: 7,  category: "cleaning", tier: "novice",     title: "Deep clean 3BR house after move-out",         neighborhood: "Natomas",        city: "Sacramento, CA",     pay: 180, payType: "flat",    posted: 200, urgent: true,  tools: ["Supplies provided"],            postedBy: "Jess W.",  jobsPosted: 2  },
-  { id: 8,  category: "painting", tier: "journeyman", title: "Paint 2-car garage interior — walls only",   neighborhood: "Lincoln Hills",  city: "Lincoln, CA",        pay: 40,  payType: "hourly",  posted: 180, urgent: false, tools: ["Paint + rollers provided"],     postedBy: "Ray C.",   jobsPosted: 16 },
-  { id: 9,  category: "hauling",  tier: "novice",     title: "Yard waste haul — 3 truck loads, weekend",   neighborhood: "Meadow Vista",   city: "Meadow Vista, CA",   pay: 80,  payType: "flat",    posted: 22,  urgent: false, tools: ["Truck needed"],                 postedBy: "Nancy K.", jobsPosted: 4  },
-  { id: 10, category: "other",    tier: "expert",     title: "Help set up outdoor event — tables, tents",  neighborhood: "Granite Bay",    city: "Granite Bay, CA",    pay: 45,  payType: "hourly",  posted: 300, urgent: true,  tools: ["Heavy lifting req."],           postedBy: "Chris B.", jobsPosted: 31 },
-  { id: 11, category: "yard",     tier: "apprentice", title: "Install 6 raised garden beds + soil fill",   neighborhood: "Cameron Park",   city: "Cameron Park, CA",   pay: 160, payType: "flat",    posted: 90,  urgent: false, tools: ["Beds + soil provided"],         postedBy: "Maria L.", jobsPosted: 8  },
-  { id: 12, category: "moving",   tier: "apprentice", title: "Piano move — upright, ground floor only",    neighborhood: "Antelope",       city: "Antelope, CA",       pay: 110, payType: "flat",    posted: 410, urgent: false, tools: ["Piano dolly needed"],           postedBy: "Frank O.", jobsPosted: 1  },
+const SAMPLE_QUESTS: Quest[] = [
+  { id: 1,  category: 'yard',     tier: 'novice',     title: 'Weekly lawn mowing — front & back yard',      neighborhood: 'East Rocklin',   city: 'Rocklin, CA',         pay: 45,  payType: 'flat',   posted: 8,   urgent: false, tools: ['Mower provided'],            postedBy: 'Karen R.', jobsPosted: 14 },
+  { id: 2,  category: 'hauling',  tier: 'apprentice', title: 'Furniture removal — 2 couches + dresser',     neighborhood: 'West Roseville', city: 'Roseville, CA',       pay: 120, payType: 'flat',   posted: 34,  urgent: true,  tools: ['Truck needed'],              postedBy: 'Mike T.',  jobsPosted: 3  },
+  { id: 3,  category: 'moving',   tier: 'journeyman', title: '1BR apartment move — need 2 people, 4 hrs',  neighborhood: 'Oak Park',       city: 'Folsom, CA',          pay: 240, payType: 'flat',   posted: 71,  urgent: false, tools: ['Dolly helpful'],             postedBy: 'Aisha M.', jobsPosted: 7  },
+  { id: 4,  category: 'yard',     tier: 'novice',     title: 'Leaf cleanup + bag haul — large yard',        neighborhood: 'Whitney Ranch',  city: 'Rocklin, CA',         pay: 60,  payType: 'flat',   posted: 15,  urgent: false, tools: ['Rake & bags provided'],      postedBy: 'Tom H.',   jobsPosted: 22 },
+  { id: 5,  category: 'handyman', tier: 'journeyman', title: 'Install ceiling fan, mount TV, fix door',    neighborhood: 'Stone Creek',    city: 'El Dorado Hills, CA', pay: 35,  payType: 'hourly', posted: 120, urgent: false, tools: ['Basic tools needed'],        postedBy: 'Linda S.', jobsPosted: 5  },
+  { id: 6,  category: 'pressure', tier: 'apprentice', title: 'Driveway + fence pressure wash',             neighborhood: 'South Placer',   city: 'Auburn, CA',          pay: 95,  payType: 'flat',   posted: 55,  urgent: false, tools: ['Pressure washer provided'],  postedBy: 'Dave P.',  jobsPosted: 9  },
+  { id: 7,  category: 'cleaning', tier: 'novice',     title: 'Deep clean 3BR house after move-out',        neighborhood: 'Natomas',        city: 'Sacramento, CA',      pay: 180, payType: 'flat',   posted: 200, urgent: true,  tools: ['Supplies provided'],         postedBy: 'Jess W.',  jobsPosted: 2  },
+  { id: 8,  category: 'painting', tier: 'journeyman', title: 'Paint 2-car garage interior — walls only',  neighborhood: 'Lincoln Hills',  city: 'Lincoln, CA',         pay: 40,  payType: 'hourly', posted: 180, urgent: false, tools: ['Paint + rollers provided'],  postedBy: 'Ray C.',   jobsPosted: 16 },
+  { id: 9,  category: 'hauling',  tier: 'novice',     title: 'Yard waste haul — 3 truck loads, weekend',  neighborhood: 'Meadow Vista',   city: 'Meadow Vista, CA',    pay: 80,  payType: 'flat',   posted: 22,  urgent: false, tools: ['Truck needed'],              postedBy: 'Nancy K.', jobsPosted: 4  },
+  { id: 10, category: 'other',    tier: 'expert',     title: 'Help set up outdoor event — tables, tents', neighborhood: 'Granite Bay',    city: 'Granite Bay, CA',     pay: 45,  payType: 'hourly', posted: 300, urgent: true,  tools: ['Heavy lifting req.'],        postedBy: 'Chris B.', jobsPosted: 31 },
+  { id: 11, category: 'yard',     tier: 'apprentice', title: 'Install 6 raised garden beds + soil fill',  neighborhood: 'Cameron Park',   city: 'Cameron Park, CA',    pay: 160, payType: 'flat',   posted: 90,  urgent: false, tools: ['Beds + soil provided'],      postedBy: 'Maria L.', jobsPosted: 8  },
+  { id: 12, category: 'moving',   tier: 'apprentice', title: 'Piano move — upright, ground floor only',   neighborhood: 'Antelope',       city: 'Antelope, CA',        pay: 110, payType: 'flat',   posted: 410, urgent: false, tools: ['Piano dolly needed'],        postedBy: 'Frank O.', jobsPosted: 1  },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function timeAgo(mins) {
-  if (mins < 60)  return `${mins}m ago`;
-  if (mins < 1440) return `${Math.floor(mins/60)}h ago`;
-  return `${Math.floor(mins/1440)}d ago`;
+function timeAgo(mins: number): string {
+  if (mins < 60)   return `${mins}m ago`;
+  if (mins < 1440) return `${Math.floor(mins / 60)}h ago`;
+  return `${Math.floor(mins / 1440)}d ago`;
 }
 
-function payDisplay(pay, payType) {
-  return payType === "hourly" ? `$${pay}/hr` : `$${pay}`;
+function payDisplay(pay: number, payType: PayType): string {
+  return payType === 'hourly' ? `$${pay}/hr` : `$${pay}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function TierBadge({ tier }) {
+function TierBadge({ tier }: { tier: TierKey }) {
   const t = TIERS[tier];
   return (
-    <span style={{
-      fontFamily: "'DM Mono', monospace",
-      fontSize: "9px",
-      fontWeight: 600,
-      letterSpacing: "0.12em",
-      color: t.color,
-      background: t.bg,
-      border: `1px solid ${t.color}33`,
-      borderRadius: "3px",
-      padding: "2px 7px",
-      whiteSpace: "nowrap",
-    }}>
+    <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-1.5 py-0.5 whitespace-nowrap', t.classes)}>
       {t.label}
     </span>
   );
@@ -81,34 +103,32 @@ function TierBadge({ tier }) {
 
 function UrgentBadge() {
   return (
-    <span style={{
-      fontFamily: "'DM Mono', monospace",
-      fontSize: "9px",
-      fontWeight: 600,
-      letterSpacing: "0.1em",
-      color: "#f43f5e",
-      background: "rgba(244,63,94,0.08)",
-      border: "1px solid rgba(244,63,94,0.25)",
-      borderRadius: "3px",
-      padding: "2px 7px",
-    }}>
+    <span className="font-mono text-[9px] font-semibold tracking-widest text-rose-400 bg-rose-400/10 border border-rose-400/25 rounded-sm px-1.5 py-0.5">
       URGENT
     </span>
   );
 }
 
-function QuestCard({ quest, onClaim, isNew }) {
-  const [hovered, setHovered] = useState(false);
-  const [claimed, setClaimed] = useState(false);
-  const [claiming, setClaiming] = useState(false);
+interface QuestCardProps {
+  quest: Quest;
+  onClaim: (quest: Quest) => void;
+  isNew: boolean;
+}
 
-  function handleClaim(e) {
+function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
+  const [hovered, setHovered]   = useState(false);
+  const [claimed, setClaimed]   = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const tier = TIERS[quest.tier];
+
+  function handleClaim(e: React.MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
+    if (claimed || claiming) return;
     setClaiming(true);
     setTimeout(() => {
       setClaiming(false);
       setClaimed(true);
-      onClaim && onClaim(quest);
+      onClaim(quest);
     }, 900);
   }
 
@@ -116,156 +136,91 @@ function QuestCard({ quest, onClaim, isNew }) {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        background: hovered
-          ? "rgba(255,255,255,0.04)"
-          : "rgba(255,255,255,0.02)",
-        border: `1px solid ${hovered ? "rgba(245,158,11,0.35)" : "rgba(255,255,255,0.07)"}`,
-        borderRadius: "8px",
-        padding: "16px 20px",
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-        cursor: "pointer",
-        transition: "all 0.18s ease",
-        position: "relative",
-        animation: isNew ? "slideIn 0.35s ease both" : "none",
-        overflow: "hidden",
-      }}
+      className={clsx(
+        'relative flex items-center gap-4 rounded-lg border px-5 py-4 cursor-pointer transition-all duration-200 overflow-hidden',
+        hovered ? 'bg-white/[0.04] border-amber-500/35' : 'bg-white/[0.02] border-white/[0.07]',
+        isNew && 'animate-[slideIn_0.35s_ease_both]',
+      )}
     >
-      {/* Left accent */}
-      <div style={{
-        position: "absolute",
-        left: 0, top: "20%", bottom: "20%",
-        width: "2px",
-        background: TIERS[quest.tier].color,
-        borderRadius: "2px",
-        opacity: hovered ? 1 : 0.4,
-        transition: "opacity 0.18s",
-      }} />
+      {/* Left tier accent — dynamic color, inline style required */}
+      <div
+        className="absolute left-0 rounded-sm transition-opacity duration-200"
+        style={{
+          top: '20%', bottom: '20%', width: '2px',
+          background: tier.accentColor,
+          opacity: hovered ? 1 : 0.4,
+        }}
+      />
 
-      {/* Category icon block */}
-      <div style={{
-        width: "40px", height: "40px",
-        borderRadius: "6px",
-        background: `${TIERS[quest.tier].color}14`,
-        border: `1px solid ${TIERS[quest.tier].color}28`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0,
-        fontSize: "18px",
-        color: TIERS[quest.tier].color,
-      }}>
-        {CATEGORIES.find(c => c.id === quest.category)?.icon || "◈"}
+      {/* Category icon — dynamic bg, inline style required */}
+      <div
+        className="flex-shrink-0 flex items-center justify-content-center w-10 h-10 rounded-md text-lg"
+        style={{ background: tier.iconBg, border: `1px solid ${tier.accentColor}28`, color: tier.accentColor }}
+      >
+        <span className="flex items-center justify-center w-full h-full">◈</span>
       </div>
 
       {/* Main info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px", flexWrap: "wrap" }}>
-          <span style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "#f5f0e8",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "340px",
-          }}>{quest.title}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span className="font-semibold text-[13px] text-stone-100 truncate max-w-[340px]">
+            {quest.title}
+          </span>
           {quest.urgent && <UrgentBadge />}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+        <div className="flex items-center gap-3 flex-wrap">
           <TierBadge tier={quest.tier} />
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", color: "#8b8578" }}>
-            📍 {quest.neighborhood} · {quest.city}
+          <span className="font-mono text-[11px] text-stone-500 flex items-center gap-1">
+            <MapPin size={10} className="inline" />
+            {quest.neighborhood} · {quest.city}
           </span>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", color: "#5c5750" }}>
+          <span className="font-mono text-[11px] text-stone-600 flex items-center gap-1">
+            <Clock size={10} className="inline" />
             {timeAgo(quest.posted)}
           </span>
-          {quest.tools.map(t => (
-            <span key={t} style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "10px",
-              color: "#6b6460",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: "3px",
-              padding: "1px 6px",
-            }}>{t}</span>
+          {quest.tools.map((t) => (
+            <span key={t} className="font-mono text-[10px] text-stone-600 bg-white/[0.04] border border-white/[0.07] rounded px-1.5 py-0.5">
+              {t}
+            </span>
           ))}
         </div>
       </div>
 
       {/* Pay + CTA */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
-        <div style={{ textAlign: "right" }}>
-          <div style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: "20px",
-            fontWeight: 700,
-            color: "#f5b942",
-            lineHeight: 1,
-          }}>{payDisplay(quest.pay, quest.payType)}</div>
-          <div style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "9px",
-            color: "#6b6460",
-            marginTop: "2px",
-            letterSpacing: "0.05em",
-          }}>{quest.payType === "hourly" ? "per hour" : "flat rate"}</div>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="text-right">
+          <div className="font-bold text-xl text-amber-400 leading-none">
+            {payDisplay(quest.pay, quest.payType)}
+          </div>
+          <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
+            {quest.payType === 'hourly' ? 'per hour' : 'flat rate'}
+          </div>
         </div>
 
         <button
           onClick={handleClaim}
           disabled={claimed}
-          style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "11px",
-            fontWeight: 600,
-            letterSpacing: "0.08em",
-            padding: "8px 16px",
-            borderRadius: "5px",
-            border: claimed ? "1px solid rgba(74,222,128,0.4)" : "1px solid rgba(245,158,11,0.5)",
-            background: claimed
-              ? "rgba(74,222,128,0.08)"
+          className={clsx(
+            'font-mono text-[11px] font-semibold tracking-widest px-4 py-2 rounded border transition-all duration-200 min-w-[108px] text-center',
+            claimed
+              ? 'text-green-400 border-green-400/40 bg-green-400/[0.08] cursor-default'
               : claiming
-                ? "rgba(245,158,11,0.15)"
-                : hovered
-                  ? "rgba(245,158,11,0.12)"
-                  : "transparent",
-            color: claimed ? "#4ade80" : "#f5b942",
-            cursor: claimed ? "default" : "pointer",
-            transition: "all 0.18s ease",
-            whiteSpace: "nowrap",
-            minWidth: "108px",
-            textAlign: "center",
-          }}
+                ? 'text-amber-400 border-amber-400/40 bg-amber-400/[0.15] cursor-default'
+                : 'text-amber-400 border-amber-500/50 hover:bg-amber-400/10 cursor-pointer',
+          )}
         >
-          {claimed ? "✓ CLAIMED" : claiming ? "CLAIMING…" : "CLAIM QUEST"}
+          {claimed ? '✓ CLAIMED' : claiming ? 'CLAIMING…' : 'CLAIM QUEST'}
         </button>
       </div>
     </div>
   );
 }
 
-function StatPill({ value, label }) {
+function StatPill({ value, label }: { value: string; label: string }) {
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center",
-      padding: "10px 20px",
-      borderRight: "1px solid rgba(255,255,255,0.06)",
-    }}>
-      <span style={{
-        fontFamily: "'Syne', sans-serif",
-        fontSize: "20px", fontWeight: 700,
-        color: "#f5b942",
-        lineHeight: 1,
-      }}>{value}</span>
-      <span style={{
-        fontFamily: "'DM Mono', monospace",
-        fontSize: "10px", color: "#6b6460",
-        marginTop: "3px", letterSpacing: "0.06em",
-        textTransform: "uppercase",
-      }}>{label}</span>
+    <div className="flex flex-col items-center px-5 py-2.5 border-r border-white/[0.06] last:border-r-0">
+      <span className="font-bold text-xl text-amber-400 leading-none">{value}</span>
+      <span className="font-mono text-[10px] text-stone-600 mt-0.5 tracking-widest uppercase">{label}</span>
     </div>
   );
 }
@@ -273,311 +228,173 @@ function StatPill({ value, label }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function QuestBoard() {
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [activeSort, setActiveSort] = useState("newest");
-  const [search, setSearch] = useState("");
-  const [quests, setQuests] = useState(SAMPLE_QUESTS);
-  const [claimedIds, setClaimedIds] = useState([]);
-  const [newIds, setNewIds] = useState([]);
-  const [liveCount, setLiveCount] = useState(1809);
-  const tickRef = useRef(null);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeSort, setActiveSort]         = useState<SortKey>('newest');
+  const [search, setSearch]                 = useState('');
+  const [claimedIds, setClaimedIds]         = useState<number[]>([]);
+  const [newIds]                            = useState<number[]>([]);
+  const [liveCount, setLiveCount]           = useState(1809);
+  const tickRef                             = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Simulate live quest arrivals
   useEffect(() => {
     tickRef.current = setInterval(() => {
-      setLiveCount(n => n + Math.floor(Math.random() * 3));
+      setLiveCount((n) => n + Math.floor(Math.random() * 3));
     }, 4000);
-    return () => clearInterval(tickRef.current);
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, []);
 
-  // Filter + sort
-  const visible = quests
-    .filter(q => {
-      if (activeCategory !== "all" && q.category !== activeCategory) return false;
+  const visible = SAMPLE_QUESTS
+    .filter((q) => {
+      if (activeCategory !== 'all' && q.category !== activeCategory) return false;
       if (search && !q.title.toLowerCase().includes(search.toLowerCase()) &&
           !q.city.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     })
     .sort((a, b) => {
-      if (activeSort === "newest")   return a.posted - b.posted;
-      if (activeSort === "pay_high") return b.pay - a.pay;
-      if (activeSort === "pay_low")  return a.pay - b.pay;
-      return a.posted - b.posted;
+      if (activeSort === 'pay_high') return b.pay - a.pay;
+      if (activeSort === 'pay_low')  return a.pay - b.pay;
+      return a.posted - b.posted; // newest / nearby default
     });
 
-  function handleClaim(quest) {
-    setClaimedIds(ids => [...ids, quest.id]);
+  function handleClaim(quest: Quest) {
+    setClaimedIds((ids) => [...ids, quest.id]);
   }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500;600&display=swap');
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.5; transform: scale(0.7); }
-        }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .cat-btn { transition: all 0.15s ease; }
-        .cat-btn:hover { border-color: rgba(245,158,11,0.4) !important; color: #f5b942 !important; }
-      `}</style>
+    <div className="min-h-screen bg-zinc-950 text-stone-400">
 
-      <div style={{
-        background: "#0d0c0b",
-        minHeight: "100vh",
-        fontFamily: "'DM Mono', monospace",
-        color: "#c9c4bc",
-      }}>
-
-        {/* ── Header ── */}
-        <div style={{
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          padding: "0 32px",
-        }}>
-          <div style={{
-            maxWidth: "1100px", margin: "0 auto",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 0",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "20px", fontWeight: 800,
-                color: "#f5f0e8", letterSpacing: "-0.02em",
-              }}>TryHardly</span>
-              <span style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "9px", color: "#f5b942",
-                background: "rgba(245,158,11,0.1)",
-                border: "1px solid rgba(245,158,11,0.2)",
-                borderRadius: "3px", padding: "2px 8px",
-                letterSpacing: "0.1em",
-              }}>QUEST BOARD</span>
-            </div>
-
-            {/* Live indicator */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div style={{
-                width: "6px", height: "6px", borderRadius: "50%",
-                background: "#4ade80",
-                animation: "pulse-dot 2s ease-in-out infinite",
-              }} />
-              <span style={{ fontSize: "11px", color: "#6b6460" }}>
-                <span style={{ color: "#f5f0e8", fontWeight: 600 }}>{liveCount.toLocaleString()}</span> quests live
+      {/* ── Header ── */}
+      <div className="border-b border-white/[0.06]">
+        <div className="max-w-5xl mx-auto px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-xl text-stone-100 tracking-tight">TryHardly</span>
+              <span className="font-mono text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-sm px-2 py-0.5 tracking-widest">
+                QUEST BOARD
               </span>
             </div>
 
-            <button style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "11px", fontWeight: 600,
-              letterSpacing: "0.08em",
-              padding: "9px 20px",
-              background: "#f5b942",
-              color: "#0d0c0b",
-              border: "none", borderRadius: "5px",
-              cursor: "pointer",
-            }}>POST A QUEST</button>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="font-mono text-[11px] text-stone-600">
+                <span className="text-stone-100 font-semibold">{liveCount.toLocaleString()}</span> quests live
+              </span>
+            </div>
+
+            <button className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors">
+              POST A QUEST
+            </button>
           </div>
 
           {/* Stats bar */}
-          <div style={{
-            maxWidth: "1100px", margin: "0 auto",
-            display: "flex",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
-          }}>
-            <StatPill value="14,280" label="Completed" />
-            <StatPill value="4.91★"  label="Avg rating" />
+          <div className="flex border-t border-white/[0.04]">
+            <StatPill value="14,280" label="Completed"   />
+            <StatPill value="4.91★"  label="Avg rating"  />
             <StatPill value="3,840"  label="Adventurers" />
-            <StatPill value="180+"   label="Cities" />
-            <div style={{ flex: 1 }} />
-            <div style={{
-              display: "flex", alignItems: "center",
-              padding: "10px 0",
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "10px", color: "#5c5750",
-              letterSpacing: "0.05em",
-            }}>
+            <StatPill value="180+"   label="Cities"      />
+            <div className="flex-1" />
+            <div className="flex items-center font-mono text-[10px] text-stone-700 tracking-widest py-2">
               THE WORK AI CANNOT DO
             </div>
           </div>
         </div>
+      </div>
 
-        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "28px 32px" }}>
+      <div className="max-w-5xl mx-auto px-8 py-7">
 
-          {/* ── Filters row ── */}
-          <div style={{
-            display: "flex", alignItems: "center",
-            gap: "12px", marginBottom: "20px", flexWrap: "wrap",
-          }}>
-            {/* Search */}
-            <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
-              <span style={{
-                position: "absolute", left: "12px", top: "50%",
-                transform: "translateY(-50%)",
-                fontSize: "13px", color: "#5c5750",
-              }}>⌕</span>
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search quests or city..."
-                style={{
-                  width: "100%",
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "12px",
-                  padding: "10px 12px 10px 32px",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "6px",
-                  color: "#c9c4bc",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
+        {/* ── Filters row ── */}
+        <div className="flex items-center gap-3 mb-5 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-600" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search quests or city..."
+              className="w-full font-mono text-[12px] pl-8 pr-3 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
+            />
+          </div>
 
-            {/* Sort */}
+          <div className="relative">
             <select
               value={activeSort}
-              onChange={e => setActiveSort(e.target.value)}
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "11px",
-                padding: "10px 14px",
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "6px",
-                color: "#c9c4bc",
-                cursor: "pointer",
-                outline: "none",
-              }}
+              onChange={(e) => setActiveSort(e.target.value as SortKey)}
+              className="font-mono text-[11px] pl-3 pr-8 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-400 cursor-pointer focus:outline-none focus:border-amber-500/40 appearance-none transition-colors"
             >
-              {SORT_OPTIONS.map(s => (
-                <option key={s.id} value={s.id} style={{ background: "#1a1916" }}>{s.label}</option>
+              {SORT_OPTIONS.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
               ))}
             </select>
-
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "11px", color: "#5c5750", whiteSpace: "nowrap" }}>
-              {visible.length} result{visible.length !== 1 ? "s" : ""}
-            </span>
+            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-600 pointer-events-none" />
           </div>
 
-          {/* ── Category pills ── */}
-          <div style={{
-            display: "flex", gap: "6px", marginBottom: "24px",
-            overflowX: "auto", paddingBottom: "4px",
-          }}>
-            {CATEGORIES.map(cat => {
-              const isActive = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  className="cat-btn"
-                  onClick={() => setActiveCategory(cat.id)}
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "11px", fontWeight: isActive ? 600 : 400,
-                    letterSpacing: "0.04em",
-                    padding: "7px 14px",
-                    borderRadius: "20px",
-                    border: isActive
-                      ? "1px solid rgba(245,158,11,0.6)"
-                      : "1px solid rgba(255,255,255,0.08)",
-                    background: isActive
-                      ? "rgba(245,158,11,0.1)"
-                      : "transparent",
-                    color: isActive ? "#f5b942" : "#6b6460",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ── Quest list ── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {visible.length === 0 ? (
-              <div style={{
-                textAlign: "center",
-                padding: "60px 0",
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "13px", color: "#4a4740",
-              }}>
-                No quests found. Try a different category or search term.
-              </div>
-            ) : (
-              visible.map(quest => (
-                <QuestCard
-                  key={quest.id}
-                  quest={quest}
-                  onClaim={handleClaim}
-                  isNew={newIds.includes(quest.id)}
-                />
-              ))
-            )}
-          </div>
-
-          {/* ── Load more ── */}
-          {visible.length > 0 && (
-            <div style={{ textAlign: "center", marginTop: "28px" }}>
-              <button style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "11px", fontWeight: 600,
-                letterSpacing: "0.08em",
-                padding: "11px 28px",
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "6px",
-                color: "#6b6460",
-                cursor: "pointer",
-                transition: "all 0.18s ease",
-              }}
-              onMouseEnter={e => {
-                e.target.style.borderColor = "rgba(245,158,11,0.4)";
-                e.target.style.color = "#f5b942";
-              }}
-              onMouseLeave={e => {
-                e.target.style.borderColor = "rgba(255,255,255,0.1)";
-                e.target.style.color = "#6b6460";
-              }}
-              >
-                LOAD MORE QUESTS
-              </button>
-            </div>
-          )}
-
-          {/* ── Bottom strip ── */}
-          <div style={{
-            marginTop: "48px",
-            borderTop: "1px solid rgba(255,255,255,0.05)",
-            paddingTop: "20px",
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "10px", color: "#3a3730", letterSpacing: "0.06em" }}>
-              © TRYHARDLY.COM · LOCAL WORK · REAL PEOPLE
-            </span>
-            <div style={{ display: "flex", gap: "20px" }}>
-              {["Post a Quest", "Become an Adventurer", "How it Works", "Pricing"].map(link => (
-                <span key={link} style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "10px", color: "#4a4740",
-                  cursor: "pointer", letterSpacing: "0.04em",
-                }}>{link}</span>
-              ))}
-            </div>
-          </div>
-
+          <span className="font-mono text-[11px] text-stone-600 whitespace-nowrap">
+            {visible.length} result{visible.length !== 1 ? 's' : ''}
+          </span>
         </div>
+
+        {/* ── Category pills ── */}
+        <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={clsx(
+                  'font-mono text-[11px] tracking-wide px-3.5 py-1.5 rounded-full border whitespace-nowrap transition-all duration-150',
+                  isActive
+                    ? 'font-semibold text-amber-400 border-amber-500/60 bg-amber-400/10'
+                    : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                )}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── Quest list ── */}
+        <div className="flex flex-col gap-2">
+          {visible.length === 0 ? (
+            <div className="text-center py-16 font-mono text-[13px] text-stone-700">
+              No quests found. Try a different category or search term.
+            </div>
+          ) : (
+            visible.map((quest) => (
+              <QuestCard
+                key={quest.id}
+                quest={quest}
+                onClaim={handleClaim}
+                isNew={newIds.includes(quest.id)}
+              />
+            ))
+          )}
+        </div>
+
+        {/* ── Load more ── */}
+        {visible.length > 0 && (
+          <div className="text-center mt-7">
+            <button className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 border border-white/10 rounded-md text-stone-600 hover:border-amber-500/40 hover:text-amber-400 transition-all duration-200">
+              LOAD MORE QUESTS
+            </button>
+          </div>
+        )}
+
+        {/* ── Footer strip ── */}
+        <div className="mt-12 pt-5 border-t border-white/[0.05] flex justify-between items-center">
+          <span className="font-mono text-[10px] text-stone-800 tracking-wider">
+            © TRYHARDLY.COM · LOCAL WORK · REAL PEOPLE
+          </span>
+          <div className="flex gap-5">
+            {['Post a Quest', 'Become an Adventurer', 'How it Works', 'Pricing'].map((link) => (
+              <span key={link} className="font-mono text-[10px] text-stone-700 cursor-pointer hover:text-stone-500 tracking-wide transition-colors">
+                {link}
+              </span>
+            ))}
+          </div>
+        </div>
+
       </div>
-    </>
+    </div>
   );
 }
