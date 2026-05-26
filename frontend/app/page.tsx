@@ -125,7 +125,7 @@ export default function HomePage() {
             or pick up paid work nearby — no bots, no fantasy fluff, just
             tasks that need a human on site.
           </p>
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          <form onSubmit={(e)=>{e.preventDefault();const z=(e.currentTarget.querySelector('input') as HTMLInputElement).value;if(z)window.location.href=`/questboard?zip=${z}`;}} className="flex gap-2 max-w-sm mx-auto w-full mb-6"><input type="text" placeholder="Enter ZIP code" maxLength={5} pattern="[0-9]{5}" className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500" /><button type="submit" className="bg-amber-500 hover:bg-amber-400 text-black font-bold px-5 py-3 rounded-xl transition-colors">Go</button></form>               <div className="mt-0 flex flex-col gap-4 sm:flex-row">
             <Link
               href="/auth/register"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-semibold text-zinc-950 transition hover:bg-amber-400"
