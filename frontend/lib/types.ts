@@ -15,6 +15,7 @@ export interface User {
   totalQuestsCompleted?: number;
   verified?: boolean;
   createdAt?: string;
+    stripeAccountId?: string;
   guild?: { id: string; name: string; tag: string; badgeUrl?: string } | null;
   achievements?: UserAchievement[];
 }
