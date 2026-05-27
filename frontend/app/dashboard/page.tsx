@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import type { Quest, Application } from '../../lib/types';
+import StripeConnectButton from '@/components/StripeConnectButton';
 
 const XP_PER_LEVEL = 1000;
 
@@ -117,6 +118,14 @@ export default function DashboardPage() {
         </div>
         <p className="text-xs text-gray-500 mt-2">{XP_PER_LEVEL - xpProgress} XP needed to level up</p>
       </div>
+
+              {/* Stripe Connect */}
+              <div className="mb-6">
+                          <StripeConnectButton
+                                        stripeAccountId={user.stripeAccountId}
+                                        onboarded={!!user.stripeAccountId}
+                                      />
+                        </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* My Applications */}
