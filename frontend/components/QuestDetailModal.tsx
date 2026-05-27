@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { X, MapPin, Clock, Users, Zap, Star, Wrench, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
+import EscrowPanel from './EscrowPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ interface Quest {
   postedBy: QuestGiver;
   status: 'open' | 'claimed' | 'completed';
   createdAt: string;
+    escrowStatus?: string;
 }
 
 export interface QuestDetailModalProps {
@@ -336,6 +338,13 @@ export default function QuestDetailModal({
                   <p className="font-mono text-[10px] text-stone-700 text-center mt-2.5">
                     You&apos;ll be redirected to log in, then returned here.
                   </p>
+                            {/* Escrow Panel */}
+                            <EscrowPanel
+                                            questId={quest.id}
+                                            isQuestGiver={currentUserId === quest.postedBy.id}
+                                            questStatus={quest.status}
+                                            escrowStatus={quest.escrowStatus}
+                                          />
                 )}
               </div>
             )}
