@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "seed:prod": "ts-node prisma/seed.prod.ts",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch"
   },
