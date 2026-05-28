@@ -11,6 +11,9 @@ CREATE TYPE "QuestDifficulty" AS ENUM ('NOVICE', 'APPRENTICE', 'JOURNEYMAN', 'EX
 CREATE TYPE "QuestStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'CANCELLED');
 
 -- CreateEnum
+CREATE TYPE "EscrowStatus" AS ENUM ('NONE', 'PENDING', 'FUNDED', 'PARTIALLY_RELEASED', 'RELEASED', 'REFUNDED');
+
+-- CreateEnum
 CREATE TYPE "ApplicationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
 
 -- CreateEnum
@@ -29,14 +32,19 @@ CREATE TABLE "User" (
     "username" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
-    "avatar" TEXT,
+    "avatarUrl" TEXT,
     "bio" TEXT,
     "level" INTEGER NOT NULL DEFAULT 1,
     "xp" INTEGER NOT NULL DEFAULT 0,
-    "class" "UserClass" NOT NULL DEFAULT 'WARRIOR',
-    "reputation" INTEGER NOT NULL DEFAULT 0,
-    "questsPosted" INTEGER NOT NULL DEFAULT 0,
-    "questsCompleted" INTEGER NOT NULL DEFAULT 0,
+    "adventurerClass" "UserClass" NOT NULL DEFAULT 'WARRIOR',
+    "reputationScore" INTEGER NOT NULL DEFAULT 0,
+    "verified" BOOLEAN NOT NULL DEFAULT false,
+    "role" TEXT NOT NULL DEFAULT 'USER',
+    "totalQuestsPosted" INTEGER NOT NULL DEFAULT 0,
+    "totalQuestsCompleted" INTEGER NOT NULL DEFAULT 0,
+    "stripeAccountId" TEXT,
+    "stripeCustomerId" TEXT,
+    "guildId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -50,12 +58,16 @@ CREATE TABLE "Quest" (
     "description" TEXT NOT NULL,
     "category" "QuestCategory" NOT NULL,
     "difficulty" "QuestDifficulty" NOT NULL,
-    "budget" DECIMAL(65,30) NOT NULL,
+    "reward" DECIMAL(65,30) NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'USD',
     "status" "QuestStatus" NOT NULL DEFAULT 'OPEN',
+    "escrowStatus" "EscrowStatus" NOT NULL DEFAULT 'NONE',
+    "paymentIntentId" TEXT,
     "xpReward" INTEGER NOT NULL,
-    "posterId" TEXT NOT NULL,
-    "takerId" TEXT,
+    "tags" TEXT[],
+    "maxApplications" INTEGER,
+    "questGiverId" TEXT NOT NULL,
+    "assignedAdventurerId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deadline" TIMESTAMP(3),
@@ -68,11 +80,11 @@ CREATE TABLE "Quest" (
 CREATE TABLE "Application" (
     "id" TEXT NOT NULL,
     "questId" TEXT NOT NULL,
-    "applicantId" TEXT NOT NULL,
+    "adventurerId" TEXT NOT NULL,
     "coverLetter" TEXT NOT NULL,
-    "proposedBudget" DECIMAL(65,30),
+    "proposedRate" DECIMAL(65,30),
     "status" "ApplicationStatus" NOT NULL DEFAULT 'PENDING',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "appliedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Application_pkey" PRIMARY KEY ("id")
@@ -82,12 +94,13 @@ CREATE TABLE "Application" (
 CREATE TABLE "Guild" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "tag" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "avatar" TEXT,
+    "badgeUrl" TEXT,
     "banner" TEXT,
-    "level" INTEGER NOT NULL DEFAULT 1,
-    "xp" INTEGER NOT NULL DEFAULT 0,
-    "reputation" INTEGER NOT NULL DEFAULT 0,
+    "isPublic" BOOLEAN NOT NULL DEFAULT true,
+    "leaderId" TEXT NOT NULL,
+    "reputationScore" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -190,10 +203,10 @@ CREATE INDEX "User_email_idx" ON "User"("email");
 CREATE INDEX "User_username_idx" ON "User"("username");
 
 -- CreateIndex
-CREATE INDEX "Quest_posterId_idx" ON "Quest"("posterId");
+CREATE INDEX "Quest_questGiverId_idx" ON "Quest"("questGiverId");
 
 -- CreateIndex
-CREATE INDEX "Quest_takerId_idx" ON "Quest"("takerId");
+CREATE INDEX "Quest_assignedAdventurerId_idx" ON "Quest"("assignedAdventurerId");
 
 -- CreateIndex
 CREATE INDEX "Quest_status_idx" ON "Quest"("status");
@@ -205,10 +218,13 @@ CREATE INDEX "Quest_category_idx" ON "Quest"("category");
 CREATE INDEX "Application_questId_idx" ON "Application"("questId");
 
 -- CreateIndex
-CREATE INDEX "Application_applicantId_idx" ON "Application"("applicantId");
+CREATE INDEX "Application_adventurerId_idx" ON "Application"("adventurerId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Guild_name_key" ON "Guild"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Guild_tag_key" ON "Guild"("tag");
 
 -- CreateIndex
 CREATE INDEX "GuildMember_guildId_idx" ON "GuildMember"("guildId");
@@ -250,16 +266,22 @@ CREATE INDEX "Notification_userId_idx" ON "Notification"("userId");
 CREATE INDEX "Notification_read_idx" ON "Notification"("read");
 
 -- AddForeignKey
-ALTER TABLE "Quest" ADD CONSTRAINT "Quest_posterId_fkey" FOREIGN KEY ("posterId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "Guild"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Quest" ADD CONSTRAINT "Quest_takerId_fkey" FOREIGN KEY ("takerId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Quest" ADD CONSTRAINT "Quest_questGiverId_fkey" FOREIGN KEY ("questGiverId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Quest" ADD CONSTRAINT "Quest_assignedAdventurerId_fkey" FOREIGN KEY ("assignedAdventurerId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Application" ADD CONSTRAINT "Application_questId_fkey" FOREIGN KEY ("questId") REFERENCES "Quest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Application" ADD CONSTRAINT "Application_applicantId_fkey" FOREIGN KEY ("applicantId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Application" ADD CONSTRAINT "Application_adventurerId_fkey" FOREIGN KEY ("adventurerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Guild" ADD CONSTRAINT "Guild_leaderId_fkey" FOREIGN KEY ("leaderId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "GuildMember" ADD CONSTRAINT "GuildMember_guildId_fkey" FOREIGN KEY ("guildId") REFERENCES "Guild"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -287,3 +309,4 @@ ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("sende
 
 -- AddForeignKey
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
