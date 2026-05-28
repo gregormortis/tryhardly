@@ -31,7 +31,7 @@ export default function ContactPage() {
             Contact Us
           </h1>
           <p className="text-xl text-gray-300">
-            Have questions? We're here to help adventurers succeed.
+            Have questions? We&apos;re here to help adventurers succeed.
           </p>
         </div>
 
@@ -96,7 +96,7 @@ export default function ContactPage() {
               </button>
               {submitted && (
                 <div className="bg-green-900/50 border border-green-700 rounded-lg p-4 text-green-300">
-                  Message sent! We'll get back to you soon.
+                  Message sent! We&apos;ll get back to you soon.
                 </div>
               )}
             </form>

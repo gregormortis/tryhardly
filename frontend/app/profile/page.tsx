@@ -36,7 +36,7 @@ export default function ProfilePage() {
       return;
     }
     if (user) fetchProfile();
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -112,6 +112,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-6">
               <div className="w-20 h-20 bg-amber-500/20 border-2 border-amber-500/50 rounded-full flex items-center justify-center text-3xl font-bold text-amber-400 overflow-hidden">
                 {displayProfile.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={displayProfile.avatarUrl} alt={displayProfile.username} className="w-full h-full object-cover" />
                 ) : (
                   displayProfile.username?.[0]?.toUpperCase()

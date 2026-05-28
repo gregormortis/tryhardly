@@ -150,7 +150,7 @@ export default function FAQPage() {
         <div className="mt-16 bg-gradient-to-r from-amber-900/20 to-purple-900/20 border border-amber-500/50 rounded-lg p-8 text-center">
           <h3 className="text-2xl font-bold text-amber-400 mb-4">Still have questions?</h3>
           <p className="text-gray-300 mb-6">
-            Can't find the answer you're looking for? Our support team is here to help.
+            Can&apos;t find the answer you&apos;re looking for? Our support team is here to help.
           </p>
           <a
             href="/contact"
