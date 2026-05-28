@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { DM_Mono, Syne } from 'next/font/google';
 import './globals.css';
 import Navbar from '../components/Navbar';
@@ -32,20 +33,21 @@ export default function RootLayout({
       <head>
         {/* Plausible Analytics */}
         <script defer data-domain="tryhardly.com" src="https://plausible.io/js/script.js" />
-        {/* Google Analytics */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-68P7FQSY7L" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-68P7FQSY7L');
-            `,
-          }}
-        />
       </head>
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-68P7FQSY7L"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-68P7FQSY7L');
+          `}
+        </Script>
         <AuthProvider>
           <Navbar />
           <main>{children}</main>

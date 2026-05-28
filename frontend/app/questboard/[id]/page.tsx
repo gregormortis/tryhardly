@@ -30,6 +30,7 @@ export default function QuestDetailPage() {
 
   useEffect(() => {
     fetchQuest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const fetchQuest = async () => {
@@ -271,6 +272,7 @@ export default function QuestDetailPage() {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold">
                     {poster.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={poster.avatarUrl} alt={poster.username} className="w-full h-full rounded-full object-cover" />
                     ) : (
                       poster.username?.[0]?.toUpperCase() || '?'

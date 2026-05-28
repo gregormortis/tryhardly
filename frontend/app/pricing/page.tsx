@@ -123,7 +123,7 @@ export default function PricingPage() {
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">How do I level up?</h3>
-              <p className="text-gray-300">Complete quests to earn XP. As you gain experience, you'll level up your adventurer class and unlock lower commission rates automatically.</p>
+              <p className="text-gray-300">Complete quests to earn XP. As you gain experience, you&apos;ll level up your adventurer class and unlock lower commission rates automatically.</p>
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">Are there any hidden fees?</h3>

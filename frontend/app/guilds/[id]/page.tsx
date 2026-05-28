@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -15,13 +15,7 @@ export default function GuildDetailPage() {
   const [joined, setJoined] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-    fetchGuild();
-  }, [params.id]);
-
-  const fetchGuild = async () => {
+  const fetchGuild = useCallback(async () => {
     try {
       const [guildData, questData] = await Promise.all([
         api.request<any>(`/guilds/${params.id}`),
@@ -51,7 +45,13 @@ export default function GuildDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+    fetchGuild();
+  }, [fetchGuild]);
 
   const handleJoin = async () => {
     if (!isLoggedIn) {

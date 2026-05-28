@@ -8,7 +8,7 @@ export default function AboutPage() {
             About Tryhardly
           </h1>
           <p className="text-xl text-gray-300 leading-relaxed">
-            Transform freelance work into epic adventures. We're building the most gamified gig marketplace ever created.
+            Transform freelance work into epic adventures. We&apos;re building the most gamified gig marketplace ever created.
           </p>
         </div>
       </section>
