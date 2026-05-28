@@ -19,6 +19,7 @@ export interface User {
   verified?: boolean;
   role?: string;
   guild?: { id: string; name: string; tag: string };
+  stripeAccountId?: string;
 }
 
 interface AuthContextType {
