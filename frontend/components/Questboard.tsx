@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { MapPin, Clock, AlertTriangle, Search, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
+import { api } from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,7 +12,7 @@ type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'l
 type SortKey = 'newest' | 'pay_high' | 'pay_low' | 'nearby';
 
 interface Quest {
-  id: number;
+  id: string;
   category: string;
   tier: TierKey;
   title: string;
@@ -26,11 +27,24 @@ interface Quest {
   jobsPosted: number;
 }
 
+interface BackendQuest {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  difficulty: string;
+  reward: number | string;
+  status: string;
+  tags?: string[];
+  createdAt: string;
+  questGiver?: { username?: string } | null;
+}
+
 interface TierConfig {
   label: string;
-  classes: string;        // Tailwind badge classes
-  accentColor: string;    // dynamic — hex only used for left-border inline style
-  iconBg: string;         // dynamic bg for category icon
+  classes: string;
+  accentColor: string;
+  iconBg: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -63,24 +77,24 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: 'nearby',   label: 'Nearest to me' },
 ];
 
-const SAMPLE_QUESTS: Quest[] = [
-  { id: 1,  category: 'yard',     tier: 'novice',     title: 'Weekly lawn mowing — front & back yard',      neighborhood: 'East Rocklin',   city: 'Rocklin, CA',         pay: 45,  payType: 'flat',   posted: 8,   urgent: false, tools: ['Mower provided'],            postedBy: 'Karen R.', jobsPosted: 14 },
-  { id: 2,  category: 'hauling',  tier: 'apprentice', title: 'Furniture removal — 2 couches + dresser',     neighborhood: 'West Roseville', city: 'Roseville, CA',       pay: 120, payType: 'flat',   posted: 34,  urgent: true,  tools: ['Truck needed'],              postedBy: 'Mike T.',  jobsPosted: 3  },
-  { id: 3,  category: 'moving',   tier: 'journeyman', title: '1BR apartment move — need 2 people, 4 hrs',  neighborhood: 'Oak Park',       city: 'Folsom, CA',          pay: 240, payType: 'flat',   posted: 71,  urgent: false, tools: ['Dolly helpful'],             postedBy: 'Aisha M.', jobsPosted: 7  },
-  { id: 4,  category: 'yard',     tier: 'novice',     title: 'Leaf cleanup + bag haul — large yard',        neighborhood: 'Whitney Ranch',  city: 'Rocklin, CA',         pay: 60,  payType: 'flat',   posted: 15,  urgent: false, tools: ['Rake & bags provided'],      postedBy: 'Tom H.',   jobsPosted: 22 },
-  { id: 5,  category: 'handyman', tier: 'journeyman', title: 'Install ceiling fan, mount TV, fix door',    neighborhood: 'Stone Creek',    city: 'El Dorado Hills, CA', pay: 35,  payType: 'hourly', posted: 120, urgent: false, tools: ['Basic tools needed'],        postedBy: 'Linda S.', jobsPosted: 5  },
-  { id: 6,  category: 'pressure', tier: 'apprentice', title: 'Driveway + fence pressure wash',             neighborhood: 'South Placer',   city: 'Auburn, CA',          pay: 95,  payType: 'flat',   posted: 55,  urgent: false, tools: ['Pressure washer provided'],  postedBy: 'Dave P.',  jobsPosted: 9  },
-  { id: 7,  category: 'cleaning', tier: 'novice',     title: 'Deep clean 3BR house after move-out',        neighborhood: 'Natomas',        city: 'Sacramento, CA',      pay: 180, payType: 'flat',   posted: 200, urgent: true,  tools: ['Supplies provided'],         postedBy: 'Jess W.',  jobsPosted: 2  },
-  { id: 8,  category: 'painting', tier: 'journeyman', title: 'Paint 2-car garage interior — walls only',  neighborhood: 'Lincoln Hills',  city: 'Lincoln, CA',         pay: 40,  payType: 'hourly', posted: 180, urgent: false, tools: ['Paint + rollers provided'],  postedBy: 'Ray C.',   jobsPosted: 16 },
-  { id: 9,  category: 'hauling',  tier: 'novice',     title: 'Yard waste haul — 3 truck loads, weekend',  neighborhood: 'Meadow Vista',   city: 'Meadow Vista, CA',    pay: 80,  payType: 'flat',   posted: 22,  urgent: false, tools: ['Truck needed'],              postedBy: 'Nancy K.', jobsPosted: 4  },
-  { id: 10, category: 'other',    tier: 'expert',     title: 'Help set up outdoor event — tables, tents', neighborhood: 'Granite Bay',    city: 'Granite Bay, CA',     pay: 45,  payType: 'hourly', posted: 300, urgent: true,  tools: ['Heavy lifting req.'],        postedBy: 'Chris B.', jobsPosted: 31 },
-  { id: 11, category: 'yard',     tier: 'apprentice', title: 'Install 6 raised garden beds + soil fill',  neighborhood: 'Cameron Park',   city: 'Cameron Park, CA',    pay: 160, payType: 'flat',   posted: 90,  urgent: false, tools: ['Beds + soil provided'],      postedBy: 'Maria L.', jobsPosted: 8  },
-  { id: 12, category: 'moving',   tier: 'apprentice', title: 'Piano move — upright, ground floor only',   neighborhood: 'Antelope',       city: 'Antelope, CA',        pay: 110, payType: 'flat',   posted: 410, urgent: false, tools: ['Piano dolly needed'],        postedBy: 'Frank O.', jobsPosted: 1  },
-];
+const DIFFICULTY_TO_TIER: Record<string, TierKey> = {
+  NOVICE: 'novice',
+  APPRENTICE: 'apprentice',
+  JOURNEYMAN: 'journeyman',
+  EXPERT: 'expert',
+  MASTER: 'master',
+  LEGENDARY: 'legendary',
+};
+
+// Recognised UI-category tag values that PostQuestForm writes into tags[].
+const UI_CATEGORY_IDS = new Set([
+  'yard', 'hauling', 'moving', 'handyman', 'cleaning', 'painting', 'pressure', 'other',
+]);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function timeAgo(mins: number): string {
+  if (mins < 1)    return 'just now';
   if (mins < 60)   return `${mins}m ago`;
   if (mins < 1440) return `${Math.floor(mins / 60)}h ago`;
   return `${Math.floor(mins / 1440)}d ago`;
@@ -88,6 +102,71 @@ function timeAgo(mins: number): string {
 
 function payDisplay(pay: number, payType: PayType): string {
   return payType === 'hourly' ? `$${pay}/hr` : `$${pay}`;
+}
+
+function minutesSince(iso: string): number {
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / 60000));
+}
+
+// PostQuestForm prepends "Location: <neighborhood>, <city> · Pay: $<reward> hourly|flat"
+// to the description. Parse it here so cards can show the same info.
+function parseLocationLine(description?: string): {
+  neighborhood: string;
+  city: string;
+  payType: PayType;
+  bodyText: string;
+} {
+  const fallback = { neighborhood: '', city: '', payType: 'flat' as PayType, bodyText: description ?? '' };
+  if (!description) return fallback;
+  const firstLine = description.split('\n', 1)[0] ?? '';
+  const match = firstLine.match(/^Location:\s*([^,]+),\s*([^·]+?)\s*·\s*Pay:\s*\$[^\s]+\s*(\/?\s*hour|hourly|flat)/i);
+  if (!match) return fallback;
+  const neighborhood = match[1].trim();
+  const city = match[2].trim();
+  const payType: PayType = /hour/i.test(match[3]) ? 'hourly' : 'flat';
+  const body = description.replace(firstLine, '').replace(/^\n+/, '');
+  return { neighborhood, city, payType, bodyText: body };
+}
+
+// Pull the UI category id (yard/hauling/etc.) out of the tags PostQuestForm wrote.
+function extractCategoryFromTags(tags: string[] | undefined): string {
+  if (!tags?.length) return 'other';
+  const hit = tags.find((t) => UI_CATEGORY_IDS.has(t));
+  return hit ?? 'other';
+}
+
+// Pull payType from tags as a secondary signal (PostQuestForm writes 'flat'|'hourly').
+function extractPayTypeFromTags(tags: string[] | undefined): PayType | null {
+  if (!tags?.length) return null;
+  if (tags.includes('hourly')) return 'hourly';
+  if (tags.includes('flat')) return 'flat';
+  return null;
+}
+
+function mapBackendQuest(q: BackendQuest): Quest {
+  const parsed = parseLocationLine(q.description);
+  const tagPayType = extractPayTypeFromTags(q.tags);
+  const payType: PayType = tagPayType ?? parsed.payType;
+  const rewardNum = typeof q.reward === 'string' ? parseFloat(q.reward) : Number(q.reward);
+  const tier: TierKey = DIFFICULTY_TO_TIER[q.difficulty] ?? 'novice';
+  const category = extractCategoryFromTags(q.tags);
+  return {
+    id: q.id,
+    category,
+    tier,
+    title: q.title,
+    neighborhood: parsed.neighborhood,
+    city: parsed.city,
+    pay: isNaN(rewardNum) ? 0 : rewardNum,
+    payType,
+    posted: minutesSince(q.createdAt),
+    urgent: false,
+    tools: [],
+    postedBy: q.questGiver?.username ?? 'Quest Giver',
+    jobsPosted: 0,
+  };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -132,6 +211,10 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
     }, 900);
   }
 
+  const locationLabel = quest.neighborhood && quest.city
+    ? `${quest.neighborhood} · ${quest.city}`
+    : quest.city || quest.neighborhood || 'Location TBD';
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -142,7 +225,6 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
         isNew && 'animate-[slideIn_0.35s_ease_both]',
       )}
     >
-      {/* Left tier accent — dynamic color, inline style required */}
       <div
         className="absolute left-0 rounded-sm transition-opacity duration-200"
         style={{
@@ -152,7 +234,6 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
         }}
       />
 
-      {/* Category icon — dynamic bg, inline style required */}
       <div
         className="flex-shrink-0 flex items-center justify-content-center w-10 h-10 rounded-md text-lg"
         style={{ background: tier.iconBg, border: `1px solid ${tier.accentColor}28`, color: tier.accentColor }}
@@ -160,7 +241,6 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
         <span className="flex items-center justify-center w-full h-full">◈</span>
       </div>
 
-      {/* Main info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           <span className="font-semibold text-[13px] text-stone-100 truncate max-w-[340px]">
@@ -172,7 +252,7 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
           <TierBadge tier={quest.tier} />
           <span className="font-mono text-[11px] text-stone-500 flex items-center gap-1">
             <MapPin size={10} className="inline" />
-            {quest.neighborhood} · {quest.city}
+            {locationLabel}
           </span>
           <span className="font-mono text-[11px] text-stone-600 flex items-center gap-1">
             <Clock size={10} className="inline" />
@@ -186,7 +266,6 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
         </div>
       </div>
 
-      {/* Pay + CTA */}
       <div className="flex items-center gap-3 flex-shrink-0">
         <div className="text-right">
           <div className="font-bold text-xl text-amber-400 leading-none">
@@ -231,9 +310,12 @@ export default function QuestBoard() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeSort, setActiveSort]         = useState<SortKey>('newest');
   const [search, setSearch]                 = useState('');
-  const [claimedIds, setClaimedIds]         = useState<number[]>([]);
-  const [newIds]                            = useState<number[]>([]);
+  const [claimedIds, setClaimedIds]         = useState<string[]>([]);
+  const [newIds]                            = useState<string[]>([]);
   const [liveCount, setLiveCount]           = useState(1809);
+  const [quests, setQuests]                 = useState<Quest[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
   const tickRef                             = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -243,18 +325,49 @@ export default function QuestBoard() {
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, []);
 
-  const visible = SAMPLE_QUESTS
-    .filter((q) => {
-      if (activeCategory !== 'all' && q.category !== activeCategory) return false;
-      if (search && !q.title.toLowerCase().includes(search.toLowerCase()) &&
-          !q.city.toLowerCase().includes(search.toLowerCase())) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (activeSort === 'pay_high') return b.pay - a.pay;
-      if (activeSort === 'pay_low')  return a.pay - b.pay;
-      return a.posted - b.posted; // newest / nearby default
-    });
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        // Backend GET /quests returns { data: Quest[], meta }. Older shape used
+        // { quests: [...] }; handle both defensively.
+        const res = await api.get<{ data?: BackendQuest[]; quests?: BackendQuest[] }>(
+          '/quests?limit=100&sort=newest',
+        );
+        const raw = res.data ?? res.quests ?? [];
+        if (cancelled) return;
+        setQuests(raw.map(mapBackendQuest));
+      } catch (e: unknown) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : 'Failed to load quests');
+        setQuests([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return quests
+      .filter((quest) => {
+        if (activeCategory !== 'all' && quest.category !== activeCategory) return false;
+        if (q) {
+          const hay = `${quest.title} ${quest.city} ${quest.neighborhood}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (activeSort === 'pay_high') return b.pay - a.pay;
+        if (activeSort === 'pay_low')  return a.pay - b.pay;
+        return a.posted - b.posted;
+      });
+  }, [quests, activeCategory, activeSort, search]);
 
   function handleClaim(quest: Quest) {
     setClaimedIds((ids) => [...ids, quest.id]);
@@ -263,7 +376,6 @@ export default function QuestBoard() {
   return (
     <div className="min-h-screen bg-zinc-950 text-stone-400">
 
-      {/* ── Header ── */}
       <div className="border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-8">
           <div className="flex items-center justify-between py-4">
@@ -281,12 +393,14 @@ export default function QuestBoard() {
               </span>
             </div>
 
-            <button className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors">
+            <a
+              href="/post-quest"
+              className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+            >
               POST A QUEST
-            </button>
+            </a>
           </div>
 
-          {/* Stats bar */}
           <div className="flex border-t border-white/[0.04]">
             <StatPill value="14,280" label="Completed"   />
             <StatPill value="4.91★"  label="Avg rating"  />
@@ -302,7 +416,6 @@ export default function QuestBoard() {
 
       <div className="max-w-5xl mx-auto px-8 py-7">
 
-        {/* ── Filters row ── */}
         <div className="flex items-center gap-3 mb-5 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-600" />
@@ -332,7 +445,6 @@ export default function QuestBoard() {
           </span>
         </div>
 
-        {/* ── Category pills ── */}
         <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
@@ -353,11 +465,21 @@ export default function QuestBoard() {
           })}
         </div>
 
-        {/* ── Quest list ── */}
         <div className="flex flex-col gap-2">
-          {visible.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-16 font-mono text-[13px] text-stone-600">
+              Loading quests…
+            </div>
+          ) : error ? (
+            <div className="text-center py-16 font-mono text-[12px] text-rose-400 flex flex-col items-center gap-2">
+              <AlertTriangle size={20} />
+              <span>Could not load quests: {error}</span>
+            </div>
+          ) : visible.length === 0 ? (
             <div className="text-center py-16 font-mono text-[13px] text-stone-700">
-              No quests found. Try a different category or search term.
+              {quests.length === 0
+                ? 'No quests posted yet. Be the first to post one!'
+                : 'No quests match your filters. Try a different category or search term.'}
             </div>
           ) : (
             visible.map((quest) => (
@@ -371,8 +493,7 @@ export default function QuestBoard() {
           )}
         </div>
 
-        {/* ── Load more ── */}
-        {visible.length > 0 && (
+        {!loading && !error && visible.length > 0 && (
           <div className="text-center mt-7">
             <button className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 border border-white/10 rounded-md text-stone-600 hover:border-amber-500/40 hover:text-amber-400 transition-all duration-200">
               LOAD MORE QUESTS
@@ -380,7 +501,6 @@ export default function QuestBoard() {
           </div>
         )}
 
-        {/* ── Footer strip ── */}
         <div className="mt-12 pt-5 border-t border-white/[0.05] flex justify-between items-center">
           <span className="font-mono text-[10px] text-stone-800 tracking-wider">
             © TRYHARDLY.COM · LOCAL WORK · REAL PEOPLE
