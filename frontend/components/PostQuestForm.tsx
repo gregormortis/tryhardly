@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, CheckCircle, Zap } from 'lucide-react';
 import clsx from 'clsx';
+import { api } from '../lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,28 @@ const CATEGORIES = [
   { id: 'pressure', label: 'Pressure Washing' },
   { id: 'other',    label: 'Odd Jobs'         },
 ];
+
+// Map UI category ids -> Prisma QuestCategory enum (schema is currently
+// developer-oriented; physical-labor categories fall back to OTHER).
+const CATEGORY_ENUM_MAP: Record<string, string> = {
+  yard:     'OTHER',
+  hauling:  'OTHER',
+  moving:   'OTHER',
+  handyman: 'OTHER',
+  cleaning: 'OTHER',
+  painting: 'OTHER',
+  pressure: 'OTHER',
+  other:    'OTHER',
+};
+
+const TIER_TO_DIFFICULTY: Record<TierKey, string> = {
+  novice:     'NOVICE',
+  apprentice: 'APPRENTICE',
+  journeyman: 'JOURNEYMAN',
+  expert:     'EXPERT',
+  master:     'MASTER',
+  legendary:  'LEGENDARY',
+};
 
 const TIER_MAP: { min: number; max: number; tier: TierKey; classes: string }[] = [
   { min: 0,    max: 49,       tier: 'novice',     classes: 'text-green-400 bg-green-400/10 border-green-400/20'    },
@@ -193,24 +216,21 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     if (errs.length) { setErrors(errs); return; }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/quests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title:        data.title.trim(),
-          category:     data.category,
-          city:         data.city.trim(),
-          neighborhood: data.neighborhood.trim(),
-          description:  data.description.trim(),
-          reward:       parseFloat(data.reward),
-          payType:      data.payType,
-          deadline:     data.deadline,
-          xpReward:     data.xpReward,
-          postedBy:     currentUserId,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to post quest. Please try again.');
-      const quest = await res.json() as { id: string };
+      const city = data.city.trim();
+      const neighborhood = data.neighborhood.trim();
+      const payType = data.payType;
+      const locationLine = `Location: ${neighborhood}, ${city} · Pay: $${data.reward} ${payType === 'hourly' ? '/ hour' : 'flat'}`;
+      const payload = {
+        title:       data.title.trim(),
+        description: `${locationLine}\n\n${data.description.trim()}`,
+        category:    CATEGORY_ENUM_MAP[data.category] ?? 'OTHER',
+        difficulty:  TIER_TO_DIFFICULTY[tierInfo.tier],
+        reward:      parseFloat(data.reward),
+        xpReward:    data.xpReward,
+        deadline:    data.deadline ? new Date(`${data.deadline}T00:00:00`).toISOString() : undefined,
+        tags:        [city, neighborhood, payType, data.category].filter(Boolean),
+      };
+      const quest = await api.post<{ id: string }>('/quests', payload);
       setSubmitted(true);
       onSuccess?.(quest.id);
     } catch (e: unknown) {
@@ -233,7 +253,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             Your quest is live on the board.<br />Adventurers can start applying now.
           </p>
           <button
-            onClick={() => { window.location.href = '/quests'; }}
+            onClick={() => { window.location.href = '/questboard'; }}
             className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
           >
             VIEW QUEST BOARD
