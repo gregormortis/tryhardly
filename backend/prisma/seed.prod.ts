@@ -96,9 +96,9 @@ type DemoQuestSpec = {
 
 const DEMO_QUESTS: DemoQuestSpec[] = [
   {
-    title: 'Sample Quest: Build a Marketing Landing Page',
+    title: 'Build a Marketing Landing Page',
     description:
-      'Demo open quest. Build a single-page marketing site with a hero, features, and contact form. Used to showcase the Tryhardly quest board.',
+      'Starter open quest. Build a single-page marketing site with a hero, features, and contact form.',
     category: 'WEB_DEVELOPMENT',
     difficulty: 'APPRENTICE',
     reward: 500,
@@ -106,9 +106,9 @@ const DEMO_QUESTS: DemoQuestSpec[] = [
     tags: ['demo', 'web', 'landing-page'],
   },
   {
-    title: 'Sample Quest: Logo & Brand Palette',
+    title: 'Logo & Brand Palette',
     description:
-      'Demo open quest. Produce a logo concept plus a 5-color brand palette suitable for a small business.',
+      'Starter open quest. Produce a logo concept plus a 5-color brand palette suitable for a small business.',
     category: 'DESIGN',
     difficulty: 'JOURNEYMAN',
     reward: 750,
@@ -116,9 +116,9 @@ const DEMO_QUESTS: DemoQuestSpec[] = [
     tags: ['demo', 'design', 'branding'],
   },
   {
-    title: 'Sample Quest: Write 3 SEO Blog Posts',
+    title: 'Write 3 SEO Blog Posts',
     description:
-      'Demo open quest. Three 1000-word SEO-optimized blog posts on a topic of the adventurer’s choice within tech/SaaS.',
+      'Starter open quest. Three 1000-word SEO-optimized blog posts on a topic of the worker’s choice within tech/SaaS.',
     category: 'WRITING',
     difficulty: 'APPRENTICE',
     reward: 300,
