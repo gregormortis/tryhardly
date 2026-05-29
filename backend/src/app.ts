@@ -18,7 +18,23 @@ const app: Application = express();
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no Origin (server-to-server, curl, health checks)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+  }),
+);
 
 // Stripe webhook needs raw body for signature verification — must come before express.json()
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
