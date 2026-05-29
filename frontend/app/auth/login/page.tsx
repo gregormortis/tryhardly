@@ -32,8 +32,8 @@ function LoginForm() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-amber-400 mb-2">⚔ Welcome Back</h1>
-          <p className="text-gray-400">Sign in to your adventurer account</p>
+          <h1 className="text-3xl font-bold text-amber-400 mb-2">Welcome back</h1>
+          <p className="text-gray-400">Sign in to your TryHardly account</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
           {error && (
@@ -49,7 +49,7 @@ function LoginForm() {
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="adventurer@email.com"
+                placeholder="your@email.com"
                 required
               />
             </div>

@@ -19,8 +19,11 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: 'Tryhardly - Local gigs, real people',
-  description: 'The marketplace AI can\'t touch. Post local jobs or find paid work near you.',
+  title: {
+    default: 'TryHardly — Local gigs, real people, real pay',
+    template: '%s · TryHardly',
+  },
+  description: 'Post local jobs or find paid work near you. Escrow-protected, verified local workers, no middlemen.',
 };
 
 export default function RootLayout({

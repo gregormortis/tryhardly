@@ -48,30 +48,49 @@ export default function HomePage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
 
       {/* Hero */}
-      <section className="mx-auto max-w-5xl px-6 py-24 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-400 mb-6">
+      <section className="mx-auto max-w-5xl px-6 py-14 sm:py-20 text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-400 mb-5">
           <MapPin className="h-3 w-3" /> Local gigs. Real people. Real pay.
         </div>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-6">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-5">
           The gig marketplace<br />AI can&apos;t replace
         </h1>
-        <p className="mx-auto max-w-xl text-lg text-zinc-400 mb-10">
-          Post local jobs or find paid work near you. No middlemen, no algorithms — just people and fair pay.
+        <p className="mx-auto max-w-2xl text-base sm:text-lg text-zinc-300 mb-3">
+          Hire verified local workers for real paid jobs — escrow-protected, no middlemen.
         </p>
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+        <p className="mx-auto max-w-xl text-sm text-zinc-500 mb-8">
+          Post a job in minutes, or browse paid work in your neighborhood this week.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-6">
+          <Link
+            href="/post-quest"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
+          >
+            Post a job — free <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/questboard"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-bold text-zinc-100 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
+          >
+            Find work near me
+          </Link>
+        </div>
+
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-md mx-auto">
           <input
             type="text"
             value={zip}
             onChange={(e) => setZip(e.target.value)}
             placeholder="Enter your ZIP code"
             maxLength={5}
-            className="flex-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+            className="flex-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
           />
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-5 py-2.5 text-sm font-semibold text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
           >
-            Find Jobs <ArrowRight className="h-4 w-4" />
+            Browse jobs <ArrowRight className="h-4 w-4" />
           </button>
         </form>
       </section>
@@ -156,7 +175,7 @@ export default function HomePage() {
             Post a job &mdash; it&apos;s free <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
-            href="/auth/login"
+            href="/auth/register"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-8 py-3.5 font-semibold transition hover:border-amber-500/50 hover:bg-zinc-900"
           >
             Start earning today
