@@ -1,15 +1,52 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Pricing — free to post, fair commission for workers',
+  description: 'Posting a job is free. Workers pay a small commission only when work is completed. No hidden fees, no subscriptions.',
+};
+
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gray-950 py-20 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-amber-400 via-orange-500 to-purple-600 bg-clip-text text-transparent">
-            Choose Your Adventure
+            Simple, fair pricing
           </h1>
           <p className="text-xl text-gray-300">
-            Fair commission rates. Level up as you earn. No hidden fees.
+            Free to post. Workers pay a small commission only when a job is completed.
           </p>
+        </div>
+
+        {/* Posters explainer */}
+        <div className="mb-14 max-w-4xl mx-auto bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/30 rounded-xl p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-2xl">🏠</span>
+            <h2 className="text-2xl font-bold text-amber-400">For job posters</h2>
+          </div>
+          <p className="text-gray-200 mb-4">
+            Posting a job on TryHardly is <span className="font-semibold text-white">free</span>. You only pay the reward you agreed with the worker — nothing more, no hidden fees.
+          </p>
+          <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Free to post</span> — describe the job and your budget</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Pay only the agreed reward</span> when work is done</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Escrow protection</span> — funds held until you&apos;re satisfied</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>The commission rates below apply to <span className="font-semibold text-white">workers</span>, not posters</span></li>
+          </ul>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <a href="/post-quest" className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2.5 text-sm transition-colors">
+              Post a job — free
+            </a>
+            <a href="/questboard" className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 hover:border-amber-400 text-amber-300 px-5 py-2.5 text-sm font-semibold transition-colors">
+              Browse jobs
+            </a>
+          </div>
+        </div>
+
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-amber-400 mb-2">For workers</h2>
+          <p className="text-gray-400">Commission only when you complete a quest. Lower rates as you level up.</p>
         </div>
 
         {/* Pricing Cards */}

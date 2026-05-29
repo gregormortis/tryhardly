@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { MapPin, Clock, AlertTriangle, Search, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -192,9 +194,11 @@ interface QuestCardProps {
   quest: Quest;
   onClaim: (quest: Quest) => void;
   isNew: boolean;
+  isAuthenticated: boolean;
 }
 
-function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
+function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
+  const router = useRouter();
   const [hovered, setHovered]   = useState(false);
   const [claimed, setClaimed]   = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -203,6 +207,11 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
   function handleClaim(e: React.MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
     if (claimed || claiming) return;
+    if (!isAuthenticated) {
+      const redirect = encodeURIComponent(`/questboard/${quest.id}`);
+      router.push(`/auth/register?redirect=${redirect}`);
+      return;
+    }
     setClaiming(true);
     setTimeout(() => {
       setClaiming(false);
@@ -220,7 +229,7 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={clsx(
-        'relative flex items-center gap-4 rounded-lg border px-5 py-4 cursor-pointer transition-all duration-200 overflow-hidden',
+        'relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-lg border px-4 sm:px-5 py-4 cursor-pointer transition-all duration-200 overflow-hidden',
         hovered ? 'bg-white/[0.04] border-amber-500/35' : 'bg-white/[0.02] border-white/[0.07]',
         isNew && 'animate-[slideIn_0.35s_ease_both]',
       )}
@@ -234,40 +243,42 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
         }}
       />
 
-      <div
-        className="flex-shrink-0 flex items-center justify-content-center w-10 h-10 rounded-md text-lg"
-        style={{ background: tier.iconBg, border: `1px solid ${tier.accentColor}28`, color: tier.accentColor }}
-      >
-        <span className="flex items-center justify-center w-full h-full">◈</span>
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-          <span className="font-semibold text-[13px] text-stone-100 truncate max-w-[340px]">
-            {quest.title}
-          </span>
-          {quest.urgent && <UrgentBadge />}
+      <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+        <div
+          className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-md text-lg"
+          style={{ background: tier.iconBg, border: `1px solid ${tier.accentColor}28`, color: tier.accentColor }}
+        >
+          <span className="flex items-center justify-center w-full h-full">◈</span>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <TierBadge tier={quest.tier} />
-          <span className="font-mono text-[11px] text-stone-500 flex items-center gap-1">
-            <MapPin size={10} className="inline" />
-            {locationLabel}
-          </span>
-          <span className="font-mono text-[11px] text-stone-600 flex items-center gap-1">
-            <Clock size={10} className="inline" />
-            {timeAgo(quest.posted)}
-          </span>
-          {quest.tools.map((t) => (
-            <span key={t} className="font-mono text-[10px] text-stone-600 bg-white/[0.04] border border-white/[0.07] rounded px-1.5 py-0.5">
-              {t}
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2 mb-1.5 flex-wrap">
+            <span className="font-semibold text-[13px] text-stone-100 break-words line-clamp-2 leading-snug">
+              {quest.title}
             </span>
-          ))}
+            {quest.urgent && <UrgentBadge />}
+          </div>
+          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
+            <TierBadge tier={quest.tier} />
+            <span className="font-mono text-[11px] text-stone-500 flex items-center gap-1 break-words">
+              <MapPin size={10} className="inline shrink-0" />
+              <span className="break-words">{locationLabel}</span>
+            </span>
+            <span className="font-mono text-[11px] text-stone-600 flex items-center gap-1">
+              <Clock size={10} className="inline shrink-0" />
+              {timeAgo(quest.posted)}
+            </span>
+            {quest.tools.map((t) => (
+              <span key={t} className="font-mono text-[10px] text-stone-600 bg-white/[0.04] border border-white/[0.07] rounded px-1.5 py-0.5">
+                {t}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <div className="text-right">
+      <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 w-full sm:w-auto">
+        <div className="text-left sm:text-right">
           <div className="font-bold text-xl text-amber-400 leading-none">
             {payDisplay(quest.pay, quest.payType)}
           </div>
@@ -279,6 +290,7 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
         <button
           onClick={handleClaim}
           disabled={claimed}
+          title={isAuthenticated ? 'Claim this quest' : 'Sign in or create an account to apply'}
           className={clsx(
             'font-mono text-[11px] font-semibold tracking-widest px-4 py-2 rounded border transition-all duration-200 min-w-[108px] text-center',
             claimed
@@ -288,7 +300,11 @@ function QuestCard({ quest, onClaim, isNew }: QuestCardProps) {
                 : 'text-amber-400 border-amber-500/50 hover:bg-amber-400/10 cursor-pointer',
           )}
         >
-          {claimed ? '✓ CLAIMED' : claiming ? 'CLAIMING…' : 'CLAIM QUEST'}
+          {claimed
+            ? '✓ CLAIMED'
+            : claiming
+              ? 'CLAIMING…'
+              : isAuthenticated ? 'CLAIM QUEST' : 'SIGN IN TO APPLY'}
         </button>
       </div>
     </div>
@@ -307,6 +323,8 @@ function StatPill({ value, label }: { value: string; label: string }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function QuestBoard() {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeSort, setActiveSort]         = useState<SortKey>('newest');
   const [search, setSearch]                 = useState('');
@@ -377,8 +395,8 @@ export default function QuestBoard() {
     <div className="min-h-screen bg-zinc-950 text-stone-400">
 
       <div className="border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-8">
-          <div className="flex items-center justify-between py-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8">
+          <div className="flex items-center justify-between gap-3 py-4 flex-wrap">
             <div className="flex items-center gap-3">
               <span className="font-bold text-xl text-stone-100 tracking-tight">TryHardly</span>
               <span className="font-mono text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-sm px-2 py-0.5 tracking-widest">
@@ -401,20 +419,20 @@ export default function QuestBoard() {
             </a>
           </div>
 
-          <div className="flex border-t border-white/[0.04]">
+          <div className="flex flex-wrap items-center border-t border-white/[0.04]">
             <StatPill value="14,280" label="Completed"   />
             <StatPill value="4.91★"  label="Avg rating"  />
-            <StatPill value="3,840"  label="Adventurers" />
+            <StatPill value="3,840"  label="Workers" />
             <StatPill value="180+"   label="Cities"      />
             <div className="flex-1" />
-            <div className="flex items-center font-mono text-[10px] text-stone-700 tracking-widest py-2">
+            <div className="hidden sm:flex items-center font-mono text-[10px] text-stone-700 tracking-widest py-2">
               THE WORK AI CANNOT DO
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-8 py-7">
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-7">
 
         <div className="flex items-center gap-3 mb-5 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
@@ -488,6 +506,7 @@ export default function QuestBoard() {
                 quest={quest}
                 onClaim={handleClaim}
                 isNew={newIds.includes(quest.id)}
+                isAuthenticated={isAuthenticated}
               />
             ))
           )}

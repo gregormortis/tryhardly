@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth';
 
 const CLASSES = [
-  { value: 'WARRIOR', label: '⚔️ Warrior', desc: 'Developer / Engineer' },
-  { value: 'MAGE', label: '📜 Mage', desc: 'Designer / Creative' },
-  { value: 'ROGUE', label: '🗡️ Rogue', desc: 'Writer / Content' },
-  { value: 'CLERIC', label: '✨ Cleric', desc: 'Consultant / Coach' },
+  { value: 'WARRIOR', label: '🛠️ Hands-on Helper / Builder', desc: 'Yardwork, moving, handyman, hauling' },
+  { value: 'MAGE', label: '🎨 Creative Pro', desc: 'Designer, photographer, creative work' },
+  { value: 'ROGUE', label: '✍️ Writer / Errands', desc: 'Writing, content, errands & delivery' },
+  { value: 'CLERIC', label: '💼 Consultant / Coach', desc: 'Advisory, tutoring, professional help' },
 ];
 
 export default function RegisterPage() {
@@ -37,8 +37,8 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-amber-400 mb-2">🗡️ Begin Your Quest</h1>
-          <p className="text-gray-400">Create your adventurer account</p>
+          <h1 className="text-3xl font-bold text-amber-400 mb-2">Create your account</h1>
+          <p className="text-gray-400">Join TryHardly to post jobs or earn from local gigs</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
           {error && (
@@ -54,7 +54,7 @@ export default function RegisterPage() {
                 value={form.username}
                 onChange={e => setForm({ ...form, username: e.target.value })}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="AwesomeAdventurer"
+                placeholder="yourname"
                 required
               />
             </div>
@@ -65,7 +65,7 @@ export default function RegisterPage() {
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="you@email.com"
+                placeholder="your@email.com"
                 required
               />
             </div>
@@ -82,7 +82,7 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Adventurer Class</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">What kind of work do you do?</label>
               <div className="grid grid-cols-2 gap-2">
                 {CLASSES.map(cls => (
                   <button
