@@ -40,21 +40,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
     const stored = localStorage.getItem('token');
     if (stored) {
       setToken(stored);
-      fetchCurrentUser(stored);
+      fetchCurrentUser();
     } else {
       setLoading(false);
     }
   }, []);
 
-  async function fetchCurrentUser(t?: string) {
+  async function fetchCurrentUser() {
     try {
-      const data = await api.get<{ user: User }>('/auth/me');
-      setUser(data.user);
+      // /auth/me returns the user object directly; /users/me wraps it as { user }.
+      // Accept either shape so a backend change can't silently log users out.
+      const data = await api.get<User | { user: User }>('/auth/me');
+      const u = (data as { user?: User })?.user ?? (data as User);
+      if (u && u.id) {
+        setUser(u);
+      } else {
+        throw new Error('Invalid /auth/me payload');
+      }
     } catch {
-      localStorage.removeItem('token');
+      if (typeof window !== 'undefined') localStorage.removeItem('token');
       setToken(null);
       setUser(null);
     } finally {

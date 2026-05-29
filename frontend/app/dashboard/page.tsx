@@ -32,10 +32,15 @@ export default function DashboardPage() {
       setDataLoading(true);
       try {
         const [questsRes, applicationsRes] = await Promise.all([
-          api.get<{ quests: Quest[] }>('/quests?status=OPEN&limit=50').catch(() => ({ quests: [] })),
+          api
+            .get<{ data?: Quest[]; quests?: Quest[] }>('/quests?mine=true&status=any&limit=50')
+            .catch(() => ({ data: [], quests: [] })),
           api.get<Application[]>('/users/me/applications').catch(() => []),
         ]);
-        const postedQuests = (questsRes.quests || []).filter(
+        const rawQuests = questsRes.data ?? questsRes.quests ?? [];
+        // Belt-and-braces filter: if backend ignored `mine=true` (older deploys),
+        // still narrow to the user's own posted quests client-side.
+        const postedQuests = rawQuests.filter(
           (q: Quest) => q.questGiverId === user.id || q.questGiver?.id === user.id
         );
         setData({

@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/authMiddleware';
+import { authenticate, optionalAuth } from '../middleware/authMiddleware';
 import { getQuests, getQuestById, createQuest, updateQuest, deleteQuest, completeQuest } from '../controllers/questController';
 import { applyToQuest, getQuestApplications } from '../controllers/applicationController';
 
 const router = Router();
 
-router.get('/', getQuests);
+router.get('/', optionalAuth, getQuests);
 router.get('/:id', getQuestById);
 router.post('/', authenticate, createQuest);
 router.put('/:id', authenticate, updateQuest);
