@@ -76,7 +76,9 @@ export const getOnboardingLink = async (
       return;
     }
 
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:3000')
+      .split(',')[0]
+      .trim();
     const refreshUrl = `${baseUrl}/payments/onboarding/refresh`;
     const returnUrl = `${baseUrl}/payments/onboarding/complete`;
 

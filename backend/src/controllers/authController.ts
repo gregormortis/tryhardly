@@ -24,7 +24,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       data: {
         email,
         username,
-        displayName,
+        displayName: displayName || username,
         passwordHash,
         adventurerClass: adventurerClass || 'WARRIOR',
       },
