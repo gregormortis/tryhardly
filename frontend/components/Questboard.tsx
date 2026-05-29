@@ -113,7 +113,8 @@ function minutesSince(iso: string): number {
 }
 
 // PostQuestForm prepends "Location: <neighborhood>, <city> · Pay: $<reward> hourly|flat"
-// to the description. Parse it here so cards can show the same info.
+// to the description. Starter/remote quests may use "Location: Online / Remote · Pay: ..."
+// instead. Parse both shapes so cards never fall back to "Location TBD" when a label exists.
 function parseLocationLine(description?: string): {
   neighborhood: string;
   city: string;
@@ -123,11 +124,13 @@ function parseLocationLine(description?: string): {
   const fallback = { neighborhood: '', city: '', payType: 'flat' as PayType, bodyText: description ?? '' };
   if (!description) return fallback;
   const firstLine = description.split('\n', 1)[0] ?? '';
-  const match = firstLine.match(/^Location:\s*([^,]+),\s*([^·]+?)\s*·\s*Pay:\s*\$[^\s]+\s*(\/?\s*hour|hourly|flat)/i);
+  const match = firstLine.match(/^Location:\s*(.+?)\s*·\s*Pay:\s*(?:\$[^\s]+\s*)?(?:listed reward\s*)?(\/?\s*hour|hourly|flat)?/i);
   if (!match) return fallback;
-  const neighborhood = match[1].trim();
-  const city = match[2].trim();
-  const payType: PayType = /hour/i.test(match[3]) ? 'hourly' : 'flat';
+  const location = match[1].trim();
+  const [neighborhoodPart, ...cityParts] = location.split(',');
+  const neighborhood = neighborhoodPart.trim();
+  const city = cityParts.join(',').trim();
+  const payType: PayType = /hour/i.test(match[2] ?? '') ? 'hourly' : 'flat';
   const body = description.replace(firstLine, '').replace(/^\n+/, '');
   return { neighborhood, city, payType, bodyText: body };
 }
