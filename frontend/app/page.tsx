@@ -59,7 +59,7 @@ export default function HomePage() {
           Hire verified local workers for real paid jobs — escrow-protected, no middlemen.
         </p>
         <p className="mx-auto max-w-xl text-sm text-zinc-500 mb-8">
-          Post a job in minutes, or browse paid work in your neighborhood this week.
+          Post a job in minutes, or browse starter quests as new local listings come online.
         </p>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-6">
