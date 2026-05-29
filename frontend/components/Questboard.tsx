@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Clock, AlertTriangle, Search, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -330,18 +330,9 @@ export default function QuestBoard() {
   const [search, setSearch]                 = useState('');
   const [claimedIds, setClaimedIds]         = useState<string[]>([]);
   const [newIds]                            = useState<string[]>([]);
-  const [liveCount, setLiveCount]           = useState(1809);
   const [quests, setQuests]                 = useState<Quest[]>([]);
   const [loading, setLoading]               = useState(true);
   const [error, setError]                   = useState<string | null>(null);
-  const tickRef                             = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    tickRef.current = setInterval(() => {
-      setLiveCount((n) => n + Math.floor(Math.random() * 3));
-    }, 4000);
-    return () => { if (tickRef.current) clearInterval(tickRef.current); };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -407,7 +398,7 @@ export default function QuestBoard() {
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span className="font-mono text-[11px] text-stone-600">
-                <span className="text-stone-100 font-semibold">{liveCount.toLocaleString()}</span> quests live
+                <span className="text-stone-100 font-semibold">{quests.length.toLocaleString()}</span> starter quests live
               </span>
             </div>
 
@@ -420,10 +411,10 @@ export default function QuestBoard() {
           </div>
 
           <div className="flex flex-wrap items-center border-t border-white/[0.04]">
-            <StatPill value="14,280" label="Completed"   />
-            <StatPill value="4.91★"  label="Avg rating"  />
-            <StatPill value="3,840"  label="Workers" />
-            <StatPill value="180+"   label="Cities"      />
+            <StatPill value={quests.length.toLocaleString()} label="Open quests" />
+            <StatPill value="Beta"  label="Launch stage" />
+            <StatPill value="2"  label="Guilds" />
+            <StatPill value="Local" label="Focus" />
             <div className="flex-1" />
             <div className="hidden sm:flex items-center font-mono text-[10px] text-stone-700 tracking-widest py-2">
               THE WORK AI CANNOT DO
@@ -525,7 +516,7 @@ export default function QuestBoard() {
             © TRYHARDLY.COM · LOCAL WORK · REAL PEOPLE
           </span>
           <div className="flex gap-5">
-            {['Post a Quest', 'Become an Adventurer', 'How it Works', 'Pricing'].map((link) => (
+            {['Post a Quest', 'Find Work', 'How it Works', 'Pricing'].map((link) => (
               <span key={link} className="font-mono text-[10px] text-stone-700 cursor-pointer hover:text-stone-500 tracking-wide transition-colors">
                 {link}
               </span>

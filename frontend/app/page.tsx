@@ -4,19 +4,19 @@ import Link from 'next/link';
 import { ArrowRight, Briefcase, MapPin, Shield, Star, Users, Wrench, Hammer, Check, Banknote } from 'lucide-react';
 
 const stats = [
-  { value: '$2.4M+', label: 'Paid to local workers' },
-  { value: '12,400+', label: 'Jobs completed' },
-  { value: '4.9', label: 'Average rating' },
-  { value: '180+', label: 'Cities active' },
+  { value: 'Early', label: 'Access launch' },
+  { value: '3', label: 'Starter quests live' },
+  { value: 'Escrow', label: 'Payment-ready flow' },
+  { value: 'Local', label: 'Built for neighborhood work' },
 ];
 
 const categories = [
-  { name: 'Lawn & Yard', icon: Hammer, jobs: '840 open' },
-  { name: 'Moving Help', icon: Briefcase, jobs: '320 open' },
-  { name: 'Handyman', icon: Wrench, jobs: '1,120 open' },
-  { name: 'Cleaning', icon: Star, jobs: '670 open' },
-  { name: 'Delivery & Errands', icon: MapPin, jobs: '410 open' },
-  { name: 'Assembly & Install', icon: Hammer, jobs: '290 open' },
+  { name: 'Lawn & Yard', icon: Hammer, jobs: 'Coming soon' },
+  { name: 'Moving Help', icon: Briefcase, jobs: 'Coming soon' },
+  { name: 'Handyman', icon: Wrench, jobs: 'Coming soon' },
+  { name: 'Cleaning', icon: Star, jobs: 'Coming soon' },
+  { name: 'Delivery & Errands', icon: MapPin, jobs: 'Coming soon' },
+  { name: 'Assembly & Install', icon: Hammer, jobs: 'Coming soon' },
 ];
 
 const howItWorks = [
@@ -26,12 +26,12 @@ const howItWorks = [
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Escrow Protection', desc: 'Funds held until work is verified complete.' },
-  { icon: Star, title: 'Verified Reviews', desc: 'Real ratings from real completed jobs.' },
-  { icon: Users, title: 'ID Verified Workers', desc: 'Background checks on every professional.' },
-  { icon: Banknote, title: 'Fast Payouts', desc: 'Workers paid within 24 hours of completion.' },
-  { icon: Check, title: 'Satisfaction Guarantee', desc: 'Not happy? We make it right.' },
-  { icon: MapPin, title: 'Truly Local', desc: 'Workers in your neighborhood, not across town.' },
+  { icon: Shield, title: 'Escrow-Ready Payments', desc: 'Built for funds to be held until work is verified complete.' },
+  { icon: Star, title: 'Structured Reviews', desc: 'Reviews and work history are part of the marketplace flow.' },
+  { icon: Users, title: 'Profile Verification', desc: 'Profiles and reviews designed for trust from day one.' },
+  { icon: Banknote, title: 'Clear Rewards', desc: 'Every quest shows the reward before anyone applies.' },
+  { icon: Check, title: 'Simple Job Flow', desc: 'Post the work, review interest, and manage it in one place.' },
+  { icon: MapPin, title: 'Local First', desc: 'Built for neighborhood work, errands, services, and hands-on help.' },
 ];
 
 export default function HomePage() {
@@ -165,7 +165,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-3xl px-6 py-20 text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Ready to get something done?</h2>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400 mb-10">
-          Join thousands of homeowners and workers trading real labor for real pay — in your city, this week.
+          Join the early TryHardly launch and help shape a marketplace for real local work in your city.
         </p>
         <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
           <Link
