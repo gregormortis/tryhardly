@@ -20,6 +20,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/jobs',
+        destination: '/questboard',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
