@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { DM_Mono, Syne } from 'next/font/google';
 import './globals.css';
@@ -18,12 +18,57 @@ const syne = Syne({
   variable: '--font-syne',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const title = 'TryHardly — Local gigs, real people, real pay';
+const description =
+  'Post local jobs or find paid work near you. Escrow-protected, verified local workers, no middlemen.';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: 'TryHardly',
   title: {
-    default: 'TryHardly — Local gigs, real people, real pay',
+    default: title,
     template: '%s · TryHardly',
   },
-  description: 'Post local jobs or find paid work near you. Escrow-protected, verified local workers, no middlemen.',
+  description,
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'TryHardly',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'TryHardly',
+    title,
+    description,
+    url: siteUrl,
+  },
+  twitter: {
+    card: 'summary',
+    title,
+    description,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#09090b',
+  colorScheme: 'dark',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
