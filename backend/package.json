@@ -11,6 +11,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
     "seed:prod": "ts-node prisma/seed.prod.ts",
+    "export:leads": "ts-node scripts/export-data.ts leads",
+    "export:core-data": "ts-node scripts/export-data.ts leads users quests",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch"
   },

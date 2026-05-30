@@ -1,13 +1,30 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+
+const LAST_UPDATED = 'May 30, 2026';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description:
+    'How TryHardly collects, uses, and protects your information. Plain-language privacy policy for our local services marketplace.',
+  alternates: { canonical: '/privacy' },
+};
+
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-gray-950 py-20 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-5xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
           Privacy Policy
         </h1>
-        <div className="text-gray-300 space-y-6">
-          <p className="text-sm text-gray-400">Last Updated: {new Date().toLocaleDateString()}</p>
-          
+        <div className="text-gray-300 space-y-6 leading-relaxed">
+          <p className="text-sm text-gray-400">Last Updated: {LAST_UPDATED}</p>
+          <p className="text-sm text-gray-400">
+            This plain-language policy explains what we collect and why. It is not legal
+            advice. See also our{' '}
+            <Link href="/terms" className="text-amber-400 hover:text-amber-300">Terms of Service</Link>.
+          </p>
+
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">1. Information We Collect</h2>
             <p className="mb-2">
@@ -85,9 +102,9 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. International Users</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. International Users &amp; Governing Law</h2>
             <p>
-              Your information may be transferred to and maintained on servers located outside of your country. By using Tryhardly, you consent to this transfer.
+              Your information may be transferred to and maintained on servers located outside of your country. By using Tryhardly, you consent to this transfer. This policy is governed by the laws of [STATE/COUNTRY OF INCORPORATION], and local privacy laws in your location may grant you additional rights.
             </p>
           </section>
 
@@ -103,7 +120,12 @@ export default function PrivacyPage() {
             <p>
               If you have questions about this Privacy Policy, please contact us at:
             </p>
-            <p className="mt-2">Email: privacy@tryhardly.com</p>
+            <p className="mt-2">
+              Email:{' '}
+              <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
+                support@tryhardly.com
+              </a>
+            </p>
           </section>
         </div>
       </div>

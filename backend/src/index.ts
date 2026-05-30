@@ -6,6 +6,13 @@ import dotenv from 'dotenv';
 // until after dotenv.config() has run.
 dotenv.config();
 
+// Optional error reporting (no-op unless SENTRY_DSN + @sentry/node are present).
+// Loaded after dotenv so SENTRY_DSN is available. Required here so it runs before
+// app handlers register; reportError() is a safe no-op until init completes.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { initErrorReporting } = require('./lib/errorReporting');
+void initErrorReporting();
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const app = require('./app').default as import('express').Application;
 

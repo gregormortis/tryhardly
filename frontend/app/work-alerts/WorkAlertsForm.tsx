@@ -242,6 +242,13 @@ export default function WorkAlertsForm() {
           </button>
 
           <p className="text-center text-xs text-gray-600">
+            By signing up you agree to our{' '}
+            <Link href="/terms" className="text-amber-400 hover:text-amber-300">Terms</Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="text-amber-400 hover:text-amber-300">Privacy Policy</Link>.
+          </p>
+
+          <p className="text-center text-xs text-gray-600">
             Want to apply to jobs right now?{' '}
             <Link href="/questboard" className="text-amber-400 hover:text-amber-300">
               Browse the live questboard

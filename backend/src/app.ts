@@ -14,6 +14,7 @@ import notificationRoutes from './routes/notificationRoutes';
 import adminRoutes from './routes/adminRoutes';
 import reportRoutes from './routes/reportRoutes';
 import leadRoutes from './routes/leadRoutes';
+import { reportError } from './lib/errorReporting';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -104,6 +105,8 @@ app.use((req: Request, res: Response) => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Error:', err);
+  // Optional error reporting; safe no-op unless SENTRY_DSN + @sentry/node are present.
+  reportError(err);
   res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
