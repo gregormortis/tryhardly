@@ -13,13 +13,32 @@ function dollarsToCents(amount: number | { toNumber?: () => number }): number {
 }
 
 /**
+ * Resolve the charge ID for a captured PaymentIntent.
+ *
+ * `Transfer.source_transaction` must reference a charge (`ch_...`), not a
+ * PaymentIntent (`pi_...`). After a manual-capture PaymentIntent is captured,
+ * its `latest_charge` holds the charge we draw transferred funds from.
+ */
+async function resolveChargeId(paymentIntentId: string): Promise<string> {
+  const pi = await stripeService.getPaymentIntent(paymentIntentId);
+  const latestCharge = (pi as any).latest_charge;
+  const chargeId =
+    typeof latestCharge === 'string' ? latestCharge : latestCharge?.id;
+
+  if (!chargeId) {
+    throw new Error('Escrow payment has no captured charge to transfer from');
+  }
+
+  return chargeId;
+}
+
+/**
  * Ensure a quest giver has a Stripe Customer ID.
  * Creates one if missing, saves it to the user record.
  */
 async function ensureCustomer(userId: string): Promise<string> {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-  // Check if user already has stripeCustomerId (field may not exist yet in schema)
   const stripeCustomerId = (user as any).stripeCustomerId;
   if (stripeCustomerId) {
     return stripeCustomerId;
@@ -39,11 +58,17 @@ async function ensureCustomer(userId: string): Promise<string> {
  * Initialize escrow for a quest after an application is accepted.
  *
  * Preconditions:
- * - Quest must have an assigned adventurer (takerId / assignedAdventurerId)
+ * - Quest must have an assigned adventurer (assignedAdventurerId)
  * - Adventurer must have a Stripe Connect account
  * - Quest must not already be escrowed
  *
  * Creates a manual-capture PaymentIntent and stores the ID on the quest.
+ *
+ * If the quest has NO milestones, a single default milestone for the full
+ * budget is created here. Without it, `completeQuest` would capture the
+ * quest giver's funds but transfer $0 to the adventurer (it iterates over
+ * milestones). Seeding one full-budget milestone guarantees the captured
+ * funds are paid out.
  */
 export async function initializeEscrow(questId: string): Promise<{
   paymentIntentId: string;
@@ -54,43 +79,52 @@ export async function initializeEscrow(questId: string): Promise<{
     include: {
       questGiver: true,
       assignedAdventurer: true,
+      milestones: true,
     },
   });
 
-  const poster = (quest as any).questGiver;
+  const posterId = (quest as any).questGiverId;
   const taker = (quest as any).assignedAdventurer;
-  const posterId = poster?.id || (quest as any).questGiverId;
-  const takerId = taker?.id || (quest as any).assignedAdventurerId;
+  const takerId = (quest as any).assignedAdventurerId;
 
   if (!takerId) {
     throw new Error('Quest has no assigned adventurer');
   }
 
-  // Check escrow status
   const escrowStatus = (quest as any).escrowStatus;
   if (escrowStatus && escrowStatus !== 'NONE') {
     throw new Error(`Quest escrow already initialized (status: ${escrowStatus})`);
   }
 
-  // Ensure adventurer has Stripe Connect account
-  const adventurerUser = taker || await prisma.user.findUniqueOrThrow({ where: { id: takerId } });
+  const adventurerUser =
+    taker || (await prisma.user.findUniqueOrThrow({ where: { id: takerId } }));
   const adventurerAccountId = (adventurerUser as any).stripeAccountId;
   if (!adventurerAccountId) {
     throw new Error('Adventurer has not completed Stripe onboarding');
   }
 
-  // Ensure quest giver has a Stripe Customer
   const customerId = await ensureCustomer(posterId);
 
-  // Get quest amount in cents
-  const budget = (quest as any).budget || (quest as any).reward;
+  const budget = (quest as any).reward;
   const amountCents = dollarsToCents(budget);
 
   if (amountCents <= 0) {
     throw new Error('Quest budget must be greater than zero');
   }
 
-  // Create the escrowed PaymentIntent
+  // Guarantee at least one milestone so completion pays out the full budget.
+  if (!quest.milestones || quest.milestones.length === 0) {
+    await prisma.milestone.create({
+      data: {
+        questId,
+        title: 'Quest Completion',
+        description: 'Full payout on quest completion.',
+        amount: budget,
+        status: 'PENDING',
+      },
+    });
+  }
+
   const paymentIntent = await stripeService.createEscrowPayment(
     questId,
     amountCents,
@@ -98,7 +132,6 @@ export async function initializeEscrow(questId: string): Promise<{
     adventurerAccountId
   );
 
-  // Update quest with payment info
   await prisma.quest.update({
     where: { id: questId },
     data: {
@@ -116,7 +149,8 @@ export async function initializeEscrow(questId: string): Promise<{
 /**
  * Mark a milestone as completed and release its funds to the adventurer.
  *
- * Only the quest giver can approve milestone completion.
+ * Only the quest giver can approve milestone completion. Escrow must be
+ * captured (FUNDED / PARTIALLY_RELEASED) before any transfer can occur.
  */
 export async function completeMilestone(
   milestoneId: string,
@@ -128,15 +162,14 @@ export async function completeMilestone(
   });
 
   const quest = milestone.quest;
-  const posterId = (quest as any).posterId || (quest as any).questGiverId;
+  const posterId = (quest as any).questGiverId;
 
-  // Authorization: only quest giver can release milestone funds
   if (posterId !== userId) {
     throw new Error('Only the quest giver can approve milestone completion');
   }
 
-  if (milestone.status !== 'PENDING') {
-    throw new Error(`Milestone is already ${milestone.status.toLowerCase()}`);
+  if (milestone.status === 'PAID') {
+    throw new Error('Milestone is already paid');
   }
 
   const paymentIntentId = (quest as any).paymentIntentId;
@@ -144,14 +177,12 @@ export async function completeMilestone(
     throw new Error('Quest has no escrowed payment');
   }
 
-  // Check that escrow is funded (PaymentIntent has been captured/confirmed)
   const escrowStatus = (quest as any).escrowStatus;
   if (!escrowStatus || !['FUNDED', 'PARTIALLY_RELEASED'].includes(escrowStatus)) {
     throw new Error(`Cannot release milestone: escrow status is ${escrowStatus || 'NONE'}`);
   }
 
-  // Get adventurer's Stripe account
-  const takerId = (quest as any).takerId || (quest as any).assignedAdventurerId;
+  const takerId = (quest as any).assignedAdventurerId;
   const adventurer = await prisma.user.findUniqueOrThrow({ where: { id: takerId } });
   const adventurerAccountId = (adventurer as any).stripeAccountId;
 
@@ -160,16 +191,15 @@ export async function completeMilestone(
   }
 
   const amountCents = dollarsToCents(milestone.amount);
+  const chargeId = await resolveChargeId(paymentIntentId);
 
-  // Create transfer for this milestone
   const transfer = await stripeService.releaseMilestonePayment(
     milestoneId,
     amountCents,
     adventurerAccountId,
-    paymentIntentId
+    chargeId
   );
 
-  // Update milestone status
   await prisma.milestone.update({
     where: { id: milestoneId },
     data: {
@@ -178,7 +208,6 @@ export async function completeMilestone(
     },
   });
 
-  // Check if all milestones are now paid — if so, mark quest escrow as RELEASED
   const remainingMilestones = await prisma.milestone.count({
     where: {
       questId: quest.id,
@@ -199,10 +228,12 @@ export async function completeMilestone(
 }
 
 /**
- * Complete an entire quest — captures remaining funds and releases them.
+ * Complete an entire quest — captures held funds and releases them.
  *
- * This is called when the quest giver approves the final deliverable.
- * Any unpaid milestones are marked as PAID, and remaining funds are transferred.
+ * Called when the quest giver approves the final deliverable. If escrow is
+ * still authorized (PENDING), it is captured first. Then every unpaid
+ * milestone is transferred to the adventurer. Because `initializeEscrow`
+ * guarantees at least one milestone, this always transfers > $0.
  */
 export async function completeQuest(
   questId: string,
@@ -213,7 +244,7 @@ export async function completeQuest(
     include: { milestones: true },
   });
 
-  const posterId = (quest as any).posterId || (quest as any).questGiverId;
+  const posterId = (quest as any).questGiverId;
   if (posterId !== userId) {
     throw new Error('Only the quest giver can complete the quest');
   }
@@ -223,19 +254,24 @@ export async function completeQuest(
     throw new Error('Quest has no escrowed payment');
   }
 
-  const escrowStatus = (quest as any).escrowStatus;
+  const unpaidMilestones = quest.milestones.filter((m: any) => m.status !== 'PAID');
+  if (unpaidMilestones.length === 0) {
+    throw new Error('Quest has no unpaid milestones to release');
+  }
 
-  // If escrow is still pending (authorized but not captured), capture it first
+  let escrowStatus = (quest as any).escrowStatus;
+
+  // If escrow is still authorized but not captured, capture it first.
   if (escrowStatus === 'PENDING') {
     await stripeService.capturePayment(paymentIntentId);
     await prisma.quest.update({
       where: { id: questId },
       data: { escrowStatus: 'FUNDED' } as any,
     });
+    escrowStatus = 'FUNDED';
   }
 
-  // Get adventurer's Stripe account
-  const takerId = (quest as any).takerId || (quest as any).assignedAdventurerId;
+  const takerId = (quest as any).assignedAdventurerId;
   const adventurer = await prisma.user.findUniqueOrThrow({ where: { id: takerId } });
   const adventurerAccountId = (adventurer as any).stripeAccountId;
 
@@ -243,10 +279,8 @@ export async function completeQuest(
     throw new Error('Adventurer has no Stripe account');
   }
 
-  // Pay out all unpaid milestones
-  const unpaidMilestones = quest.milestones.filter(
-    (m: any) => m.status !== 'PAID'
-  );
+  // Resolve the charge once funds are captured, then transfer each milestone.
+  const chargeId = await resolveChargeId(paymentIntentId);
 
   for (const milestone of unpaidMilestones) {
     const amountCents = dollarsToCents(milestone.amount);
@@ -255,7 +289,7 @@ export async function completeQuest(
       milestone.id,
       amountCents,
       adventurerAccountId,
-      paymentIntentId
+      chargeId
     );
 
     await prisma.milestone.update({
@@ -267,7 +301,6 @@ export async function completeQuest(
     });
   }
 
-  // Update quest to completed
   await prisma.quest.update({
     where: { id: questId },
     data: {
@@ -283,7 +316,9 @@ export async function completeQuest(
 /**
  * Cancel a quest and refund the escrowed funds.
  *
- * Only the quest giver can cancel, and only if escrow hasn't been fully released.
+ * Only the quest giver can cancel, and only if escrow hasn't been fully
+ * released. PENDING (authorized-only) intents are cancelled; captured funds
+ * are refunded.
  */
 export async function cancelQuest(
   questId: string,
@@ -293,7 +328,7 @@ export async function cancelQuest(
     where: { id: questId },
   });
 
-  const posterId = (quest as any).posterId || (quest as any).questGiverId;
+  const posterId = (quest as any).questGiverId;
   if (posterId !== userId) {
     throw new Error('Only the quest giver can cancel the quest');
   }
@@ -308,20 +343,17 @@ export async function cancelQuest(
     throw new Error('Quest has no escrowed payment to refund');
   }
 
-  // If funds were captured, issue a refund. If only authorized, cancel the PaymentIntent.
   let refundId: string;
 
   if (escrowStatus === 'FUNDED' || escrowStatus === 'PARTIALLY_RELEASED') {
     const refund = await stripeService.refundEscrow(paymentIntentId);
     refundId = refund.id;
   } else {
-    // For PENDING (authorized but not captured), cancel the intent
-    const { stripe } = await import('./stripeService');
-    const canceled = await stripe.paymentIntents.cancel(paymentIntentId);
+    // PENDING: authorized but not captured — cancel the intent.
+    const canceled = await stripeService.cancelPaymentIntent(paymentIntentId);
     refundId = `canceled_${canceled.id}`;
   }
 
-  // Update quest status
   await prisma.quest.update({
     where: { id: questId },
     data: {
@@ -339,6 +371,7 @@ export async function cancelQuest(
 export async function getEscrowStatus(questId: string): Promise<{
   questId: string;
   escrowStatus: string;
+  paymentIntentId: string | null;
   totalBudget: number;
   totalEscrowed: number;
   totalReleased: number;
@@ -347,6 +380,7 @@ export async function getEscrowStatus(questId: string): Promise<{
   milestones: Array<{
     id: string;
     title: string;
+    description: string;
     amount: number;
     status: string;
   }>;
@@ -362,15 +396,15 @@ export async function getEscrowStatus(questId: string): Promise<{
     include: { milestones: true },
   });
 
-  const budget = (quest as any).budget || (quest as any).reward;
+  const budget = (quest as any).reward;
   const budgetCents = dollarsToCents(budget);
   const escrowStatus = (quest as any).escrowStatus || 'NONE';
-  const paymentIntentId = (quest as any).paymentIntentId;
+  const paymentIntentId = (quest as any).paymentIntentId || null;
 
-  // Calculate milestone totals
   const milestoneBreakdown = quest.milestones.map((m: any) => ({
     id: m.id,
     title: m.title,
+    description: m.description,
     amount: dollarsToCents(m.amount),
     status: m.status,
   }));
@@ -382,7 +416,6 @@ export async function getEscrowStatus(questId: string): Promise<{
   const platformFeePercent = stripeService.PLATFORM_FEE_PERCENT;
   const platformFee = Math.round(budgetCents * (platformFeePercent / 100));
 
-  // Fetch live PaymentIntent status if available
   let paymentIntentInfo = null;
   if (paymentIntentId) {
     try {
@@ -394,7 +427,6 @@ export async function getEscrowStatus(questId: string): Promise<{
         amountCaptured: pi.amount_received,
       };
     } catch {
-      // PaymentIntent may have been deleted or expired
       paymentIntentInfo = null;
     }
   }
@@ -402,6 +434,7 @@ export async function getEscrowStatus(questId: string): Promise<{
   return {
     questId,
     escrowStatus,
+    paymentIntentId,
     totalBudget: budgetCents,
     totalEscrowed: paymentIntentInfo?.amount || 0,
     totalReleased,

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Quest, Application } from '@/lib/types';
+import EscrowPanel from '@/components/EscrowPanel';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   NOVICE: 'text-green-400 border-green-400',
@@ -285,6 +286,18 @@ export default function QuestDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Payment escrow — visible to the quest giver and the assigned
+                adventurer once the quest is no longer just OPEN. */}
+            {user &&
+              (isOwner || user.id === quest.assignedAdventurerId) &&
+              quest.status !== 'OPEN' && (
+                <EscrowPanel
+                  questId={quest.id}
+                  isQuestGiver={!!isOwner}
+                  questStatus={quest.status}
+                />
+              )}
           </div>
         </div>
       </div>
