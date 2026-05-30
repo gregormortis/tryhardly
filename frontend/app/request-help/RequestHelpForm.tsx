@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
+import ImageUploader from '@/components/ImageUploader';
 
 interface FormState {
   title: string;
@@ -54,6 +55,15 @@ export default function RequestHelpForm() {
 
   const update = (field: keyof FormState, value: string | boolean) =>
     setData((prev) => ({ ...prev, [field]: value }));
+
+  // Append a freshly uploaded URL to the comma-separated photoUrls field so it
+  // flows through the existing lead payload and gallery logic unchanged.
+  const appendPhotoUrl = (url: string) =>
+    setData((prev) => {
+      const existing = prev.photoUrls.trim();
+      const next = existing ? `${existing}, ${url}` : url;
+      return { ...prev, photoUrls: next.slice(0, 2000) };
+    });
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim());
   const canSubmit =
@@ -244,13 +254,19 @@ export default function RequestHelpForm() {
             </div>
 
             <div>
-              <Label>Photo links (optional)</Label>
+              <Label>Photos (optional)</Label>
+              <ImageUploader
+                multiple
+                onUploaded={appendPhotoUrl}
+                disabled={submitting}
+                className="mb-3"
+              />
               <input
                 type="text"
                 value={data.photoUrls}
                 onChange={(e) => update('photoUrls', e.target.value.slice(0, 2000))}
                 className={inputClass}
-                placeholder="Paste image URLs, separated by commas"
+                placeholder="Or paste image URLs, separated by commas"
               />
             </div>
           </div>
