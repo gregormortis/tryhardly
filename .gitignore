@@ -1,3 +1,7 @@
+# Data exports (may contain PII — never commit)
+exports/
+*.export.json
+
 # Logs
 logs
 *.log

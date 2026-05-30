@@ -1,88 +1,159 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+
+const LAST_UPDATED = 'May 30, 2026';
+const SUPPORT_EMAIL = 'support@tryhardly.com';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description:
+    'The terms that govern your use of TryHardly, a local services marketplace. Plain-language startup terms — not legal advice.',
+  alternates: { canonical: '/terms' },
+};
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-gray-950 py-20 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-5xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
           Terms of Service
         </h1>
-        <div className="text-gray-300 space-y-6">
-          <p className="text-sm text-gray-400">Last Updated: {new Date().toLocaleDateString()}</p>
-          
+        <div className="text-gray-300 space-y-6 leading-relaxed">
+          <p className="text-sm text-gray-400">Last Updated: {LAST_UPDATED}</p>
+          <p className="text-sm text-gray-400">
+            These terms are written in plain language for an early-access startup and are not
+            legal advice. By using TryHardly you agree to them, along with our{' '}
+            <Link href="/privacy" className="text-amber-400 hover:text-amber-300">Privacy Policy</Link>,{' '}
+            <Link href="/refunds" className="text-amber-400 hover:text-amber-300">Refund &amp; Dispute Policy</Link>, and{' '}
+            <Link href="/community-guidelines" className="text-amber-400 hover:text-amber-300">Community Guidelines</Link>.
+          </p>
+
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">1. Acceptance of Terms</h2>
             <p>
-              By accessing and using Tryhardly, you accept and agree to be bound by the terms and provision of this agreement.
+              By accessing or using TryHardly, you agree to be bound by these Terms. If you do
+              not agree, please do not use the service. You must be at least 18 years old to
+              use TryHardly.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">2. Use License</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">2. What TryHardly Is</h2>
             <p>
-              Permission is granted to temporarily download one copy of the materials on Tryhardly for personal, non-commercial transitory viewing only.
+              TryHardly is a marketplace that connects people who need local help (clients, or
+              &quot;quest posters&quot;) with people who can do the work (adventurers). We provide the
+              platform that helps you find each other and coordinate work. We do not employ
+              adventurers, and we are not a party to the agreements made between users.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">3. Quest Marketplace</h2>
-            <p className="mb-2">
-              Tryhardly operates as a marketplace connecting quest posters (clients) with adventurers (freelancers). We facilitate but do not employ freelancers.
-            </p>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">3. Accounts</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Quest posters are responsible for accurate quest descriptions</li>
-              <li>Adventurers must deliver work as specified in quest requirements</li>
-              <li>Payment is held in escrow until quest completion</li>
-              <li>Disputes are handled through our resolution process</li>
+              <li>You are responsible for keeping your login credentials secure.</li>
+              <li>Provide accurate information and keep it up to date.</li>
+              <li>You may also use certain features (such as posting a help request) without an account; those submissions are still governed by these Terms.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Commission Fees</h2>
-            <p>
-              Tryhardly charges commission fees based on your adventurer level:
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Payments, Escrow &amp; Fees</h2>
+            <p className="mb-2">
+              TryHardly is in early access. Some arrangements are currently made directly
+              between clients and adventurers. Card payments and an escrow service that holds
+              funds until work is approved may be rolling out and will be enabled for your
+              account when available. We will not represent a payment feature as live before
+              it is.
             </p>
-            <ul className="list-disc list-inside space-y-2 ml-4 mt-2">
-              <li>Novice (Level 1-20): 15%</li>
-              <li>Journeyman (Level 21-75): 10%</li>
-              <li>Legendary (Level 76+): 5%</li>
+            <p>
+              When platform payments are enabled, TryHardly may charge a commission on
+              completed quests. Applicable fees will be shown before you commit to a
+              transaction. Refunds and disputes are handled under our{' '}
+              <Link href="/refunds" className="text-amber-400 hover:text-amber-300">Refund &amp; Dispute Policy</Link>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Your Responsibilities</h2>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li>Quest posters must describe work accurately and pay for work delivered as agreed.</li>
+              <li>Adventurers must deliver work that matches what was agreed.</li>
+              <li>Both parties must follow our <Link href="/community-guidelines" className="text-amber-400 hover:text-amber-300">Community Guidelines</Link> and all applicable laws, licenses, and local regulations.</li>
+              <li>You are responsible for your own taxes and any required insurance or permits.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. User Conduct</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Prohibited Conduct</h2>
             <p className="mb-2">You agree not to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Post fraudulent or misleading quests</li>
-              <li>Harass or threaten other users</li>
-              <li>Attempt to circumvent our payment system</li>
-              <li>Violate any applicable laws or regulations</li>
+              <li>Post fraudulent, misleading, or illegal quests.</li>
+              <li>Harass, threaten, or discriminate against other users.</li>
+              <li>Circumvent platform payments or fees once payments are enabled.</li>
+              <li>Scrape, attack, or interfere with the platform or other users&apos; accounts.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Intellectual Property</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Intellectual Property</h2>
             <p>
-              Work products created through Tryhardly belong to the quest poster upon full payment, unless otherwise specified in the quest agreement.
+              Unless a quest agreement says otherwise, work products created through TryHardly
+              belong to the quest poster upon full payment for that work. The TryHardly name,
+              brand, and platform remain our property.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Limitation of Liability</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Disclaimers</h2>
             <p>
-              Tryhardly shall not be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of the service.
+              TryHardly is provided &quot;as is&quot; during early access. We do not guarantee that work
+              posted or performed will meet your expectations, and we do not vet every user.
+              Use good judgment, especially for in-person work.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Changes to Terms</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. Limitation of Liability</h2>
             <p>
-              We reserve the right to modify these terms at any time. Continued use of the service after changes constitutes acceptance of the new terms.
+              To the fullest extent permitted by law, TryHardly is not liable for any indirect,
+              incidental, special, or consequential damages arising from your use of the
+              service or from disputes between users.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. Contact</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. Termination</h2>
             <p>
-              For questions about these Terms of Service, please contact us at legal@tryhardly.com
+              We may suspend or terminate accounts that violate these Terms or our Community
+              Guidelines. You may stop using the service at any time.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Governing Law</h2>
+            <p>
+              These Terms are governed by the laws of [STATE/COUNTRY OF INCORPORATION], without
+              regard to conflict-of-law rules. Disputes will be handled in the courts located
+              in [JURISDICTION], unless local law requires otherwise.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">12. Changes to These Terms</h2>
+            <p>
+              We may update these Terms as the product evolves. We will update the date above
+              when we do. Continued use after changes means you accept the updated Terms.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">13. Contact</h2>
+            <p>
+              Questions about these Terms? Email{' '}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-amber-400 hover:text-amber-300">
+                {SUPPORT_EMAIL}
+              </a>
+              .
             </p>
           </section>
         </div>

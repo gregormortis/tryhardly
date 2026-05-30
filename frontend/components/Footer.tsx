@@ -106,6 +106,14 @@ export default function Footer() {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/support"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Support
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -126,6 +134,22 @@ export default function Footer() {
                   className="transition-colors hover:text-zinc-100"
                 >
                   Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/refunds"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Refunds &amp; Disputes
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/community-guidelines"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Community Guidelines
                 </Link>
               </li>
             </ul>

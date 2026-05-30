@@ -1,0 +1,50 @@
+name: Uptime Check
+
+# Low-noise production uptime probe. Runs on a schedule and on demand, and
+# fails the run (which surfaces in the Actions tab and the configured GitHub
+# notifications) if any monitored endpoint is down or returns an unexpected
+# status. It performs only safe GET requests against public surfaces — it never
+# submits leads, mutates data, or touches payment endpoints.
+
+on:
+  schedule:
+    # Every 15 minutes. Cron is UTC; minute 7 avoids the top-of-hour stampede.
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+    inputs:
+      frontend_url:
+        description: 'Override frontend base URL'
+        required: false
+      backend_url:
+        description: 'Override backend base URL'
+        required: false
+
+# Don't pile up overlapping runs; cancel an in-flight check when a newer one starts.
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  uptime:
+    name: Probe public endpoints
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run uptime check
+        env:
+          # Prefer manual-dispatch overrides, then repo/org variables, then a
+          # safe default. Set FRONTEND_URL / BACKEND_URL under
+          # Settings → Secrets and variables → Actions → Variables.
+          FRONTEND_URL: ${{ github.event.inputs.frontend_url || vars.FRONTEND_URL || 'https://tryhardly.com' }}
+          BACKEND_URL: ${{ github.event.inputs.backend_url || vars.BACKEND_URL || 'https://api.tryhardly.com' }}
+          TIMEOUT_MS: '15000'
+          RETRIES: '2'
+        run: node scripts/uptime-check.mjs
