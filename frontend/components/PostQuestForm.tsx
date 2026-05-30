@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, CheckCircle, Zap } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
+import ImageUploader from './ImageUploader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -374,9 +375,14 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <p className="font-mono text-[9px] text-stone-800 mt-1.5 text-right">{data.description.length}/1000</p>
             </div>
 
-            {/* Optional photo URL */}
+            {/* Optional photo */}
             <div>
-              <FieldLabel>Photo URL (optional)</FieldLabel>
+              <FieldLabel>Photo (optional)</FieldLabel>
+              <ImageUploader
+                onUploaded={(url) => update('photoUrl', url)}
+                disabled={submitting}
+                className="mb-3"
+              />
               <input
                 type="url"
                 value={data.photoUrl}
@@ -385,7 +391,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 className={inputCls}
               />
               <p className="font-mono text-[9px] text-stone-800 mt-1.5">
-                Link to a photo of the job (hosted elsewhere). No uploads yet.
+                Upload a photo of the job, or paste a link to one hosted elsewhere.
               </p>
               {data.photoUrl.trim() && isValidPhotoUrl(data.photoUrl.trim()) && (
                 // eslint-disable-next-line @next/next/no-img-element
