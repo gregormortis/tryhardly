@@ -6,6 +6,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import ReportButton from '@/components/ReportButton';
 
 interface Message {
   id: string;
@@ -80,9 +81,12 @@ export default function MessageThreadPage() {
         </Link>
 
         <div className="bg-gray-900 border border-gray-800 rounded-xl flex flex-col h-[70vh]">
-          <div className="px-5 py-4 border-b border-gray-800">
-            <h1 className="text-lg font-semibold text-white">Messages</h1>
-            <p className="text-xs text-gray-500">Quest conversation · text only</p>
+          <div className="px-5 py-4 border-b border-gray-800 flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-lg font-semibold text-white">Messages</h1>
+              <p className="text-xs text-gray-500">Quest conversation · text only</p>
+            </div>
+            <ReportButton targetType="USER" targetId={otherId} label="Report user" />
           </div>
 
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">

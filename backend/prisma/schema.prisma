@@ -53,9 +53,13 @@ model User {
   guildMemberships   GuildMember[]
   achievements       UserAchievement[]
   messages           Message[]
-  reviews            Review[]
+  reviews            Review[]          @relation("ReviewAuthor")
+  reviewsReceived    Review[]          @relation("ReviewSubject")
   notifications      Notification[]
   ledGuilds          Guild[]           @relation("GuildLeader")
+  passwordResetTokens PasswordResetToken[]
+  reportsFiled       Report[]          @relation("ReportsFiled")
+  reportsResolved    Report[]          @relation("ReportsResolved")
 
   @@index([email])
   @@index([username])
@@ -261,15 +265,23 @@ model Review {
   questId     String
   quest       Quest    @relation(fields: [questId], references: [id])
   reviewerId  String
-  reviewer    User     @relation(fields: [reviewerId], references: [id])
+  reviewer    User     @relation("ReviewAuthor", fields: [reviewerId], references: [id])
+
+  // The user being reviewed (counterparty on the quest). Nullable to preserve
+  // any pre-existing rows that predate this column.
+  revieweeId  String?
+  reviewee    User?    @relation("ReviewSubject", fields: [revieweeId], references: [id])
 
   rating      Int
   comment     String
 
   createdAt   DateTime @default(now())
 
+  // One review per reviewer per quest — prevents duplicate reviews.
+  @@unique([questId, reviewerId])
   @@index([questId])
   @@index([reviewerId])
+  @@index([revieweeId])
 }
 
 // ─── Achievement ─────────────────────────────────────────────────────────────
@@ -346,4 +358,75 @@ enum NotificationType {
   NEW_MESSAGE
   ACHIEVEMENT_UNLOCKED
   LEVEL_UP
+}
+
+// ─── Password Reset ──────────────────────────────────────────────────────────
+
+// Stores only a SHA-256 hash of the reset token, never the token itself, so a
+// database leak cannot be used to reset accounts. Tokens are single-use and
+// short-lived (expiry enforced at the application layer).
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Report / Dispute ────────────────────────────────────────────────────────
+
+model Report {
+  id          String       @id @default(uuid())
+
+  reporterId  String
+  reporter    User         @relation("ReportsFiled", fields: [reporterId], references: [id])
+
+  targetType  ReportTargetType
+  // Free-form id of the reported entity (quest id, user id, or message id).
+  targetId    String
+
+  reason      ReportReason
+  details     String?
+  status      ReportStatus @default(OPEN)
+
+  // Admin who resolved/dismissed the report, if any.
+  resolvedById String?
+  resolvedBy   User?       @relation("ReportsResolved", fields: [resolvedById], references: [id])
+  resolvedAt   DateTime?
+  resolutionNote String?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status])
+  @@index([targetType, targetId])
+  @@index([reporterId])
+}
+
+enum ReportTargetType {
+  QUEST
+  USER
+  MESSAGE
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  SCAM
+  INAPPROPRIATE
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
 }

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createNotification } from '../services/notificationService';
+import { sendEmail, emailTemplates } from '../services/mailerService';
 
 // A user may participate in a quest thread if they are the quest giver, the
 // assigned adventurer, or have applied to the quest. Returns the quest if the
@@ -84,6 +85,14 @@ export const sendQuestMessage = async (req: AuthRequest, res: Response): Promise
       title: 'New message',
       message: `${req.user!.username} sent you a message about "${quest.title}".`,
     });
+
+    const recipient = await prisma.user.findUnique({
+      where: { id: recipientId },
+      select: { email: true },
+    });
+    if (recipient?.email) {
+      void sendEmail(emailTemplates.newMessage(recipient.email, req.user!.username, quest.title));
+    }
 
     res.status(201).json(message);
   } catch (error) {

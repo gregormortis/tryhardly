@@ -339,12 +339,22 @@ function StatPill({ value, label }: { value: string; label: string }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function QuestBoard() {
+const VALID_CATEGORY_IDS = new Set(CATEGORIES.map((c) => c.id));
+
+export interface QuestBoardProps {
+  // SEO landing pages deep-link into a pre-filtered board.
+  initialCategory?: string;
+  initialSearch?: string;
+}
+
+export default function QuestBoard({ initialCategory, initialSearch }: QuestBoardProps = {}) {
   const { user } = useAuth();
   const isAuthenticated = !!user;
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(
+    initialCategory && VALID_CATEGORY_IDS.has(initialCategory) ? initialCategory : 'all',
+  );
   const [activeSort, setActiveSort]         = useState<SortKey>('newest');
-  const [search, setSearch]                 = useState('');
+  const [search, setSearch]                 = useState(initialSearch ?? '');
   const [claimedIds, setClaimedIds]         = useState<string[]>([]);
   const [newIds]                            = useState<string[]>([]);
   const [quests, setQuests]                 = useState<Quest[]>([]);

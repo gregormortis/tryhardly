@@ -72,7 +72,12 @@ function LoginForm() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-          <p className="mt-6 text-center text-gray-500 text-sm">
+          <p className="mt-4 text-center text-sm">
+            <Link href="/auth/forgot-password" className="text-gray-400 hover:text-amber-300">
+              Forgot your password?
+            </Link>
+          </p>
+          <p className="mt-2 text-center text-gray-500 text-sm">
             No account?{' '}
             <Link href="/auth/register" className="text-amber-400 hover:text-amber-300">
               Register here

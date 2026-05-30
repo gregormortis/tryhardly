@@ -39,6 +39,19 @@ interface AdminQuest {
   _count?: { applications: number };
 }
 
+interface AdminReport {
+  id: string;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  details?: string | null;
+  status: string;
+  resolutionNote?: string | null;
+  createdAt: string;
+  reporter?: { id: string; username: string };
+  resolvedBy?: { id: string; username: string } | null;
+}
+
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -46,6 +59,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [quests, setQuests] = useState<AdminQuest[]>([]);
+  const [reports, setReports] = useState<AdminReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -63,14 +77,16 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const [s, u, q] = await Promise.all([
+      const [s, u, q, r] = await Promise.all([
         api.get<Stats>('/admin/stats'),
         api.get<AdminUser[]>('/admin/users'),
         api.get<AdminQuest[]>('/admin/quests'),
+        api.get<AdminReport[]>('/admin/reports').catch(() => [] as AdminReport[]),
       ]);
       setStats(s);
       setUsers(u);
       setQuests(q);
+      setReports(r);
     } catch (err: any) {
       setError(err.message || 'Failed to load admin data');
     } finally {
@@ -97,6 +113,16 @@ export default function AdminPage() {
       toast.success(res.verified ? 'User verified' : 'Verification removed');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update user');
+    }
+  };
+
+  const handleResolveReport = async (id: string, status: 'RESOLVED' | 'DISMISSED' | 'REVIEWING') => {
+    try {
+      const updated = await api.put<AdminReport>(`/admin/reports/${id}`, { status });
+      setReports((prev) => prev.map((r) => (r.id === id ? { ...r, ...updated } : r)));
+      toast.success(`Report ${status.toLowerCase()}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update report');
     }
   };
 
@@ -189,6 +215,89 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Reports */}
+        <section className="mb-10">
+          <h2 className="text-lg font-semibold text-white mb-4">Reports</h2>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            {reports.length === 0 ? (
+              <p className="p-6 text-sm text-gray-500">No reports filed.</p>
+            ) : (
+              <div className="divide-y divide-gray-800">
+                {reports.map((r) => {
+                  const targetHref =
+                    r.targetType === 'QUEST'
+                      ? `/questboard/${r.targetId}`
+                      : r.targetType === 'USER'
+                        ? `/profile/${r.targetId}`
+                        : null;
+                  return (
+                    <div key={r.id} className="p-4">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{r.targetType}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">{r.reason}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              r.status === 'OPEN' ? 'bg-yellow-500/20 text-yellow-400' :
+                              r.status === 'REVIEWING' ? 'bg-blue-500/20 text-blue-400' :
+                              r.status === 'RESOLVED' ? 'bg-green-500/20 text-green-400' :
+                              'bg-gray-700 text-gray-300'
+                            }`}>
+                              {r.status}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-300 mt-2">
+                            Reported by{' '}
+                            <Link href={`/profile/${r.reporter?.username}`} className="text-amber-400 hover:text-amber-300">
+                              {r.reporter?.username || 'unknown'}
+                            </Link>{' '}
+                            · {new Date(r.createdAt).toLocaleDateString()}
+                          </p>
+                          {r.details && <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">{r.details}</p>}
+                          {targetHref ? (
+                            <Link href={targetHref} className="text-xs text-gray-500 hover:text-amber-400 mt-1 inline-block">
+                              View {r.targetType.toLowerCase()} →
+                            </Link>
+                          ) : (
+                            <p className="text-xs text-gray-600 mt-1">Target: {r.targetType} {r.targetId}</p>
+                          )}
+                          {r.resolvedBy && (
+                            <p className="text-xs text-gray-600 mt-1">Resolved by {r.resolvedBy.username}</p>
+                          )}
+                        </div>
+                        {r.status !== 'RESOLVED' && r.status !== 'DISMISSED' && (
+                          <div className="flex flex-col gap-2 flex-shrink-0">
+                            {r.status === 'OPEN' && (
+                              <button
+                                onClick={() => handleResolveReport(r.id, 'REVIEWING')}
+                                className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-blue-500 hover:text-blue-400"
+                              >
+                                Mark reviewing
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleResolveReport(r.id, 'RESOLVED')}
+                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                            >
+                              Resolve
+                            </button>
+                            <button
+                              onClick={() => handleResolveReport(r.id, 'DISMISSED')}
+                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
