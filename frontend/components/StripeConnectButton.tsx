@@ -18,14 +18,11 @@ export default function StripeConnectButton({ stripeAccountId, onboarded }: Stri
     try {
       if (!stripeAccountId) {
         // Step 1: Create connected account
-        await api.post('/api/payments/connect', {});
+        await api.post('/payments/connect', {});
       }
-      // Step 2: Get onboarding link
-      const returnUrl = `${window.location.origin}/dashboard?stripe=success`;
-      const refreshUrl = `${window.location.origin}/dashboard?stripe=refresh`;
-      const res = await api.get<{ url: string }>(
-        `/api/payments/connect/onboarding?returnUrl=${encodeURIComponent(returnUrl)}&refreshUrl=${encodeURIComponent(refreshUrl)}`
-      );
+      // Step 2: Get onboarding link. Redirect URLs are derived from FRONTEND_URL
+      // on the backend, so no query params are needed here.
+      const res = await api.get<{ url: string }>('/payments/connect/onboarding');
       window.location.href = res.url;
     } catch (err: unknown) {
       const e = err as { message?: string };

@@ -1,9 +1,73 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { X, MapPin, Clock, Users, Zap, Star, Wrench, ChevronRight } from 'lucide-react';
+import { X, MapPin, Clock, Star, Wrench, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import EscrowPanel from './EscrowPanel';
+import { api } from '../lib/api';
+
+// TODO(escrow-readiness): This modal still models a quest with mock-shaped
+// fields (tier/pay/postedBy/status:'open'|'claimed'). The canonical, fully
+// wired quest detail UI lives at app/questboard/[id]/page.tsx and renders the
+// EscrowPanel against real backend data. This modal now talks to the real API
+// via lib/api (no more non-existent /api/quests Next mock routes), but a proper
+// rewrite mapping the backend Quest shape (reward/difficulty/questGiver/
+// assignedAdventurerId/escrowStatus) is still needed for full parity.
+
+interface BackendQuest {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  reward: number;
+  xpReward: number;
+  status: string;
+  tags?: string[];
+  deadline?: string | null;
+  createdAt: string;
+  escrowStatus?: string;
+  questGiverId?: string;
+  questGiver?: { id: string; username: string; reputationScore?: number } | null;
+  _count?: { applications?: number };
+}
+
+const TIER_BY_DIFFICULTY: Record<string, TierKey> = {
+  NOVICE: 'novice',
+  APPRENTICE: 'apprentice',
+  JOURNEYMAN: 'journeyman',
+  EXPERT: 'expert',
+  MASTER: 'master',
+  LEGENDARY: 'legendary',
+};
+
+function mapBackendQuest(q: BackendQuest): Quest {
+  return {
+    id: q.id,
+    title: q.title,
+    category: q.category,
+    tier: TIER_BY_DIFFICULTY[q.difficulty] ?? 'novice',
+    city: '',
+    neighborhood: '',
+    pay: Number(q.reward) || 0,
+    payType: 'flat',
+    description: q.description,
+    xpReward: q.xpReward,
+    applicantCount: q._count?.applications ?? 0,
+    deadline: q.deadline ?? new Date().toISOString(),
+    tools: q.tags ?? [],
+    postedBy: {
+      id: q.questGiver?.id ?? q.questGiverId ?? '',
+      username: q.questGiver?.username ?? 'Quest Giver',
+      reputationScore: q.questGiver?.reputationScore ?? 0,
+      questsPosted: 0,
+      avatarInitials: (q.questGiver?.username ?? 'Q').slice(0, 2).toUpperCase(),
+    },
+    status: q.status === 'OPEN' ? 'open' : q.status === 'COMPLETED' ? 'completed' : 'claimed',
+    createdAt: q.createdAt,
+    escrowStatus: q.escrowStatus,
+  };
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,9 +204,9 @@ export default function QuestDetailModal({
     if (!questId || !isOpen) return;
     setLoading(true);
     setError(null);
-    fetch(`/api/quests/${questId}`)
-      .then((r) => { if (!r.ok) throw new Error('Quest not found'); return r.json() as Promise<Quest>; })
-      .then(setQuest)
+    api
+      .get<BackendQuest>(`/quests/${questId}`)
+      .then((q) => setQuest(mapBackendQuest(q)))
       .catch((e: unknown) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, [questId, isOpen]);
@@ -162,12 +226,10 @@ export default function QuestDetailModal({
       return;
     }
     setClaiming(true);
-    fetch(`/api/quests/${questId}/claim`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUserId }),
-    })
-      .then((r) => { if (!r.ok) throw new Error('Claim failed'); return r.json(); })
+    // Backend exposes application via POST /quests/:id/apply (there is no
+    // /claim route). lib/api attaches the auth token automatically.
+    api
+      .post(`/quests/${questId}/apply`, {})
       .then(() => setClaimed(true))
       .catch((e: unknown) => setError(errorMessage(e)))
       .finally(() => setClaiming(false));
@@ -345,7 +407,6 @@ export default function QuestDetailModal({
                   questId={quest.id}
                   isQuestGiver={currentUserId === quest.postedBy.id}
                   questStatus={quest.status}
-                  escrowStatus={quest.escrowStatus}
                 />
               </div>
             )}

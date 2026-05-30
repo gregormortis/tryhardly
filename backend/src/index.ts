@@ -1,8 +1,13 @@
 import dotenv from 'dotenv';
-import app from './app';
 
-// Load environment variables
+// Load environment variables BEFORE importing app. ES `import` statements are
+// hoisted and would otherwise run app's module-level code (CORS origins, etc.)
+// before dotenv populates process.env. Using require here defers app loading
+// until after dotenv.config() has run.
 dotenv.config();
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const app = require('./app').default as import('express').Application;
 
 const PORT = process.env.PORT || 4000;
 
