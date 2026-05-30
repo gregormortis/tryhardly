@@ -227,10 +227,24 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
     ? `${quest.neighborhood} · ${quest.city}`
     : quest.city || quest.neighborhood || 'Location TBD';
 
+  function goToDetail() {
+    router.push(`/questboard/${quest.id}`);
+  }
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={goToDetail}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          goToDetail();
+        }
+      }}
+      aria-label={`View quest: ${quest.title}`}
       className={clsx(
         'relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-lg border px-4 sm:px-5 py-4 cursor-pointer transition-all duration-200 overflow-hidden',
         hovered ? 'bg-white/[0.04] border-amber-500/35' : 'bg-white/[0.02] border-white/[0.07]',

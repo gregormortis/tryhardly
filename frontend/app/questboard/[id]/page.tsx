@@ -195,9 +195,9 @@ export default function QuestDetailPage() {
             </div>
 
             {/* Photos */}
-            {photoUrls.length > 0 && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Photos</h2>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Photos</h2>
+              {photoUrls.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {photoUrls.map((url) => (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -210,8 +210,14 @@ export default function QuestDetailPage() {
                     />
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-lg border border-dashed border-gray-700 bg-gray-800/30 px-4 py-8 text-center">
+                  <div className="text-3xl mb-2">🖼️</div>
+                  <p className="text-sm text-gray-400">No photos yet.</p>
+                  <p className="text-xs text-gray-500 mt-1">Photos can be added by URL when posting a quest.</p>
+                </div>
+              )}
+            </div>
 
             {/* Tags */}
             {skillTags.length > 0 && (
