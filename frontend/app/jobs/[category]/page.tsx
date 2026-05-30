@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { JOB_CATEGORIES, getJobCategory } from '@/lib/jobCategories';
+import { JOB_CATEGORIES, resolveJobCategory } from '@/lib/jobCategories';
 import QuestBoard from '@/components/Questboard';
 
 interface PageProps {
@@ -13,9 +12,8 @@ export function generateStaticParams() {
 }
 
 export function generateMetadata({ params }: PageProps): Metadata {
-  const cat = getJobCategory(params.category);
-  if (!cat) return { title: 'Jobs' };
-  const title = `${cat.label} — Find Local Work`;
+  const cat = resolveJobCategory(params.category);
+  const title = cat.known ? `${cat.label} — Find Local Work` : `${cat.label} — Local Quests`;
   return {
     title,
     description: `${cat.blurb} Browse and post ${cat.label.toLowerCase()} on TryHardly, a local gig board for real work.`,
@@ -29,8 +27,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
 }
 
 export default function JobCategoryPage({ params }: PageProps) {
-  const cat = getJobCategory(params.category);
-  if (!cat) notFound();
+  const cat = resolveJobCategory(params.category);
 
   return (
     <div className="bg-zinc-950">
@@ -70,8 +67,12 @@ export default function JobCategoryPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* Live, pre-filtered board for this category. */}
-      <QuestBoard initialCategory={cat.slug} />
+      {/* Known categories deep-link into a filtered board; generic slugs search
+          the board by the slug term so the page still surfaces live quests. */}
+      <QuestBoard
+        initialCategory={cat.known ? cat.slug : undefined}
+        initialSearch={cat.known ? undefined : cat.label}
+      />
 
       {/* Internal links to other categories help discovery + SEO. */}
       <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-white/[0.05]">
