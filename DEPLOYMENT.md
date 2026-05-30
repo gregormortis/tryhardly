@@ -51,6 +51,11 @@
    JWT_EXPIRES_IN=7d
    STRIPE_SECRET_KEY=sk_live_your_key
    FRONTEND_URL=https://your-vercel-app.vercel.app
+   # Email — defaults to "noop" (no emails sent) in production.
+   # To send real transactional email via Resend (https://resend.com):
+   EMAIL_PROVIDER=resend
+   RESEND_API_KEY=re_your_key
+   EMAIL_FROM=TryHardly <no-reply@your-verified-domain.com>
    ```
 7. **Add Redis** (Optional):
    - Click "+ New" > "Database" > "Redis"

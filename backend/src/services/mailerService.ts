@@ -8,8 +8,10 @@
  *   - "log" (default in dev): writes the rendered email to the logs, never sends.
  *   - "noop": silently drops the email (default in production until a real
  *     provider is wired up — avoids surprising send attempts).
+ *   - "resend": sends via the Resend HTTP API (https://resend.com). Requires
+ *     RESEND_API_KEY; falls back to the safe default provider if it's missing.
  *
- * To add a real provider later (e.g. SendGrid/Postmark/SES), implement the
+ * To add another provider later (e.g. SendGrid/Postmark/SES), implement the
  * EmailProvider interface and select it here based on EMAIL_PROVIDER. The
  * required production env vars are documented in backend/.env.example.
  */
@@ -42,18 +44,61 @@ class NoopEmailProvider implements EmailProvider {
   }
 }
 
-function selectProvider(): EmailProvider {
-  const configured = (process.env.EMAIL_PROVIDER || '').toLowerCase();
-  if (configured === 'log') return new LogEmailProvider();
-  if (configured === 'noop') return new NoopEmailProvider();
-  // Default: log in non-production (so devs see the link), noop in production.
+// Sends via the Resend HTTP API. Uses the global fetch available in Node 18+,
+// so no extra SDK dependency is required.
+class ResendEmailProvider implements EmailProvider {
+  constructor(private readonly apiKey: string) {}
+
+  async send(message: EmailMessage): Promise<void> {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM,
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
+        ...(message.html ? { html: message.html } : {}),
+      }),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Resend send failed (${res.status}): ${detail}`);
+    }
+  }
+}
+
+// The default provider when EMAIL_PROVIDER is unset: log in dev (so devs see the
+// link), noop in production (avoids surprising send attempts before a vendor is set).
+function defaultProvider(): EmailProvider {
   return process.env.NODE_ENV === 'production'
     ? new NoopEmailProvider()
     : new LogEmailProvider();
 }
 
-const provider = selectProvider();
+function selectProvider(): EmailProvider {
+  const configured = (process.env.EMAIL_PROVIDER || '').toLowerCase();
+  if (configured === 'log') return new LogEmailProvider();
+  if (configured === 'noop') return new NoopEmailProvider();
+  if (configured === 'resend') {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (apiKey) return new ResendEmailProvider(apiKey);
+    // Misconfigured: requested resend but no key. Fall back instead of crashing
+    // so transactional flows keep working; surface the reason in logs.
+    console.warn(
+      'EMAIL_PROVIDER=resend but RESEND_API_KEY is not set — falling back to the default provider.',
+    );
+    return defaultProvider();
+  }
+  return defaultProvider();
+}
+
 const FROM = process.env.EMAIL_FROM || 'TryHardly <no-reply@tryhardly.com>';
+const provider = selectProvider();
 
 // Fire-and-forget by default at the call site; sending must never break the
 // primary action. Returns a promise so callers can await when they need to.
