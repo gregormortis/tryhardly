@@ -9,6 +9,9 @@ import userRoutes from './routes/userRoutes';
 import guildRoutes from './routes/guildRoutes';
 import gamificationRoutes from './routes/gamificationRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import messageRoutes from './routes/messageRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
@@ -65,6 +68,9 @@ app.get('/', (_req: Request, res: Response) => {
       guilds: '/api/guilds',
       payments: '/api/payments',
       gamification: '/api/gamification',
+      messages: '/api/messages',
+      notifications: '/api/notifications',
+      admin: '/api/admin',
     },
   });
 });
@@ -76,6 +82,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/guilds', guildRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/gamification', gamificationRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

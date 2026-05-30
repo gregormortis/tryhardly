@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { createNotification } from '../services/notificationService';
 
 // POST /api/quests/:questId/apply
 export const applyToQuest = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -21,6 +22,13 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
     const application = await prisma.application.create({
       data: { questId, adventurerId: req.user!.id, coverLetter, proposedRate },
       include: { adventurer: { select: { id: true, username: true, avatarUrl: true, level: true } } },
+    });
+
+    await createNotification({
+      userId: quest.questGiverId,
+      type: 'QUEST_APPLICATION',
+      title: 'New application',
+      message: `${application.adventurer.username} applied to "${quest.title}".`,
     });
 
     res.status(201).json(application);
@@ -73,9 +81,44 @@ export const acceptApplication = async (req: AuthRequest, res: Response): Promis
       }),
     ]);
 
+    await createNotification({
+      userId: application.adventurerId,
+      type: 'QUEST_ACCEPTED',
+      title: 'Application accepted',
+      message: `You were accepted for "${application.quest.title}". Time to get started!`,
+    });
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to accept application' });
+  }
+};
+
+// PUT /api/applications/:id/reject
+export const rejectApplication = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const application = await prisma.application.findUnique({
+      where: { id: req.params.id },
+      include: { quest: true },
+    });
+    if (!application) { res.status(404).json({ error: 'Application not found' }); return; }
+    if (application.quest.questGiverId !== req.user!.id) { res.status(403).json({ error: 'Forbidden' }); return; }
+
+    const updated = await prisma.application.update({
+      where: { id: req.params.id },
+      data: { status: 'REJECTED' },
+    });
+
+    await createNotification({
+      userId: application.adventurerId,
+      type: 'QUEST_APPLICATION',
+      title: 'Application update',
+      message: `Your application for "${application.quest.title}" was not selected this time.`,
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reject application' });
   }
 };
 

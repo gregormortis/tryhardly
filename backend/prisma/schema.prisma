@@ -112,6 +112,7 @@ model Quest {
   applications    Application[]
   milestones      Milestone[]
   reviews         Review[]
+  messages        Message[]
 
   @@index([questGiverId])
   @@index([assignedAdventurerId])
@@ -304,6 +305,11 @@ model Message {
   sender      User     @relation(fields: [senderId], references: [id])
   recipientId String
 
+  // Optional quest link so messages can be grouped into a per-quest thread.
+  // Nullable to preserve any existing rows and direct (non-quest) messages.
+  questId     String?
+  quest       Quest?   @relation(fields: [questId], references: [id])
+
   content     String
   read        Boolean  @default(false)
 
@@ -311,6 +317,7 @@ model Message {
 
   @@index([senderId])
   @@index([recipientId])
+  @@index([questId])
 }
 
 // ─── Notification ────────────────────────────────────────────────────────────

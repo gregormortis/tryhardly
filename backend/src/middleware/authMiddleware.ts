@@ -39,6 +39,23 @@ export const authenticate = async (
   }
 };
 
+// Gate a route to ADMIN-role users. Must run after `authenticate`.
+export const requireAdmin = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (!req.user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  if (req.user.role !== 'ADMIN') {
+    res.status(403).json({ error: 'Forbidden', message: 'Admin access required' });
+    return;
+  }
+  next();
+};
+
 export const optionalAuth = async (
   req: AuthRequest,
   _res: Response,
