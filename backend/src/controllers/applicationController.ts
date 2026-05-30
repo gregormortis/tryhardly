@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createNotification } from '../services/notificationService';
+import { sendEmail, emailTemplates } from '../services/mailerService';
 
 // POST /api/quests/:questId/apply
 export const applyToQuest = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -30,6 +31,14 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
       title: 'New application',
       message: `${application.adventurer.username} applied to "${quest.title}".`,
     });
+
+    const giver = await prisma.user.findUnique({
+      where: { id: quest.questGiverId },
+      select: { email: true },
+    });
+    if (giver?.email) {
+      void sendEmail(emailTemplates.newApplication(giver.email, application.adventurer.username, quest.title));
+    }
 
     res.status(201).json(application);
   } catch (error) {
@@ -88,6 +97,14 @@ export const acceptApplication = async (req: AuthRequest, res: Response): Promis
       message: `You were accepted for "${application.quest.title}". Time to get started!`,
     });
 
+    const accepted = await prisma.user.findUnique({
+      where: { id: application.adventurerId },
+      select: { email: true },
+    });
+    if (accepted?.email) {
+      void sendEmail(emailTemplates.applicationAccepted(accepted.email, application.quest.title));
+    }
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to accept application' });
@@ -115,6 +132,14 @@ export const rejectApplication = async (req: AuthRequest, res: Response): Promis
       title: 'Application update',
       message: `Your application for "${application.quest.title}" was not selected this time.`,
     });
+
+    const rejected = await prisma.user.findUnique({
+      where: { id: application.adventurerId },
+      select: { email: true },
+    });
+    if (rejected?.email) {
+      void sendEmail(emailTemplates.applicationRejected(rejected.email, application.quest.title));
+    }
 
     res.json(updated);
   } catch (error) {

@@ -2,11 +2,13 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
 import { getUserProfile, getMe, updateMe, getLeaderboard } from '../controllers/userController';
 import { getMyApplications, acceptApplication, rejectApplication } from '../controllers/applicationController';
+import { getUserReviews } from '../controllers/reviewController';
 
 const router = Router();
 
 // Public
 router.get('/leaderboard', getLeaderboard);
+router.get('/:userId/reviews', getUserReviews);
 
 // Authenticated — current user
 router.get('/me', authenticate, getMe);

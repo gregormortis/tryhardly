@@ -8,6 +8,8 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Quest, Application } from '@/lib/types';
 import EscrowPanel from '@/components/EscrowPanel';
+import ReportButton from '@/components/ReportButton';
+import QuestReviews from '@/components/QuestReviews';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   NOVICE: 'text-green-400 border-green-400',
@@ -168,7 +170,10 @@ export default function QuestDetailPage() {
                 <span className={`text-xs font-medium px-2 py-1 rounded border ${difficultyColor}`}>
                   {quest.difficulty}
                 </span>
-                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">{quest.category}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">{quest.category}</span>
+                  {!isOwner && <ReportButton targetType="QUEST" targetId={quest.id} />}
+                </div>
               </div>
               <h1 className="text-3xl font-bold text-white mb-4">{quest.title}</h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
@@ -232,6 +237,16 @@ export default function QuestDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Reviews — anyone can read; participants on a completed quest can write. */}
+            <QuestReviews
+              questId={quest.id}
+              canReview={
+                !!user &&
+                quest.status === 'COMPLETED' &&
+                (user.id === quest.questGiverId || user.id === quest.assignedAdventurerId)
+              }
+            />
 
             {/* Applications (visible to quest owner) */}
             {isOwner && (

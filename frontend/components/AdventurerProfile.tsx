@@ -50,6 +50,21 @@ export interface AdventurerProfileProps {
   userId: string;
 }
 
+interface ReceivedReview {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  reviewer?: { id: string; username: string };
+  quest?: { id: string; title: string };
+}
+
+interface UserReviewsResponse {
+  reviews: ReceivedReview[];
+  averageRating: number | null;
+  reviewCount: number;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TIERS: Record<TierKey, { label: string; classes: string; avatarClasses: string; ringColor: string }> = {
@@ -224,14 +239,25 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [adventurer, setAdventurer] = useState<Adventurer | null>(null);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState<string | null>(null);
+  const [reviewData, setReviewData] = useState<UserReviewsResponse | null>(null);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError(null);
+    setReviewData(null);
     api
       .get<ApiUserProfile>(`/users/${encodeURIComponent(userId)}`)
-      .then((u) => { if (active) setAdventurer(mapProfile(u)); })
+      .then((u) => {
+        if (!active) return;
+        setAdventurer(mapProfile(u));
+        // Reviews are keyed by user id; fetch separately so the profile still
+        // renders if the reviews endpoint is empty or fails.
+        api
+          .get<UserReviewsResponse>(`/users/${encodeURIComponent(u.id)}/reviews`)
+          .then((r) => { if (active) setReviewData(r); })
+          .catch(() => { if (active) setReviewData({ reviews: [], averageRating: null, reviewCount: 0 }); });
+      })
       .catch((e: unknown) => { if (active) setError(errorMessage(e)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -374,6 +400,41 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     {adventurer.recentQuests.map((q) => (
                       <QuestHistoryCard key={q.id} quest={q} />
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Reviews received from real completed-quest counterparties */}
+              {reviewData && reviewData.reviewCount > 0 && (
+                <div>
+                  <SectionLabel>
+                    Reviews ({reviewData.reviewCount})
+                    {reviewData.averageRating != null && (
+                      <span className="text-amber-400 ml-2 normal-case tracking-normal">
+                        {reviewData.averageRating.toFixed(1)} ★
+                      </span>
+                    )}
+                  </SectionLabel>
+                  <div className="space-y-2">
+                    {reviewData.reviews.map((rev) => {
+                      const stars = Math.min(5, Math.max(1, rev.rating));
+                      return (
+                        <div key={rev.id} className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-3.5">
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="font-mono text-[11px] text-stone-400">
+                              {rev.reviewer?.username || 'Someone'}
+                            </span>
+                            <span className="font-mono text-[11px] text-amber-400">
+                              {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
+                            </span>
+                          </div>
+                          <p className="font-mono text-[12px] text-stone-500 leading-relaxed whitespace-pre-line">{rev.comment}</p>
+                          {rev.quest?.title && (
+                            <p className="font-mono text-[10px] text-stone-700 mt-1.5">on “{rev.quest.title}”</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
