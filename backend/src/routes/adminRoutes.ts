@@ -8,6 +8,7 @@ import {
   setUserVerified,
 } from '../controllers/adminController';
 import { listReports, updateReport } from '../controllers/reportController';
+import { listLeads, updateLead, convertLead } from '../controllers/leadController';
 
 const router = Router();
 
@@ -21,5 +22,8 @@ router.put('/quests/:id/cancel', cancelQuest);
 router.put('/users/:id/verify', setUserVerified);
 router.get('/reports', listReports);
 router.put('/reports/:id', updateReport);
+router.get('/leads', listLeads);
+router.put('/leads/:id', updateLead);
+router.post('/leads/:id/convert', convertLead);
 
 export default router;

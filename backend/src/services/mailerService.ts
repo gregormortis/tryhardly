@@ -165,4 +165,20 @@ export const emailTemplates = {
     );
     return { to, subject: `Update on "${questTitle}"`, text, html };
   },
+
+  jobRequestReceived(to: string, name: string, title: string): EmailMessage {
+    const { text, html } = wrap(
+      'We got your request',
+      `Thanks${name ? `, ${name}` : ''} — we received your request "${title}". We'll line up local help and follow up by email. No account needed right now; create one any time at ${APP_URL()}/auth/register to manage applicants yourself.`,
+    );
+    return { to, subject: 'Your TryHardly request was received', text, html };
+  },
+
+  workerAlertReceived(to: string, name: string): EmailMessage {
+    const { text, html } = wrap(
+      "You're on the work-alerts list",
+      `Thanks${name ? `, ${name}` : ''} — you're signed up for local work alerts. We'll email you when jobs that match come up. Want to start browsing now? See live work at ${APP_URL()}/questboard.`,
+    );
+    return { to, subject: "You're on the TryHardly work-alerts list", text, html };
+  },
 };

@@ -145,10 +145,10 @@ export default function PostJobFastLanding() {
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto">
           <Link
-            href="/post-quest"
+            href="/request-help"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
-            Post your job &mdash; free <ArrowRight className="h-4 w-4" />
+            Request help &mdash; no account needed <ArrowRight className="h-4 w-4" />
           </Link>
           <a
             href="#how-it-works"
@@ -207,10 +207,10 @@ export default function PostJobFastLanding() {
         </div>
         <div className="mt-12 text-center">
           <Link
-            href="/post-quest"
+            href="/request-help"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
-            Post your job &mdash; free <ArrowRight className="h-4 w-4" />
+            Request help &mdash; no account needed <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
@@ -352,10 +352,10 @@ export default function PostJobFastLanding() {
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href="/post-quest"
+              href="/request-help"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-8 py-3.5 font-semibold text-zinc-950 transition hover:bg-amber-400"
             >
-              Post your job &mdash; free <ArrowRight className="h-5 w-5" />
+              Request help &mdash; no account needed <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
               href="/questboard"

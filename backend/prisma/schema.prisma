@@ -430,3 +430,66 @@ enum ReportStatus {
   RESOLVED
   DISMISSED
 }
+
+// ─── Lead ────────────────────────────────────────────────────────────────────
+// Low-friction acquisition: captures intent before account creation.
+//   - JOB_REQUEST: a poster describing work they need done (from /request-help).
+//   - WORKER_ALERT: a worker signing up for work alerts (from /work-alerts).
+// Leads are admin-triage items, NOT live quests. An admin can later convert a
+// JOB_REQUEST into a real Quest; convertedQuestId records that linkage.
+model Lead {
+  id          String     @id @default(uuid())
+
+  type        LeadType
+  status      LeadStatus @default(NEW)
+
+  // Contact info (no account required).
+  name        String
+  email       String
+  phone       String?
+
+  // Common location field (city / ZIP / neighborhood, free-form).
+  location    String?
+
+  // Type-specific structured fields. Optional so one model serves both types.
+  // JOB_REQUEST:
+  title       String?
+  description String?
+  category    String?
+  budget      String?
+  timeline    String?
+  photoUrls   String[]   @default([])
+  // WORKER_ALERT:
+  skills      String[]   @default([])
+  availability String?
+  hasTools    Boolean    @default(false)
+
+  // Catch-all for any extra fields without a migration.
+  payload     Json?
+
+  // Admin triage / conversion tracking. handledById is the admin user id
+  // (free-form, mirrors Report.targetId — avoids extra User back-relations).
+  handledById       String?
+  handledAt         DateTime?
+  adminNote         String?
+  convertedQuestId  String?
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([type, status])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum LeadType {
+  JOB_REQUEST
+  WORKER_ALERT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  IGNORED
+}
