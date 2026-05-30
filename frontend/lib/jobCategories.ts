@@ -65,6 +65,31 @@ export function getJobCategory(slug: string): JobCategory | undefined {
   return JOB_CATEGORIES.find((c) => c.slug === slug.toLowerCase());
 }
 
+export interface ResolvedJobCategory extends JobCategory {
+  // True for the curated categories above; false for an arbitrary slug we
+  // render generically so /jobs/<anything> resolves to a real page instead
+  // of a 404. Generic pages don't claim a dedicated category — they just
+  // surface the live board, optionally searched by the slug term.
+  known: boolean;
+}
+
+// Resolve any slug to a renderable landing-page config. Known slugs keep their
+// curated copy; unknown slugs get a neutral, honest fallback that points at the
+// unfiltered board so we never advertise work types we don't actually serve.
+export function resolveJobCategory(slug: string): ResolvedJobCategory {
+  const known = getJobCategory(slug);
+  if (known) return { ...known, known: true };
+
+  const term = humanizeCity(slug);
+  return {
+    slug: slug.toLowerCase(),
+    label: term || 'Local Work',
+    blurb: 'Browse live local quests and post your own — real work from real neighbors.',
+    examples: [],
+    known: false,
+  };
+}
+
 // Turn a URL slug like "rocklin-ca" into a human label like "Rocklin Ca".
 export function humanizeCity(slug: string): string {
   return slug

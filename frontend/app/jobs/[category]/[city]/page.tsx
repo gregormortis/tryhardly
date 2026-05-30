@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { getJobCategory, humanizeCity } from '@/lib/jobCategories';
+import { resolveJobCategory, humanizeCity } from '@/lib/jobCategories';
 import QuestBoard from '@/components/Questboard';
 
 interface PageProps {
@@ -9,8 +8,7 @@ interface PageProps {
 }
 
 export function generateMetadata({ params }: PageProps): Metadata {
-  const cat = getJobCategory(params.category);
-  if (!cat) return { title: 'Jobs' };
+  const cat = resolveJobCategory(params.category);
   const city = humanizeCity(params.city);
   const title = `${cat.label} in ${city} — Local Work`;
   return {
@@ -26,8 +24,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
 }
 
 export default function JobCategoryCityPage({ params }: PageProps) {
-  const cat = getJobCategory(params.category);
-  if (!cat) notFound();
+  const cat = resolveJobCategory(params.category);
   const city = humanizeCity(params.city);
 
   return (
@@ -62,9 +59,9 @@ export default function JobCategoryCityPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* The board filters by category and searches the city string against the
-          quest's parsed location/title. */}
-      <QuestBoard initialCategory={cat.slug} initialSearch={city} />
+      {/* Known categories filter the board and search the city; generic slugs
+          search the city term so the page still surfaces live local quests. */}
+      <QuestBoard initialCategory={cat.known ? cat.slug : undefined} initialSearch={city} />
     </div>
   );
 }
