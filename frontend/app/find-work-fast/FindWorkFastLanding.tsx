@@ -151,10 +151,10 @@ export default function FindWorkFastLanding() {
             Browse starter quests <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            href="/auth/register"
+            href="/work-alerts"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-bold text-zinc-100 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
           >
-            Create worker profile
+            Get work alerts &mdash; no account
           </Link>
         </div>
         <p className="mt-4 font-mono text-[11px] text-zinc-600">
@@ -358,10 +358,10 @@ export default function FindWorkFastLanding() {
               Browse starter quests <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
-              href="/auth/register"
+              href="/work-alerts"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-8 py-3.5 font-semibold transition hover:border-amber-500/50 hover:bg-zinc-900"
             >
-              Sign up free
+              Get work alerts &mdash; no account
             </Link>
           </div>
         </div>
