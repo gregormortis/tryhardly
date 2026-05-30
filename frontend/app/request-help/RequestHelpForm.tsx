@@ -100,8 +100,8 @@ export default function RequestHelpForm() {
             &ldquo;{data.title}&rdquo; and follow up at <span className="text-gray-200">{data.email}</span>.
           </p>
           <p className="text-sm text-gray-500 mb-8">
-            No account needed right now. Want to manage applicants yourself later? Creating an account is
-            optional.
+            We also emailed you a private link to check on and update your request — no account needed.
+            Want to manage applicants yourself later? Creating an account is optional.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
