@@ -38,6 +38,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/post-job-fast"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Post your job in 60 seconds
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/pricing"
                   className="transition-colors hover:text-zinc-100"
                 >
