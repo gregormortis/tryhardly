@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TryHardly</string>
+    <string name="title_activity_main">TryHardly</string>
+    <string name="package_name">com.tryhardly.app</string>
+    <string name="custom_url_scheme">com.tryhardly.app</string>
+</resources>
