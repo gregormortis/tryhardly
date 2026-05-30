@@ -174,6 +174,17 @@ export const emailTemplates = {
     return { to, subject: 'Your TryHardly request was received', text, html };
   },
 
+  // Secure no-account manage link for a JOB_REQUEST lead. The manageUrl embeds a
+  // one-time-ish, expiring token so the requester can view/edit their submission
+  // without an account. Never logged or stored in raw form.
+  jobRequestClaimLink(to: string, name: string, title: string, manageUrl: string): EmailMessage {
+    const { text, html } = wrap(
+      'Manage your request',
+      `Hi${name ? ` ${name}` : ''} — here's your private link to check on and update your request "${title}". No account needed:\n\n${manageUrl}\n\nKeep this link private — anyone with it can view your request. It expires in 30 days. If you didn't make this request, you can ignore this email.`,
+    );
+    return { to, subject: 'Manage your TryHardly request', text, html };
+  },
+
   workerAlertReceived(to: string, name: string): EmailMessage {
     const { text, html } = wrap(
       "You're on the work-alerts list",

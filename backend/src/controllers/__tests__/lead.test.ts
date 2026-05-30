@@ -4,7 +4,13 @@
  */
 
 const mockPrisma = {
-  lead: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+  lead: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+  },
   quest: { create: jest.fn() },
   $transaction: jest.fn(),
 };
@@ -14,6 +20,7 @@ jest.mock('../../services/mailerService', () => ({
   sendEmail: jest.fn().mockResolvedValue(undefined),
   emailTemplates: {
     jobRequestReceived: jest.fn(() => ({ to: 'x', subject: 's', text: 't' })),
+    jobRequestClaimLink: jest.fn(() => ({ to: 'x', subject: 's', text: 't' })),
     workerAlertReceived: jest.fn(() => ({ to: 'x', subject: 's', text: 't' })),
   },
 }));
@@ -23,8 +30,11 @@ import {
   createWorkerAlert,
   updateLead,
   convertLead,
+  getLeadByClaimToken,
+  updateLeadByClaimToken,
+  resendClaimLink,
 } from '../leadController';
-import { sendEmail } from '../../services/mailerService';
+import { sendEmail, emailTemplates } from '../../services/mailerService';
 
 function mockRes() {
   const res: any = {};
@@ -49,7 +59,7 @@ describe('createJobRequest', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('creates a JOB_REQUEST lead and sends a confirmation', async () => {
+  it('creates a JOB_REQUEST lead, stores a hashed claim token, and sends confirmation + manage link', async () => {
     mockPrisma.lead.create.mockResolvedValue({ id: 'l1', status: 'NEW' });
     const res = mockRes();
     await createJobRequest(
@@ -61,8 +71,147 @@ describe('createJobRequest', () => {
     expect(arg.data.type).toBe('JOB_REQUEST');
     expect(arg.data.email).toBe('pat@b.com'); // normalized lowercase
     expect(arg.data.photoUrls).toEqual(['http://a', 'http://b']);
-    expect(sendEmail).toHaveBeenCalledTimes(1);
+    // A claim token hash is stored, not a raw token, and it has an expiry.
+    expect(typeof arg.data.claimTokenHash).toBe('string');
+    expect(arg.data.claimTokenHash).toHaveLength(64); // sha256 hex
+    expect(arg.data.claimTokenExpiresAt).toBeInstanceOf(Date);
+    // The raw token must never appear anywhere in the persisted payload.
+    const rawToken = (emailTemplates.jobRequestClaimLink as jest.Mock).mock.calls[0][3];
+    const manageUrl = String(rawToken);
+    const tokenFromUrl = manageUrl.split('token=')[1];
+    expect(JSON.stringify(arg.data)).not.toContain(tokenFromUrl);
+    // Both the confirmation and the secure manage link are sent.
+    expect(sendEmail).toHaveBeenCalledTimes(2);
+    expect(emailTemplates.jobRequestClaimLink).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(201);
+  });
+});
+
+describe('getLeadByClaimToken', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns 404 generic error for an unknown token', async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue(null);
+    const res = mockRes();
+    await getLeadByClaimToken({ query: { token: 'deadbeef' } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('returns 404 for an expired token', async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue({
+      id: 'l1', type: 'JOB_REQUEST', claimTokenExpiresAt: new Date(Date.now() - 1000),
+    });
+    const res = mockRes();
+    await getLeadByClaimToken({ query: { token: 'abc' } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('returns a sanitized lead and omits admin-only fields', async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue({
+      id: 'l1', type: 'JOB_REQUEST', status: 'NEW', name: 'Pat', email: 'pat@b.com',
+      phone: null, location: 'Austin', title: 'Mow lawn', description: 'big yard',
+      category: 'yard', budget: '$50', timeline: 'weekend', photoUrls: [],
+      convertedQuestId: null, createdAt: new Date(), claimedAt: null,
+      claimTokenExpiresAt: new Date(Date.now() + 1000),
+      adminNote: 'SECRET', handledById: 'admin-1', claimTokenHash: 'HASH',
+    });
+    mockPrisma.lead.update.mockResolvedValue({});
+    const res = mockRes();
+    await getLeadByClaimToken({ query: { token: 'abc' } } as any, res);
+    expect(res.json).toHaveBeenCalledTimes(1);
+    const payload = (res.json as jest.Mock).mock.calls[0][0];
+    expect(payload.lead.title).toBe('Mow lawn');
+    expect(payload.lead.adminNote).toBeUndefined();
+    expect(payload.lead.handledById).toBeUndefined();
+    expect(payload.lead.claimTokenHash).toBeUndefined();
+    // First view records claimedAt.
+    expect(mockPrisma.lead.update).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('updateLeadByClaimToken', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('refuses to edit a converted lead', async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue({
+      id: 'l1', type: 'JOB_REQUEST', status: 'CONVERTED', convertedQuestId: 'q1',
+      claimTokenExpiresAt: new Date(Date.now() + 1000),
+    });
+    const res = mockRes();
+    await updateLeadByClaimToken({ query: { token: 'abc' }, body: { phone: '555' } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(mockPrisma.lead.update).not.toHaveBeenCalled();
+  });
+
+  it('updates only the whitelisted contact/scheduling fields', async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue({
+      id: 'l1', type: 'JOB_REQUEST', status: 'NEW', convertedQuestId: null,
+      claimTokenExpiresAt: new Date(Date.now() + 1000),
+    });
+    mockPrisma.lead.update.mockResolvedValue({
+      id: 'l1', status: 'NEW', name: 'Pat', email: 'pat@b.com', phone: '555',
+      location: null, title: 't', description: null, category: null, budget: null,
+      timeline: null, photoUrls: [], convertedQuestId: null, createdAt: new Date(),
+    });
+    const res = mockRes();
+    await updateLeadByClaimToken(
+      { query: { token: 'abc' }, body: { phone: '555', status: 'CONVERTED', email: 'evil@x.com' } } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.update.mock.calls[0][0];
+    expect(arg.data.phone).toBe('555');
+    // status/email must be ignored — not editable via the public claim flow.
+    expect(arg.data.status).toBeUndefined();
+    expect(arg.data.email).toBeUndefined();
+    expect(res.json).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects when no editable fields are provided', async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue({
+      id: 'l1', type: 'JOB_REQUEST', status: 'NEW', convertedQuestId: null,
+      claimTokenExpiresAt: new Date(Date.now() + 1000),
+    });
+    const res = mockRes();
+    await updateLeadByClaimToken({ query: { token: 'abc' }, body: {} } as any, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
+describe('resendClaimLink', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns a generic message and sends no email for an unknown email', async () => {
+    mockPrisma.lead.findFirst.mockResolvedValue(null);
+    const res = mockRes();
+    await resendClaimLink({ body: { email: 'nobody@b.com' } } as any, res);
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.any(String) }),
+    );
+    expect(res.status).not.toHaveBeenCalledWith(404);
+  });
+
+  it('issues a fresh token and emails a link when a lead exists', async () => {
+    mockPrisma.lead.findFirst.mockResolvedValue({
+      id: 'l1', email: 'pat@b.com', name: 'Pat', title: 'Mow lawn',
+    });
+    mockPrisma.lead.update.mockResolvedValue({});
+    const res = mockRes();
+    await resendClaimLink({ body: { email: 'Pat@B.com' } } as any, res);
+    // A new token hash is written.
+    const arg = mockPrisma.lead.update.mock.calls[0][0];
+    expect(typeof arg.data.claimTokenHash).toBe('string');
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(emailTemplates.jobRequestClaimLink).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns generic success even for an invalid email (no enumeration)', async () => {
+    const res = mockRes();
+    await resendClaimLink({ body: { email: 'not-an-email' } } as any, res);
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.any(String) }),
+    );
   });
 });
 

@@ -474,6 +474,14 @@ model Lead {
   adminNote         String?
   convertedQuestId  String?
 
+  // No-account claim/manage link. Only a SHA-256 hash of the claim token is
+  // stored, never the raw token, so a DB leak can't be used to view/edit a lead.
+  // Used only for JOB_REQUEST leads. The token lets a requester view and lightly
+  // edit their own submission without an account; expiry is enforced in the app.
+  claimTokenHash      String?   @unique
+  claimTokenExpiresAt DateTime?
+  claimedAt           DateTime?
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
