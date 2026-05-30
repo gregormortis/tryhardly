@@ -20,6 +20,7 @@ interface FormData {
   payType: PayType;
   deadline: string;
   xpReward: number;
+  photoUrl: string;
 }
 
 export interface PostQuestFormProps {
@@ -101,12 +102,24 @@ function validate(step: number, data: FormData): string[] {
     const r = parseFloat(data.reward);
     if (!data.reward || isNaN(r) || r < 10)  errs.push('Reward must be at least $10.');
     if (!data.deadline)                      errs.push('Deadline is required.');
+    if (data.photoUrl.trim() && !isValidPhotoUrl(data.photoUrl.trim())) {
+      errs.push('Photo URL must be a valid http(s) link.');
+    }
   }
   return errs;
 }
 
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : 'Something went wrong';
+}
+
+function isValidPhotoUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -179,6 +192,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   const [data, setData] = useState<FormData>({
     title: '', category: '', city: '', neighborhood: '',
     description: '', reward: '', payType: 'flat', deadline: '', xpReward: 0,
+    photoUrl: '',
   });
 
   // Auth gate
@@ -219,7 +233,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
       const city = data.city.trim();
       const neighborhood = data.neighborhood.trim();
       const payType = data.payType;
+      const photoUrl = data.photoUrl.trim();
       const locationLine = `Location: ${neighborhood}, ${city} · Pay: $${data.reward} ${payType === 'hourly' ? '/ hour' : 'flat'}`;
+      // Photo support is URL-only (no cloud storage): the link is encoded as a
+      // `photo:<url>` tag so the detail page can render it without a schema change.
+      const tags = [city, neighborhood, payType, data.category].filter(Boolean);
+      if (photoUrl) tags.push(`photo:${photoUrl}`);
       const payload = {
         title:       data.title.trim(),
         description: `${locationLine}\n\n${data.description.trim()}`,
@@ -228,7 +247,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         reward:      parseFloat(data.reward),
         xpReward:    data.xpReward,
         deadline:    data.deadline ? new Date(`${data.deadline}T00:00:00`).toISOString() : undefined,
-        tags:        [city, neighborhood, payType, data.category].filter(Boolean),
+        tags,
       };
       const quest = await api.post<{ id: string }>('/quests', payload);
       setSubmitted(true);
@@ -353,6 +372,30 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 className={clsx(inputCls, 'resize-y min-h-[120px] leading-relaxed')}
               />
               <p className="font-mono text-[9px] text-stone-800 mt-1.5 text-right">{data.description.length}/1000</p>
+            </div>
+
+            {/* Optional photo URL */}
+            <div>
+              <FieldLabel>Photo URL (optional)</FieldLabel>
+              <input
+                type="url"
+                value={data.photoUrl}
+                onChange={(e) => update('photoUrl', e.target.value)}
+                placeholder="https://example.com/photo.jpg"
+                className={inputCls}
+              />
+              <p className="font-mono text-[9px] text-stone-800 mt-1.5">
+                Link to a photo of the job (hosted elsewhere). No uploads yet.
+              </p>
+              {data.photoUrl.trim() && isValidPhotoUrl(data.photoUrl.trim()) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={data.photoUrl.trim()}
+                  alt="Quest preview"
+                  className="mt-3 w-full max-h-48 object-cover rounded-lg border border-white/[0.08]"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
             </div>
 
             {/* Pay type */}

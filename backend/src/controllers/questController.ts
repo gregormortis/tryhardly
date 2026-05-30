@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { QuestStatus, QuestCategory } from "@prisma/client";
+import { createNotification } from "../services/notificationService";
 
 const VALID_CATEGORIES = new Set(Object.values(QuestCategory));
 const VALID_STATUSES = new Set(Object.values(QuestStatus));
@@ -185,6 +186,16 @@ export async function completeQuest(req: Request, res: Response) {
       where: { id: req.params.id },
       data: { status: QuestStatus.COMPLETED },
     });
+
+    if (quest.assignedAdventurerId) {
+      await createNotification({
+        userId: quest.assignedAdventurerId,
+        type: "QUEST_COMPLETED",
+        title: "Quest completed",
+        message: `"${quest.title}" was marked complete. Nice work, adventurer!`,
+      });
+    }
+
     res.json(updated);
   } catch (error) {
     console.error("completeQuest error:", error);

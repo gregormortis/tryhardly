@@ -28,11 +28,13 @@ export default function QuestDetailPage() {
   const [applied, setApplied] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState('');
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchQuest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [params.id, user?.id]);
 
   const fetchQuest = async () => {
     setLoading(true);
@@ -40,10 +42,16 @@ export default function QuestDetailPage() {
       const data = await api.get<Quest>(`/quests/${params.id}`);
       setQuest(data);
 
-      // Check if current user already applied
-      if (data.applications && user) {
-        const alreadyApplied = data.applications.some(app => app.adventurerId === user.id);
-        if (alreadyApplied) setApplied(true);
+      // The quest giver can load applications to manage them. Adventurers can
+      // only see their own application status, which we infer from the list
+      // the owner sees — so we just fetch when owner.
+      if (user && data.questGiverId === user.id) {
+        try {
+          const apps = await api.get<Application[]>(`/quests/${params.id}/applications`);
+          setApplications(apps);
+        } catch {
+          setApplications([]);
+        }
       }
     } catch {
       setQuest(null);
@@ -53,6 +61,32 @@ export default function QuestDetailPage() {
   };
 
   const isOwner = user && quest && quest.questGiverId === user.id;
+
+  const handleAccept = async (appId: string) => {
+    setActioningId(appId);
+    try {
+      await api.put(`/users/applications/${appId}/accept`, {});
+      toast.success('Applicant accepted. The quest is now in progress.');
+      await fetchQuest();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to accept applicant');
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const handleReject = async (appId: string) => {
+    setActioningId(appId);
+    try {
+      await api.put(`/users/applications/${appId}/reject`, {});
+      toast.success('Applicant rejected.');
+      await fetchQuest();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reject applicant');
+    } finally {
+      setActioningId(null);
+    }
+  };
 
   const handleApply = async () => {
     if (!user) {
@@ -108,6 +142,15 @@ export default function QuestDetailPage() {
     : null;
   const difficultyColor = DIFFICULTY_COLORS[quest.difficulty] || 'text-gray-400 border-gray-400';
 
+  // Photo URLs are encoded as `photo:<url>` tags (no cloud storage). Split them
+  // out so they render as images while the rest stay as skill/location tags.
+  const allTags = quest.tags || [];
+  const photoUrls = allTags
+    .filter((t) => t.startsWith('photo:'))
+    .map((t) => t.slice('photo:'.length))
+    .filter(Boolean);
+  const skillTags = allTags.filter((t) => !t.startsWith('photo:'));
+
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -151,12 +194,31 @@ export default function QuestDetailPage() {
               <div className="text-gray-300 leading-relaxed whitespace-pre-line">{quest.description}</div>
             </div>
 
-            {/* Tags */}
-            {quest.tags && quest.tags.length > 0 && (
+            {/* Photos */}
+            {photoUrls.length > 0 && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Required Skills</h2>
+                <h2 className="text-lg font-semibold text-white mb-4">Photos</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {photoUrls.map((url) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={url}
+                      src={url}
+                      alt="Quest photo"
+                      className="w-full max-h-64 object-cover rounded-lg border border-gray-800"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {skillTags.length > 0 && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Details &amp; Skills</h2>
                 <div className="flex flex-wrap gap-2">
-                  {quest.tags.map((tag: string) => (
+                  {skillTags.map((tag: string) => (
                     <span key={tag} className="px-3 py-1 bg-gray-800 text-amber-400 text-sm rounded-full border border-gray-700">
                       {tag}
                     </span>
@@ -166,35 +228,72 @@ export default function QuestDetailPage() {
             )}
 
             {/* Applications (visible to quest owner) */}
-            {isOwner && quest.applications && quest.applications.length > 0 && (
+            {isOwner && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-white mb-4">
-                  Applications ({quest.applications.length})
+                  Applications ({applications.length})
                 </h2>
-                <div className="space-y-3">
-                  {quest.applications.map((app: Application) => (
-                    <div key={app.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold text-sm">
-                          {app.adventurer?.username?.[0]?.toUpperCase() || '?'}
+                {applications.length === 0 ? (
+                  <p className="text-sm text-gray-500">No applications yet. Share your quest to attract adventurers.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {applications.map((app: Application) => (
+                      <div key={app.id} className="p-4 bg-gray-800 rounded-lg">
+                        <div className="flex items-center justify-between gap-3">
+                          <Link href={`/profile/${app.adventurer?.username}`} className="flex items-center gap-3 group">
+                            <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold text-sm">
+                              {app.adventurer?.username?.[0]?.toUpperCase() || '?'}
+                            </div>
+                            <div>
+                              <p className="text-white font-medium group-hover:text-amber-400">{app.adventurer?.username}</p>
+                              <p className="text-xs text-gray-500">
+                                Lv.{app.adventurer?.level} • {app.adventurer?.adventurerClass || 'Adventurer'}
+                              </p>
+                            </div>
+                          </Link>
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            app.status === 'ACCEPTED' ? 'bg-green-500/20 text-green-400' :
+                            app.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {app.status}
+                          </span>
                         </div>
-                        <div>
-                          <p className="text-white font-medium">{app.adventurer?.username}</p>
-                          <p className="text-xs text-gray-500">
-                            Lv.{app.adventurer?.level} • {app.adventurer?.adventurerClass || 'Adventurer'}
-                          </p>
+                        {app.coverLetter && (
+                          <p className="mt-3 text-sm text-gray-400 whitespace-pre-line">{app.coverLetter}</p>
+                        )}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {app.status === 'PENDING' && (
+                            <>
+                              <button
+                                onClick={() => handleAccept(app.id)}
+                                disabled={actioningId === app.id}
+                                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-500/90 hover:bg-green-400 text-gray-900 disabled:opacity-50"
+                              >
+                                {actioningId === app.id ? '...' : 'Accept'}
+                              </button>
+                              <button
+                                onClick={() => handleReject(app.id)}
+                                disabled={actioningId === app.id}
+                                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-50"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {app.adventurerId && (
+                            <Link
+                              href={`/messages/${quest.id}/${app.adventurerId}`}
+                              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                            >
+                              Message
+                            </Link>
+                          )}
                         </div>
                       </div>
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        app.status === 'ACCEPTED' ? 'bg-green-500/20 text-green-400' :
-                        app.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {app.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -270,7 +369,7 @@ export default function QuestDetailPage() {
             {poster && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quest Giver</h3>
-                <div className="flex items-center gap-3">
+                <Link href={`/profile/${poster.username}`} className="flex items-center gap-3 group">
                   <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold">
                     {poster.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -280,10 +379,20 @@ export default function QuestDetailPage() {
                     )}
                   </div>
                   <div>
-                    <div className="text-white font-medium">{poster.username}</div>
+                    <div className="text-white font-medium group-hover:text-amber-400">{poster.username}</div>
                     {poster.level && <div className="text-amber-400 text-xs">Level {poster.level}</div>}
                   </div>
-                </div>
+                </Link>
+
+                {/* Assigned adventurer can message the poster about the quest. */}
+                {user && quest.assignedAdventurerId === user.id && (
+                  <Link
+                    href={`/messages/${quest.id}/${poster.id}`}
+                    className="mt-4 block text-center px-3 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                  >
+                    Message quest giver
+                  </Link>
+                )}
               </div>
             )}
 

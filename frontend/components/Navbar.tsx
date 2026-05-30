@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
+import NotificationBell from "./NotificationBell";
 
 const navLinks = [
   { href: "/questboard", label: "Browse jobs" },
@@ -50,6 +51,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
+            {!loading && user && <NotificationBell />}
             {!loading &&
               (user ? (
                 <div className="relative">
@@ -80,6 +82,15 @@ export default function Navbar() {
                       >
                         Dashboard
                       </Link>
+                      {user.role === "ADMIN" && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-amber-400 hover:bg-zinc-800"
+                        >
+                          Admin
+                        </Link>
+                      )}
                       <hr className="my-1 border-zinc-800" />
                       <button
                         onClick={handleLogout}

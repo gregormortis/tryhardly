@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Star, Zap, Shield, Sword, Award, MapPin } from 'lucide-react';
+import { Zap, Shield, Sword, Award, MapPin } from 'lucide-react';
 import clsx from 'clsx';
+import { api } from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ interface Adventurer {
   totalGoldEarned: number;
   guild: Guild | null;
   memberSince: string;
+  verified: boolean;
   recentQuests: CompletedQuest[];
 }
 
@@ -80,6 +82,71 @@ function formatFullDate(iso: string): string {
 
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : 'Adventurer not found';
+}
+
+// Derive a display tier from the user's level. Mirrors the QuestDifficulty
+// ladder so the badge feels consistent across the app.
+function tierFromLevel(level: number): TierKey {
+  if (level >= 50) return 'legendary';
+  if (level >= 30) return 'master';
+  if (level >= 20) return 'expert';
+  if (level >= 10) return 'journeyman';
+  if (level >= 5) return 'apprentice';
+  return 'novice';
+}
+
+// Shape returned by GET /api/users/:username (see backend userController).
+interface ApiUserProfile {
+  id: string;
+  username: string;
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string;
+  level: number;
+  xp: number;
+  adventurerClass?: string;
+  reputationScore?: number;
+  totalQuestsCompleted?: number;
+  verified?: boolean;
+  createdAt?: string;
+  guild?: { id: string; name: string; tag?: string } | null;
+  questsCompleted?: Array<{ id: string; title: string; difficulty?: string; reward?: number }>;
+}
+
+// Map the backend profile payload to the component's view model. Fields the
+// schema does not track (per-quest city/rating, gold earned) degrade to honest
+// defaults rather than inventing data.
+function mapProfile(u: ApiUserProfile): Adventurer {
+  const level = u.level ?? 1;
+  return {
+    id: u.id,
+    username: u.displayName || u.username,
+    avatarInitials: (u.displayName || u.username || '?').slice(0, 2).toUpperCase(),
+    tier: tierFromLevel(level),
+    level,
+    xp: u.xp ?? 0,
+    xpToNextLevel: (level + 1) * 100,
+    reputationScore: u.reputationScore ?? 0,
+    bio: u.bio || '',
+    skills: u.adventurerClass ? [u.adventurerClass] : [],
+    questsCompleted: u.totalQuestsCompleted ?? 0,
+    totalGoldEarned: (u.questsCompleted ?? []).reduce((sum, q) => sum + (q.reward ?? 0), 0),
+    guild: u.guild
+      ? { id: u.guild.id, name: u.guild.name, rank: 'Member', memberCount: 0 }
+      : null,
+    memberSince: u.createdAt || new Date().toISOString(),
+    verified: !!u.verified,
+    recentQuests: (u.questsCompleted ?? []).map((q) => ({
+      id: q.id,
+      title: q.title,
+      category: '',
+      city: '',
+      reward: q.reward ?? 0,
+      xpEarned: 0,
+      completedAt: u.createdAt || new Date().toISOString(),
+      rating: Math.min(5, Math.max(1, Math.round((u.reputationScore ?? 0) / 20) || 1)),
+    })),
+  };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -159,13 +226,15 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [error,      setError]      = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
     setError(null);
-    fetch(`/api/users/${userId}`)
-      .then((r) => { if (!r.ok) throw new Error('Adventurer not found.'); return r.json() as Promise<Adventurer>; })
-      .then(setAdventurer)
-      .catch((e: unknown) => setError(errorMessage(e)))
-      .finally(() => setLoading(false));
+    api
+      .get<ApiUserProfile>(`/users/${encodeURIComponent(userId)}`)
+      .then((u) => { if (active) setAdventurer(mapProfile(u)); })
+      .catch((e: unknown) => { if (active) setError(errorMessage(e)); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [userId]);
 
   return (
@@ -227,6 +296,11 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     <span className="font-mono text-[9px] text-stone-700 bg-white/[0.04] border border-white/[0.07] rounded-sm px-2 py-0.5">
                       LVL {adventurer.level}
                     </span>
+                    {adventurer.verified && (
+                      <span className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-sky-400 bg-sky-400/10 border border-sky-400/25 rounded-sm px-2 py-0.5">
+                        <Shield size={9} /> VERIFIED
+                      </span>
+                    )}
                   </div>
 
                   <div className="font-mono text-sm text-amber-400 tracking-wide mb-2">
