@@ -46,6 +46,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/find-work-fast"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Find local work
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/pricing"
                   className="transition-colors hover:text-zinc-100"
                 >

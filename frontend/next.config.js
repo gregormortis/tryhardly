@@ -32,6 +32,11 @@ const nextConfig = {
         destination: '/post-job-fast',
         permanent: false,
       },
+      {
+        source: '/workers',
+        destination: '/find-work-fast',
+        permanent: false,
+      },
     ];
   },
 };
