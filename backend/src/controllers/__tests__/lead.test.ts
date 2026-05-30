@@ -6,11 +6,12 @@
 const mockPrisma = {
   lead: {
     create: jest.fn(),
-    findMany: jest.fn(),
+    findMany: jest.fn().mockResolvedValue([]),
     findUnique: jest.fn(),
     findFirst: jest.fn(),
     update: jest.fn(),
   },
+  leadMatchNotification: { create: jest.fn() },
   quest: { create: jest.fn() },
   $transaction: jest.fn(),
 };
@@ -22,6 +23,7 @@ jest.mock('../../services/mailerService', () => ({
     jobRequestReceived: jest.fn(() => ({ to: 'x', subject: 's', text: 't' })),
     jobRequestClaimLink: jest.fn(() => ({ to: 'x', subject: 's', text: 't' })),
     workerAlertReceived: jest.fn(() => ({ to: 'x', subject: 's', text: 't' })),
+    newLocalJobForWorker: jest.fn(() => ({ to: 'x', subject: 's', text: 't' })),
   },
 }));
 

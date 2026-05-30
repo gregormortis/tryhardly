@@ -71,6 +71,7 @@ interface AdminLead {
   hasTools?: boolean;
   adminNote?: string | null;
   convertedQuestId?: string | null;
+  workerAlertsNotified?: number;
   createdAt: string;
 }
 
@@ -322,6 +323,11 @@ export default function AdminPage() {
                                 </a>
                               ))}
                             </div>
+                          )}
+                          {isJob && typeof l.workerAlertsNotified === 'number' && l.workerAlertsNotified > 0 && (
+                            <p className="text-xs text-purple-300 mt-1">
+                              🔔 {l.workerAlertsNotified} worker alert{l.workerAlertsNotified === 1 ? '' : 's'} notified
+                            </p>
                           )}
                           {l.convertedQuestId && (
                             <Link href={`/questboard/${l.convertedQuestId}`} className="text-xs text-green-400 hover:text-green-300 mt-1 inline-block">

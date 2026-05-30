@@ -485,9 +485,46 @@ model Lead {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  // Worker-alert match notifications. A JOB_REQUEST lead is the "job" side; a
+  // WORKER_ALERT lead is the "worker" side. Both relations point at this table
+  // so we can dedupe and count notifications from either direction.
+  jobNotifications    LeadMatchNotification[] @relation("JobLeadNotifications")
+  workerNotifications LeadMatchNotification[] @relation("WorkerLeadNotifications")
+
   @@index([type, status])
   @@index([status])
   @@index([createdAt])
+}
+
+// Records that a worker-alert lead was emailed about a specific job-request lead.
+// Purely additive: backs the /work-alerts matching feature without altering any
+// existing flow. The unique [jobLeadId, workerLeadId] pair guarantees a worker
+// is never emailed twice for the same job, even under retries/races.
+model LeadMatchNotification {
+  id           String   @id @default(uuid())
+
+  jobLeadId    String
+  jobLead      Lead     @relation("JobLeadNotifications", fields: [jobLeadId], references: [id], onDelete: Cascade)
+
+  workerLeadId String
+  workerLead   Lead     @relation("WorkerLeadNotifications", fields: [workerLeadId], references: [id], onDelete: Cascade)
+
+  // Denormalized for quick audit/export without joining back to the worker lead.
+  email        String
+
+  status       LeadMatchStatus @default(SENT)
+
+  createdAt    DateTime @default(now())
+  sentAt       DateTime?
+
+  @@unique([jobLeadId, workerLeadId])
+  @@index([jobLeadId])
+  @@index([workerLeadId])
+}
+
+enum LeadMatchStatus {
+  SENT
+  FAILED
 }
 
 enum LeadType {
