@@ -192,4 +192,39 @@ export const emailTemplates = {
     );
     return { to, subject: "You're on the TryHardly work-alerts list", text, html };
   },
+
+  // Notifies a worker-alert lead about a new, matching job request. The job is an
+  // early lead (not yet a public quest), so the copy is deliberately honest: no
+  // fake urgency, no payment promises, and it's clear TryHardly will follow up.
+  newLocalJobForWorker(
+    to: string,
+    workerName: string,
+    job: {
+      title: string;
+      location?: string | null;
+      budget?: string | null;
+      timeline?: string | null;
+      category?: string | null;
+      categoryLabel?: string | null;
+    },
+  ): EmailMessage {
+    const where = job.location ? ` in ${job.location}` : '';
+    const subject = `New local job: ${job.title}${where}`;
+
+    const details = [
+      `Job: ${job.title}`,
+      job.location ? `Location: ${job.location}` : null,
+      job.categoryLabel || job.category ? `Type of work: ${job.categoryLabel || job.category}` : null,
+      job.budget ? `Budget: ${job.budget}` : null,
+      job.timeline ? `Timeline: ${job.timeline}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const { text, html } = wrap(
+      'A local job matches your work alerts',
+      `Hi${workerName ? ` ${workerName}` : ''} — a new local job request just came in that matches the work alerts you signed up for.\n\n${details}\n\nThis is an early lead, not a live posting yet. TryHardly is reviewing it and may turn it into a quest you can apply to. To browse current open work right now, visit ${APP_URL()}/questboard. You can update or pause your alerts any time at ${APP_URL()}/work-alerts.`,
+    );
+    return { to, subject, text, html };
+  },
 };

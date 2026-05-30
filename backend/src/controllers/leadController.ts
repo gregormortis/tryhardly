@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { LeadType, LeadStatus, QuestCategory, QuestDifficulty } from '@prisma/client';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendEmail, emailTemplates } from '../services/mailerService';
+import { notifyMatchingWorkers } from '../services/workerMatchService';
 
 const VALID_STATUSES = new Set(Object.values(LeadStatus));
 const VALID_TYPES = new Set(Object.values(LeadType));
@@ -157,7 +158,15 @@ export const createJobRequest = async (req: Request, res: Response): Promise<voi
         claimTokenHash: hashToken(rawClaimToken),
         claimTokenExpiresAt: new Date(Date.now() + CLAIM_TOKEN_TTL_MS),
       },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        title: true,
+        location: true,
+        category: true,
+        budget: true,
+        timeline: true,
+      },
     });
 
     // Fire-and-forget emails; sendEmail never throws and is a safe no-op when no
@@ -166,6 +175,11 @@ export const createJobRequest = async (req: Request, res: Response): Promise<voi
     void sendEmail(
       emailTemplates.jobRequestClaimLink(normalizedEmail, name, title, claimManageUrl(rawClaimToken)),
     );
+
+    // Best-effort: email worker-alert leads whose city + skills match this job.
+    // notifyMatchingWorkers never throws, so it can't block or fail the
+    // submission; if it errors internally it just logs and emails no one.
+    void notifyMatchingWorkers(lead);
 
     // Outside production, surface the manage link in logs for easy dev testing.
     if (process.env.NODE_ENV !== 'production') {
@@ -229,8 +243,16 @@ export const listLeads = async (req: AuthRequest, res: Response): Promise<void> 
       where,
       orderBy: { createdAt: 'desc' },
       take: 200,
+      // Surface how many worker-alert leads were emailed about each job request
+      // so admins can see the /work-alerts matching at work in the inbox.
+      include: { _count: { select: { jobNotifications: true } } },
     });
-    res.json(leads);
+
+    const withCounts = leads.map(({ _count, ...lead }) => ({
+      ...lead,
+      workerAlertsNotified: _count.jobNotifications,
+    }));
+    res.json(withCounts);
   } catch (error) {
     console.error('listLeads error:', error);
     res.status(500).json({ error: 'Failed to fetch leads' });
