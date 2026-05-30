@@ -27,6 +27,11 @@ const nextConfig = {
         destination: '/questboard',
         permanent: false,
       },
+      {
+        source: '/facebook',
+        destination: '/post-job-fast',
+        permanent: false,
+      },
     ];
   },
 };
