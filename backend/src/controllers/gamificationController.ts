@@ -2,9 +2,15 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { getXPProgress, xpForLevel } from '../services/xpService';
-import { getUserAchievements, getAchievementCatalog } from '../services/achievementService';
+import {
+  getUserAchievements,
+  getAchievementCatalog,
+  getPublicAchievementCatalog,
+  getEarnedAchievements,
+} from '../services/achievementService';
 import { getReputationBreakdown } from '../services/reputationService';
 import { getFullStats } from '../services/gamificationService';
+import { getLeaderboards } from '../services/leaderboardService';
 
 // ─── GET /api/gamification/xp ────────────────────────────────────────────────
 // Returns the authenticated user's XP progress.
@@ -33,15 +39,32 @@ export const getMyAchievements = async (req: AuthRequest, res: Response): Promis
 };
 
 // ─── GET /api/gamification/achievements/catalog ──────────────────────────────
-// Returns the full achievement catalog (no auth required).
+// Returns the public achievement catalog (no auth required). Recognition/trust/
+// skill achievements only — money/earnings achievements are excluded so no
+// dollar framing appears on public, Stripe-facing surfaces.
 
 export const getAchievementsCatalog = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const catalog = getAchievementCatalog();
+    const catalog = getPublicAchievementCatalog();
     res.json({ achievements: catalog, total: catalog.length });
   } catch (error) {
     console.error('getAchievementsCatalog error:', error);
     res.status(500).json({ error: 'Failed to fetch achievement catalog' });
+  }
+};
+
+// ─── GET /api/gamification/achievements/:userId/earned ────────────────────────
+// Public — returns only the achievements a user has actually earned (including
+// admin-awarded), filtered to public-safe (no earnings) achievements. An empty
+// array is an honest "none yet" state; locked achievements are never shown.
+
+export const getEarnedAchievementsForUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const earned = await getEarnedAchievements(req.params.userId);
+    res.json({ achievements: earned, total: earned.length });
+  } catch (error) {
+    console.error('getEarnedAchievementsForUser error:', error);
+    res.status(500).json({ error: 'Failed to fetch achievements' });
   }
 };
 
@@ -96,6 +119,25 @@ export const getLeaderboard = async (req: AuthRequest, res: Response): Promise<v
   } catch (error) {
     console.error('getLeaderboard error:', error);
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+};
+
+// ─── GET /api/gamification/leaderboards ──────────────────────────────────────
+// Public — quality-only leaderboards (Top Workers, Rising Workers, Skill
+// Masters, Top Guilds). Ranked by reputation, rating quality, completed jobs,
+// review volume, verified credentials, skill mastery, and guild standing —
+// never by money. Every figure is a real aggregate; sparse boards surface an
+// honest early-access state in the UI.
+
+export const getQualityLeaderboards = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { limit = '25' } = req.query;
+    const take = Math.min(100, Math.max(1, parseInt(limit as string) || 25));
+    const boards = await getLeaderboards(take);
+    res.json(boards);
+  } catch (error) {
+    console.error('getQualityLeaderboards error:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboards' });
   }
 };
 

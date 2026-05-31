@@ -2,6 +2,11 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { QuestStatus } from '@prisma/client';
+import {
+  getAchievementCatalog,
+  adminAwardAchievement,
+  adminRevokeAchievement,
+} from '../services/achievementService';
 
 // GET /api/admin/stats - high-level platform counts
 export const getStats = async (_req: AuthRequest, res: Response): Promise<void> => {
@@ -85,5 +90,52 @@ export const setUserVerified = async (req: AuthRequest, res: Response): Promise<
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update user' });
+  }
+};
+
+// GET /api/admin/achievements/catalog - full catalog (with keys) for awarding
+export const getAchievementCatalogForAdmin = async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    res.json({ achievements: getAchievementCatalog() });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch achievement catalog' });
+  }
+};
+
+// POST /api/admin/users/:id/achievements  { key } - manually award an achievement
+export const awardUserAchievement = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { key } = req.body as { key?: string };
+    if (!key || typeof key !== 'string') {
+      res.status(400).json({ error: 'An achievement key is required' });
+      return;
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.params.id }, select: { id: true } });
+    if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+
+    const awarded = await adminAwardAchievement(req.params.id, key);
+    res.json({ awarded, alreadyHad: !awarded });
+  } catch (error: any) {
+    if (typeof error?.message === 'string' && error.message.startsWith('Unknown achievement key')) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    console.error('awardUserAchievement error:', error);
+    res.status(500).json({ error: 'Failed to award achievement' });
+  }
+};
+
+// DELETE /api/admin/users/:id/achievements/:key - revoke an awarded achievement
+export const revokeUserAchievement = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const removed = await adminRevokeAchievement(req.params.id, req.params.key);
+    res.json({ revoked: removed });
+  } catch (error: any) {
+    if (typeof error?.message === 'string' && error.message.startsWith('Unknown achievement key')) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    console.error('revokeUserAchievement error:', error);
+    res.status(500).json({ error: 'Failed to revoke achievement' });
   }
 };
