@@ -246,6 +246,14 @@ export default function QuestDetailPage() {
                 quest.status === 'COMPLETED' &&
                 (user.id === quest.questGiverId || user.id === quest.assignedAdventurerId)
               }
+              // Only the quest giver rates the worker's individual skills.
+              canRateSkills={
+                !!user &&
+                quest.status === 'COMPLETED' &&
+                user.id === quest.questGiverId &&
+                !!quest.assignedAdventurerId
+              }
+              suggestedSkills={allTags.filter((t: string) => !t.startsWith('photo:'))}
             />
 
             {/* Applications (visible to quest owner) */}

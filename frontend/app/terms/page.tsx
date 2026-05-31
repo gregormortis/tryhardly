@@ -67,8 +67,9 @@ export default function TermsPage() {
               will not represent a payment feature as live before it is.
             </p>
             <p>
-              When marketplace payments are enabled, TryHardly may charge a commission on
-              completed quests. Applicable fees will be shown before you commit to a
+              When marketplace payments are enabled, TryHardly charges a flat 12% marketplace
+              fee to workers on completed paid jobs. Posting a job is free. The fee does not
+              change with rank, and applicable fees will be shown before you commit to a
               transaction. Refunds and disputes are handled under our{' '}
               <Link href="/refunds" className="text-amber-400 hover:text-amber-300">Refund &amp; Dispute Policy</Link>.
             </p>

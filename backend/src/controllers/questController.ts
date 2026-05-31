@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { QuestStatus, QuestCategory } from "@prisma/client";
 import { createNotification } from "../services/notificationService";
+import { awardCompletionXp } from "../services/progressionService";
 
 const VALID_CATEGORIES = new Set(Object.values(QuestCategory));
 const VALID_STATUSES = new Set(Object.values(QuestStatus));
@@ -182,12 +183,29 @@ export async function completeQuest(req: Request, res: Response) {
     const quest = await prisma.quest.findUnique({ where: { id: req.params.id } });
     if (!quest) return res.status(404).json({ error: "Quest not found" });
     if (quest.questGiverId !== user.id) return res.status(403).json({ error: "Forbidden" });
+    if (quest.status === QuestStatus.COMPLETED) {
+      return res.status(400).json({ error: "Quest is already completed" });
+    }
     const updated = await prisma.quest.update({
       where: { id: req.params.id },
-      data: { status: QuestStatus.COMPLETED },
+      data: { status: QuestStatus.COMPLETED, completedAt: new Date() },
     });
 
     if (quest.assignedAdventurerId) {
+      // Increment the worker's completed-jobs counter and award balanced
+      // completion XP (quality-independent portion — rating XP is layered on
+      // later when a review arrives). Additive to existing notification flow.
+      await prisma.user.update({
+        where: { id: quest.assignedAdventurerId },
+        data: { totalQuestsCompleted: { increment: 1 } },
+      });
+      try {
+        await awardCompletionXp(req.params.id);
+      } catch (e) {
+        // XP is non-critical to completion; never fail the request over it.
+        console.error("awardCompletionXp error:", e);
+      }
+
       await createNotification({
         userId: quest.assignedAdventurerId,
         type: "QUEST_COMPLETED",

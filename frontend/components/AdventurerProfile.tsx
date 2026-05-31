@@ -39,6 +39,7 @@ interface Adventurer {
   reputationScore: number; // 0–100
   bio: string;
   skills: string[];
+  favoriteSkills: string[];
   questsCompleted: number;
   totalGoldEarned: number;
   guild: Guild | null;
@@ -66,7 +67,73 @@ interface UserReviewsResponse {
   reviewCount: number;
 }
 
+// ─── Skill badges (mirrors backend skillService SkillBadge) ─────────────────────
+
+type SkillTier = 'LOCKED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+
+interface SkillBadge {
+  skillSlug: string;
+  skillName: string;
+  ratingCount: number;
+  averageRating: number;
+  tier: SkillTier;
+  next: {
+    tier: Exclude<SkillTier, 'LOCKED'>;
+    ratingsNeeded: number;
+    minAverage: number;
+    meetsAverage: boolean;
+  } | null;
+}
+
+interface SkillBadgesResponse {
+  badges: SkillBadge[];
+}
+
+// ─── Progression (mirrors backend progressionService ProgressionSummary) ────────
+
+type WorkerRank = 'NOVICE' | 'APPRENTICE' | 'JOURNEYMAN' | 'EXPERT' | 'LEGENDARY';
+
+interface ProgressionRankRow {
+  rank: WorkerRank;
+  label: string;
+  blurb: string;
+  requirements: string[];
+  achieved: boolean;
+  current: boolean;
+}
+
+interface ProgressionSummary {
+  currentRank: WorkerRank;
+  currentRankLabel: string;
+  signals: {
+    level: number;
+    xp: number;
+    completedJobs: number;
+    averageRating: number | null;
+    ratingCount: number;
+  };
+  ranks: ProgressionRankRow[];
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
+
+// Visual treatment per skill-badge tier. LOCKED renders as honest "in progress".
+const SKILL_TIER_STYLE: Record<SkillTier, { label: string; classes: string }> = {
+  LOCKED:   { label: 'In progress', classes: 'text-stone-500 bg-white/[0.03] border-white/[0.08]' },
+  BRONZE:   { label: 'Bronze',      classes: 'text-amber-600 bg-amber-600/10 border-amber-600/25' },
+  SILVER:   { label: 'Silver',      classes: 'text-stone-300 bg-stone-300/10 border-stone-300/25' },
+  GOLD:     { label: 'Gold',        classes: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/25' },
+  PLATINUM: { label: 'Platinum',    classes: 'text-cyan-300 bg-cyan-300/10 border-cyan-300/25' },
+};
+
+// Worker-rank visual accent for the progression panel.
+const RANK_ACCENT: Record<WorkerRank, string> = {
+  NOVICE:     'text-green-400 border-green-400/25 bg-green-400/[0.06]',
+  APPRENTICE: 'text-blue-400 border-blue-400/25 bg-blue-400/[0.06]',
+  JOURNEYMAN: 'text-amber-400 border-amber-400/25 bg-amber-400/[0.06]',
+  EXPERT:     'text-orange-400 border-orange-400/25 bg-orange-400/[0.06]',
+  LEGENDARY:  'text-rose-400 border-rose-400/25 bg-rose-400/[0.06]',
+};
 
 const TIERS: Record<TierKey, { label: string; classes: string; avatarClasses: string; ringColor: string }> = {
   novice:     { label: 'NOVICE',     classes: 'text-green-400 bg-green-400/10 border-green-400/20',    avatarClasses: 'bg-green-400/10 border-green-400/25 text-green-400',    ringColor: '#4ade80' },
@@ -143,6 +210,7 @@ interface ApiUserProfile {
   adventurerClass?: string;
   reputationScore?: number;
   totalQuestsCompleted?: number;
+  favoriteSkills?: string[];
   verified?: boolean;
   createdAt?: string;
   guild?: { id: string; name: string; tag?: string } | null;
@@ -165,6 +233,7 @@ function mapProfile(u: ApiUserProfile): Adventurer {
     reputationScore: u.reputationScore ?? 0,
     bio: u.bio || '',
     skills: u.adventurerClass ? [u.adventurerClass] : [],
+    favoriteSkills: Array.isArray(u.favoriteSkills) ? u.favoriteSkills : [],
     questsCompleted: u.totalQuestsCompleted ?? 0,
     totalGoldEarned: (u.questsCompleted ?? []).reduce((sum, q) => sum + (q.reward ?? 0), 0),
     guild: u.guild
@@ -254,6 +323,33 @@ function SkeletonBlock({ h = 'h-4', w = 'w-full' }: { h?: string; w?: string }) 
   return <div className={clsx('bg-white/[0.05] rounded animate-pulse', h, w)} />;
 }
 
+// A single skill badge. Earned tiers show the tier label + average; LOCKED
+// skills show honest progress toward Bronze rather than a badge not yet earned.
+function SkillBadgeCard({ badge }: { badge: SkillBadge }) {
+  const style = SKILL_TIER_STYLE[badge.tier] ?? SKILL_TIER_STYLE.LOCKED;
+  const earned = badge.tier !== 'LOCKED';
+  return (
+    <div className={clsx('rounded-lg border p-3.5', style.classes)}>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <span className="font-semibold text-[13px] text-stone-200 leading-snug">{badge.skillName}</span>
+        <span className="font-mono text-[9px] font-semibold tracking-widest uppercase">{style.label}</span>
+      </div>
+      {earned ? (
+        <p className="font-mono text-[10px] text-stone-500">
+          {badge.averageRating.toFixed(1)}★ over {badge.ratingCount} rating{badge.ratingCount === 1 ? '' : 's'}
+        </p>
+      ) : badge.next ? (
+        <p className="font-mono text-[10px] text-stone-600">
+          {badge.ratingCount} rating{badge.ratingCount === 1 ? '' : 's'} so far ·{' '}
+          {badge.next.ratingsNeeded > 0
+            ? `${badge.next.ratingsNeeded} more to ${SKILL_TIER_STYLE[badge.next.tier].label}`
+            : `needs ${badge.next.minAverage.toFixed(1)}★ avg for ${SKILL_TIER_STYLE[badge.next.tier].label}`}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
@@ -262,6 +358,8 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [error,      setError]      = useState<string | null>(null);
   const [reviewData, setReviewData] = useState<UserReviewsResponse | null>(null);
   const [credentials, setCredentials] = useState<PublicCredential[]>([]);
+  const [skillBadges, setSkillBadges] = useState<SkillBadge[]>([]);
+  const [progression, setProgression] = useState<ProgressionSummary | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -269,6 +367,8 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
     setError(null);
     setReviewData(null);
     setCredentials([]);
+    setSkillBadges([]);
+    setProgression(null);
     // Verified credentials are keyed by username; fetch separately so the
     // profile still renders if the endpoint is empty or fails.
     api
@@ -286,6 +386,17 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
           .get<UserReviewsResponse>(`/users/${encodeURIComponent(u.id)}/reviews`)
           .then((r) => { if (active) setReviewData(r); })
           .catch(() => { if (active) setReviewData({ reviews: [], averageRating: null, reviewCount: 0 }); });
+        // Skill badges and progression are derived server-side from real
+        // ratings; fetch separately so the profile still renders if either
+        // endpoint is empty or fails.
+        api
+          .get<SkillBadgesResponse>(`/users/${encodeURIComponent(u.id)}/skill-badges`)
+          .then((b) => { if (active) setSkillBadges(Array.isArray(b?.badges) ? b.badges : []); })
+          .catch(() => { if (active) setSkillBadges([]); });
+        api
+          .get<ProgressionSummary>(`/progression/${encodeURIComponent(u.id)}`)
+          .then((p) => { if (active) setProgression(p); })
+          .catch(() => { if (active) setProgression(null); });
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e)); })
       .finally(() => { if (active) setLoading(false); });
@@ -388,6 +499,96 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                 <StatCard value={String(adventurer.level)}             label="Level"       icon={<Zap size={13} />}   />
                 <StatCard value={String(adventurer.reputationScore)}   label="Rep score"   icon={<Shield size={13} />}/>
               </div>
+
+              {/* Rank & progression — current rank plus per-rank achieved/locked
+                  requirements, derived server-side from real signals. */}
+              {progression && (() => {
+                const accent = RANK_ACCENT[progression.currentRank] ?? RANK_ACCENT.NOVICE;
+                return (
+                  <div>
+                    <SectionLabel>Rank &amp; progression</SectionLabel>
+                    <div className={clsx('rounded-lg border p-4 mb-3', accent)}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="font-bold text-[15px] tracking-tight">
+                          {progression.currentRankLabel}
+                        </span>
+                        <span className="font-mono text-[10px] text-stone-500">
+                          {progression.signals.completedJobs} jobs ·{' '}
+                          {progression.signals.averageRating != null
+                            ? `${progression.signals.averageRating.toFixed(1)}★`
+                            : 'no ratings yet'}
+                          {' '}· {progression.signals.ratingCount} rating
+                          {progression.signals.ratingCount === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {progression.ranks.map((r) => (
+                        <div
+                          key={r.rank}
+                          className={clsx(
+                            'rounded-lg border p-3.5',
+                            r.current
+                              ? RANK_ACCENT[r.rank]
+                              : r.achieved
+                                ? 'border-white/[0.08] bg-white/[0.02]'
+                                : 'border-white/[0.05] bg-transparent opacity-70',
+                          )}
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="font-mono text-[11px]">
+                              {r.achieved ? '✓' : '○'}
+                            </span>
+                            <span className="font-semibold text-[13px] text-stone-200">{r.label}</span>
+                            {r.current && (
+                              <span className="font-mono text-[9px] font-semibold tracking-widest uppercase text-stone-400">
+                                current
+                              </span>
+                            )}
+                          </div>
+                          <ul className="space-y-0.5 pl-5">
+                            {r.requirements.map((req) => (
+                              <li key={req} className="font-mono text-[10px] text-stone-600 leading-relaxed">
+                                {req}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
+                      Ranks reward trust and craft — not a lower fee. The marketplace fee is a flat 12% at every rank.
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Skill badges — tiered (Bronze → Platinum) and always derived from
+                  real per-skill ratings, so they can never be faked. Favorite
+                  skills are surfaced first when the worker has curated them. */}
+              {skillBadges.length > 0 && (() => {
+                const favorites = adventurer.favoriteSkills;
+                const ordered = favorites.length
+                  ? [...skillBadges].sort((a, b) => {
+                      const ai = favorites.indexOf(a.skillSlug);
+                      const bi = favorites.indexOf(b.skillSlug);
+                      if (ai === -1 && bi === -1) return 0;
+                      if (ai === -1) return 1;
+                      if (bi === -1) return -1;
+                      return ai - bi;
+                    })
+                  : skillBadges;
+                return (
+                  <div>
+                    <SectionLabel>Skill badges</SectionLabel>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {ordered.map((b) => (
+                        <SkillBadgeCard key={b.skillSlug} badge={b} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Bio */}
               {adventurer.bio && (

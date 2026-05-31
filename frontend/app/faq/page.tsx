@@ -24,12 +24,16 @@ const faqs = [
     category: 'For Adventurers (Freelancers)',
     questions: [
       {
-        q: 'How do commission rates work?',
-        a: 'Your commission rate decreases as you level up: Novice (Level 1-20): 15%, Journeyman (Level 21-75): 10%, Legendary (Level 76+): 5%. The more quests you complete, the less you pay!'
+        q: 'How does the marketplace fee work?',
+        a: 'Workers pay a flat 12% marketplace fee on completed paid jobs — the same rate at every rank. There are no tiers, no listing fees, and no subscriptions. You only pay when you get paid.'
       },
       {
-        q: 'How do I level up?',
-        a: 'Complete quests to earn XP. Each successful quest completion gives you experience points based on the quest difficulty and payment amount. Track your progress in your profile dashboard.'
+        q: 'Do higher ranks pay a lower fee?',
+        a: 'No. The fee is a flat 12% whether you are Novice or Legendary. Ranks reward trust, visibility, and access — like skill badges and guild leadership — not a cheaper cut.'
+      },
+      {
+        q: 'How do I level up and rank up?',
+        a: 'Complete quests well to earn XP. XP balances cash earned, rating quality, on-time and consistent completion, verified credentials, and guild contribution. Higher ranks (Novice → Apprentice → Journeyman → Expert → Legendary) unlock trust and visibility. See the Ranks & Progression page for the full requirements.'
       },
       {
         q: 'What are guilds?',
@@ -83,8 +87,8 @@ const faqs = [
     category: 'Features & Gameplay',
     questions: [
       {
-        q: 'What are achievements?',
-        a: 'Achievements are special badges you earn for milestones like completing your first quest, reaching level 50, or earning $10,000. They display on your profile and show your expertise.'
+        q: 'What are achievements and skill badges?',
+        a: 'Achievements are milestone badges (e.g. completing your first quest or reaching level 50). Skill badges are different: clients rate each skill you performed on a job (mowing, fencing, hauling, etc.), and you earn Bronze, Silver, Gold, or Platinum tiers per skill once you have enough high ratings. Both display on your profile to show proven expertise.'
       },
       {
         q: 'Can I see quest history?',
