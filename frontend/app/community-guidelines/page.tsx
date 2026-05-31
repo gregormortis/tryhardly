@@ -71,9 +71,7 @@ export default function CommunityGuidelinesPage() {
             <h2 className="text-2xl font-bold text-amber-400 mb-4">Prohibited work</h2>
             <p className="mb-2">Quests must not involve:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Illegal goods, services, or activities.</li>
-              <li>Weapons, drugs, or regulated items where prohibited.</li>
-              <li>Adult or sexual services.</li>
+              <li>Illegal, unsafe, regulated, or policy-restricted goods or services.</li>
               <li>Anything that puts a worker&apos;s safety or legal standing at risk.</li>
             </ul>
           </section>
