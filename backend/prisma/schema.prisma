@@ -30,6 +30,11 @@ model User {
   verified        Boolean @default(false)
   role            String  @default("USER")
 
+  // Professionalism layer. Additive and nullable: a worker may pledge to the
+  // public Code of Craft. Null means "not pledged" — we never imply a pledge
+  // that didn't happen. The pledged-at timestamp doubles as the proof.
+  codeOfCraftPledgedAt DateTime?
+
   // Stats
   totalQuestsPosted    Int @default(0)
   totalQuestsCompleted Int @default(0)
@@ -75,6 +80,7 @@ model User {
   credentialsVerified ProfessionalCredential[] @relation("CredentialVerifier")
   skillRatingsReceived SkillRating[]          @relation("SkillRatingSubject")
   skillRatingsGiven    SkillRating[]          @relation("SkillRatingAuthor")
+  proofOfWork          ProofOfWork[]          @relation("ProofOwner")
 
   @@index([email])
   @@index([username])
@@ -133,6 +139,7 @@ model Quest {
   reviews         Review[]
   messages        Message[]
   skillRatings    SkillRating[]
+  proofOfWork     ProofOfWork[]
 
   @@index([questGiverId])
   @@index([assignedAdventurerId])
@@ -545,6 +552,40 @@ enum CredentialStatus {
   VERIFIED
   REJECTED
   EXPIRED
+}
+
+// ─── ProofOfWork ──────────────────────────────────────────────────────────────
+// A worker-curated, honest gallery of past work shown on the public profile.
+// Additive and backward-compatible. We store only URLs (no file storage), in
+// keeping with the credential model. Images are worker-supplied — the platform
+// never fabricates proof. An optional questId links an item to a real quest the
+// worker actually worked on; it is purely informational and not required.
+model ProofOfWork {
+  id          String   @id @default(uuid())
+
+  userId      String
+  user        User     @relation("ProofOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Optional link to a real quest. SetNull on delete so removing a quest never
+  // destroys the worker's gallery item — it just drops the linkage.
+  questId     String?
+  quest       Quest?   @relation(fields: [questId], references: [id], onDelete: SetNull)
+
+  title       String
+  description String?
+  // Worker-supplied image URLs (e.g. a hosted photo link). No file storage.
+  imageUrls   String[] @default([])
+  // Free-form skill tags the worker associates with this work.
+  skillTags   String[] @default([])
+
+  // Worker controls whether the item appears on their public profile.
+  visible     Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([questId])
 }
 
 // ─── Lead ────────────────────────────────────────────────────────────────────

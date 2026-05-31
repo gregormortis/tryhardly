@@ -5,7 +5,12 @@ import Link from 'next/link';
 import { Zap, Shield, Sword, Award, MapPin, BadgeCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
-import type { PublicCredential, CredentialType } from '@/lib/types';
+import type {
+  PublicCredential,
+  CredentialType,
+  ProofOfWorkItem,
+  VerifiedProStatus,
+} from '@/lib/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,6 +57,7 @@ interface Adventurer {
   guild: Guild | null;
   memberSince: string;
   verified: boolean;
+  codeOfCraftPledgedAt: string | null;
   recentQuests: CompletedQuest[];
 }
 
@@ -262,6 +268,7 @@ interface ApiUserProfile {
   favoriteSkills?: string[];
   role?: string;
   verified?: boolean;
+  codeOfCraftPledgedAt?: string | null;
   createdAt?: string;
   guild?: { id: string; name: string; tag?: string } | null;
   questsCompleted?: Array<{ id: string; title: string; difficulty?: string; reward?: number }>;
@@ -292,6 +299,7 @@ function mapProfile(u: ApiUserProfile): Adventurer {
       : null,
     memberSince: u.createdAt || new Date().toISOString(),
     verified: !!u.verified,
+    codeOfCraftPledgedAt: u.codeOfCraftPledgedAt ?? null,
     recentQuests: (u.questsCompleted ?? []).map((q) => ({
       id: q.id,
       title: q.title,
@@ -412,6 +420,8 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [skillBadges, setSkillBadges] = useState<SkillBadge[]>([]);
   const [progression, setProgression] = useState<ProgressionSummary | null>(null);
   const [achievements, setAchievements] = useState<EarnedAchievement[]>([]);
+  const [proof, setProof] = useState<ProofOfWorkItem[]>([]);
+  const [verifiedPro, setVerifiedPro] = useState<VerifiedProStatus | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -422,12 +432,20 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
     setSkillBadges([]);
     setProgression(null);
     setAchievements([]);
+    setProof([]);
+    setVerifiedPro(null);
     // Verified credentials are keyed by username; fetch separately so the
     // profile still renders if the endpoint is empty or fails.
     api
       .get<PublicCredential[]>(`/users/${encodeURIComponent(userId)}/credentials`)
       .then((c) => { if (active) setCredentials(Array.isArray(c) ? c : []); })
       .catch(() => { if (active) setCredentials([]); });
+    // Public proof-of-work gallery is keyed by username and returns only
+    // visible items; fetch separately so the profile still renders if empty.
+    api
+      .get<ProofOfWorkItem[]>(`/users/${encodeURIComponent(userId)}/proof`)
+      .then((p) => { if (active) setProof(Array.isArray(p) ? p : []); })
+      .catch(() => { if (active) setProof([]); });
     api
       .get<ApiUserProfile>(`/users/${encodeURIComponent(userId)}`)
       .then((u) => {
@@ -450,6 +468,12 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
           .get<ProgressionSummary>(`/progression/${encodeURIComponent(u.id)}`)
           .then((p) => { if (active) setProgression(p); })
           .catch(() => { if (active) setProgression(null); });
+        // Verified Pro is keyed by user id and derived server-side from real
+        // signals. Fetch separately; only render the badge when eligible.
+        api
+          .get<VerifiedProStatus>(`/users/${encodeURIComponent(u.id)}/verified-pro`)
+          .then((v) => { if (active) setVerifiedPro(v); })
+          .catch(() => { if (active) setVerifiedPro(null); });
         // Earned achievements are public, recognition-only (money achievements
         // excluded server-side). Fetch separately so the profile still renders
         // if the endpoint is empty or fails.
@@ -552,6 +576,27 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                         <BadgeCheck size={9} /> {credentialBadgeLabel(c)}
                       </span>
                     ))}
+                    {/* Verified Pro — only when the server reports the worker has
+                        actually met every checklist item (derived from real
+                        signals), never as a purchasable or self-set flag. */}
+                    {verifiedPro?.eligible && (
+                      <Link
+                        href="/verified-pro"
+                        className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-emerald-300 bg-emerald-300/10 border border-emerald-300/30 rounded-sm px-2 py-0.5 uppercase hover:border-emerald-300/60"
+                      >
+                        <BadgeCheck size={9} /> Verified Pro
+                      </Link>
+                    )}
+                    {/* Code of Craft — only when the worker has an active pledge
+                        (codeOfCraftPledgedAt set). Withdrawn pledges clear it. */}
+                    {adventurer.codeOfCraftPledgedAt && (
+                      <Link
+                        href="/code-of-craft"
+                        className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-amber-300 bg-amber-300/10 border border-amber-300/30 rounded-sm px-2 py-0.5 uppercase hover:border-amber-300/60"
+                      >
+                        <Award size={9} /> Code of Craft
+                      </Link>
+                    )}
                   </div>
 
                   {/* Staff accounts have an appointed status, not an earned
@@ -693,6 +738,63 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   </div>
                 );
               })()}
+
+              {/* Proof of work — worker-curated gallery of past jobs (image URLs
+                  only; we store no files). Only items the worker marked visible
+                  are returned by the public endpoint. Rendered only when present
+                  so absent galleries show nothing rather than a fake empty box. */}
+              {proof.length > 0 && (
+                <div>
+                  <SectionLabel>Proof of work</SectionLabel>
+                  <div className="space-y-3">
+                    {proof.map((p) => (
+                      <div key={p.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3.5">
+                        <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                          <span className="font-semibold text-[13px] text-stone-200 leading-snug">{p.title}</span>
+                          {p.quest?.title && (
+                            <span className="font-mono text-[9px] text-amber-300 bg-amber-300/10 border border-amber-300/25 rounded-sm px-2 py-0.5">
+                              {p.quest.title}
+                            </span>
+                          )}
+                        </div>
+                        {p.description && (
+                          <p className="font-mono text-[11px] text-stone-500 leading-relaxed mb-2">{p.description}</p>
+                        )}
+                        {p.imageUrls.length > 0 && (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+                            {p.imageUrls.map((url, i) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                key={`${p.id}-img-${i}`}
+                                src={url}
+                                alt={`${p.title} — example ${i + 1}`}
+                                loading="lazy"
+                                className="w-full h-28 object-cover rounded-md border border-white/[0.06] bg-white/[0.02]"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {p.skillTags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {p.skillTags.map((tag) => (
+                              <span
+                                key={`${p.id}-tag-${tag}`}
+                                className="font-mono text-[10px] text-stone-400 bg-white/[0.04] border border-white/[0.08] rounded px-2 py-0.5"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
+                    Proof examples are self-published by the worker to illustrate past work. Skill badges above stay
+                    derived from real client ratings.
+                  </p>
+                </div>
+              )}
 
               {/* Achievements — recognition-only badges the worker has actually
                   earned (money/earnings achievements are excluded server-side).
