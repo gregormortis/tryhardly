@@ -70,6 +70,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/redding"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Redding launch
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/pricing"
                   className="transition-colors hover:text-zinc-100"
                 >
