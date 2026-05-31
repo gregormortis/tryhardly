@@ -519,14 +519,23 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     ))}
                   </div>
 
-                  <div className="font-mono text-sm text-amber-400 tracking-wide mb-2">
-                    {starsDisplay(adventurer.reputationScore)}
-                    <span className="text-[11px] text-stone-600 ml-2">{adventurer.reputationScore}/100 rep</span>
-                  </div>
+                  {/* Staff accounts have an appointed status, not an earned
+                      reputation/XP standing. Their seeded rep/level/XP would read
+                      as fake 5-star ratings and inflated progress, so we suppress
+                      the earned-signal visuals here. Real earned progression (when
+                      any) still surfaces in the "Rank & progression" panel below. */}
+                  {!adventurer.staffBadge && (
+                    <>
+                      <div className="font-mono text-sm text-amber-400 tracking-wide mb-2">
+                        {starsDisplay(adventurer.reputationScore)}
+                        <span className="text-[11px] text-stone-600 ml-2">{adventurer.reputationScore}/100 rep</span>
+                      </div>
 
-                  <div className="mb-2.5">
-                    <XPBar xp={adventurer.xp} xpToNext={adventurer.xpToNextLevel} ringColor={tier.ringColor} />
-                  </div>
+                      <div className="mb-2.5">
+                        <XPBar xp={adventurer.xp} xpToNext={adventurer.xpToNextLevel} ringColor={tier.ringColor} />
+                      </div>
+                    </>
+                  )}
 
                   <p className="font-mono text-[10px] text-stone-800">
                     Adventurer since {formatMonthYear(adventurer.memberSince)}
@@ -534,12 +543,19 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                 </div>
               </div>
 
-              {/* Stats grid */}
-              <div className="grid grid-cols-4 gap-2.5">
+              {/* Stats grid. Quests done and gold earned are honest tallies, so
+                  they show for everyone. Level and rep score are seeded earned
+                  signals for staff accounts (inflated, not earned), so we omit
+                  them for staff rather than display fake standing. */}
+              <div className={clsx('grid gap-2.5', adventurer.staffBadge ? 'grid-cols-2' : 'grid-cols-4')}>
                 <StatCard value={String(adventurer.questsCompleted)} label="Quests done"  icon={<Sword size={13} />}  />
                 <StatCard value={formatGold(adventurer.totalGoldEarned)} label="Gold earned" icon={<Award size={13} />} />
-                <StatCard value={String(adventurer.level)}             label="Level"       icon={<Zap size={13} />}   />
-                <StatCard value={String(adventurer.reputationScore)}   label="Rep score"   icon={<Shield size={13} />}/>
+                {!adventurer.staffBadge && (
+                  <>
+                    <StatCard value={String(adventurer.level)}           label="Level"       icon={<Zap size={13} />}   />
+                    <StatCard value={String(adventurer.reputationScore)} label="Rep score"   icon={<Shield size={13} />}/>
+                  </>
+                )}
               </div>
 
               {/* Rank & progression — current rank plus per-rank achieved/locked
