@@ -188,7 +188,11 @@ a {
   font-size: 1.15rem;
   font-weight: 800;
   color: #000000;
-  word-break: break-all;
+  /* Keep the short fallback URL on one readable line so it never breaks
+     mid-word (e.g. "request-h elp" / "work-aler ts"). */
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .flyer-footnote {
@@ -209,6 +213,25 @@ a {
 .flyer-brand span {
   /* amber renders as a readable mid-tone on b/w printers */
   color: #b45309;
+}
+
+/* Narrow screens (browser preview on phones): stack the QR + text so the
+   fallback URL keeps its full width and never has to break mid-word. */
+@media screen and (max-width: 640px) {
+  .flyer-qr-wrap {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .flyer-qr-text {
+    text-align: center;
+  }
+
+  .flyer-url {
+    /* Stay on one line; shrink slightly so the short URL fits a phone preview
+       without ever breaking mid-word. */
+    font-size: 1rem;
+  }
 }
 
 @media print {
