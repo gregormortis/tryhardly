@@ -100,6 +100,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/leaderboards"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Leaderboards
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/faq"
                   className="transition-colors hover:text-zinc-100"
                 >

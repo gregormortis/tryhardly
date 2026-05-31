@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Zap, Shield, Sword, Award, MapPin, BadgeCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
@@ -119,6 +120,23 @@ interface ProgressionSummary {
     ratingCount: number;
   };
   ranks: ProgressionRankRow[];
+}
+
+// ─── Earned achievements (mirrors backend EarnedAchievement) ────────────────────
+// Public, recognition-only: only achievements the user has actually earned
+// (including admin-awarded), with money/earnings achievements excluded server-side.
+
+interface EarnedAchievement {
+  key: string | null;
+  name: string;
+  description: string;
+  icon: string;
+  unlockedAt: string;
+}
+
+interface EarnedAchievementsResponse {
+  achievements: EarnedAchievement[];
+  total: number;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -385,6 +403,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [credentials, setCredentials] = useState<PublicCredential[]>([]);
   const [skillBadges, setSkillBadges] = useState<SkillBadge[]>([]);
   const [progression, setProgression] = useState<ProgressionSummary | null>(null);
+  const [achievements, setAchievements] = useState<EarnedAchievement[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -394,6 +413,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
     setCredentials([]);
     setSkillBadges([]);
     setProgression(null);
+    setAchievements([]);
     // Verified credentials are keyed by username; fetch separately so the
     // profile still renders if the endpoint is empty or fails.
     api
@@ -422,6 +442,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
           .get<ProgressionSummary>(`/progression/${encodeURIComponent(u.id)}`)
           .then((p) => { if (active) setProgression(p); })
           .catch(() => { if (active) setProgression(null); });
+        // Earned achievements are public, recognition-only (money achievements
+        // excluded server-side). Fetch separately so the profile still renders
+        // if the endpoint is empty or fails.
+        api
+          .get<EarnedAchievementsResponse>(`/gamification/achievements/${encodeURIComponent(u.id)}/earned`)
+          .then((a) => { if (active) setAchievements(Array.isArray(a?.achievements) ? a.achievements : []); })
+          .catch(() => { if (active) setAchievements([]); });
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e)); })
       .finally(() => { if (active) setLoading(false); });
@@ -647,6 +674,46 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   </div>
                 );
               })()}
+
+              {/* Achievements — recognition-only badges the worker has actually
+                  earned (money/earnings achievements are excluded server-side).
+                  Honest empty/in-progress state when none have been earned. */}
+              <div>
+                <SectionLabel>Achievements</SectionLabel>
+                {achievements.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {achievements.map((a) => (
+                      <div
+                        key={a.key ?? a.name}
+                        className="flex items-start gap-3 rounded-lg border border-amber-400/15 bg-amber-400/[0.05] p-3.5"
+                      >
+                        <span className="text-xl leading-none mt-0.5" aria-hidden>{a.icon}</span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[13px] text-amber-200 leading-snug">{a.name}</p>
+                          <p className="font-mono text-[10px] text-stone-500 mt-0.5 leading-relaxed">{a.description}</p>
+                          <p className="font-mono text-[9px] text-stone-700 mt-1">
+                            Earned {formatFullDate(a.unlockedAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                    <p className="font-mono text-[11px] text-stone-600 leading-relaxed">
+                      No achievements earned yet. Achievements recognize milestones like a first completed job,
+                      five-star work, on-time delivery, and skill mastery — they unlock automatically from real
+                      activity.
+                    </p>
+                    <Link
+                      href="/leaderboards"
+                      className="mt-2.5 inline-block font-mono text-[10px] text-amber-400 hover:underline"
+                    >
+                      See the community leaderboards →
+                    </Link>
+                  </div>
+                )}
+              </div>
 
               {/* Bio */}
               {adventurer.bio && (

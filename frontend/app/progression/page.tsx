@@ -175,6 +175,41 @@ export default function ProgressionPage() {
           </p>
         </section>
 
+        {/* Achievements */}
+        <section className="mb-14">
+          <h2 className="text-2xl font-bold text-amber-400 mb-3">Achievements</h2>
+          <p className="text-gray-300 mb-5">
+            Achievements are recognition badges that unlock automatically from real activity — your first completed
+            job, a five-star review, on-time delivery, fast responses, verified credentials, skill specialization,
+            guild mentorship, and community contributions. They appear on your public profile so clients can see your
+            track record at a glance. Until you earn one, your profile shows an honest empty state — never a badge you
+            haven&apos;t earned.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[
+              { icon: '⚔️', name: 'First Completed Job', rule: 'Finish your first job on the platform.' },
+              { icon: '⭐', name: 'Five-Star Start', rule: 'Receive a 5-star review for your work.' },
+              { icon: '⚡', name: 'On-Time Finisher', rule: 'Deliver a job on or before its deadline.' },
+              { icon: '🔬', name: 'Skill Specialist', rule: 'Build a strong, rated track record in one skill.' },
+              { icon: '🏰', name: 'Guild Mentor', rule: 'Lead and grow a guild in the community.' },
+              { icon: '🤝', name: 'Community Builder', rule: 'Contribute consistently alongside your guild.' },
+            ].map((a) => (
+              <div key={a.name} className="bg-gray-900/50 border border-gray-800 rounded-lg p-5 flex items-start gap-3">
+                <span className="text-2xl leading-none" aria-hidden>{a.icon}</span>
+                <div>
+                  <div className="font-bold text-amber-200">{a.name}</div>
+                  <p className="text-sm text-gray-400 mt-0.5">{a.rule}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-gray-500 text-sm mt-5">
+            Achievements are recognition only. They confer no cash, discounts, or fee changes — see the{' '}
+            <a href="/leaderboards" className="text-amber-400 hover:underline">community leaderboards</a> for how
+            trust and skill are celebrated across the platform.
+          </p>
+        </section>
+
         {/* CTA */}
         <div className="bg-gradient-to-r from-amber-900/20 to-purple-900/20 border border-amber-500/40 rounded-xl p-8 text-center">
           <h3 className="text-2xl font-bold text-amber-400 mb-3">Start your climb</h3>

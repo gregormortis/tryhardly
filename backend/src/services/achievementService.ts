@@ -10,6 +10,14 @@ export interface AchievementDef {
   xpReward: number;
   /** Which event types can trigger this achievement */
   triggers: AchievementEvent['type'][];
+  /**
+   * Whether this achievement may be shown on public, recognition-only surfaces
+   * (profiles, the achievements catalog). Money/earnings-themed achievements are
+   * marked `publicSafe: false` so they never surface dollar figures or cash-prize
+   * framing in public copy. They still award internally and remain visible to the
+   * owner in their authenticated achievements view. Defaults to true when omitted.
+   */
+  publicSafe?: boolean;
 }
 
 export const ACHIEVEMENT_CATALOG: AchievementDef[] = [
@@ -27,9 +35,11 @@ export const ACHIEVEMENT_CATALOG: AchievementDef[] = [
   { key: 'FIVE_STAR',        name: 'Five Star',          description: 'Receive a 5-star review',                           icon: '⭐',  xpReward: 100,  triggers: ['REVIEW_RECEIVED'] },
   { key: 'PERFECTIONIST',    name: 'Perfectionist',      description: 'Receive 5-star reviews on 5 completed quests',     icon: '💎',  xpReward: 500,  triggers: ['REVIEW_RECEIVED'] },
 
-  // Earnings
-  { key: 'GOLD_RUSH',        name: 'Gold Rush',          description: 'Earn $1,000+ from completed quests',               icon: '💰',  xpReward: 200,  triggers: ['QUEST_COMPLETED'] },
-  { key: 'WEALTHY',          name: 'Wealthy',            description: 'Earn $10,000+ from completed quests',              icon: '👑',  xpReward: 750,  triggers: ['QUEST_COMPLETED'] },
+  // Earnings — internal-only (not shown on public, Stripe-facing surfaces, since
+  // they reference dollar figures). Marked publicSafe: false so the public
+  // catalog and profile panels never surface cash framing.
+  { key: 'GOLD_RUSH',        name: 'Gold Rush',          description: 'Earn $1,000+ from completed quests',               icon: '💰',  xpReward: 200,  triggers: ['QUEST_COMPLETED'], publicSafe: false },
+  { key: 'WEALTHY',          name: 'Wealthy',            description: 'Earn $10,000+ from completed quests',              icon: '👑',  xpReward: 750,  triggers: ['QUEST_COMPLETED'], publicSafe: false },
 
   // Speed
   { key: 'SPEED_RUNNER',     name: 'Speed Runner',       description: 'Complete a quest before its deadline',              icon: '⚡',  xpReward: 100,  triggers: ['QUEST_COMPLETED'] },
@@ -382,4 +392,103 @@ export function getAchievementCatalog() {
     icon: def.icon,
     xpReward: def.xpReward,
   }));
+}
+
+// ─── Public (recognition-only) helpers ─────────────────────────────────────────
+
+/** An achievement is public-safe unless explicitly opted out (earnings ones). */
+export function isPublicSafe(def: AchievementDef): boolean {
+  return def.publicSafe !== false;
+}
+
+const CATALOG_BY_NAME = new Map(ACHIEVEMENT_CATALOG.map((d) => [d.name, d]));
+
+/**
+ * The public achievement catalog: recognition/trust/skill achievements only.
+ * Money/earnings achievements are excluded so no dollar framing appears on
+ * Stripe-facing surfaces.
+ */
+export function getPublicAchievementCatalog() {
+  return ACHIEVEMENT_CATALOG.filter(isPublicSafe).map((def) => ({
+    key: def.key,
+    name: def.name,
+    description: def.description,
+    icon: def.icon,
+    xpReward: def.xpReward,
+  }));
+}
+
+export interface EarnedAchievement {
+  key: string | null; // null when the awarded row has no catalog match (e.g. admin-awarded custom)
+  name: string;
+  description: string;
+  icon: string;
+  unlockedAt: Date;
+}
+
+/**
+ * Return only the achievements a user has actually EARNED (real UserAchievement
+ * rows, including admin-awarded ones), suitable for public display. Money/
+ * earnings achievements are filtered out. Never invents or shows locked
+ * achievements — an empty array is an honest "none yet" state for the caller.
+ */
+export async function getEarnedAchievements(userId: string): Promise<EarnedAchievement[]> {
+  const rows = await prisma.userAchievement.findMany({
+    where: { userId },
+    include: { achievement: true },
+    orderBy: { unlockedAt: 'desc' },
+  });
+
+  const earned: EarnedAchievement[] = [];
+  for (const row of rows) {
+    const def = CATALOG_BY_NAME.get(row.achievement.name);
+    // Catalog achievements that are not public-safe (earnings) are hidden from
+    // public display. Admin-awarded achievements with no catalog entry have no
+    // money framing by construction, so they are shown.
+    if (def && !isPublicSafe(def)) continue;
+    earned.push({
+      key: def?.key ?? null,
+      name: row.achievement.name,
+      description: row.achievement.description,
+      icon: row.achievement.icon,
+      unlockedAt: row.unlockedAt,
+    });
+  }
+  return earned;
+}
+
+/**
+ * Admin: award an achievement to a user by catalog key. Upserts the Achievement
+ * row from the catalog def, creates the UserAchievement (idempotent), notifies,
+ * and grants the catalog XP. Returns whether a new award was created.
+ */
+export async function adminAwardAchievement(userId: string, key: string): Promise<boolean> {
+  const def = ACHIEVEMENT_CATALOG.find((d) => d.key === key);
+  if (!def) throw new Error(`Unknown achievement key: ${key}`);
+
+  const already = await prisma.userAchievement.findFirst({
+    where: { userId, achievement: { name: def.name } },
+    select: { id: true },
+  });
+  if (already) return false;
+
+  await awardAchievement(userId, def);
+  return true;
+}
+
+/**
+ * Admin: revoke a previously awarded achievement by catalog key. Returns whether
+ * a row was removed. Does not claw back XP (XP is a non-reversible ledger here).
+ */
+export async function adminRevokeAchievement(userId: string, key: string): Promise<boolean> {
+  const def = ACHIEVEMENT_CATALOG.find((d) => d.key === key);
+  if (!def) throw new Error(`Unknown achievement key: ${key}`);
+
+  const achievement = await prisma.achievement.findUnique({ where: { name: def.name } });
+  if (!achievement) return false;
+
+  const result = await prisma.userAchievement.deleteMany({
+    where: { userId, achievementId: achievement.id },
+  });
+  return result.count > 0;
 }

@@ -6,6 +6,9 @@ import {
   listQuests,
   cancelQuest,
   setUserVerified,
+  getAchievementCatalogForAdmin,
+  awardUserAchievement,
+  revokeUserAchievement,
 } from '../controllers/adminController';
 import { listReports, updateReport } from '../controllers/reportController';
 import { listLeads, updateLead, convertLead } from '../controllers/leadController';
@@ -21,6 +24,9 @@ router.get('/users', listUsers);
 router.get('/quests', listQuests);
 router.put('/quests/:id/cancel', cancelQuest);
 router.put('/users/:id/verify', setUserVerified);
+router.get('/achievements/catalog', getAchievementCatalogForAdmin);
+router.post('/users/:id/achievements', awardUserAchievement);
+router.delete('/users/:id/achievements/:key', revokeUserAchievement);
 router.get('/reports', listReports);
 router.put('/reports/:id', updateReport);
 router.get('/leads', listLeads);

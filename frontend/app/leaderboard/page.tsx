@@ -61,7 +61,7 @@ export default function LeaderboardPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-white mb-2">🏆 Leaderboard</h1>
-          <p className="text-gray-400">Top adventurers competing for glory and rewards</p>
+          <p className="text-gray-400">Top adventurers recognized for trust, skill, and consistent work</p>
         </div>
 
         {/* Leaderboard */}
@@ -167,13 +167,21 @@ export default function LeaderboardPage() {
         {/* CTA */}
         <div className="mt-12 text-center bg-gray-900 border border-gray-800 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-white mb-2">Think you can climb higher?</h2>
-          <p className="text-gray-400 mb-6">Complete more quests, level up, and dominate the leaderboard!</p>
-          <Link
-            href="/questboard"
-            className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-bold px-8 py-3 rounded-lg transition-colors"
-          >
-            Find Quests
-          </Link>
+          <p className="text-gray-400 mb-6">Complete more quests, level up, and build your standing.</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link
+              href="/questboard"
+              className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-bold px-8 py-3 rounded-lg transition-colors"
+            >
+              Find Quests
+            </Link>
+            <Link
+              href="/leaderboards"
+              className="inline-block border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold px-8 py-3 rounded-lg transition-colors"
+            >
+              Quality leaderboards
+            </Link>
+          </div>
         </div>
       </div>
     </div>
