@@ -57,16 +57,17 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Payments, Escrow &amp; Fees</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Payments &amp; Fees</h2>
             <p className="mb-2">
               TryHardly is in early access. Some arrangements are currently made directly
-              between clients and adventurers. Card payments and an escrow service that holds
-              funds until work is approved may be rolling out and will be enabled for your
-              account when available. We will not represent a payment feature as live before
-              it is.
+              between clients and adventurers. Marketplace payment features, when enabled, are
+              processed by third-party payment providers; payouts may occur after task
+              completion according to the provider&apos;s and platform&apos;s flow. TryHardly is not a
+              bank, escrow agent, or money transmitter and does not take custody of user
+              funds. We will not represent a payment feature as live before it is.
             </p>
             <p>
-              When platform payments are enabled, TryHardly may charge a commission on
+              When marketplace payments are enabled, TryHardly may charge a commission on
               completed quests. Applicable fees will be shown before you commit to a
               transaction. Refunds and disputes are handled under our{' '}
               <Link href="/refunds" className="text-amber-400 hover:text-amber-300">Refund &amp; Dispute Policy</Link>.

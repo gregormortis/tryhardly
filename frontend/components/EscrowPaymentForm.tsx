@@ -67,7 +67,7 @@ function InnerForm({ onConfirmed }: { onConfirmed: () => void }) {
         disabled={!stripe || submitting}
         className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
       >
-        {submitting ? 'Confirming…' : 'Confirm Payment & Fund Escrow'}
+        {submitting ? 'Confirming…' : 'Confirm Payment'}
       </button>
     </form>
   );
@@ -91,7 +91,7 @@ export default function EscrowPaymentForm({
         <p className="text-xs text-zinc-400 mt-1">
           Set <code className="text-amber-300">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>{' '}
           (a test-mode <code className="text-amber-300">pk_test_…</code> key) in the
-          frontend environment to confirm the escrow payment.
+          frontend environment to confirm the marketplace payment.
         </p>
       </div>
     );
