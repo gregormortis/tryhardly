@@ -37,9 +37,9 @@ export default function RefundsPage() {
               with people who can do the work (adventurers). During early access, some
               arrangements are made directly between the two parties. Marketplace payment
               features, when enabled, are processed by third-party payment providers, with
-              payouts on task completion. TryHardly is not a bank, escrow agent, or money
-              transmitter and does not take custody of user funds. We will never claim a
-              payment feature is live before it is.
+              payouts on task completion. TryHardly is not a bank or money transmitter and
+              does not provide regulated financial services. We will never claim a payment
+              feature is live before it is.
             </p>
           </section>
 
@@ -89,7 +89,7 @@ export default function RefundsPage() {
               </li>
               <li>Include any photos, messages, or deliverables that show the agreed scope and the result.</li>
               <li>We review both sides and aim to respond within 5 business days.</li>
-              <li>Our decision on releasing or refunding any held funds is final for amounts processed through the platform.</li>
+              <li>Our decision on any refund of amounts processed through the platform is final.</li>
             </ol>
           </section>
 

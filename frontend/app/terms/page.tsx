@@ -63,8 +63,8 @@ export default function TermsPage() {
               between clients and adventurers. Marketplace payment features, when enabled, are
               processed by third-party payment providers; payouts may occur after task
               completion according to the provider&apos;s and platform&apos;s flow. TryHardly is not a
-              bank, escrow agent, or money transmitter and does not take custody of user
-              funds. We will not represent a payment feature as live before it is.
+              bank or money transmitter and does not provide regulated financial services. We
+              will not represent a payment feature as live before it is.
             </p>
             <p>
               When marketplace payments are enabled, TryHardly may charge a commission on
