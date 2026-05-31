@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Ranks & Progression — how workers level up on TryHardly',
   description:
-    'How worker ranks (Novice → Legendary), skill badges (Bronze → Platinum), guild requirements, and trust-based progression work. Ranks reward trust and craft, not a lower fee.',
+    'How worker ranks (Novice → Legendary, including Master), skill badges (Bronze → Mythic), guild requirements, and trust-based progression work. Ranks reward trust and craft, not a lower fee.',
 };
 
 const RANKS = [
@@ -16,56 +16,88 @@ const RANKS = [
   {
     name: 'Apprentice',
     color: 'text-blue-400 border-blue-400/30 bg-blue-400/5',
-    blurb: 'You have shown up and delivered a few good jobs.',
+    blurb: 'You have shown up and delivered a handful of good jobs.',
     reqs: [
-      'Reach level 3',
-      'Complete 3+ jobs',
-      'Hold a 3.5★+ average across 2+ ratings',
+      'Reach level 10',
+      'Be active for 14 days',
+      'Complete 5+ jobs',
+      'Hold a 4.0★+ average across 5+ ratings',
+      'No unresolved disputes on your record',
     ],
   },
   {
     name: 'Journeyman',
     color: 'text-amber-400 border-amber-400/30 bg-amber-400/5',
-    blurb: 'A proven, consistent worker with a solid track record.',
+    blurb: 'A proven, consistent worker with a real body of rated work.',
     reqs: [
-      'Reach level 8',
-      'Complete 10+ jobs',
-      'Hold a 4.0★+ average across 5+ ratings',
-      'Verify a professional credential OR maintain consistent high ratings',
+      'Reach level 35',
+      'Be active for 3 months',
+      'Complete 30+ jobs',
+      'Hold a 4.4★+ average across 10+ ratings',
+      'Earn 2+ Bronze skill badges',
+      'Build a base of repeat/return clients or referrals (coming soon)',
     ],
   },
   {
     name: 'Expert',
     color: 'text-orange-400 border-orange-400/30 bg-orange-400/5',
-    blurb: 'A trusted craftsperson who works within the guild community.',
+    blurb: 'A trusted, credentialed craftsperson working within the guild community.',
     reqs: [
-      'Reach level 15',
-      'Complete 25+ jobs',
-      'Hold a 4.5★+ average across 12+ ratings',
-      'Be an active member of a guild (membership or leadership)',
+      'Reach level 65',
+      'Be active for 6 months',
+      'Complete 100+ jobs',
+      'Hold a 4.7★+ average across 25+ ratings',
+      'Be a guild member in good standing',
+      'Earn 2+ Silver skill badges',
+      'Hold 1+ verified credential',
     ],
     gated: 'Guild',
+  },
+  {
+    name: 'Master',
+    color: 'text-violet-400 border-violet-400/30 bg-violet-400/5',
+    blurb: 'A master of the craft and a leader who mentors others in the guild.',
+    reqs: [
+      'Reach level 80',
+      'Be active for 12 months',
+      'Complete 200+ jobs',
+      'Hold a 4.8★+ average across 40+ ratings',
+      'Serve as a guild officer, mentor, or leader',
+      'Earn 1+ Gold skill badge',
+      'Maintain 95%+ completion reliability (coming soon)',
+    ],
+    gated: 'Guild leadership',
   },
   {
     name: 'Legendary',
     color: 'text-rose-400 border-rose-400/30 bg-rose-400/5',
     blurb: 'A guild leader of standing with a top reputation and a clean record.',
     reqs: [
-      'Reach level 30',
-      'Complete 60+ jobs',
-      'Hold a 4.7★+ average across 30+ ratings',
-      'Lead a guild of 5+ members with 500+ guild reputation',
-      'No recent severe disputes on your record',
+      'Reach level 95',
+      'Be active for 18+ months',
+      'Complete 400+ jobs',
+      'Hold a 4.9★+ average across 80+ ratings',
+      'Lead a guild of 10+ active members with 1000+ guild reputation',
+      'No serious disputes on your record',
+      'Maintain a guild 4.8★+ average and a clean 180-day record (coming soon)',
     ],
     gated: 'Guild leadership',
   },
 ];
 
 const SKILL_TIERS = [
-  { tier: 'Bronze', color: 'text-amber-700', rule: '3+ ratings averaging 4.0★+' },
-  { tier: 'Silver', color: 'text-gray-300', rule: '8+ ratings averaging 4.3★+' },
-  { tier: 'Gold', color: 'text-yellow-400', rule: '20+ ratings averaging 4.6★+' },
-  { tier: 'Platinum', color: 'text-cyan-300', rule: '50+ ratings averaging 4.8★+' },
+  { tier: 'Bronze', color: 'text-amber-700', rule: '5+ ratings averaging 4.2★+' },
+  { tier: 'Silver', color: 'text-gray-300', rule: '15+ ratings averaging 4.5★+' },
+  { tier: 'Gold', color: 'text-yellow-400', rule: '40+ ratings averaging 4.7★+' },
+  { tier: 'Platinum', color: 'text-cyan-300', rule: '100+ ratings averaging 4.85★+' },
+  { tier: 'Mythic', color: 'text-fuchsia-400', rule: '250+ ratings averaging 4.9★+, plus admin/guild review' },
+];
+
+const PROBATION_STAGES = [
+  { stage: 'Warning', detail: 'A dip in ratings or a recent low review puts a soft flag on your account. Nothing changes yet — it is a heads-up.' },
+  { stage: 'Probation', detail: 'A continued pattern of low ratings or a dispute moves you to probation. Your rank is held in place while you recover.' },
+  { stage: 'Rank freeze', detail: 'While frozen, you keep your rank but cannot climb higher until the pattern clears and your recent record improves.' },
+  { stage: 'Review & demotion', detail: 'Only after human review — for serious or repeated issues — can a rank be lowered. We never auto-demote on a single bad day.' },
 ];
 
 export default function ProgressionPage() {
@@ -78,9 +110,10 @@ export default function ProgressionPage() {
             Ranks &amp; Progression
           </h1>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            Climb from Novice to Legendary by doing great work — not by paying more. Ranks reward
+            Climb from Novice through Master to Legendary by doing great work — not by paying more. Ranks reward
             <span className="text-white font-semibold"> trust, skill, and standing</span>, never a lower fee.
-            The marketplace fee stays a flat 12% at every rank.
+            The marketplace fee stays a flat 12% at every rank. This is a long road by design: the top ranks
+            are earned over seasons of quality work, like a trade you master over years.
           </p>
         </div>
 
@@ -92,13 +125,20 @@ export default function ProgressionPage() {
             Cash earned counts — but it&apos;s capped per job. The rest comes from doing the job well:
           </p>
           <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>A solid base for every completed job</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Cash earned — capped, so big jobs don&apos;t dominate</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Rating quality — 4★ and 5★ jobs earn bonus XP</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>On-time delivery before the deadline</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Written client reviews</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Verified credentials &amp; guild contribution</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>A solid base for every completed job (+250)</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Cash earned — capped at +500, so big jobs don&apos;t dominate</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Rating quality — 5★ jobs +350, 4★ jobs +150</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>On-time delivery before the deadline (+150)</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Written client reviews (+100) &amp; each rated skill (+50)</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Verified credentials, guild contribution &amp; repeat clients</span></li>
           </ul>
+          <p className="text-gray-400 text-sm mt-4">
+            Your <span className="text-white font-semibold">level</span> comes from XP, but a rank takes more than
+            levels: it is gated on time, completed jobs, rating quality, skill badges, and guild standing. If you have
+            the level for the next rank but still owe its other requirements, your profile shows you as a
+            <span className="text-white font-semibold"> candidate</span> (for example, &ldquo;Journeyman Candidate&rdquo;)
+            — never a rank you haven&apos;t fully earned.
+          </p>
         </section>
 
         {/* Rank ladder */}
@@ -134,9 +174,10 @@ export default function ProgressionPage() {
           <h2 className="text-2xl font-bold text-violet-300 mb-3">Guilds open the top ranks</h2>
           <p className="text-gray-300 mb-3">
             Like a trade union local, the highest ranks reward people who lift up the community — not just
-            themselves. <span className="text-white font-semibold">Expert</span> requires being part of a guild.
-            <span className="text-white font-semibold"> Legendary</span> requires leading a guild of standing:
-            a real member base, a strong shared reputation, and a clean record.
+            themselves. <span className="text-white font-semibold">Expert</span> requires being a guild member in
+            good standing. <span className="text-white font-semibold">Master</span> requires serving as a guild
+            officer or mentor. <span className="text-white font-semibold">Legendary</span> requires leading a guild
+            of standing: a real member base, a strong shared reputation, and a clean record.
           </p>
           <p className="text-gray-400 text-sm">
             This keeps the top of the ladder meaningful — it reflects leadership and trust, not just hours logged.
@@ -165,10 +206,22 @@ export default function ProgressionPage() {
         {/* Rank-down / trust moderation */}
         <section className="mb-14 bg-rose-500/[0.06] border border-rose-500/25 rounded-xl p-6 sm:p-8">
           <h2 className="text-2xl font-bold text-rose-300 mb-3">Keeping ranks honest</h2>
-          <p className="text-gray-300 mb-3">
+          <p className="text-gray-300 mb-4">
             Ranks are a trust signal, so they have to stay trustworthy. A pattern of low ratings, several bad
-            reviews in a row, or a severe dispute will flag an account for review and can put a rank at risk.
+            reviews in a row, or a severe dispute moves an account through a clear, fair ladder — never a sudden
+            drop. Each step is reversible by getting back to good work.
           </p>
+          <ol className="space-y-2.5 mb-4">
+            {PROBATION_STAGES.map((s, i) => (
+              <li key={s.stage} className="flex items-start gap-3 text-sm">
+                <span className="font-mono text-rose-300/80 mt-0.5">{i + 1}.</span>
+                <span>
+                  <span className="text-white font-semibold">{s.stage}</span>
+                  <span className="text-gray-400"> — {s.detail}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
           <p className="text-gray-400 text-sm">
             We don&apos;t silently strip ranks — flagged accounts are reviewed for fairness first. This protects
             clients hiring high-ranked workers and protects workers from a single bad day undoing months of good work.

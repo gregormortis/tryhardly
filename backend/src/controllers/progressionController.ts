@@ -5,6 +5,8 @@ import {
   getProgressionSummary,
   RANK_REQUIREMENTS,
   RANK_GATES,
+  PROBATION_STAGES,
+  JOB_XP,
 } from '../services/progressionService';
 import { SKILL_TIER_RULES } from '../services/skillService';
 import { slugifySkill } from '../services/skillService';
@@ -17,6 +19,8 @@ export const getRankCatalog = async (_req: Request, res: Response): Promise<void
       ranks: RANK_REQUIREMENTS,
       gates: RANK_GATES,
       skillTiers: SKILL_TIER_RULES,
+      probationStages: PROBATION_STAGES,
+      xpRewards: JOB_XP,
     });
   } catch (error) {
     console.error('getRankCatalog error:', error);
