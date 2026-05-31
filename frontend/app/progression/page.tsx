@@ -292,6 +292,13 @@ export default function ProgressionPage() {
                 skill claims — but skill badges themselves always stay rating-derived.
               </p>
             </div>
+            <a href="/standards" className="bg-gray-900/50 border border-gray-800 rounded-lg p-5 block hover:border-amber-500/40 transition-colors">
+              <div className="text-lg font-bold text-amber-200 mb-1">Trade standards &amp; checklists</div>
+              <p className="text-sm text-gray-400">
+                Practical, job-by-job checklists for each kind of work. Following them — and documenting the
+                result — is how a completed job becomes a strong review and real proof toward your badges.
+              </p>
+            </a>
           </div>
         </section>
 

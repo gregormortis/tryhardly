@@ -143,6 +143,15 @@ export default function CodeOfCraftPage() {
                 A proof-of-work gallery lets you show honest photos of past work on your profile.
               </span>
             </li>
+            <li className="flex items-start gap-2">
+              <span className="text-green-400 mt-0.5">✓</span>
+              <span>
+                <Link href="/standards" className="text-amber-400 hover:underline">
+                  Work standards &amp; trade checklists
+                </Link>{' '}
+                turn these principles into a practical, job-by-job guide.
+              </span>
+            </li>
           </ul>
         </section>
 

@@ -10,6 +10,8 @@ import type { Quest, Application } from '@/lib/types';
 import EscrowPanel from '@/components/EscrowPanel';
 import ReportButton from '@/components/ReportButton';
 import QuestReviews from '@/components/QuestReviews';
+import TradeStandardChecklist from '@/components/TradeStandardChecklist';
+import { resolveTradeStandard } from '@/lib/tradeStandards';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   NOVICE: 'text-green-400 border-green-400',
@@ -152,6 +154,7 @@ export default function QuestDetailPage() {
     .map((t) => t.slice('photo:'.length))
     .filter(Boolean);
   const skillTags = allTags.filter((t) => !t.startsWith('photo:'));
+  const tradeStandard = resolveTradeStandard(quest.category, skillTags);
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -198,6 +201,9 @@ export default function QuestDetailPage() {
               <h2 className="text-lg font-semibold text-white mb-4">Quest Details</h2>
               <div className="text-gray-300 leading-relaxed whitespace-pre-line">{quest.description}</div>
             </div>
+
+            {/* Suggested trade standard / completion checklist */}
+            <TradeStandardChecklist standard={tradeStandard} defaultCollapsed />
 
             {/* Photos */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">

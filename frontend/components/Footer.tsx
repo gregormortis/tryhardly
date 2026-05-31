@@ -124,6 +124,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/standards"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Trade standards
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/faq"
                   className="transition-colors hover:text-zinc-100"
                 >

@@ -122,6 +122,12 @@ export default function VerifiedProPage() {
             >
               Read the Code of Craft
             </Link>
+            <Link
+              href="/standards"
+              className="inline-block border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 font-bold px-6 py-3 rounded-lg transition-colors"
+            >
+              Work standards &amp; checklists
+            </Link>
           </div>
         </div>
       </div>
