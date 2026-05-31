@@ -115,9 +115,9 @@ export default function SupportPage() {
             <li className="flex gap-3">
               <span className="text-amber-400 mt-1">•</span>
               <span>
-                Card payments and escrow (funds held until work is approved) may be rolling
-                out and will be enabled when available. We&apos;ll tell you clearly when your
-                account can use them.
+                Marketplace payments (with payouts on task completion, processed by a
+                third-party payment provider) may be enabled when available. We&apos;ll tell you
+                clearly when your account can use them.
               </span>
             </li>
             <li className="flex gap-3">

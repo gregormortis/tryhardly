@@ -52,6 +52,16 @@ const STATUS_STYLES: Record<string, string> = {
   NONE: 'bg-zinc-700 text-zinc-400',
 };
 
+// User-facing labels for the internal payment status values.
+const STATUS_LABELS: Record<string, string> = {
+  RELEASED: 'PAID OUT',
+  FUNDED: 'AUTHORIZED',
+  PARTIALLY_RELEASED: 'PARTIALLY PAID',
+  PENDING: 'PENDING',
+  REFUNDED: 'REFUNDED',
+  NONE: 'NOT STARTED',
+};
+
 function dollars(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
@@ -89,7 +99,7 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
       await fetchEscrowStatus();
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setError(e?.message || 'Failed to initialize escrow');
+      setError(e?.message || 'Failed to set up payment');
     } finally {
       setLoading(false);
     }
@@ -105,7 +115,7 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
       await fetchEscrowStatus();
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setError(e?.message || `Failed to ${action} escrow`);
+      setError(e?.message || `Failed to ${action} payment`);
     } finally {
       setActionLoading(null);
     }
@@ -120,20 +130,20 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
   if (!escrow || escrow.escrowStatus === 'NONE') {
     return (
       <div className="mt-6 p-4 rounded-lg border border-zinc-700 bg-zinc-900">
-        <h3 className="text-base font-semibold text-zinc-100 mb-2">Payment Escrow</h3>
+        <h3 className="text-base font-semibold text-zinc-100 mb-2">Marketplace Payment</h3>
         {clientSecret ? (
           <div className="space-y-3">
             <p className="text-sm text-zinc-400">
-              Confirm payment to authorize the escrow hold. Funds are captured only when you
-              complete the quest.
+              Confirm your payment details to authorize the charge. Your card is charged when
+              you complete the quest, and the worker is paid out on task completion.
             </p>
             <EscrowPaymentForm clientSecret={clientSecret} onConfirmed={handleConfirmed} />
           </div>
         ) : isQuestGiver ? (
           <div>
             <p className="text-sm text-zinc-400 mb-3">
-              Lock in payment before work begins. Funds are held securely until the quest is
-              complete.
+              Set up payment before work begins. Marketplace payments are processed by Stripe,
+              with payout to the worker on task completion.
             </p>
             {error && <p className="text-xs text-rose-400 mb-2">{error}</p>}
             <button
@@ -141,12 +151,12 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
               disabled={loading}
               className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
             >
-              {loading ? 'Initializing…' : 'Initialize Escrow'}
+              {loading ? 'Setting up…' : 'Set up payment'}
             </button>
           </div>
         ) : (
           <p className="text-sm text-zinc-400">
-            Waiting for the quest giver to initialize payment escrow.
+            Waiting for the quest giver to set up marketplace payment.
           </p>
         )}
       </div>
@@ -164,13 +174,13 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
   return (
     <div className="mt-6 p-4 rounded-lg border border-zinc-700 bg-zinc-900 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-zinc-100">Payment Escrow</h3>
+        <h3 className="text-base font-semibold text-zinc-100">Marketplace Payment</h3>
         <span
           className={`text-xs font-medium px-2 py-1 rounded-full ${
             STATUS_STYLES[escrow.escrowStatus] ?? STATUS_STYLES.NONE
           }`}
         >
-          {escrow.escrowStatus}
+          {STATUS_LABELS[escrow.escrowStatus] ?? STATUS_LABELS.NONE}
         </span>
       </div>
 

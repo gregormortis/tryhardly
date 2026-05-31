@@ -6,7 +6,7 @@ import { ArrowRight, Briefcase, MapPin, Shield, Star, Users, Wrench, Hammer, Che
 const stats = [
   { value: 'Early', label: 'Access launch' },
   { value: '3', label: 'Starter quests live' },
-  { value: 'Escrow', label: 'Payment-ready flow' },
+  { value: 'Payouts', label: 'On task completion' },
   { value: 'Local', label: 'Built for neighborhood work' },
 ];
 
@@ -22,11 +22,11 @@ const categories = [
 const howItWorks = [
   { title: 'Post a quest', desc: 'Describe the job, set your budget, and post it live in minutes.' },
   { title: 'Get matched', desc: 'Local workers apply. Review profiles, ratings, and past work.' },
-  { title: 'Pay securely', desc: 'Funds are held in escrow until the job is done to your satisfaction.' },
+  { title: 'Pay securely', desc: 'Marketplace payments are handled by Stripe, with payouts on task completion.' },
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Escrow-Ready Payments', desc: 'Built for funds to be held until work is verified complete.' },
+  { icon: Shield, title: 'Marketplace Payments', desc: 'Built on Stripe Connect, with payouts released on task completion.' },
   { icon: Star, title: 'Structured Reviews', desc: 'Reviews and work history are part of the marketplace flow.' },
   { icon: Users, title: 'Profile Verification', desc: 'Profiles and reviews designed for trust from day one.' },
   { icon: Banknote, title: 'Clear Rewards', desc: 'Every quest shows the reward before anyone applies.' },
@@ -56,7 +56,7 @@ export default function HomePage() {
           The gig marketplace<br />AI can&apos;t replace
         </h1>
         <p className="mx-auto max-w-2xl text-base sm:text-lg text-zinc-300 mb-3">
-          Hire verified local workers for real paid jobs — escrow-protected, no middlemen.
+          Hire verified local workers for real paid jobs — paid after completion, no middlemen.
         </p>
         <p className="mx-auto max-w-xl text-sm text-zinc-500 mb-8">
           Post a job in minutes, or browse starter quests as new local listings come online.

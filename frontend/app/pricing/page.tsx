@@ -31,7 +31,7 @@ export default function PricingPage() {
           <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Free to post</span> — describe the job and your budget</span></li>
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Pay only the agreed reward</span> when work is done</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Escrow protection</span> — funds held until you&apos;re satisfied</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Marketplace payouts</span> — paid after the work is completed</span></li>
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>The commission rates below apply to <span className="font-semibold text-white">workers</span>, not posters</span></li>
           </ul>
           <div className="mt-5 flex flex-wrap gap-3">

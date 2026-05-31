@@ -73,8 +73,8 @@ const benefits = [
   },
   {
     icon: ShieldCheck,
-    title: 'Escrow-ready, payment-ready flow',
-    desc: 'Built so a job’s reward can be held until the work is done. Card payments are rolling out — for now you can browse, apply, and arrange work for free.',
+    title: 'Clear marketplace payouts',
+    desc: 'Built so a job’s reward is clear up front, with marketplace payouts on task completion. For now you can browse, apply, and arrange work for free.',
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'How do I get paid?',
-    a: 'Each job lists its reward up front. TryHardly is built with an escrow-ready, payment-ready flow so a job’s reward can be held until the work is finished, and card payments are rolling out. For now you can browse, apply, and arrange the job directly — no surprises on what it pays.',
+    a: 'Each job lists its reward up front. TryHardly uses a marketplace payout flow so a job’s reward is paid after the work is completed. For now you can browse, apply, and arrange the job directly — no surprises on what it pays.',
   },
   {
     q: 'What kind of work is on here?',

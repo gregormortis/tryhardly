@@ -37,7 +37,7 @@ const faqs = [
       },
       {
         q: 'How do I get paid?',
-        a: 'Payments are held in escrow until the quest is completed. Once the quest giver marks the work as complete, funds are released to your account. You can withdraw to your bank account or PayPal.'
+        a: 'Marketplace payments are processed by our third-party payment provider, with payouts on task completion. Once the quest giver marks the work as complete, your payout is released and you can transfer it to your bank account or PayPal.'
       }
     ]
   },
@@ -67,7 +67,7 @@ const faqs = [
     questions: [
       {
         q: 'Is my payment secure?',
-        a: 'Yes! All payments are processed through secure, encrypted payment gateways. Funds are held in escrow until work is completed, protecting both parties.'
+        a: 'Yes! Marketplace payments are processed through secure, encrypted third-party payment providers, with payouts released on task completion.'
       },
       {
         q: 'What payment methods do you accept?',

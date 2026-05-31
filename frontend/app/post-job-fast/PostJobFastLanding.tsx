@@ -73,8 +73,8 @@ const trust = [
   },
   {
     icon: ShieldCheck,
-    title: 'Escrow-ready flow',
-    desc: 'Built so payments can be held until the job is done. Card payments are rolling out — you can post and hire for free today.',
+    title: 'Marketplace payout flow',
+    desc: 'Built so marketplace payouts are released on task completion. You can post and hire for free today.',
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'Do I have to pay through the site?',
-    a: 'Not required today. TryHardly is built with an escrow-ready flow so payments can be held until the work is finished, and card payments are rolling out. For now you can post, get applications, and arrange the job for free.',
+    a: 'Not required today. TryHardly uses a marketplace payout flow so payments are released after the work is completed. For now you can post, get applications, and arrange the job for free.',
   },
   {
     q: 'What kind of jobs work here?',

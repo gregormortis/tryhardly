@@ -3,7 +3,7 @@
 _Last updated: 2026-04-01_
 
 ## What It Is
-A gamified gig marketplace — freelance work reframed as quests, teams as guilds, reputation as XP/levels/achievements, with built-in escrow for payment safety. Think Craigslist meets World of Warcraft.
+A gamified gig marketplace — freelance work reframed as quests, teams as guilds, reputation as XP/levels/achievements, with marketplace payouts on task completion. Think Craigslist meets World of Warcraft.
 
 **Domain:** tryhardly.com  
 **Repo:** https://github.com/gregormortis/tryhardly  

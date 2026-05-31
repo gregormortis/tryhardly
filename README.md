@@ -26,11 +26,11 @@
 - **Collaborative Quests**: Take on large projects together
 - **Guild Reputation**: Build collective credibility
 
-### 💰 Payment & Escrow
-- **Secure Payments**: Stripe integration with escrow system
+### 💰 Marketplace Payments
+- **Secure Payments**: Stripe Connect marketplace payments, with payouts on task completion
 - **Gold Currency**: Work is rewarded in "Gold" (real money)
 - **Platform Fee**: Fair 12% commission
-- **Fast Payouts**: Receive funds within 2-3 business days
+- **Fast Payouts**: Receive payouts within 2-3 business days
 
 ### 💬 Communication
 - **In-App Messaging**: Direct communication between quest givers and adventurers
@@ -230,8 +230,8 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ## 🔒 Security
 
-- All payments are processed securely through Stripe
-- Escrow system protects both quest givers and adventurers
+- All marketplace payments are processed securely through Stripe
+- Payouts are released on task completion, protecting both quest givers and adventurers
 - Two-factor authentication available
 - Regular security audits
 

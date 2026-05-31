@@ -35,17 +35,18 @@ export default function RefundsPage() {
             <p>
               TryHardly is a marketplace that connects people who need local help (clients)
               with people who can do the work (adventurers). During early access, some
-              arrangements are made directly between the two parties. Card payments and an
-              escrow service that holds funds until work is approved may be rolling out and
-              will be enabled for your account when available. We will never claim a payment
-              feature is live before it is.
+              arrangements are made directly between the two parties. Marketplace payment
+              features, when enabled, are processed by third-party payment providers, with
+              payouts on task completion. TryHardly is not a bank, escrow agent, or money
+              transmitter and does not take custody of user funds. We will never claim a
+              payment feature is live before it is.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">2. Cancellations before work starts</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>A client may cancel a quest before an adventurer begins work for a full refund of any amount paid into escrow.</li>
+              <li>A client may cancel a quest before an adventurer begins work for a full refund of any amount already paid.</li>
               <li>An adventurer may withdraw before starting at no penalty.</li>
               <li>If no funds were collected, cancelling simply closes the quest.</li>
             </ul>
