@@ -179,6 +179,19 @@ export default function RequestHelpForm() {
                 </option>
               ))}
             </select>
+            {data.category && (
+              <p className="mt-1.5 text-xs text-gray-500">
+                Not sure what to include?{' '}
+                <Link
+                  href={`/standards/${data.category}`}
+                  target="_blank"
+                  className="text-amber-400 hover:underline"
+                >
+                  See the checklist for this kind of work
+                </Link>
+                .
+              </p>
+            )}
           </div>
 
           <div>
