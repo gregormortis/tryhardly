@@ -16,6 +16,9 @@ export interface User {
   verified?: boolean;
   createdAt?: string;
     stripeAccountId?: string;
+  businessName?: string | null;
+  serviceArea?: string | null;
+  yearsExperience?: number | null;
   guild?: { id: string; name: string; tag: string; badgeUrl?: string } | null;
   achievements?: UserAchievement[];
 }
@@ -155,3 +158,44 @@ export interface DashboardData {
 export type QuestCategory = 'WEB_DEVELOPMENT' | 'MOBILE_DEV' | 'DESIGN' | 'WRITING' | 'MARKETING' | 'DATA_SCIENCE' | 'OTHER';
 export type QuestDifficulty = 'NOVICE' | 'APPRENTICE' | 'JOURNEYMAN' | 'EXPERT' | 'MASTER' | 'LEGENDARY';
 export type QuestStatus = 'OPEN' | 'IN_PROGRESS' | 'IN_REVIEW' | 'COMPLETED' | 'CANCELLED';
+
+export type CredentialType =
+  | 'LICENSE'
+  | 'INSURANCE'
+  | 'CERTIFICATION'
+  | 'BOND'
+  | 'BACKGROUND_CHECK'
+  | 'TRADE_MEMBERSHIP'
+  | 'OTHER';
+
+export type CredentialStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'EXPIRED';
+
+// Owner-facing credential shape (GET /users/me/credentials).
+export interface ProfessionalCredential {
+  id: string;
+  type: CredentialType;
+  title: string;
+  issuer?: string | null;
+  credentialNumber?: string | null;
+  jurisdiction?: string | null;
+  expirationDate?: string | null;
+  proofUrl?: string | null;
+  notes?: string | null;
+  status: CredentialStatus;
+  verifiedAt?: string | null;
+  rejectionReason?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Public credential shape (GET /users/:username/credentials) — verified only.
+export interface PublicCredential {
+  id: string;
+  type: CredentialType;
+  title: string;
+  issuer?: string | null;
+  jurisdiction?: string | null;
+  expirationDate?: string | null;
+  status: CredentialStatus;
+  verifiedAt?: string | null;
+}

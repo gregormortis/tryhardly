@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Application, User } from '@/lib/types';
+import CredentialsManager from '@/components/CredentialsManager';
 
 const ADVENTURER_CLASSES = [
   { value: 'WARRIOR', label: '⚔️ Warrior', desc: 'Developer / Engineer' },
@@ -28,6 +29,9 @@ export default function ProfilePage() {
     bio: '',
     avatarUrl: '',
     adventurerClass: '',
+    businessName: '',
+    serviceArea: '',
+    yearsExperience: '',
   });
 
   useEffect(() => {
@@ -52,6 +56,10 @@ export default function ProfilePage() {
         bio: profileData.bio || '',
         avatarUrl: profileData.avatarUrl || '',
         adventurerClass: profileData.adventurerClass || 'WARRIOR',
+        businessName: profileData.businessName || '',
+        serviceArea: profileData.serviceArea || '',
+        yearsExperience:
+          profileData.yearsExperience != null ? String(profileData.yearsExperience) : '',
       });
     } catch {
       toast.error('Failed to load profile');
@@ -63,7 +71,10 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/users/me', editForm);
+      await api.put('/users/me', {
+        ...editForm,
+        yearsExperience: editForm.yearsExperience === '' ? null : Number(editForm.yearsExperience),
+      });
       await refreshUser();
       await fetchProfile();
       setEditing(false);
@@ -178,6 +189,39 @@ export default function ProfilePage() {
                   placeholder="https://example.com/avatar.jpg"
                 />
               </div>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Business name</label>
+                  <input
+                    type="text"
+                    value={editForm.businessName}
+                    onChange={e => setEditForm({ ...editForm, businessName: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Service area</label>
+                  <input
+                    type="text"
+                    value={editForm.serviceArea}
+                    onChange={e => setEditForm({ ...editForm, serviceArea: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                    placeholder="e.g. Redding, CA"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Years experience</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editForm.yearsExperience}
+                    onChange={e => setEditForm({ ...editForm, yearsExperience: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Adventurer Class</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -238,6 +282,9 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+
+        {/* Professional credentials */}
+        <CredentialsManager />
 
         {/* Applications */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">

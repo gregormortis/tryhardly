@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Zap, Shield, Sword, Award, MapPin } from 'lucide-react';
+import { Zap, Shield, Sword, Award, MapPin, BadgeCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
+import type { PublicCredential, CredentialType } from '@/lib/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,26 @@ function formatFullDate(iso: string): string {
 
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : 'Adventurer not found';
+}
+
+const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
+  LICENSE: 'License',
+  INSURANCE: 'Insurance',
+  CERTIFICATION: 'Certification',
+  BOND: 'Bond',
+  BACKGROUND_CHECK: 'Background check',
+  TRADE_MEMBERSHIP: 'Trade membership',
+  OTHER: 'Credential',
+};
+
+// Build the verified-badge label. When a jurisdiction is present on a license,
+// surface it honestly (e.g. "CA license verified"); otherwise keep it generic.
+function credentialBadgeLabel(c: PublicCredential): string {
+  const base = CREDENTIAL_TYPE_LABELS[c.type] || 'Credential';
+  if (c.jurisdiction) {
+    return `${c.jurisdiction} ${base.toLowerCase()} verified`;
+  }
+  return c.type === 'BACKGROUND_CHECK' ? 'Background check verified' : `${base} verified`;
 }
 
 // Derive a display tier from the user's level. Mirrors the QuestDifficulty
@@ -240,12 +261,20 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState<string | null>(null);
   const [reviewData, setReviewData] = useState<UserReviewsResponse | null>(null);
+  const [credentials, setCredentials] = useState<PublicCredential[]>([]);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError(null);
     setReviewData(null);
+    setCredentials([]);
+    // Verified credentials are keyed by username; fetch separately so the
+    // profile still renders if the endpoint is empty or fails.
+    api
+      .get<PublicCredential[]>(`/users/${encodeURIComponent(userId)}/credentials`)
+      .then((c) => { if (active) setCredentials(Array.isArray(c) ? c : []); })
+      .catch(() => { if (active) setCredentials([]); });
     api
       .get<ApiUserProfile>(`/users/${encodeURIComponent(userId)}`)
       .then((u) => {
@@ -327,6 +356,14 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                         <Shield size={9} /> VERIFIED
                       </span>
                     )}
+                    {credentials.map((c) => (
+                      <span
+                        key={`badge-${c.id}`}
+                        className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 rounded-sm px-2 py-0.5 uppercase"
+                      >
+                        <BadgeCheck size={9} /> {credentialBadgeLabel(c)}
+                      </span>
+                    ))}
                   </div>
 
                   <div className="font-mono text-sm text-amber-400 tracking-wide mb-2">
@@ -371,6 +408,38 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       </span>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Verified professional credentials */}
+              {credentials.length > 0 && (
+                <div>
+                  <SectionLabel>Verified credentials</SectionLabel>
+                  <div className="space-y-2">
+                    {credentials.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-start gap-3 p-3.5 bg-emerald-400/[0.05] border border-emerald-400/15 rounded-lg"
+                      >
+                        <BadgeCheck size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[13px] text-emerald-300 leading-snug">
+                            {credentialBadgeLabel(c)}
+                          </p>
+                          <p className="font-mono text-[11px] text-stone-400 mt-0.5">{c.title}</p>
+                          <p className="font-mono text-[10px] text-stone-600 mt-0.5">
+                            {[c.issuer, c.jurisdiction, c.expirationDate ? `expires ${formatFullDate(c.expirationDate)}` : null]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
+                    Verification means TryHardly reviewed the submitted credential details. Users should confirm
+                    licensing requirements for their project and location.
+                  </p>
                 </div>
               )}
 
