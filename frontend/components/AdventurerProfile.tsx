@@ -10,6 +10,11 @@ import type { PublicCredential, CredentialType } from '@/lib/types';
 
 type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
 
+// Official platform status shown for staff accounts. This is an *appointed*
+// status (founder/admin), deliberately distinct from the earned tier ladder so
+// it can never read as an earned Legendary rank.
+type StaffBadge = 'FOUNDER' | 'ADMIN';
+
 interface CompletedQuest {
   id: string;
   title: string;
@@ -33,6 +38,7 @@ interface Adventurer {
   username: string;
   avatarInitials: string;
   tier: TierKey;
+  staffBadge: StaffBadge | null;
   level: number;
   xp: number;
   xpToNextLevel: number;
@@ -144,6 +150,13 @@ const TIERS: Record<TierKey, { label: string; classes: string; avatarClasses: st
   legendary:  { label: 'LEGENDARY',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20',       avatarClasses: 'bg-rose-400/10 border-rose-400/25 text-rose-400',       ringColor: '#f43f5e' },
 };
 
+// Visual treatment for official staff status. Amber/crown styling reads as an
+// appointed platform role, not a position on the earned tier ladder.
+const STAFF_BADGE_STYLE: Record<StaffBadge, { label: string; classes: string }> = {
+  FOUNDER: { label: 'FOUNDER', classes: 'text-amber-300 bg-amber-300/10 border-amber-300/30' },
+  ADMIN:   { label: 'STAFF',   classes: 'text-amber-300 bg-amber-300/10 border-amber-300/30' },
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function starsDisplay(score: number): string {
@@ -187,6 +200,16 @@ function credentialBadgeLabel(c: PublicCredential): string {
   return c.type === 'BACKGROUND_CHECK' ? 'Background check verified' : `${base} verified`;
 }
 
+// Map a backend role string to an official staff badge, if any. Only appointed
+// platform roles qualify; ordinary users (role "USER" / undefined) get none.
+function staffBadgeFromRole(role: string | undefined): StaffBadge | null {
+  switch ((role ?? '').toUpperCase()) {
+    case 'FOUNDER': return 'FOUNDER';
+    case 'ADMIN':   return 'ADMIN';
+    default:        return null;
+  }
+}
+
 // Derive a display tier from the user's level. Mirrors the QuestDifficulty
 // ladder so the badge feels consistent across the app.
 function tierFromLevel(level: number): TierKey {
@@ -211,6 +234,7 @@ interface ApiUserProfile {
   reputationScore?: number;
   totalQuestsCompleted?: number;
   favoriteSkills?: string[];
+  role?: string;
   verified?: boolean;
   createdAt?: string;
   guild?: { id: string; name: string; tag?: string } | null;
@@ -227,6 +251,7 @@ function mapProfile(u: ApiUserProfile): Adventurer {
     username: u.displayName || u.username,
     avatarInitials: (u.displayName || u.username || '?').slice(0, 2).toUpperCase(),
     tier: tierFromLevel(level),
+    staffBadge: staffBadgeFromRole(u.role),
     level,
     xp: u.xp ?? 0,
     xpToNextLevel: (level + 1) * 100,
@@ -436,7 +461,12 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
 
         {/* Profile */}
         {adventurer && !loading && (() => {
-          const tier = TIERS[adventurer.tier] ?? TIERS.novice;
+          // Earned-tier styling drives the tier badge color. For staff accounts
+          // we use a neutral amber accent for the avatar/XP visuals so the seeded
+          // legendary-level glow doesn't imply an earned Legendary rank.
+          const tier = adventurer.staffBadge
+            ? { ...TIERS.novice, avatarClasses: 'bg-amber-300/10 border-amber-300/30 text-amber-300', ringColor: '#fcd34d' }
+            : (TIERS[adventurer.tier] ?? TIERS.novice);
           return (
             <div className="space-y-7 animate-[fadeIn_0.35s_ease_both]">
 
@@ -456,12 +486,24 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     <h1 className="font-bold text-[26px] text-stone-100 tracking-tight leading-none">
                       {adventurer.username}
                     </h1>
-                    <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5', tier.classes)}>
-                      {tier.label}
-                    </span>
-                    <span className="font-mono text-[9px] text-stone-700 bg-white/[0.04] border border-white/[0.07] rounded-sm px-2 py-0.5">
-                      LVL {adventurer.level}
-                    </span>
+                    {/* Staff accounts show an official appointed status instead of an
+                        earned tier badge, so seeded admin level/rep can't read as an
+                        earned Legendary rank. The earned ladder lives in the
+                        "Rank & progression" panel below, derived from real signals. */}
+                    {adventurer.staffBadge ? (
+                      <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5', STAFF_BADGE_STYLE[adventurer.staffBadge].classes)}>
+                        {STAFF_BADGE_STYLE[adventurer.staffBadge].label}
+                      </span>
+                    ) : (
+                      <>
+                        <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5', tier.classes)}>
+                          {tier.label}
+                        </span>
+                        <span className="font-mono text-[9px] text-stone-700 bg-white/[0.04] border border-white/[0.07] rounded-sm px-2 py-0.5">
+                          LVL {adventurer.level}
+                        </span>
+                      </>
+                    )}
                     {adventurer.verified && (
                       <span className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-sky-400 bg-sky-400/10 border border-sky-400/25 rounded-sm px-2 py-0.5">
                         <Shield size={9} /> VERIFIED

@@ -10,7 +10,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
       select: {
         id: true, username: true, displayName: true, bio: true, avatarUrl: true,
         level: true, xp: true, adventurerClass: true, reputationScore: true,
-        totalQuestsCompleted: true, verified: true, createdAt: true,
+        totalQuestsCompleted: true, verified: true, createdAt: true, role: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
         questsGiven: { where: { status: 'COMPLETED' }, select: { id: true, title: true, difficulty: true }, take: 5 },
         questsCompleted: { where: { status: 'COMPLETED' }, select: { id: true, title: true, difficulty: true, reward: true }, take: 5 },
