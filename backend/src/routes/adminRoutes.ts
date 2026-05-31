@@ -9,6 +9,7 @@ import {
 } from '../controllers/adminController';
 import { listReports, updateReport } from '../controllers/reportController';
 import { listLeads, updateLead, convertLead } from '../controllers/leadController';
+import { listCredentialsForReview, reviewCredential } from '../controllers/credentialController';
 
 const router = Router();
 
@@ -25,5 +26,7 @@ router.put('/reports/:id', updateReport);
 router.get('/leads', listLeads);
 router.put('/leads/:id', updateLead);
 router.post('/leads/:id/convert', convertLead);
+router.get('/credentials', listCredentialsForReview);
+router.put('/credentials/:id', reviewCredential);
 
 export default router;

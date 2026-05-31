@@ -87,6 +87,24 @@ interface LeadsResponse {
   sourceSummary: LeadSourceCount[];
 }
 
+interface AdminCredential {
+  id: string;
+  type: string;
+  title: string;
+  issuer?: string | null;
+  credentialNumber?: string | null;
+  jurisdiction?: string | null;
+  expirationDate?: string | null;
+  proofUrl?: string | null;
+  notes?: string | null;
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'EXPIRED';
+  rejectionReason?: string | null;
+  verifiedAt?: string | null;
+  createdAt: string;
+  user?: { id: string; username: string; displayName?: string };
+  verifiedBy?: { id: string; username: string } | null;
+}
+
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -97,6 +115,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [leadSources, setLeadSources] = useState<LeadSourceCount[]>([]);
+  const [credentials, setCredentials] = useState<AdminCredential[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -114,7 +133,7 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const [s, u, q, r, l] = await Promise.all([
+      const [s, u, q, r, l, c] = await Promise.all([
         api.get<Stats>('/admin/stats'),
         api.get<AdminUser[]>('/admin/users'),
         api.get<AdminQuest[]>('/admin/quests'),
@@ -122,6 +141,7 @@ export default function AdminPage() {
         api
           .get<LeadsResponse>('/admin/leads')
           .catch(() => ({ leads: [], sourceSummary: [] } as LeadsResponse)),
+        api.get<AdminCredential[]>('/admin/credentials').catch(() => [] as AdminCredential[]),
       ]);
       setStats(s);
       setUsers(u);
@@ -129,6 +149,7 @@ export default function AdminPage() {
       setReports(r);
       setLeads(l.leads);
       setLeadSources(l.sourceSummary);
+      setCredentials(c);
     } catch (err: any) {
       setError(err.message || 'Failed to load admin data');
     } finally {
@@ -185,6 +206,20 @@ export default function AdminPage() {
       toast.success('Converted to a quest');
     } catch (err: any) {
       toast.error(err.message || 'Failed to convert lead');
+    }
+  };
+
+  const handleReviewCredential = async (
+    id: string,
+    status: AdminCredential['status'],
+    rejectionReason?: string,
+  ) => {
+    try {
+      const updated = await api.put<AdminCredential>(`/admin/credentials/${id}`, { status, rejectionReason });
+      setCredentials((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
+      toast.success(`Credential ${status.toLowerCase()}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update credential');
     }
   };
 
@@ -396,6 +431,100 @@ export default function AdminPage() {
                               className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
                             >
                               Ignore
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Professional credentials review queue */}
+        <section className="mb-10">
+          <h2 className="text-lg font-semibold text-white mb-4">
+            Credentials <span className="text-sm font-normal text-gray-500">({credentials.length})</span>
+          </h2>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            {credentials.length === 0 ? (
+              <p className="p-6 text-sm text-gray-500">
+                No credentials submitted. Professionals add these from their profile page.
+              </p>
+            ) : (
+              <div className="divide-y divide-gray-800">
+                {credentials.map((c) => {
+                  const statusColor =
+                    c.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
+                    c.status === 'VERIFIED' ? 'bg-green-500/20 text-green-400' :
+                    c.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
+                    'bg-gray-700 text-gray-300';
+                  return (
+                    <div key={c.id} className="p-4">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{c.type}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}>{c.status}</span>
+                          </div>
+                          <p className="text-white font-medium mt-2">{c.title}</p>
+                          <p className="text-sm text-gray-300 mt-1">
+                            {c.user ? (
+                              <Link href={`/profile/${c.user.username}`} className="text-amber-400 hover:text-amber-300">
+                                {c.user.username}
+                              </Link>
+                            ) : 'unknown'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {[
+                              c.issuer,
+                              c.jurisdiction,
+                              c.credentialNumber ? `#${c.credentialNumber}` : null,
+                              c.expirationDate ? `expires ${new Date(c.expirationDate).toLocaleDateString()}` : null,
+                            ].filter(Boolean).join(' · ')}
+                            {' · '}submitted {new Date(c.createdAt).toLocaleDateString()}
+                          </p>
+                          {c.notes && <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">{c.notes}</p>}
+                          {c.proofUrl && (
+                            <a href={c.proofUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-400 hover:text-amber-300 underline mt-1 inline-block">
+                              Proof link →
+                            </a>
+                          )}
+                          {c.status === 'REJECTED' && c.rejectionReason && (
+                            <p className="text-xs text-red-400 mt-1">Reason: {c.rejectionReason}</p>
+                          )}
+                          {c.verifiedBy && (
+                            <p className="text-xs text-gray-600 mt-1">Verified by {c.verifiedBy.username}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                          {c.status !== 'VERIFIED' && (
+                            <button
+                              onClick={() => handleReviewCredential(c.id, 'VERIFIED')}
+                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                            >
+                              Verify
+                            </button>
+                          )}
+                          {c.status !== 'REJECTED' && (
+                            <button
+                              onClick={() => {
+                                const reason = window.prompt('Reason for rejection (optional):') ?? undefined;
+                                handleReviewCredential(c.id, 'REJECTED', reason);
+                              }}
+                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                            >
+                              Reject
+                            </button>
+                          )}
+                          {c.status !== 'EXPIRED' && (
+                            <button
+                              onClick={() => handleReviewCredential(c.id, 'EXPIRED')}
+                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-gray-200"
+                            >
+                              Mark expired
                             </button>
                           )}
                         </div>

@@ -42,6 +42,11 @@ model User {
   guildId       String?
   guild         Guild?   @relation("GuildMembers", fields: [guildId], references: [id])
 
+  // Optional professional/contractor profile fields (all nullable, additive).
+  businessName    String?
+  serviceArea     String?
+  yearsExperience Int?
+
   // Timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -60,6 +65,8 @@ model User {
   passwordResetTokens PasswordResetToken[]
   reportsFiled       Report[]          @relation("ReportsFiled")
   reportsResolved    Report[]          @relation("ReportsResolved")
+  credentials        ProfessionalCredential[] @relation("CredentialOwner")
+  credentialsVerified ProfessionalCredential[] @relation("CredentialVerifier")
 
   @@index([email])
   @@index([username])
@@ -358,6 +365,8 @@ enum NotificationType {
   NEW_MESSAGE
   ACHIEVEMENT_UNLOCKED
   LEVEL_UP
+  CREDENTIAL_VERIFIED
+  CREDENTIAL_REJECTED
 }
 
 // ─── Password Reset ──────────────────────────────────────────────────────────
@@ -429,6 +438,61 @@ enum ReportStatus {
   REVIEWING
   RESOLVED
   DISMISSED
+}
+
+// ─── Professional Credential ────────────────────────────────────────────────
+// Contractor credibility signals a user attaches to their public profile:
+// licenses, insurance, certifications, etc. Submissions start PENDING and are
+// only shown publicly as "verified" after an admin reviews them. Verification
+// means TryHardly reviewed the submitted details — it is NOT an independent
+// guarantee of legal compliance.
+model ProfessionalCredential {
+  id              String           @id @default(uuid())
+
+  userId          String
+  user            User             @relation("CredentialOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  type            CredentialType
+  title           String
+  issuer          String?
+  credentialNumber String?
+  // Jurisdiction the credential applies to (e.g. "CA", "Federal", "Shasta County").
+  jurisdiction    String?
+  expirationDate  DateTime?
+  // User-provided link to proof. We store only URLs — no document storage.
+  proofUrl        String?
+  notes           String?
+
+  status          CredentialStatus @default(PENDING)
+
+  // Admin review trail.
+  verifiedById    String?
+  verifiedBy      User?            @relation("CredentialVerifier", fields: [verifiedById], references: [id])
+  verifiedAt      DateTime?
+  rejectionReason String?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum CredentialType {
+  LICENSE
+  INSURANCE
+  CERTIFICATION
+  BOND
+  BACKGROUND_CHECK
+  TRADE_MEMBERSHIP
+  OTHER
+}
+
+enum CredentialStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
 }
 
 // ─── Lead ────────────────────────────────────────────────────────────────────
