@@ -563,10 +563,21 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                         </span>
                       </>
                     )}
+                    {/* Account verification. For staff/admin this is an official
+                        platform-account marker (amber, "OFFICIAL ACCOUNT"), styled
+                        to match the appointed staff badge so it can't be mistaken
+                        for the earned "Verified Pro" credential below. Non-staff
+                        accounts keep the generic sky "VERIFIED" treatment. */}
                     {adventurer.verified && (
-                      <span className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-sky-400 bg-sky-400/10 border border-sky-400/25 rounded-sm px-2 py-0.5">
-                        <Shield size={9} /> VERIFIED
-                      </span>
+                      adventurer.staffBadge ? (
+                        <span className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-amber-300 bg-amber-300/10 border border-amber-300/30 rounded-sm px-2 py-0.5">
+                          <Shield size={9} /> OFFICIAL ACCOUNT
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-sky-400 bg-sky-400/10 border border-sky-400/25 rounded-sm px-2 py-0.5">
+                          <Shield size={9} /> VERIFIED
+                        </span>
+                      )
                     )}
                     {credentials.map((c) => (
                       <span
