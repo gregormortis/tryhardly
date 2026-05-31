@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
+import { readLeadSource, type LeadSource } from '@/lib/leadSource';
 import ImageUploader from '@/components/ImageUploader';
 
 interface FormState {
@@ -53,6 +54,14 @@ export default function RequestHelpForm() {
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
 
+  // Capture acquisition attribution from the URL once on mount, before the user
+  // navigates within the SPA could drop the query string. Stored in a ref so it
+  // travels with the eventual submission without triggering re-renders.
+  const leadSource = useRef<LeadSource>({});
+  useEffect(() => {
+    leadSource.current = readLeadSource();
+  }, []);
+
   const update = (field: keyof FormState, value: string | boolean) =>
     setData((prev) => ({ ...prev, [field]: value }));
 
@@ -90,6 +99,7 @@ export default function RequestHelpForm() {
         email: data.email.trim(),
         phone: data.phone.trim() || undefined,
         photoUrls: data.photoUrls.trim() || undefined,
+        ...leadSource.current,
       });
       setDone(true);
     } catch (err: any) {

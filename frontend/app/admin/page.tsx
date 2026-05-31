@@ -72,7 +72,19 @@ interface AdminLead {
   adminNote?: string | null;
   convertedQuestId?: string | null;
   workerAlertsNotified?: number;
+  source?: string | null;
+  utm?: Record<string, string> | null;
   createdAt: string;
+}
+
+interface LeadSourceCount {
+  source: string;
+  count: number;
+}
+
+interface LeadsResponse {
+  leads: AdminLead[];
+  sourceSummary: LeadSourceCount[];
 }
 
 export default function AdminPage() {
@@ -84,6 +96,7 @@ export default function AdminPage() {
   const [quests, setQuests] = useState<AdminQuest[]>([]);
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [leadSources, setLeadSources] = useState<LeadSourceCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -106,13 +119,16 @@ export default function AdminPage() {
         api.get<AdminUser[]>('/admin/users'),
         api.get<AdminQuest[]>('/admin/quests'),
         api.get<AdminReport[]>('/admin/reports').catch(() => [] as AdminReport[]),
-        api.get<AdminLead[]>('/admin/leads').catch(() => [] as AdminLead[]),
+        api
+          .get<LeadsResponse>('/admin/leads')
+          .catch(() => ({ leads: [], sourceSummary: [] } as LeadsResponse)),
       ]);
       setStats(s);
       setUsers(u);
       setQuests(q);
       setReports(r);
-      setLeads(l);
+      setLeads(l.leads);
+      setLeadSources(l.sourceSummary);
     } catch (err: any) {
       setError(err.message || 'Failed to load admin data');
     } finally {
@@ -271,6 +287,18 @@ export default function AdminPage() {
           <h2 className="text-lg font-semibold text-white mb-4">
             Leads <span className="text-sm font-normal text-gray-500">({leads.length})</span>
           </h2>
+          {leadSources.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {leadSources.map((s) => (
+                <span
+                  key={s.source}
+                  className="text-xs px-2.5 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300"
+                >
+                  {s.source}: <span className="text-white font-medium">{s.count}</span>
+                </span>
+              ))}
+            </div>
+          )}
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             {leads.length === 0 ? (
               <p className="p-6 text-sm text-gray-500">
@@ -294,6 +322,11 @@ export default function AdminPage() {
                               {isJob ? 'Job request' : 'Worker alert'}
                             </span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}>{l.status}</span>
+                            {l.source && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">
+                                Source: {l.source}
+                              </span>
+                            )}
                           </div>
                           {isJob && l.title && (
                             <p className="text-white font-medium mt-2">{l.title}</p>
@@ -323,6 +356,11 @@ export default function AdminPage() {
                                 </a>
                               ))}
                             </div>
+                          )}
+                          {l.utm && Object.keys(l.utm).length > 0 && (
+                            <p className="text-xs text-gray-600 mt-1">
+                              {Object.entries(l.utm).map(([k, v]) => `${k}=${v}`).join(' · ')}
+                            </p>
                           )}
                           {isJob && typeof l.workerAlertsNotified === 'number' && l.workerAlertsNotified > 0 && (
                             <p className="text-xs text-purple-300 mt-1">

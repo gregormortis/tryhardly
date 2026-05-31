@@ -464,6 +464,15 @@ model Lead {
   availability String?
   hasTools    Boolean    @default(false)
 
+  // Acquisition attribution. `source` is the primary launch-channel label
+  // (e.g. redding, facebook-requester, flyer-worker), captured from the form's
+  // ?source= query param. `utm` holds any UTM/ref params as a small JSON blob so
+  // we can measure which channels drive job requests and worker alerts without a
+  // column per param. Both are optional and additive — leads without attribution
+  // keep working unchanged.
+  source      String?
+  utm         Json?
+
   // Catch-all for any extra fields without a migration.
   payload     Json?
 
@@ -494,6 +503,7 @@ model Lead {
   @@index([type, status])
   @@index([status])
   @@index([createdAt])
+  @@index([source])
 }
 
 // Records that a worker-alert lead was emailed about a specific job-request lead.

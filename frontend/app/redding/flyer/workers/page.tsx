@@ -22,7 +22,7 @@ export default function ReddingWorkerFlyerPage() {
         'Yard work, hauling, moving, cleaning',
         'Handyman gigs & errands',
       ]}
-      qrUrl={links.workAlerts}
+      qrUrl={links.flyerWorkersTarget}
       shortUrl={shortLinks.workAlerts}
       callToAction="Get local job alerts"
       footnote="New in Redding — early access. Listings are just starting to come online. Get in early, build your profile, and be first in line as jobs roll in."
