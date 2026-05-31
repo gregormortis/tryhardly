@@ -7,25 +7,50 @@ import { prisma } from '../app';
 // or faked. When a worker has too few ratings to earn even Bronze, we surface an
 // honest "locked" tier with progress toward the next threshold instead.
 
-export type SkillBadgeTier = 'LOCKED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+export type SkillBadgeTier = 'LOCKED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'MYTHIC';
 
 export interface SkillTierRule {
   tier: Exclude<SkillBadgeTier, 'LOCKED'>;
   minRatings: number;
   minAverage: number;
+  // Some top tiers require an out-of-band review (admin/guild) in addition to the
+  // measurable thresholds. We never auto-grant those from ratings alone.
+  requiresReview?: boolean;
 }
 
 // Ordered ascending. Each tier requires BOTH a minimum number of ratings and a
 // minimum average rating. A skill earns the highest tier whose thresholds it
-// meets. Keeping both gates means a single 5★ rating can't mint a badge.
+// meets. Keeping both gates means a single 5★ rating can't mint a badge. Tiers
+// are deliberately demanding — a Mythic badge represents a deep, proven track
+// record, not a lucky streak.
+//
+// MYTHIC additionally requires an admin/guild review and is therefore not
+// auto-awarded from ratings: deriveSkillTier caps at PLATINUM. The Mythic rule is
+// published so workers can see the bar, and the tier exists in the type/display
+// so a reviewed Mythic badge renders correctly.
 export const SKILL_TIER_RULES: SkillTierRule[] = [
-  { tier: 'BRONZE',   minRatings: 3,  minAverage: 4.0 },
-  { tier: 'SILVER',   minRatings: 8,  minAverage: 4.3 },
-  { tier: 'GOLD',     minRatings: 20, minAverage: 4.6 },
-  { tier: 'PLATINUM', minRatings: 50, minAverage: 4.8 },
+  { tier: 'BRONZE',   minRatings: 5,   minAverage: 4.2 },
+  { tier: 'SILVER',   minRatings: 15,  minAverage: 4.5 },
+  { tier: 'GOLD',     minRatings: 40,  minAverage: 4.7 },
+  { tier: 'PLATINUM', minRatings: 100, minAverage: 4.85 },
+  { tier: 'MYTHIC',   minRatings: 250, minAverage: 4.9, requiresReview: true },
 ];
 
-const TIER_ORDER: SkillBadgeTier[] = ['LOCKED', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
+// The highest tier a worker can earn purely from ratings (no manual review).
+const MAX_AUTO_TIER: SkillBadgeTier = 'PLATINUM';
+
+const TIER_ORDER: SkillBadgeTier[] = ['LOCKED', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'MYTHIC'];
+
+/** Ordinal of a tier (LOCKED = 0). Higher tiers rank above lower ones. */
+export function skillTierRank(tier: SkillBadgeTier): number {
+  return Math.max(0, TIER_ORDER.indexOf(tier));
+}
+
+/** Count how many badges are at `min` tier or higher (Gold counts toward Silver/Bronze). */
+export function countBadgesAtLeast(badges: SkillBadge[], min: Exclude<SkillBadgeTier, 'LOCKED'>): number {
+  const floor = skillTierRank(min);
+  return badges.filter((b) => skillTierRank(b.tier) >= floor).length;
+}
 
 export interface SkillBadge {
   skillSlug: string;
@@ -49,10 +74,15 @@ export interface SkillBadge {
 export function deriveSkillTier(ratingCount: number, averageRating: number): SkillBadgeTier {
   let earned: SkillBadgeTier = 'LOCKED';
   for (const rule of SKILL_TIER_RULES) {
+    // Review-gated tiers (e.g. MYTHIC) are never auto-granted from ratings alone.
+    if (rule.requiresReview) continue;
     if (ratingCount >= rule.minRatings && averageRating >= rule.minAverage) {
       earned = rule.tier;
     }
   }
+  // Belt-and-suspenders: never exceed the highest auto-grantable tier here.
+  const cap = TIER_ORDER.indexOf(MAX_AUTO_TIER);
+  if (TIER_ORDER.indexOf(earned) > cap) earned = MAX_AUTO_TIER;
   return earned;
 }
 
@@ -67,7 +97,7 @@ export function nextTierProgress(
 ): SkillBadge['next'] {
   const currentIdx = TIER_ORDER.indexOf(currentTier);
   const nextTier = TIER_ORDER[currentIdx + 1] as Exclude<SkillBadgeTier, 'LOCKED'> | undefined;
-  if (!nextTier) return null; // already PLATINUM
+  if (!nextTier) return null; // already MYTHIC — top of the ladder
 
   const rule = SKILL_TIER_RULES.find((r) => r.tier === nextTier)!;
   return {

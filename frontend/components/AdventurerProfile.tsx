@@ -76,7 +76,7 @@ interface UserReviewsResponse {
 
 // ─── Skill badges (mirrors backend skillService SkillBadge) ─────────────────────
 
-type SkillTier = 'LOCKED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+type SkillTier = 'LOCKED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'MYTHIC';
 
 interface SkillBadge {
   skillSlug: string;
@@ -98,7 +98,7 @@ interface SkillBadgesResponse {
 
 // ─── Progression (mirrors backend progressionService ProgressionSummary) ────────
 
-type WorkerRank = 'NOVICE' | 'APPRENTICE' | 'JOURNEYMAN' | 'EXPERT' | 'LEGENDARY';
+type WorkerRank = 'NOVICE' | 'APPRENTICE' | 'JOURNEYMAN' | 'EXPERT' | 'MASTER' | 'LEGENDARY';
 
 interface ProgressionRankRow {
   rank: WorkerRank;
@@ -112,6 +112,11 @@ interface ProgressionRankRow {
 interface ProgressionSummary {
   currentRank: WorkerRank;
   currentRankLabel: string;
+  candidate?: {
+    isCandidate: boolean;
+    candidateForRank: WorkerRank | null;
+    candidateLabel: string | null;
+  };
   signals: {
     level: number;
     xp: number;
@@ -120,6 +125,7 @@ interface ProgressionSummary {
     ratingCount: number;
   };
   ranks: ProgressionRankRow[];
+  probationStage?: string;
 }
 
 // ─── Earned achievements (mirrors backend EarnedAchievement) ────────────────────
@@ -148,6 +154,7 @@ const SKILL_TIER_STYLE: Record<SkillTier, { label: string; classes: string }> = 
   SILVER:   { label: 'Silver',      classes: 'text-stone-300 bg-stone-300/10 border-stone-300/25' },
   GOLD:     { label: 'Gold',        classes: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/25' },
   PLATINUM: { label: 'Platinum',    classes: 'text-cyan-300 bg-cyan-300/10 border-cyan-300/25' },
+  MYTHIC:   { label: 'Mythic',      classes: 'text-fuchsia-400 bg-fuchsia-400/10 border-fuchsia-400/25' },
 };
 
 // Worker-rank visual accent for the progression panel.
@@ -156,6 +163,7 @@ const RANK_ACCENT: Record<WorkerRank, string> = {
   APPRENTICE: 'text-blue-400 border-blue-400/25 bg-blue-400/[0.06]',
   JOURNEYMAN: 'text-amber-400 border-amber-400/25 bg-amber-400/[0.06]',
   EXPERT:     'text-orange-400 border-orange-400/25 bg-orange-400/[0.06]',
+  MASTER:     'text-violet-400 border-violet-400/25 bg-violet-400/[0.06]',
   LEGENDARY:  'text-rose-400 border-rose-400/25 bg-rose-400/[0.06]',
 };
 
@@ -596,6 +604,11 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="font-bold text-[15px] tracking-tight">
                           {progression.currentRankLabel}
+                          {progression.candidate?.isCandidate && progression.candidate.candidateLabel && (
+                            <span className="ml-2 font-mono text-[9px] font-semibold tracking-widest uppercase text-stone-400 align-middle">
+                              {progression.candidate.candidateLabel}
+                            </span>
+                          )}
                         </span>
                         <span className="font-mono text-[10px] text-stone-500">
                           {progression.signals.completedJobs} jobs ·{' '}
@@ -606,6 +619,12 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                           {progression.signals.ratingCount === 1 ? '' : 's'}
                         </span>
                       </div>
+                      {progression.candidate?.isCandidate && (
+                        <p className="font-mono text-[10px] text-stone-500 mt-2 leading-relaxed">
+                          You have the level for {progression.candidate.candidateLabel?.replace(' Candidate', '')} —
+                          finish the remaining requirements below to rank up.
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       {progression.ranks.map((r) => (
