@@ -10,6 +10,7 @@ const mockPrisma = {
     findUnique: jest.fn(),
     findFirst: jest.fn(),
     update: jest.fn(),
+    groupBy: jest.fn().mockResolvedValue([]),
   },
   leadMatchNotification: { create: jest.fn() },
   quest: { create: jest.fn() },
@@ -85,6 +86,50 @@ describe('createJobRequest', () => {
     // Both the confirmation and the secure manage link are sent.
     expect(sendEmail).toHaveBeenCalledTimes(2);
     expect(emailTemplates.jobRequestClaimLink).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it('captures and trims source + allowlisted utm params', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'l1', status: 'NEW' });
+    const res = mockRes();
+    await createJobRequest(
+      {
+        body: {
+          title: 'Mow lawn', name: 'Pat', email: 'pat@b.com',
+          source: '  flyer-requester  ',
+          utm_source: 'facebook', utm_medium: 'social', ref: 'qr',
+          // Not on the allowlist — must be dropped, not persisted.
+          utm_evil: 'x', notAUtm: 'y',
+        },
+      } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.source).toBe('flyer-requester'); // trimmed
+    expect(arg.data.utm).toEqual({ utm_source: 'facebook', utm_medium: 'social', ref: 'qr' });
+    expect(arg.data.utm.utm_evil).toBeUndefined();
+    expect(arg.data.utm.notAUtm).toBeUndefined();
+  });
+
+  it('caps an oversized source and stores no utm when none supplied', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'l1', status: 'NEW' });
+    const res = mockRes();
+    await createJobRequest(
+      { body: { title: 'Mow lawn', name: 'Pat', email: 'pat@b.com', source: 'x'.repeat(500) } } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.source).toHaveLength(120); // length-capped
+    expect(arg.data.utm).toBeUndefined();
+  });
+
+  it('preserves the existing flow when no source param is present', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'l1', status: 'NEW' });
+    const res = mockRes();
+    await createJobRequest({ body: { title: 'Mow lawn', name: 'Pat', email: 'pat@b.com' } } as any, res);
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.source).toBeNull();
+    expect(arg.data.utm).toBeUndefined();
     expect(res.status).toHaveBeenCalledWith(201);
   });
 });
@@ -232,6 +277,18 @@ describe('createWorkerAlert', () => {
     expect(arg.data.skills).toEqual(['yard', 'hauling']);
     expect(arg.data.hasTools).toBe(true);
     expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it('captures source + utm attribution on a worker alert', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'w1', status: 'NEW' });
+    const res = mockRes();
+    await createWorkerAlert(
+      { body: { name: 'Sam', email: 'sam@b.com', source: 'flyer-worker', utm_campaign: 'redding-launch' } } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.source).toBe('flyer-worker');
+    expect(arg.data.utm).toEqual({ utm_campaign: 'redding-launch' });
   });
 
   it('rejects when name is missing', async () => {

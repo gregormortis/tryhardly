@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
+import { readLeadSource, type LeadSource } from '@/lib/leadSource';
 
 interface FormState {
   name: string;
@@ -44,6 +45,13 @@ export default function WorkAlertsForm() {
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
 
+  // Capture acquisition attribution from the URL once on mount so it survives
+  // any in-app navigation before the user submits the form.
+  const leadSource = useRef<LeadSource>({});
+  useEffect(() => {
+    leadSource.current = readLeadSource();
+  }, []);
+
   const update = (field: keyof FormState, value: string | boolean | string[]) =>
     setData((prev) => ({ ...prev, [field]: value }));
 
@@ -74,6 +82,7 @@ export default function WorkAlertsForm() {
         skills: data.skills,
         availability: data.availability.trim() || undefined,
         hasTools: data.hasTools,
+        ...leadSource.current,
       });
       setDone(true);
     } catch (err: any) {

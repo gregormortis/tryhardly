@@ -100,6 +100,28 @@ function str(v: unknown, max = 2000): string | undefined {
   return t.slice(0, max);
 }
 
+// UTM/ref attribution params we accept from the public lead forms. Kept to a
+// fixed allowlist so we never persist arbitrary client-supplied keys.
+const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ref'] as const;
+
+// Extract acquisition attribution from a request body. `source` is the primary
+// launch-channel label (?source=...); `utm` is a small object of the allowlisted
+// UTM/ref params that were actually present. Every value is trimmed and length-
+// capped so the public (unauthenticated) endpoints can't be used to store bulky
+// or arbitrary data. Returns { source: undefined, utm: undefined } when nothing
+// usable was supplied, so leads without attribution are stored unchanged.
+function sourceData(body: any): { source: string | undefined; utm: Record<string, string> | undefined } {
+  const source = str(body?.source, 120);
+
+  const utm: Record<string, string> = {};
+  for (const key of UTM_KEYS) {
+    const v = str(body?.[key], 200);
+    if (v) utm[key] = v;
+  }
+
+  return { source, utm: Object.keys(utm).length > 0 ? utm : undefined };
+}
+
 // Normalize an array of strings (e.g. photo URLs, skills) from the request body.
 function strArray(v: unknown, maxItems = 20, maxLen = 500): string[] {
   if (!Array.isArray(v)) {
@@ -142,6 +164,8 @@ export const createJobRequest = async (req: Request, res: Response): Promise<voi
     // lead. Only the hash is persisted; the raw token is emailed below.
     const rawClaimToken = crypto.randomBytes(32).toString('hex');
 
+    const { source, utm } = sourceData(req.body);
+
     const lead = await prisma.lead.create({
       data: {
         type: LeadType.JOB_REQUEST,
@@ -155,6 +179,8 @@ export const createJobRequest = async (req: Request, res: Response): Promise<voi
         budget: str(req.body?.budget, 120) ?? null,
         timeline: str(req.body?.timeline, 200) ?? null,
         photoUrls: strArray(req.body?.photoUrls),
+        source: source ?? null,
+        utm: utm ?? undefined,
         claimTokenHash: hashToken(rawClaimToken),
         claimTokenExpiresAt: new Date(Date.now() + CLAIM_TOKEN_TTL_MS),
       },
@@ -206,6 +232,8 @@ export const createWorkerAlert = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    const { source, utm } = sourceData(req.body);
+
     const lead = await prisma.lead.create({
       data: {
         type: LeadType.WORKER_ALERT,
@@ -216,6 +244,8 @@ export const createWorkerAlert = async (req: Request, res: Response): Promise<vo
         skills: strArray(req.body?.skills),
         availability: str(req.body?.availability, 200) ?? null,
         hasTools: req.body?.hasTools === true || req.body?.hasTools === 'true',
+        source: source ?? null,
+        utm: utm ?? undefined,
       },
       select: { id: true, status: true },
     });
@@ -252,7 +282,23 @@ export const listLeads = async (req: AuthRequest, res: Response): Promise<void> 
       ...lead,
       workerAlertsNotified: _count.jobNotifications,
     }));
-    res.json(withCounts);
+
+    // Attribution summary: counts by source across ALL leads matching the same
+    // type/status filter (not just the 200-row page), so admins can see at a
+    // glance which launch channels are driving leads. Leads with no source are
+    // bucketed under '(none)'.
+    const grouped = await prisma.lead.groupBy({
+      by: ['source'],
+      where,
+      _count: { _all: true },
+      orderBy: { _count: { source: 'desc' } },
+    });
+    const sourceSummary = grouped.map((g) => ({
+      source: g.source ?? '(none)',
+      count: g._count._all,
+    }));
+
+    res.json({ leads: withCounts, sourceSummary });
   } catch (error) {
     console.error('listLeads error:', error);
     res.status(500).json({ error: 'Failed to fetch leads' });

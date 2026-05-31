@@ -22,7 +22,7 @@ export default function ReddingRequestFlyerPage() {
         'Cleaning & handyman jobs',
         'Errands & pickups',
       ]}
-      qrUrl={links.requestHelp}
+      qrUrl={links.flyerRequestHelpTarget}
       shortUrl={shortLinks.requestHelp}
       callToAction="Post your job — it's free"
       footnote="New in Redding — early access. We're connecting real local jobs with dependable local people. Takes about a minute, no account needed to post."
