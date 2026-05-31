@@ -17,7 +17,7 @@ import {
   Star,
   ShieldCheck,
   MessagesSquare,
-  Wallet,
+  CircleDollarSign,
 } from 'lucide-react';
 
 const problems = [
@@ -67,7 +67,7 @@ const benefits = [
     desc: 'Build a profile and collect reviews so posters can trust you fast. Your good work actually counts toward the next job.',
   },
   {
-    icon: Wallet,
+    icon: CircleDollarSign,
     title: 'Clear rewards up front',
     desc: 'Every job lists what it pays before you apply. No haggling in the comments, no surprise lowball at the door.',
   },
@@ -342,7 +342,7 @@ export default function FindWorkFastLanding() {
       <section className="border-t border-zinc-800 bg-zinc-900/50">
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-400">
-            <Wallet className="h-5 w-5" />
+            <CircleDollarSign className="h-5 w-5" />
           </div>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
             Start finding work today
