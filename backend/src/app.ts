@@ -14,6 +14,7 @@ import notificationRoutes from './routes/notificationRoutes';
 import adminRoutes from './routes/adminRoutes';
 import reportRoutes from './routes/reportRoutes';
 import leadRoutes from './routes/leadRoutes';
+import progressionRoutes from './routes/progressionRoutes';
 import { reportError } from './lib/errorReporting';
 
 // Initialize Prisma Client
@@ -92,6 +93,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/progression', progressionRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

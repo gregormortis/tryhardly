@@ -92,6 +92,14 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
+                  href="/progression"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Ranks &amp; Progression
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/faq"
                   className="transition-colors hover:text-zinc-100"
                 >

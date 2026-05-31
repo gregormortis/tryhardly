@@ -47,6 +47,12 @@ model User {
   serviceArea     String?
   yearsExperience Int?
 
+  // Worker-curated "favorite" skill slugs surfaced on the public profile. Purely
+  // additive; defaults to empty so existing rows are unaffected. The badge tier
+  // for each skill is always derived from real SkillRating data, never from this
+  // list — this only controls which skills the worker chooses to feature.
+  favoriteSkills  String[] @default([])
+
   // Timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -67,6 +73,8 @@ model User {
   reportsResolved    Report[]          @relation("ReportsResolved")
   credentials        ProfessionalCredential[] @relation("CredentialOwner")
   credentialsVerified ProfessionalCredential[] @relation("CredentialVerifier")
+  skillRatingsReceived SkillRating[]          @relation("SkillRatingSubject")
+  skillRatingsGiven    SkillRating[]          @relation("SkillRatingAuthor")
 
   @@index([email])
   @@index([username])
@@ -124,6 +132,7 @@ model Quest {
   milestones      Milestone[]
   reviews         Review[]
   messages        Message[]
+  skillRatings    SkillRating[]
 
   @@index([questGiverId])
   @@index([assignedAdventurerId])
@@ -284,11 +293,54 @@ model Review {
 
   createdAt   DateTime @default(now())
 
+  // Per-skill ratings attached to this review (optional, additive).
+  skillRatings SkillRating[]
+
   // One review per reviewer per quest — prevents duplicate reviews.
   @@unique([questId, reviewerId])
   @@index([questId])
   @@index([reviewerId])
   @@index([revieweeId])
+}
+
+// ─── Skill Rating ─────────────────────────────────────────────────────────────
+// A client's rating of a specific skill the worker performed on a completed job
+// (e.g. "mowing", "fencing", "hauling"). Aggregated to derive per-skill badge
+// tiers (Bronze/Silver/Gold/Platinum) on the worker's profile. Badge tiers are
+// always computed from these rows — never denormalized — so they cannot go stale
+// or be faked. Fully additive: no existing flow depends on this table.
+model SkillRating {
+  id          String   @id @default(uuid())
+
+  // The completed quest the skill was performed on.
+  questId     String
+  quest       Quest    @relation(fields: [questId], references: [id])
+
+  // The review this rating was submitted alongside, when applicable. Nullable so
+  // skill ratings can also be recorded independently of a written review.
+  reviewId    String?
+  review      Review?  @relation(fields: [reviewId], references: [id])
+
+  // Who rated (client) and who is being rated (worker).
+  raterId     String
+  rater       User     @relation("SkillRatingAuthor", fields: [raterId], references: [id])
+  workerId    String
+  worker      User     @relation("SkillRatingSubject", fields: [workerId], references: [id])
+
+  // Normalized skill identity. `skillSlug` is the stable key used for grouping;
+  // `skillName` is the human-friendly label captured at rating time.
+  skillSlug   String
+  skillName   String
+
+  rating      Int      // 1–5
+
+  createdAt   DateTime @default(now())
+
+  // One rating per skill per rater per quest — prevents duplicate skill ratings.
+  @@unique([questId, raterId, skillSlug])
+  @@index([workerId])
+  @@index([workerId, skillSlug])
+  @@index([questId])
 }
 
 // ─── Achievement ─────────────────────────────────────────────────────────────

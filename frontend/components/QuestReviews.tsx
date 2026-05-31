@@ -28,18 +28,51 @@ function Stars({ value, className }: { value: number; className?: string }) {
   );
 }
 
+interface SkillRow {
+  skillName: string;
+  rating: number;
+}
+
 interface QuestReviewsProps {
   questId: string;
   // When the viewer is a participant on a COMPLETED quest, they may leave a review.
   canReview: boolean;
+  // When the viewer is the quest giver, they may additionally rate the worker's
+  // individual skills (mowing, fencing, hauling, …) to build skill badges.
+  canRateSkills?: boolean;
+  // Skill name suggestions (e.g. from the quest's tags) to pre-fill the form.
+  suggestedSkills?: string[];
 }
 
-export default function QuestReviews({ questId, canReview }: QuestReviewsProps) {
+export default function QuestReviews({ questId, canReview, canRateSkills = false, suggestedSkills = [] }: QuestReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Per-skill ratings. Seed from suggested skills (deduped, non-empty), default 5★.
+  const [skills, setSkills] = useState<SkillRow[]>(() => {
+    const seen = new Set<string>();
+    const rows: SkillRow[] = [];
+    for (const s of suggestedSkills) {
+      const name = (s || '').trim();
+      const key = name.toLowerCase();
+      if (!name || seen.has(key)) continue;
+      seen.add(key);
+      rows.push({ skillName: name, rating: 5 });
+      if (rows.length >= 6) break;
+    }
+    return rows;
+  });
+
+  const setSkillRating = (idx: number, value: number) =>
+    setSkills((prev) => prev.map((s, i) => (i === idx ? { ...s, rating: value } : s)));
+  const setSkillName = (idx: number, value: string) =>
+    setSkills((prev) => prev.map((s, i) => (i === idx ? { ...s, skillName: value } : s)));
+  const removeSkill = (idx: number) => setSkills((prev) => prev.filter((_, i) => i !== idx));
+  const addSkill = () =>
+    setSkills((prev) => (prev.length >= 6 ? prev : [...prev, { skillName: '', rating: 5 }]));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,7 +99,16 @@ export default function QuestReviews({ questId, canReview }: QuestReviewsProps) 
     }
     setSubmitting(true);
     try {
-      await api.post(`/quests/${questId}/reviews`, { rating, comment: comment.trim() });
+      const cleanedSkills = canRateSkills
+        ? skills
+            .map((s) => ({ skillName: s.skillName.trim(), rating: s.rating }))
+            .filter((s) => s.skillName.length > 0)
+        : [];
+      await api.post(`/quests/${questId}/reviews`, {
+        rating,
+        comment: comment.trim(),
+        ...(cleanedSkills.length > 0 ? { skills: cleanedSkills } : {}),
+      });
       toast.success('Review submitted. Thanks for the feedback!');
       setComment('');
       setRating(5);
@@ -106,6 +148,60 @@ export default function QuestReviews({ questId, canReview }: QuestReviewsProps) 
             placeholder="How did it go? Be honest and specific…"
             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
           />
+
+          {/* Per-skill ratings — only the quest giver rating the worker. These
+              build the worker's skill badges (Bronze → Platinum). */}
+          {canRateSkills && (
+            <div className="pt-2 border-t border-gray-800 space-y-3">
+              <div>
+                <p className="text-sm text-gray-300">Rate the skills they performed (optional)</p>
+                <p className="text-xs text-gray-500">Helps build their skill badges. Leave blank to skip.</p>
+              </div>
+              {skills.map((s, idx) => (
+                <div key={idx} className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="text"
+                    value={s.skillName}
+                    onChange={(e) => setSkillName(idx, e.target.value)}
+                    maxLength={40}
+                    placeholder="e.g. Lawn mowing"
+                    className="flex-1 min-w-[8rem] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                  />
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setSkillRating(idx, n)}
+                        className={`text-xl leading-none transition-colors ${n <= s.rating ? 'text-amber-400' : 'text-gray-700 hover:text-gray-500'}`}
+                        aria-label={`Rate ${s.skillName || 'skill'} ${n} star${n > 1 ? 's' : ''}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(idx)}
+                    className="text-gray-600 hover:text-rose-400 text-sm px-1"
+                    aria-label="Remove skill"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {skills.length < 6 && (
+                <button
+                  type="button"
+                  onClick={addSkill}
+                  className="text-sm text-amber-400 hover:text-amber-300 font-medium"
+                >
+                  + Add a skill
+                </button>
+              )}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={submitting}
