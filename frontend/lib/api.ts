@@ -37,6 +37,11 @@ async function apiRequest<T>(
     throw new Error(error.error || error.message || 'Request failed');
   }
 
+  // 204 No Content (and other empty bodies) have nothing to parse.
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 

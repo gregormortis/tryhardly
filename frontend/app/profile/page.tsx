@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Application, User } from '@/lib/types';
 import CredentialsManager from '@/components/CredentialsManager';
+import ProfessionalismManager from '@/components/ProfessionalismManager';
 
 const ADVENTURER_CLASSES = [
   { value: 'WARRIOR', label: '⚔️ Warrior', desc: 'Developer / Engineer' },
@@ -285,6 +286,9 @@ export default function ProfilePage() {
 
         {/* Professional credentials */}
         <CredentialsManager />
+
+        {/* Professionalism: Code of Craft pledge, Verified Pro, proof of work */}
+        <ProfessionalismManager userId={displayProfile.id} />
 
         {/* Applications */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">

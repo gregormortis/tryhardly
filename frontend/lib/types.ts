@@ -19,6 +19,7 @@ export interface User {
   businessName?: string | null;
   serviceArea?: string | null;
   yearsExperience?: number | null;
+  codeOfCraftPledgedAt?: string | null;
   guild?: { id: string; name: string; tag: string; badgeUrl?: string } | null;
   achievements?: UserAchievement[];
 }
@@ -198,4 +199,40 @@ export interface PublicCredential {
   expirationDate?: string | null;
   status: CredentialStatus;
   verifiedAt?: string | null;
+}
+
+// Code of Craft pledge status (GET/POST /users/me/pledge).
+export interface PledgeStatus {
+  pledged: boolean;
+  pledgedAt?: string | null;
+}
+
+// Proof-of-work gallery item. Owner shape includes the `visible` flag; the
+// public shape omits it (only visible items are ever returned publicly).
+export interface ProofOfWorkItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  imageUrls: string[];
+  skillTags: string[];
+  questId?: string | null;
+  quest?: { id: string; title: string } | null;
+  visible?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Verified Pro checklist + eligibility (GET /users/:userId/verified-pro).
+export interface VerifiedProCheckItem {
+  key: string;
+  label: string;
+  met: boolean;
+  detail: string;
+}
+
+export interface VerifiedProStatus {
+  eligible: boolean;
+  metCount: number;
+  totalCount: number;
+  checklist: VerifiedProCheckItem[];
 }

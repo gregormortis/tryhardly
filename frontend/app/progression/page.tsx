@@ -263,6 +263,38 @@ export default function ProgressionPage() {
           </p>
         </section>
 
+        {/* Professional signals */}
+        <section className="mb-14">
+          <h2 className="text-2xl font-bold text-amber-400 mb-3">Professional signals</h2>
+          <p className="text-gray-300 mb-5">
+            Ranks and badges grow over time, but you can show clients you mean business from day one. These
+            professional signals sit alongside your rank — all honest, all earned or self-attested, never faked.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <a href="/code-of-craft" className="bg-gray-900/50 border border-gray-800 rounded-lg p-5 block hover:border-amber-500/40 transition-colors">
+              <div className="text-lg font-bold text-amber-200 mb-1">Code of Craft</div>
+              <p className="text-sm text-gray-400">
+                Pledge to professional standards — show up, communicate, protect property, and clean up. Your
+                profile shows the pledge only when you&apos;ve actually made it.
+              </p>
+            </a>
+            <a href="/verified-pro" className="bg-gray-900/50 border border-gray-800 rounded-lg p-5 block hover:border-emerald-500/40 transition-colors">
+              <div className="text-lg font-bold text-emerald-200 mb-1">Verified Pro</div>
+              <p className="text-sm text-gray-400">
+                An earned checklist: complete profile, Code of Craft pledge, a verified credential, completed
+                jobs, strong reviews, and a clean record. Derived from real activity — never bought.
+              </p>
+            </a>
+            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-5">
+              <div className="text-lg font-bold text-sky-200 mb-1">Proof-of-work gallery</div>
+              <p className="text-sm text-gray-400">
+                Showcase honest photos of past work on your profile. Proof examples help clients trust your
+                skill claims — but skill badges themselves always stay rating-derived.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <div className="bg-gradient-to-r from-amber-900/20 to-purple-900/20 border border-amber-500/40 rounded-xl p-8 text-center">
           <h3 className="text-2xl font-bold text-amber-400 mb-3">Start your climb</h3>

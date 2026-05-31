@@ -108,6 +108,22 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/code-of-craft"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Code of Craft
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/verified-pro"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Verified Pro
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/faq"
                   className="transition-colors hover:text-zinc-100"
                 >

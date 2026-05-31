@@ -11,6 +11,19 @@ import {
   deleteCredential,
   getPublicCredentials,
 } from '../controllers/credentialController';
+import {
+  listMyProof,
+  createProof,
+  updateProof,
+  deleteProof,
+  getPublicProof,
+} from '../controllers/proofController';
+import {
+  getMyPledge,
+  pledgeCodeOfCraft,
+  withdrawPledge,
+  getVerifiedPro,
+} from '../controllers/professionalismController';
 
 const router = Router();
 
@@ -18,7 +31,9 @@ const router = Router();
 router.get('/leaderboard', getLeaderboard);
 router.get('/:userId/reviews', getUserReviews);
 router.get('/:userId/skill-badges', getUserSkillBadges);
+router.get('/:userId/verified-pro', getVerifiedPro);
 router.get('/:username/credentials', getPublicCredentials);
+router.get('/:username/proof', getPublicProof);
 
 // Authenticated — current user
 router.get('/me', authenticate, getMe);
@@ -33,6 +48,18 @@ router.get('/me/credentials', authenticate, listMyCredentials);
 router.post('/me/credentials', authenticate, createCredential);
 router.put('/me/credentials/:id', authenticate, updateCredential);
 router.delete('/me/credentials/:id', authenticate, deleteCredential);
+
+// Authenticated — Code of Craft pledge (owner-scoped). Literal `/me/pledge`
+// paths declared before the `/:username` catch-all so they aren't shadowed.
+router.get('/me/pledge', authenticate, getMyPledge);
+router.post('/me/pledge', authenticate, pledgeCodeOfCraft);
+router.delete('/me/pledge', authenticate, withdrawPledge);
+
+// Authenticated — proof-of-work gallery (owner-scoped CRUD).
+router.get('/me/proof', authenticate, listMyProof);
+router.post('/me/proof', authenticate, createProof);
+router.put('/me/proof/:id', authenticate, updateProof);
+router.delete('/me/proof/:id', authenticate, deleteProof);
 
 // Application management (accept/reject)
 router.put('/applications/:id/accept', authenticate, acceptApplication);
