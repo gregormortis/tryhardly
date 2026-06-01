@@ -185,6 +185,35 @@ export const emailTemplates = {
     return { to, subject: 'Manage your TryHardly request', text, html };
   },
 
+  // Notifies the quest giver that the assigned worker submitted a completion
+  // request (work done, proof attached) and the quest is awaiting their review.
+  completionSubmitted(to: string, workerName: string, questTitle: string): EmailMessage {
+    const { text, html } = wrap(
+      'Work submitted for review',
+      `${workerName} marked "${questTitle}" as done and submitted it for your review. Confirm completion or request changes at ${APP_URL()}/dashboard.`,
+    );
+    return { to, subject: `"${questTitle}" is ready for your review`, text, html };
+  },
+
+  // Notifies the worker that the quest giver confirmed completion.
+  completionConfirmed(to: string, questTitle: string): EmailMessage {
+    const { text, html } = wrap(
+      'Task completion confirmed',
+      `Your work on "${questTitle}" was confirmed complete. Nice work! Leave a review and see your progress at ${APP_URL()}/dashboard.`,
+    );
+    return { to, subject: `"${questTitle}" confirmed complete`, text, html };
+  },
+
+  // Notifies the worker that the quest giver asked for changes before confirming.
+  completionChangesRequested(to: string, questTitle: string, note?: string | null): EmailMessage {
+    const detail = note && note.trim() ? `\n\nWhat they asked for:\n${note.trim()}` : '';
+    const { text, html } = wrap(
+      'Changes requested',
+      `The client reviewed "${questTitle}" and asked for a few changes before confirming completion.${detail}\n\nPick the work back up and resubmit when ready at ${APP_URL()}/questboard.`,
+    );
+    return { to, subject: `Changes requested on "${questTitle}"`, text, html };
+  },
+
   workerAlertReceived(to: string, name: string): EmailMessage {
     const { text, html } = wrap(
       "You're on the work-alerts list",

@@ -40,6 +40,13 @@ export interface Quest {
   createdAt: string;
   updatedAt?: string;
   completedAt?: string | null;
+  // Work completion protocol (additive).
+  completionNote?: string | null;
+  completionProofUrls?: string[];
+  completionRequestedAt?: string | null;
+  completionConfirmedAt?: string | null;
+  changeRequestCount?: number;
+  changeRequestNote?: string | null;
   questGiver?: {
     id: string;
     username: string;
