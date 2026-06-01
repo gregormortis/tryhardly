@@ -127,6 +127,29 @@ model Quest {
   assignedAdventurerId String?
   assignedAdventurer   User?   @relation("AssignedAdventurer", fields: [assignedAdventurerId], references: [id])
 
+  // ─── Work completion protocol ───────────────────────────────────────────────
+  // Additive, backward-compatible fields backing the worker→client completion
+  // handshake. The worker submits a completion request (notes + proof image
+  // URLs, no file storage — same convention as ProofOfWork), which moves the
+  // quest to IN_REVIEW. The quest giver then either confirms (→ COMPLETED) or
+  // requests changes (→ back to IN_PROGRESS). All fields are nullable / default
+  // 0 so existing rows are unaffected and the legacy "owner marks complete"
+  // path keeps working unchanged.
+  completionNote        String?
+  // Worker-supplied proof image URLs for the completion request (no file storage).
+  completionProofUrls   String[]  @default([])
+  // Set when the worker submits a completion request; cleared semantics are not
+  // needed — confirmedAt / status carry the final state. Doubles as a reliability
+  // signal (request → confirm turnaround, on-time vs. deadline).
+  completionRequestedAt DateTime?
+  // Set when the quest giver confirms the completion request.
+  completionConfirmedAt DateTime?
+  // How many times the giver sent the work back for changes. A reliability
+  // signal; never used to auto-penalize (mirrors the non-destructive progression
+  // design). The most recent change note the giver left for the worker.
+  changeRequestCount    Int       @default(0)
+  changeRequestNote     String?
+
   // Timestamps
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -426,6 +449,9 @@ enum NotificationType {
   LEVEL_UP
   CREDENTIAL_VERIFIED
   CREDENTIAL_REJECTED
+  COMPLETION_SUBMITTED
+  COMPLETION_CONFIRMED
+  COMPLETION_CHANGES_REQUESTED
 }
 
 // ─── Password Reset ──────────────────────────────────────────────────────────

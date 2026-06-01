@@ -3,6 +3,7 @@ import { authenticate, optionalAuth } from '../middleware/authMiddleware';
 import { getQuests, getQuestById, createQuest, updateQuest, deleteQuest, completeQuest } from '../controllers/questController';
 import { applyToQuest, getQuestApplications } from '../controllers/applicationController';
 import { createReview, getQuestReviews } from '../controllers/reviewController';
+import { submitCompletion, confirmCompletion, requestChanges } from '../controllers/completionController';
 
 const router = Router();
 
@@ -12,6 +13,11 @@ router.post('/', authenticate, createQuest);
 router.put('/:id', authenticate, updateQuest);
 router.delete('/:id', authenticate, deleteQuest);
 router.post('/:id/complete', authenticate, completeQuest);
+
+// Work completion protocol (worker submits → giver confirms / requests changes)
+router.post('/:id/completion/submit', authenticate, submitCompletion);
+router.post('/:id/completion/confirm', authenticate, confirmCompletion);
+router.post('/:id/completion/request-changes', authenticate, requestChanges);
 
 // Applications nested under quests
 router.post('/:questId/apply', authenticate, applyToQuest);

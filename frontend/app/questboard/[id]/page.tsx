@@ -10,6 +10,7 @@ import type { Quest, Application } from '@/lib/types';
 import EscrowPanel from '@/components/EscrowPanel';
 import ReportButton from '@/components/ReportButton';
 import QuestReviews from '@/components/QuestReviews';
+import CompletionPanel from '@/components/CompletionPanel';
 import TradeStandardChecklist from '@/components/TradeStandardChecklist';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
 
@@ -242,6 +243,18 @@ export default function QuestDetailPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Work completion handshake — role-aware actions for the worker and
+                giver, plus shared status/proof history. Only relevant once the
+                quest has started (assigned), so the component self-hides otherwise. */}
+            {user && (isOwner || user.id === quest.assignedAdventurerId) && (
+              <CompletionPanel
+                quest={quest}
+                isQuestGiver={!!isOwner}
+                isAssignedWorker={user.id === quest.assignedAdventurerId}
+                onChange={fetchQuest}
+              />
             )}
 
             {/* Reviews — anyone can read; participants on a completed quest can write. */}

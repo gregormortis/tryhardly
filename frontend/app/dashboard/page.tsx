@@ -68,6 +68,8 @@ export default function DashboardPage() {
   const xpProgress = user.xp % XP_PER_LEVEL;
   const xpPercent = (xpProgress / XP_PER_LEVEL) * 100;
   const activeApps = data?.applications?.filter(a => a.status === 'ACCEPTED') || [];
+  // Quests the user posted that a worker submitted for completion review.
+  const pendingReview = data?.postedQuests?.filter(q => q.status === 'IN_REVIEW') || [];
 
   return (
     <div className="min-h-screen bg-zinc-950 px-4 py-8 max-w-4xl mx-auto">
@@ -121,6 +123,31 @@ export default function DashboardPage() {
           onboarded={!!user.stripeAccountId}
         />
       </div>
+
+      {/* Pending completion reviews — quests a worker submitted for your review. */}
+      {!dataLoading && pendingReview.length > 0 && (
+        <div className="rounded-xl bg-amber-500/5 border border-amber-500/30 p-4 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-amber-300">✅ Pending your review</h2>
+            <span className="text-xs text-amber-400/70">{pendingReview.length} awaiting</span>
+          </div>
+          <div className="space-y-2">
+            {pendingReview.map(q => (
+              <Link
+                key={q.id}
+                href={`/questboard/${q.id}`}
+                className="flex justify-between items-center p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium text-zinc-100">{q.title}</p>
+                  <p className="text-xs text-zinc-500">A worker submitted this for completion review</p>
+                </div>
+                <span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-300">Review</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* My Applications */}
       <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-4 mb-6">
