@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { guildPathIcon } from '@/lib/guildPath';
 
 interface LeaderboardUser {
   id: string;
@@ -15,13 +16,6 @@ interface LeaderboardUser {
   reputationScore: number;
   totalQuestsCompleted: number;
 }
-
-const CLASS_ICONS: Record<string, string> = {
-  WARRIOR: '⚔️',
-  MAGE: '📜',
-  ROGUE: '🗡️',
-  CLERIC: '✨',
-};
 
 export default function LeaderboardPage() {
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
@@ -95,7 +89,7 @@ export default function LeaderboardPage() {
                 {/* 2nd place */}
                 <div className="bg-gray-900 border border-gray-500/30 rounded-xl p-6 text-center mt-6">
                   <div className="text-4xl mb-2">🥈</div>
-                  <div className="text-3xl mb-2">{CLASS_ICONS[users[1].adventurerClass] || '⚔️'}</div>
+                  <div className="text-3xl mb-2">{guildPathIcon(users[1].adventurerClass)}</div>
                   <div className="font-bold text-white text-lg">{users[1].displayName}</div>
                   <div className="text-gray-500 text-sm">@{users[1].username}</div>
                   <div className="text-amber-400 font-bold mt-2">Level {users[1].level}</div>
@@ -104,7 +98,7 @@ export default function LeaderboardPage() {
                 {/* 1st place */}
                 <div className="bg-gray-900 border border-amber-500/40 rounded-xl p-6 text-center shadow-lg shadow-amber-900/20">
                   <div className="text-4xl mb-2">🥇</div>
-                  <div className="text-3xl mb-2">{CLASS_ICONS[users[0].adventurerClass] || '⚔️'}</div>
+                  <div className="text-3xl mb-2">{guildPathIcon(users[0].adventurerClass)}</div>
                   <div className="font-bold text-white text-lg">{users[0].displayName}</div>
                   <div className="text-gray-500 text-sm">@{users[0].username}</div>
                   <div className="text-amber-400 font-bold mt-2">Level {users[0].level}</div>
@@ -113,7 +107,7 @@ export default function LeaderboardPage() {
                 {/* 3rd place */}
                 <div className="bg-gray-900 border border-amber-700/30 rounded-xl p-6 text-center mt-6">
                   <div className="text-4xl mb-2">🥉</div>
-                  <div className="text-3xl mb-2">{CLASS_ICONS[users[2].adventurerClass] || '⚔️'}</div>
+                  <div className="text-3xl mb-2">{guildPathIcon(users[2].adventurerClass)}</div>
                   <div className="font-bold text-white text-lg">{users[2].displayName}</div>
                   <div className="text-gray-500 text-sm">@{users[2].username}</div>
                   <div className="text-amber-400 font-bold mt-2">Level {users[2].level}</div>
@@ -138,7 +132,7 @@ export default function LeaderboardPage() {
 
                     {/* Avatar */}
                     <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/30 rounded-full flex items-center justify-center text-lg">
-                      {CLASS_ICONS[user.adventurerClass] || '⚔️'}
+                      {guildPathIcon(user.adventurerClass)}
                     </div>
 
                     {/* Info */}

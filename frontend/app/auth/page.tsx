@@ -329,7 +329,7 @@ export default function AuthPage() {
               htmlFor="register-userClass"
               style={{ display: 'block', marginBottom: '0.5rem' }}
             >
-              Class (Optional)
+              Guild Path (Optional)
             </label>
             <select
               id="register-userClass"
@@ -344,10 +344,10 @@ export default function AuthPage() {
                 borderRadius: '4px',
               }}
             >
-              <option value="WARRIOR">Warrior (Developer)</option>
-              <option value="MAGE">Mage (Designer)</option>
-              <option value="ROGUE">Rogue (Writer)</option>
-              <option value="CLERIC">Cleric (Support)</option>
+              <option value="WARRIOR">Builder (Handyman / Repairs)</option>
+              <option value="MAGE">Craftsperson (Design / Creative)</option>
+              <option value="ROGUE">Scout (Errands / Delivery)</option>
+              <option value="CLERIC">Helper (Coaching / Advisory)</option>
             </select>
           </div>
 

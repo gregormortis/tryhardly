@@ -9,13 +9,7 @@ import { useAuth } from '@/lib/auth';
 import type { Application, User } from '@/lib/types';
 import CredentialsManager from '@/components/CredentialsManager';
 import ProfessionalismManager from '@/components/ProfessionalismManager';
-
-const ADVENTURER_CLASSES = [
-  { value: 'WARRIOR', icon: '⚔️', label: 'Warrior', desc: 'Developer / Engineer' },
-  { value: 'MAGE', icon: '📜', label: 'Mage', desc: 'Designer / Creative' },
-  { value: 'ROGUE', icon: '🗡️', label: 'Rogue', desc: 'Writer / Content' },
-  { value: 'CLERIC', icon: '✨', label: 'Cleric', desc: 'Consultant / Coach' },
-];
+import { GUILD_PATHS, guildPathLabel } from '@/lib/guildPath';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -136,7 +130,7 @@ export default function ProfilePage() {
                   <div className="text-gray-400 text-sm">{(displayProfile as any).displayName}</div>
                 )}
                 <div className="text-amber-400 font-medium">
-                  Level {displayProfile.level} • {(displayProfile as any).adventurerClass || 'Adventurer'}
+                  Level {displayProfile.level} • {guildPathLabel((displayProfile as any).adventurerClass)}
                 </div>
                 <div className="text-gray-500 text-sm mt-1">{displayProfile.email}</div>
               </div>
@@ -224,9 +218,10 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Adventurer Class</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Guild Path</label>
+                <p className="text-xs text-gray-500 mb-2">Choose the path that best describes how you like to help.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {ADVENTURER_CLASSES.map(cls => (
+                  {GUILD_PATHS.map(cls => (
                     <button
                       key={cls.value}
                       type="button"

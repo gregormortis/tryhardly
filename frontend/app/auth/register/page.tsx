@@ -4,13 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth';
-
-const CLASSES = [
-  { value: 'WARRIOR', label: '🛠️ Hands-on Helper / Builder', desc: 'Yardwork, moving, handyman, hauling' },
-  { value: 'MAGE', label: '🎨 Creative Pro', desc: 'Designer, photographer, creative work' },
-  { value: 'ROGUE', label: '✍️ Writer / Errands', desc: 'Writing, content, errands & delivery' },
-  { value: 'CLERIC', label: '💼 Consultant / Coach', desc: 'Advisory, tutoring, professional help' },
-];
+import { GUILD_PATHS } from '../../../lib/guildPath';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -82,9 +76,10 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">What kind of work do you do?</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Guild Path</label>
+              <p className="text-xs text-gray-500 mb-2">Choose the path that best describes how you like to help.</p>
               <div className="grid grid-cols-2 gap-2">
-                {CLASSES.map(cls => (
+                {GUILD_PATHS.map(cls => (
                   <button
                     key={cls.value}
                     type="button"
@@ -95,7 +90,10 @@ export default function RegisterPage() {
                         : 'border-gray-700 hover:border-gray-600'
                     }`}
                   >
-                    <div className="font-medium text-sm">{cls.label}</div>
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <span className="w-5 shrink-0 text-center">{cls.icon}</span>
+                      <span>{cls.label}</span>
+                    </div>
                     <div className="text-xs text-gray-500">{cls.desc}</div>
                   </button>
                 ))}
