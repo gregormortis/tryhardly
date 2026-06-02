@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Zap, Shield, Sword, Award, MapPin, BadgeCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
+import { guildPathLabel } from '@/lib/guildPath';
 import type {
   PublicCredential,
   CredentialType,
@@ -290,7 +291,7 @@ function mapProfile(u: ApiUserProfile): Adventurer {
     xpToNextLevel: (level + 1) * 100,
     reputationScore: u.reputationScore ?? 0,
     bio: u.bio || '',
-    skills: u.adventurerClass ? [u.adventurerClass] : [],
+    skills: u.adventurerClass ? [guildPathLabel(u.adventurerClass)] : [],
     favoriteSkills: Array.isArray(u.favoriteSkills) ? u.favoriteSkills : [],
     questsCompleted: u.totalQuestsCompleted ?? 0,
     totalGoldEarned: (u.questsCompleted ?? []).reduce((sum, q) => sum + (q.reward ?? 0), 0),

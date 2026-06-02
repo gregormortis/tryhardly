@@ -13,6 +13,7 @@ import QuestReviews from '@/components/QuestReviews';
 import CompletionPanel from '@/components/CompletionPanel';
 import TradeStandardChecklist from '@/components/TradeStandardChecklist';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
+import { guildPathLabel } from '@/lib/guildPath';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   NOVICE: 'text-green-400 border-green-400',
@@ -295,7 +296,7 @@ export default function QuestDetailPage() {
                             <div>
                               <p className="text-white font-medium group-hover:text-amber-400">{app.adventurer?.username}</p>
                               <p className="text-xs text-gray-500">
-                                Lv.{app.adventurer?.level} • {app.adventurer?.adventurerClass || 'Adventurer'}
+                                Lv.{app.adventurer?.level} • {guildPathLabel(app.adventurer?.adventurerClass)}
                               </p>
                             </div>
                           </Link>
