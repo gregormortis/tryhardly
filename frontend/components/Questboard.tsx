@@ -27,6 +27,7 @@ interface Quest {
   tools: string[];
   postedBy: string;
   jobsPosted: number;
+  isRecurring: boolean;
 }
 
 interface BackendQuest {
@@ -40,6 +41,7 @@ interface BackendQuest {
   tags?: string[];
   createdAt: string;
   questGiver?: { username?: string } | null;
+  isRecurring?: boolean;
 }
 
 interface TierConfig {
@@ -171,6 +173,7 @@ function mapBackendQuest(q: BackendQuest): Quest {
     tools: [],
     postedBy: q.questGiver?.username ?? 'Quest Giver',
     jobsPosted: 0,
+    isRecurring: !!q.isRecurring,
   };
 }
 
@@ -274,6 +277,11 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
               {quest.title}
             </span>
             {quest.urgent && <UrgentBadge />}
+            {quest.isRecurring && (
+              <span className="font-mono text-[9px] font-semibold tracking-widest border border-amber-500/40 bg-amber-400/10 text-amber-300 rounded-sm px-1.5 py-0.5 whitespace-nowrap">
+                🔁 RECURRING
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
             <TierBadge tier={quest.tier} />

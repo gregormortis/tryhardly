@@ -47,6 +47,15 @@ export interface Quest {
   completionConfirmedAt?: string | null;
   changeRequestCount?: number;
   changeRequestNote?: string | null;
+  // Recurring booking template (additive). Scheduling/visibility only — no money
+  // is charged or held; each occurrence pays out per-task on completion.
+  isRecurring?: boolean;
+  recurrenceCadence?: RecurrenceCadence | null;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: string | null;
+  recurrenceCount?: number | null;
+  nextOccurrenceAt?: string | null;
+  recurrenceParentId?: string | null;
   questGiver?: {
     id: string;
     username: string;
@@ -166,6 +175,7 @@ export interface DashboardData {
 export type QuestCategory = 'WEB_DEVELOPMENT' | 'MOBILE_DEV' | 'DESIGN' | 'WRITING' | 'MARKETING' | 'DATA_SCIENCE' | 'OTHER';
 export type QuestDifficulty = 'NOVICE' | 'APPRENTICE' | 'JOURNEYMAN' | 'EXPERT' | 'MASTER' | 'LEGENDARY';
 export type QuestStatus = 'OPEN' | 'IN_PROGRESS' | 'IN_REVIEW' | 'COMPLETED' | 'CANCELLED';
+export type RecurrenceCadence = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 
 export type CredentialType =
   | 'LICENSE'

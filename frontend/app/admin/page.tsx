@@ -6,6 +6,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { CADENCE_OPTIONS } from '@/lib/recurrence';
 
 interface Stats {
   users: number;
@@ -112,6 +113,9 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [quests, setQuests] = useState<AdminQuest[]>([]);
+  // Per-lead recurring selection for conversion. Maps lead id → cadence; absent
+  // means convert as a normal one-off quest.
+  const [recurringLeadCadence, setRecurringLeadCadence] = useState<Record<string, string>>({});
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [leadSources, setLeadSources] = useState<LeadSourceCount[]>([]);
@@ -199,11 +203,14 @@ export default function AdminPage() {
     }
   };
 
-  const handleConvertLead = async (id: string) => {
+  const handleConvertLead = async (id: string, recurring?: { cadence: string }) => {
     try {
-      const res = await api.post<{ questId: string; lead: AdminLead }>(`/admin/leads/${id}/convert`, {});
+      const body = recurring
+        ? { isRecurring: true, recurrenceCadence: recurring.cadence }
+        : {};
+      const res = await api.post<{ questId: string; lead: AdminLead }>(`/admin/leads/${id}/convert`, body);
       setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...res.lead } : l)));
-      toast.success('Converted to a quest');
+      toast.success(recurring ? 'Converted to a recurring quest' : 'Converted to a quest');
     } catch (err: any) {
       toast.error(err.message || 'Failed to convert lead');
     }
@@ -418,12 +425,50 @@ export default function AdminPage() {
                             </button>
                           )}
                           {isJob && l.status !== 'CONVERTED' && (
-                            <button
-                              onClick={() => handleConvertLead(l.id)}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
-                            >
-                              Convert to quest
-                            </button>
+                            <div className="flex flex-col gap-1 rounded border border-gray-700 p-2">
+                              <label className="flex items-center gap-1.5 text-xs text-gray-300">
+                                <input
+                                  type="checkbox"
+                                  checked={!!recurringLeadCadence[l.id]}
+                                  onChange={(e) =>
+                                    setRecurringLeadCadence((prev) => {
+                                      const next = { ...prev };
+                                      if (e.target.checked) next[l.id] = 'WEEKLY';
+                                      else delete next[l.id];
+                                      return next;
+                                    })
+                                  }
+                                  className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+                                />
+                                Recurring
+                              </label>
+                              {recurringLeadCadence[l.id] && (
+                                <select
+                                  value={recurringLeadCadence[l.id]}
+                                  onChange={(e) =>
+                                    setRecurringLeadCadence((prev) => ({ ...prev, [l.id]: e.target.value }))
+                                  }
+                                  className="text-xs bg-gray-800 border border-gray-700 rounded px-1.5 py-1 text-gray-200"
+                                >
+                                  {CADENCE_OPTIONS.map((c) => (
+                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                  ))}
+                                </select>
+                              )}
+                              <button
+                                onClick={() =>
+                                  handleConvertLead(
+                                    l.id,
+                                    recurringLeadCadence[l.id]
+                                      ? { cadence: recurringLeadCadence[l.id] }
+                                      : undefined,
+                                  )
+                                }
+                                className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                              >
+                                Convert to quest
+                              </button>
+                            </div>
                           )}
                           {l.status !== 'IGNORED' && l.status !== 'CONVERTED' && (
                             <button
