@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, CheckCircle, Zap } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
+import { CADENCE_OPTIONS } from '../lib/recurrence';
+import type { RecurrenceCadence } from '../lib/types';
 import ImageUploader from './ImageUploader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,6 +24,10 @@ interface FormData {
   deadline: string;
   xpReward: number;
   photoUrl: string;
+  // Recurring booking (scheduling/visibility only — no money is charged or held).
+  isRecurring: boolean;
+  recurrenceCadence: RecurrenceCadence;
+  recurrenceEndDate: string;
 }
 
 export interface PostQuestFormProps {
@@ -194,6 +200,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     title: '', category: '', city: '', neighborhood: '',
     description: '', reward: '', payType: 'flat', deadline: '', xpReward: 0,
     photoUrl: '',
+    isRecurring: false, recurrenceCadence: 'WEEKLY', recurrenceEndDate: '',
   });
 
   // Auth gate
@@ -249,6 +256,17 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         xpReward:    data.xpReward,
         deadline:    data.deadline ? new Date(`${data.deadline}T00:00:00`).toISOString() : undefined,
         tags,
+        // Recurring booking template. The backend treats this as scheduling only:
+        // no charge or hold is created here, and each occurrence is paid per-task.
+        isRecurring: data.isRecurring,
+        ...(data.isRecurring
+          ? {
+              recurrenceCadence: data.recurrenceCadence,
+              recurrenceEndDate: data.recurrenceEndDate
+                ? new Date(`${data.recurrenceEndDate}T00:00:00`).toISOString()
+                : undefined,
+            }
+          : {}),
       };
       const quest = await api.post<{ id: string }>('/quests', payload);
       setSubmitted(true);
@@ -457,6 +475,54 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               </div>
             </div>
 
+            {/* Recurring booking */}
+            <div className="rounded-lg border border-white/[0.08] p-4 space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={data.isRecurring}
+                  onChange={(e) => update('isRecurring', e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/[0.05] text-amber-500 focus:ring-amber-500"
+                />
+                <span>
+                  <span className="block font-mono text-[11px] font-semibold tracking-wide text-stone-300">
+                    This is a recurring job
+                  </span>
+                  <span className="block font-mono text-[10px] text-stone-600 mt-0.5">
+                    Keep repeat work (e.g. weekly mowing) on your board. You confirm and pay for each
+                    visit separately — nothing is charged in advance.
+                  </span>
+                </span>
+              </label>
+
+              {data.isRecurring && (
+                <div className="grid grid-cols-2 gap-4 pt-1">
+                  <div>
+                    <FieldLabel required>How often</FieldLabel>
+                    <select
+                      value={data.recurrenceCadence}
+                      onChange={(e) => update('recurrenceCadence', e.target.value as RecurrenceCadence)}
+                      className={clsx(inputCls, 'cursor-pointer')}
+                    >
+                      {CADENCE_OPTIONS.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <FieldLabel>Ends on (optional)</FieldLabel>
+                    <input
+                      type="date"
+                      value={data.recurrenceEndDate}
+                      min={data.deadline || MIN_DATE}
+                      onChange={(e) => update('recurrenceEndDate', e.target.value)}
+                      className={clsx(inputCls, '[color-scheme:dark]')}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* XP preview */}
             {rewardNum > 0 && (
               <div className="flex items-center justify-between p-3.5 bg-white/[0.02] border border-white/[0.06] rounded-lg">
@@ -495,6 +561,14 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <ReviewRow label="Pay"      value={`$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`} />
               <ReviewRow label="XP"       value={`${data.xpReward} XP`} />
               <ReviewRow label="Deadline" value={formatDate(data.deadline)} />
+              {data.isRecurring && (
+                <ReviewRow
+                  label="Repeats"
+                  value={`${CADENCE_OPTIONS.find((c) => c.value === data.recurrenceCadence)?.label ?? 'Weekly'}${
+                    data.recurrenceEndDate ? ` · until ${formatDate(data.recurrenceEndDate)}` : ''
+                  }`}
+                />
+              )}
               <div className="pt-3">
                 <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-2">Description</p>
                 <p className="font-mono text-[12px] text-stone-500 leading-relaxed line-clamp-4">{data.description}</p>

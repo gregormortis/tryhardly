@@ -152,6 +152,35 @@ model Quest {
   changeRequestCount    Int       @default(0)
   changeRequestNote     String?
 
+  // ─── Recurring booking template ─────────────────────────────────────────────
+  // Additive, backward-compatible fields letting a client mark a job as recurring
+  // (e.g. weekly mowing) so the repeat relationship stays on-platform instead of
+  // the lead being lost after one booking. This is purely a scheduling/visibility
+  // template: it does NOT charge, hold, or pre-authorize any money. Each actual
+  // occurrence is its own quest with the normal per-task marketplace payout when
+  // the client confirms completion. All fields default to the non-recurring case
+  // so existing rows are unaffected.
+  isRecurring         Boolean            @default(false)
+  // Cadence + interval describe the repeat rhythm. interval is a multiplier on the
+  // cadence (e.g. WEEKLY + 2 = every two weeks); defaults to 1.
+  recurrenceCadence   RecurrenceCadence?
+  recurrenceInterval  Int                @default(1)
+  // Optional bounds — a client may cap the series by date or by a number of
+  // occurrences. Null on both means open-ended ("until cancelled").
+  recurrenceEndDate   DateTime?
+  recurrenceCount     Int?
+  // Best-effort hint for when the next occurrence is suggested. Advisory only;
+  // nothing auto-charges or auto-posts off this. Recomputed when an occurrence
+  // is generated.
+  nextOccurrenceAt    DateTime?
+
+  // Self-relation linking generated occurrences back to the template quest. A
+  // template (isRecurring=true) is the parent; manually generated next-occurrence
+  // quests point at it via recurrenceParentId.
+  recurrenceParentId  String?
+  recurrenceParent    Quest?  @relation("RecurrenceSeries", fields: [recurrenceParentId], references: [id])
+  recurrenceChildren  Quest[] @relation("RecurrenceSeries")
+
   // Timestamps
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -170,6 +199,14 @@ model Quest {
   @@index([assignedAdventurerId])
   @@index([status])
   @@index([category])
+  @@index([recurrenceParentId])
+  @@index([isRecurring])
+}
+
+enum RecurrenceCadence {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
 }
 
 enum QuestCategory {

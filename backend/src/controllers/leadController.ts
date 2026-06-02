@@ -5,6 +5,11 @@ import { LeadType, LeadStatus, QuestCategory, QuestDifficulty } from '@prisma/cl
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendEmail, emailTemplates } from '../services/mailerService';
 import { notifyMatchingWorkers } from '../services/workerMatchService';
+import {
+  normalizeRecurrence,
+  computeNextOccurrence,
+  RecurrenceValidationError,
+} from '../services/recurrenceService';
 
 const VALID_STATUSES = new Set(Object.values(LeadStatus));
 const VALID_TYPES = new Set(Object.values(LeadType));
@@ -363,6 +368,29 @@ export const convertLead = async (req: AuthRequest, res: Response): Promise<void
       ? (difficultyRaw as QuestDifficulty)
       : QuestDifficulty.NOVICE;
 
+    // Optional: an admin can convert a help request straight into a recurring
+    // booking template (e.g. a weekly mowing client). Scheduling/visibility only —
+    // no money is charged or held; each occurrence pays out per-task as normal.
+    let recurrence;
+    try {
+      recurrence = normalizeRecurrence(req.body);
+    } catch (e) {
+      if (e instanceof RecurrenceValidationError) {
+        res.status(400).json({ error: e.message });
+        return;
+      }
+      throw e;
+    }
+    const nextOccurrenceAt =
+      recurrence.isRecurring && recurrence.recurrenceCadence
+        ? computeNextOccurrence(
+            new Date(),
+            recurrence.recurrenceCadence,
+            recurrence.recurrenceInterval,
+            recurrence.recurrenceEndDate,
+          )
+        : null;
+
     // Conversion: create the quest and flip the lead atomically.
     const result = await prisma.$transaction(async (tx) => {
       const quest = await tx.quest.create({
@@ -375,6 +403,8 @@ export const convertLead = async (req: AuthRequest, res: Response): Promise<void
           xpReward: 0,
           tags: lead.category ? [lead.category] : [],
           questGiverId: req.user!.id,
+          ...recurrence,
+          nextOccurrenceAt,
         },
         select: { id: true },
       });

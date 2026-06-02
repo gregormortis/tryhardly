@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, optionalAuth } from '../middleware/authMiddleware';
-import { getQuests, getQuestById, createQuest, updateQuest, deleteQuest, completeQuest } from '../controllers/questController';
+import { getQuests, getQuestById, createQuest, updateQuest, deleteQuest, completeQuest, generateNextOccurrence } from '../controllers/questController';
 import { applyToQuest, getQuestApplications } from '../controllers/applicationController';
 import { createReview, getQuestReviews } from '../controllers/reviewController';
 import { submitCompletion, confirmCompletion, requestChanges } from '../controllers/completionController';
@@ -13,6 +13,9 @@ router.post('/', authenticate, createQuest);
 router.put('/:id', authenticate, updateQuest);
 router.delete('/:id', authenticate, deleteQuest);
 router.post('/:id/complete', authenticate, completeQuest);
+
+// Recurring booking: owner manually spins up the next occurrence as a fresh quest.
+router.post('/:id/next-occurrence', authenticate, generateNextOccurrence);
 
 // Work completion protocol (worker submits → giver confirms / requests changes)
 router.post('/:id/completion/submit', authenticate, submitCompletion);

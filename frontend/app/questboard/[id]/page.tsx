@@ -14,6 +14,7 @@ import CompletionPanel from '@/components/CompletionPanel';
 import TradeStandardChecklist from '@/components/TradeStandardChecklist';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
 import { guildPathLabel } from '@/lib/guildPath';
+import { recurrenceSummary } from '@/lib/recurrence';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   NOVICE: 'text-green-400 border-green-400',
@@ -36,6 +37,7 @@ export default function QuestDetailPage() {
   const [error, setError] = useState('');
   const [applications, setApplications] = useState<Application[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [generatingOccurrence, setGeneratingOccurrence] = useState(false);
 
   useEffect(() => {
     fetchQuest();
@@ -91,6 +93,19 @@ export default function QuestDetailPage() {
       toast.error(err.message || 'Failed to reject applicant');
     } finally {
       setActioningId(null);
+    }
+  };
+
+  const handleGenerateOccurrence = async () => {
+    setGeneratingOccurrence(true);
+    try {
+      const next = await api.post<Quest>(`/quests/${params.id}/next-occurrence`, {});
+      toast.success('Next visit posted to your board.');
+      router.push(`/questboard/${next.id}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Could not post the next occurrence');
+    } finally {
+      setGeneratingOccurrence(false);
     }
   };
 
@@ -181,6 +196,13 @@ export default function QuestDetailPage() {
                 </div>
               </div>
               <h1 className="text-3xl font-bold text-white mb-4">{quest.title}</h1>
+              {quest.isRecurring && (
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">
+                    🔁 {recurrenceSummary(quest) || 'Recurring'}
+                  </span>
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
                 {poster && (
                   <span>Posted by <span className="text-amber-400">{poster.username}</span></span>
@@ -413,6 +435,36 @@ export default function QuestDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Recurring booking management (owner only) */}
+            {isOwner && quest.isRecurring && (
+              <div className="bg-gray-900 border border-amber-500/30 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  🔁 Recurring job
+                </h3>
+                <p className="text-sm text-gray-400 mb-1">{recurrenceSummary(quest)}</p>
+                {quest.nextOccurrenceAt ? (
+                  <p className="text-xs text-gray-500 mb-4">
+                    Suggested next visit: {new Date(quest.nextOccurrenceAt).toLocaleDateString()}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mb-4">
+                    This series has reached its end date.
+                  </p>
+                )}
+                <button
+                  onClick={handleGenerateOccurrence}
+                  disabled={generatingOccurrence}
+                  className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-900 font-semibold py-2.5 rounded-lg transition-colors text-sm"
+                >
+                  {generatingOccurrence ? 'Posting…' : 'Post next visit'}
+                </button>
+                <p className="text-[11px] text-gray-600 mt-3 leading-relaxed">
+                  Posts a fresh copy of this job to the board. You confirm and pay for each visit
+                  on completion — nothing is charged in advance.
+                </p>
+              </div>
+            )}
 
             {/* Quest giver */}
             {poster && (
