@@ -11,6 +11,7 @@ import {
   matchesWorker,
   parseBudget,
   budgetMatches,
+  smsEligible,
   notifyMatchingWorkers,
   DEFAULT_MAX_WORKER_EMAILS,
 } from '../workerMatchService';
@@ -140,13 +141,40 @@ describe('matchesWorker', () => {
   });
 });
 
+describe('smsEligible', () => {
+  const consent = new Date('2026-01-01T00:00:00Z');
+
+  it('requires opt-in, a non-blank phone, AND a consent timestamp', () => {
+    expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123', smsConsentAt: consent })).toBe(true);
+  });
+
+  it('is false without explicit opt-in', () => {
+    expect(smsEligible({ smsAlertsOptIn: false, phone: '+15555550123', smsConsentAt: consent })).toBe(false);
+    expect(smsEligible({ phone: '+15555550123', smsConsentAt: consent })).toBe(false);
+  });
+
+  it('is false without a usable phone', () => {
+    expect(smsEligible({ smsAlertsOptIn: true, phone: null, smsConsentAt: consent })).toBe(false);
+    expect(smsEligible({ smsAlertsOptIn: true, phone: '   ', smsConsentAt: consent })).toBe(false);
+  });
+
+  it('is false without a recorded consent timestamp', () => {
+    expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123', smsConsentAt: null })).toBe(false);
+    expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123' })).toBe(false);
+  });
+});
+
 // ─── notifyMatchingWorkers (orchestration) ────────────────────────────────────
 
-function makeDeps(workers: any[]) {
+function makeDeps(workers: any[], opts: { smsEnabled?: boolean } = {}) {
   const created: any[] = [];
   const sent: any[] = [];
+  const texted: any[] = [];
+  // Default every worker to email-opted-in so existing email tests keep their
+  // meaning; individual tests can override emailAlertsOptIn/smsAlertsOptIn.
+  const normalized = workers.map((w) => ({ emailAlertsOptIn: true, ...w }));
   const prisma = {
-    lead: { findMany: jest.fn().mockResolvedValue(workers) },
+    lead: { findMany: jest.fn().mockResolvedValue(normalized) },
     leadMatchNotification: {
       create: jest.fn(async ({ data }: any) => {
         // Emulate the unique (jobLeadId, workerLeadId) constraint.
@@ -165,7 +193,23 @@ function makeDeps(workers: any[]) {
   const emailTemplates = {
     newLocalJobForWorker: jest.fn((to: string) => ({ to, subject: 's', text: 't' })),
   } as any;
-  return { deps: { prisma, sendEmail, emailTemplates }, created, sent, prisma, sendEmail };
+  const sendSms = jest.fn(async (m: any) => {
+    texted.push(m);
+    return true;
+  });
+  const smsEnabled = jest.fn(() => opts.smsEnabled ?? false);
+  const smsTemplates = {
+    newLocalJobForWorker: jest.fn((to: string) => ({ to, body: 'b' })),
+  } as any;
+  return {
+    deps: { prisma, sendEmail, emailTemplates, sendSms, smsEnabled, smsTemplates },
+    created,
+    sent,
+    texted,
+    prisma,
+    sendEmail,
+    sendSms,
+  };
 }
 
 const JOB = {
@@ -243,12 +287,12 @@ describe('notifyMatchingWorkers', () => {
     expect(sent.map((s) => s.to)).toEqual(['a@x.com']);
   });
 
-  it('queries only email-opted-in worker leads', async () => {
+  it('queries worker leads opted into either channel', async () => {
     const { deps, prisma } = makeDeps([]);
     await notifyMatchingWorkers(JOB, deps);
     const where = prisma.lead.findMany.mock.calls[0][0].where;
-    expect(where.emailAlertsOptIn).toBe(true);
     expect(where.type).toBe('WORKER_ALERT');
+    expect(where.OR).toEqual([{ emailAlertsOptIn: true }, { smsAlertsOptIn: true }]);
   });
 
   it('never throws and returns zeros if prisma fails', async () => {
@@ -257,6 +301,115 @@ describe('notifyMatchingWorkers', () => {
       leadMatchNotification: { create: jest.fn() },
     } as any;
     const res = await notifyMatchingWorkers(JOB, { prisma } as any);
-    expect(res).toEqual({ matched: 0, notified: 0 });
+    expect(res).toEqual({ matched: 0, notified: 0, texted: 0 });
+  });
+
+  const CONSENT = new Date('2026-01-01T00:00:00Z');
+
+  it('does not text anyone when SMS is disabled (no Twilio config)', async () => {
+    const { deps, sent, texted } = makeDeps(
+      [
+        {
+          id: 'w1',
+          name: 'A',
+          email: 'a@x.com',
+          location: 'redding',
+          skills: ['yard'],
+          smsAlertsOptIn: true,
+          phone: '+15555550123',
+          smsConsentAt: CONSENT,
+        },
+      ],
+      { smsEnabled: false },
+    );
+    const res = await notifyMatchingWorkers(JOB, deps);
+    // Email still goes out; SMS is suppressed entirely.
+    expect(res.notified).toBe(1);
+    expect(res.texted).toBe(0);
+    expect(sent).toHaveLength(1);
+    expect(texted).toHaveLength(0);
+  });
+
+  it('texts a matching worker with full SMS consent when SMS is enabled', async () => {
+    const { deps, texted, sendSms } = makeDeps(
+      [
+        {
+          id: 'w1',
+          name: 'A',
+          email: 'a@x.com',
+          location: 'redding',
+          skills: ['yard'],
+          smsAlertsOptIn: true,
+          phone: '+15555550123',
+          smsConsentAt: CONSENT,
+        },
+      ],
+      { smsEnabled: true },
+    );
+    const res = await notifyMatchingWorkers(JOB, deps);
+    expect(res.texted).toBe(1);
+    expect(texted).toHaveLength(1);
+    expect(sendSms.mock.calls[0][0].to).toBe('+15555550123');
+  });
+
+  it('does NOT text a matching worker missing any consent piece', async () => {
+    const base = { location: 'redding', skills: ['yard'], email: 'x@x.com' };
+    const { deps, texted } = makeDeps(
+      [
+        { id: 'noOptIn', name: 'A', ...base, smsAlertsOptIn: false, phone: '+15555550001', smsConsentAt: CONSENT },
+        { id: 'noPhone', name: 'B', ...base, smsAlertsOptIn: true, phone: null, smsConsentAt: CONSENT },
+        { id: 'noConsent', name: 'C', ...base, smsAlertsOptIn: true, phone: '+15555550003', smsConsentAt: null },
+      ],
+      { smsEnabled: true },
+    );
+    const res = await notifyMatchingWorkers(JOB, deps);
+    // All three still get emails (email-opted-in by default), none get texts.
+    expect(res.notified).toBe(3);
+    expect(res.texted).toBe(0);
+    expect(texted).toHaveLength(0);
+  });
+
+  it('sends SMS to an SMS-only worker (email opt-out) without emailing them', async () => {
+    const { deps, sent, texted } = makeDeps(
+      [
+        {
+          id: 'smsOnly',
+          name: 'A',
+          email: 'a@x.com',
+          location: 'redding',
+          skills: ['yard'],
+          emailAlertsOptIn: false,
+          smsAlertsOptIn: true,
+          phone: '+15555550123',
+          smsConsentAt: CONSENT,
+        },
+      ],
+      { smsEnabled: true },
+    );
+    const res = await notifyMatchingWorkers(JOB, deps);
+    expect(res.notified).toBe(1);
+    expect(res.texted).toBe(1);
+    expect(sent).toHaveLength(0); // email opt-out -> no email
+    expect(texted).toHaveLength(1);
+  });
+
+  it('does not re-notify (email or SMS) the same worker for the same job', async () => {
+    const worker = {
+      id: 'w1',
+      name: 'A',
+      email: 'a@x.com',
+      location: 'redding',
+      skills: ['yard'],
+      smsAlertsOptIn: true,
+      phone: '+15555550123',
+      smsConsentAt: CONSENT,
+    };
+    const { deps, sent, texted } = makeDeps([worker], { smsEnabled: true });
+    await notifyMatchingWorkers(JOB, deps);
+    const res2 = await notifyMatchingWorkers(JOB, deps);
+    expect(res2.notified).toBe(0);
+    expect(res2.texted).toBe(0);
+    expect(sent).toHaveLength(1);
+    expect(texted).toHaveLength(1);
   });
 });

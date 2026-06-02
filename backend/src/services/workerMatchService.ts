@@ -2,7 +2,9 @@
  * Worker-match alerts.
  *
  * When a new JOB_REQUEST lead is created, find WORKER_ALERT leads that plausibly
- * match (by city + skill/category) and email each one once. This makes the
+ * match (by city + skill/category) and notify each one once. Email is always
+ * available; SMS is sent additionally when Twilio is configured (see
+ * smsService.ts) and the worker has explicit text-alert consent. This makes the
  * /work-alerts signup useful instead of a dead list.
  *
  * Design goals:
@@ -22,6 +24,11 @@ import {
   sendEmail as defaultSendEmail,
   emailTemplates as defaultTemplates,
 } from './mailerService';
+import {
+  sendSms as defaultSendSms,
+  smsEnabled as defaultSmsEnabled,
+  smsTemplates as defaultSmsTemplates,
+} from './smsService';
 import { LeadType } from '@prisma/client';
 
 // Curated category slugs the product knows about. Kept in sync with the
@@ -213,15 +220,38 @@ export function matchesWorker(job: JobLeadLike, worker: WorkerLeadLike): boolean
   );
 }
 
+export interface SmsEligibleWorker {
+  smsAlertsOptIn?: boolean | null;
+  phone?: string | null;
+  smsConsentAt?: Date | string | null;
+}
+
+/**
+ * A worker is eligible for an SMS alert ONLY with all three pieces of explicit,
+ * affirmative consent present: smsAlertsOptIn === true, a non-blank phone, and a
+ * recorded smsConsentAt timestamp. Missing any one disqualifies SMS (email is
+ * governed separately). Pure and side-effect free for easy unit testing.
+ */
+export function smsEligible(worker: SmsEligibleWorker): boolean {
+  if (worker.smsAlertsOptIn !== true) return false;
+  if (!worker.phone || !String(worker.phone).trim()) return false;
+  if (!worker.smsConsentAt) return false;
+  return true;
+}
+
 interface NotifyDeps {
   prisma?: typeof defaultPrisma;
   sendEmail?: typeof defaultSendEmail;
   emailTemplates?: typeof defaultTemplates;
+  sendSms?: typeof defaultSendSms;
+  smsEnabled?: typeof defaultSmsEnabled;
+  smsTemplates?: typeof defaultSmsTemplates;
 }
 
 export interface NotifyResult {
   matched: number;
   notified: number;
+  texted: number;
 }
 
 /**
@@ -248,19 +278,26 @@ export async function notifyMatchingWorkers(
   const prisma = deps.prisma ?? defaultPrisma;
   const sendEmail = deps.sendEmail ?? defaultSendEmail;
   const emailTemplates = deps.emailTemplates ?? defaultTemplates;
+  const sendSms = deps.sendSms ?? defaultSendSms;
+  const smsEnabled = deps.smsEnabled ?? defaultSmsEnabled;
+  const smsTemplates = deps.smsTemplates ?? defaultSmsTemplates;
 
-  const result: NotifyResult = { matched: 0, notified: 0 };
+  const result: NotifyResult = { matched: 0, notified: 0, texted: 0 };
+  const smsActive = smsEnabled();
 
   try {
     // Pull active worker-alert leads. Capped generously so the in-memory match
     // filter has enough candidates without scanning an unbounded table.
-    // Only consider workers who opted into email alerts — SMS is never sent here
-    // (no provider) and an opted-out worker should not be emailed even on a match.
+    // Consider workers opted into EITHER channel: email-opted-in workers get an
+    // email, and (independently) SMS-opted-in workers get a text when SMS is
+    // configured. Per-channel gating below decides what each matched worker
+    // actually receives, so an email opt-out never gets an email and an SMS
+    // non-consenter never gets a text.
     const workers = await prisma.lead.findMany({
       where: {
         type: LeadType.WORKER_ALERT,
         status: { not: 'IGNORED' },
-        emailAlertsOptIn: true,
+        OR: [{ emailAlertsOptIn: true }, { smsAlertsOptIn: true }],
       },
       orderBy: { createdAt: 'desc' },
       take: 500,
@@ -271,6 +308,10 @@ export async function notifyMatchingWorkers(
         location: true,
         skills: true,
         budgetMin: true,
+        emailAlertsOptIn: true,
+        smsAlertsOptIn: true,
+        phone: true,
+        smsConsentAt: true,
       },
     });
 
@@ -293,16 +334,24 @@ export async function notifyMatchingWorkers(
 
     for (const worker of matches) {
       if (result.notified >= effectiveCap) break;
-      if (!worker.email) continue;
 
-      // Create the dedupe row first. The unique constraint makes a repeat insert
-      // throw, which we treat as "already notified" and skip — no second email.
+      // Decide which channels this worker is eligible for, independently:
+      //   - email: opted in AND has an email address.
+      //   - SMS: provider configured AND explicit opt-in + phone + consent.
+      const wantsEmail = worker.emailAlertsOptIn === true && !!worker.email;
+      const wantsSms = smsActive && smsEligible(worker);
+      if (!wantsEmail && !wantsSms) continue;
+
+      // Create the dedupe row first. The unique (jobLeadId, workerLeadId)
+      // constraint makes a repeat insert throw, which we treat as "already
+      // notified for this job" and skip — so a worker is never re-notified on
+      // any channel for the same job. `email` may be blank for SMS-only workers.
       try {
         await prisma.leadMatchNotification.create({
           data: {
             jobLeadId: jobLead.id,
             workerLeadId: worker.id,
-            email: worker.email,
+            email: worker.email || '',
             status: 'SENT',
             sentAt: new Date(),
           },
@@ -312,23 +361,39 @@ export async function notifyMatchingWorkers(
         continue;
       }
 
-      // sendEmail never throws (it swallows provider errors internally).
-      await sendEmail(
-        emailTemplates.newLocalJobForWorker(worker.email, worker.name, {
-          title: jobLead.title || 'New local job',
-          location: jobLead.location,
-          budget: jobLead.budget,
-          timeline: jobLead.timeline,
-          category: jobLead.category,
-          categoryLabel,
-        }),
-      );
+      if (wantsEmail) {
+        // sendEmail never throws (it swallows provider errors internally).
+        await sendEmail(
+          emailTemplates.newLocalJobForWorker(worker.email as string, worker.name, {
+            title: jobLead.title || 'New local job',
+            location: jobLead.location,
+            budget: jobLead.budget,
+            timeline: jobLead.timeline,
+            category: jobLead.category,
+            categoryLabel,
+          }),
+        );
+      }
+
+      if (wantsSms) {
+        // sendSms never throws (it swallows provider errors internally) and is a
+        // no-op when SMS is disabled. Count only successful sends.
+        const ok = await sendSms(
+          smsTemplates.newLocalJobForWorker(String(worker.phone), {
+            title: jobLead.title || 'New local job',
+            location: jobLead.location,
+            budget: jobLead.budget,
+          }),
+        );
+        if (ok) result.texted += 1;
+      }
+
       result.notified += 1;
     }
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(
-        `🔔 [worker-match] job ${jobLead.id}: ${result.matched} matched, ${result.notified} emailed (cap ${effectiveCap})`,
+        `🔔 [worker-match] job ${jobLead.id}: ${result.matched} matched, ${result.notified} notified, ${result.texted} texted (cap ${effectiveCap}, sms ${smsActive ? 'on' : 'off'})`,
       );
     }
   } catch (error) {
