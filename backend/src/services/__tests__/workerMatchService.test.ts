@@ -9,6 +9,8 @@ import {
   cityMatches,
   skillMatches,
   matchesWorker,
+  parseBudget,
+  budgetMatches,
   notifyMatchingWorkers,
   DEFAULT_MAX_WORKER_EMAILS,
 } from '../workerMatchService';
@@ -85,9 +87,45 @@ describe('skillMatches', () => {
   });
 });
 
+describe('parseBudget', () => {
+  it('reads a number out of common budget strings', () => {
+    expect(parseBudget('$50')).toBe(50);
+    expect(parseBudget('1,200')).toBe(1200);
+    expect(parseBudget('around 80 bucks')).toBe(80);
+    expect(parseBudget('50/hr')).toBe(50);
+  });
+
+  it('returns null for non-numeric / non-positive / nullish input', () => {
+    expect(parseBudget(null)).toBeNull();
+    expect(parseBudget(undefined)).toBeNull();
+    expect(parseBudget('')).toBeNull();
+    expect(parseBudget('negotiable')).toBeNull();
+    expect(parseBudget('$0')).toBeNull();
+  });
+});
+
+describe('budgetMatches', () => {
+  it('passes everything when the worker has no minimum', () => {
+    expect(budgetMatches('$10', null)).toBe(true);
+    expect(budgetMatches('$10', undefined)).toBe(true);
+    expect(budgetMatches('$10', 0)).toBe(true);
+  });
+
+  it('excludes only a known job budget strictly below the worker floor', () => {
+    expect(budgetMatches('$40', 50)).toBe(false);
+    expect(budgetMatches('$50', 50)).toBe(true); // exactly at floor is fine
+    expect(budgetMatches('$80', 50)).toBe(true);
+  });
+
+  it('never excludes a job with an unknown/unparseable budget', () => {
+    expect(budgetMatches(null, 50)).toBe(true);
+    expect(budgetMatches('negotiable', 50)).toBe(true);
+  });
+});
+
 describe('matchesWorker', () => {
-  it('requires BOTH city and skill to match', () => {
-    const job = { location: 'Redding, CA', category: 'yard' };
+  it('requires city, skill, AND the worker budget floor to match', () => {
+    const job = { location: 'Redding, CA', category: 'yard', budget: '$50' };
     expect(matchesWorker(job, { location: 'redding', skills: ['yard'] })).toBe(true);
     // right city, wrong skill
     expect(matchesWorker(job, { location: 'redding', skills: ['moving'] })).toBe(false);
@@ -95,6 +133,10 @@ describe('matchesWorker', () => {
     expect(matchesWorker(job, { location: 'sacramento', skills: ['yard'] })).toBe(false);
     // right skill, blank city
     expect(matchesWorker(job, { location: '', skills: ['yard'] })).toBe(false);
+    // city + skill match but the job pays below the worker's floor
+    expect(matchesWorker(job, { location: 'redding', skills: ['yard'], budgetMin: 100 })).toBe(false);
+    // floor satisfied
+    expect(matchesWorker(job, { location: 'redding', skills: ['yard'], budgetMin: 25 })).toBe(true);
   });
 });
 
@@ -189,6 +231,24 @@ describe('notifyMatchingWorkers', () => {
     const res = await notifyMatchingWorkers({ ...JOB, category: null }, deps);
     expect(res.notified).toBe(5); // tighter cap of 5 for category-less jobs
     expect(sent.every((s) => s.to !== 'y@x.com')).toBe(true);
+  });
+
+  it('skips workers whose pay floor is above the job budget', async () => {
+    const { deps, sent } = makeDeps([
+      { id: 'w1', name: 'A', email: 'a@x.com', location: 'redding', skills: ['yard'], budgetMin: 25 },
+      { id: 'w2', name: 'B', email: 'b@x.com', location: 'redding', skills: ['yard'], budgetMin: 100 },
+    ]);
+    const res = await notifyMatchingWorkers(JOB, deps); // JOB budget is $50
+    expect(res.notified).toBe(1);
+    expect(sent.map((s) => s.to)).toEqual(['a@x.com']);
+  });
+
+  it('queries only email-opted-in worker leads', async () => {
+    const { deps, prisma } = makeDeps([]);
+    await notifyMatchingWorkers(JOB, deps);
+    const where = prisma.lead.findMany.mock.calls[0][0].where;
+    expect(where.emailAlertsOptIn).toBe(true);
+    expect(where.type).toBe('WORKER_ALERT');
   });
 
   it('never throws and returns zeros if prisma fails', async () => {
