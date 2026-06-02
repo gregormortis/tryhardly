@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, CheckCircle, Zap } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle, Zap, Wand2 } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
 import { CADENCE_OPTIONS } from '../lib/recurrence';
+import { inferQuestFromText, summarizeInference } from '../lib/questInference';
 import type { RecurrenceCadence } from '../lib/types';
 import ImageUploader from './ImageUploader';
 
@@ -196,6 +197,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   const [submitting, setSubmitting] = useState(false);
   const [submitted,  setSubmitted]  = useState(false);
 
+  // Text-first entry: poster describes the job, we infer fields they can edit.
+  const [needText,   setNeedText]   = useState('');
+  const [applied,    setApplied]    = useState(false);
+
+  const inference = needText.trim().length >= 3 ? inferQuestFromText(needText) : null;
+  const inferenceSummary = inference ? summarizeInference(inference) : '';
+
   const [data, setData] = useState<FormData>({
     title: '', category: '', city: '', neighborhood: '',
     description: '', reward: '', payType: 'flat', deadline: '', xpReward: 0,
@@ -218,6 +226,23 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
   function update<K extends keyof FormData>(field: K, value: FormData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
+    setErrors([]);
+  }
+
+  // Pre-fill the form from the inferred summary. Every field stays editable
+  // below; we only fill blanks so we never clobber something the poster typed.
+  function applyInference() {
+    if (!inference) return;
+    setData((prev) => ({
+      ...prev,
+      title: prev.title.trim() ? prev.title : (inference.title ?? prev.title),
+      category: prev.category || (inference.category ?? prev.category),
+      description: prev.description.trim() ? prev.description : needText.trim(),
+      isRecurring: prev.isRecurring || inference.isRecurring,
+      recurrenceCadence: inference.cadence ?? prev.recurrenceCadence,
+      deadline: prev.deadline || (inference.timing?.date ?? prev.deadline),
+    }));
+    setApplied(true);
     setErrors([]);
   }
 
@@ -325,6 +350,36 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* ── Step 1 ── */}
         {step === 1 && (
           <div className="space-y-5">
+            {/* Text-first entry: describe the job in plain language. */}
+            <div className="rounded-lg border border-amber-500/25 bg-amber-400/[0.04] p-4">
+              <FieldLabel>What do you need done?</FieldLabel>
+              <textarea
+                value={needText}
+                onChange={(e) => { setNeedText(e.target.value); setApplied(false); }}
+                placeholder="e.g. Need my front and back lawn mowed every Friday, and the hedges trimmed."
+                rows={3}
+                maxLength={1000}
+                className={clsx(inputCls, 'resize-y min-h-[72px] leading-relaxed')}
+              />
+              {inference && inferenceSummary && (
+                <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+                  <p className="font-mono text-[11px] text-amber-300/90">
+                    Looks like: <span className="font-semibold text-amber-300">{inferenceSummary}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={applyInference}
+                    className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                  >
+                    <Wand2 size={12} /> {applied ? 'APPLIED ✓' : 'USE THIS'}
+                  </button>
+                </div>
+              )}
+              <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
+                We&apos;ll guess the details below — you can edit anything before posting.
+              </p>
+            </div>
+
             <div>
               <FieldLabel required>Quest title</FieldLabel>
               <input
