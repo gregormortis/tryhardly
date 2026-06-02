@@ -132,6 +132,61 @@ describe('createJobRequest', () => {
     expect(arg.data.utm).toBeUndefined();
     expect(res.status).toHaveBeenCalledWith(201);
   });
+
+  it('stores a non-recurring lead by default', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'l1', status: 'NEW' });
+    const res = mockRes();
+    await createJobRequest({ body: { title: 'Mow lawn', name: 'Pat', email: 'pat@b.com' } } as any, res);
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.isRecurring).toBe(false);
+    expect(arg.data.recurrenceCadence).toBeNull();
+  });
+
+  it('captures recurrence intent on the public help request', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'l1', status: 'NEW' });
+    const res = mockRes();
+    await createJobRequest(
+      {
+        body: {
+          title: 'Mow lawn', name: 'Pat', email: 'pat@b.com',
+          isRecurring: true, recurrenceCadence: 'weekly', recurrenceInterval: 2,
+          recurrenceCount: 10,
+        },
+      } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.isRecurring).toBe(true);
+    expect(arg.data.recurrenceCadence).toBe('WEEKLY'); // normalized uppercase
+    expect(arg.data.recurrenceInterval).toBe(2);
+    expect(arg.data.recurrenceCount).toBe(10);
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it('rejects a recurring request with no cadence', async () => {
+    const res = mockRes();
+    await createJobRequest(
+      { body: { title: 'Mow lawn', name: 'Pat', email: 'pat@b.com', isRecurring: true } } as any,
+      res,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockPrisma.lead.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an out-of-range recurrence count', async () => {
+    const res = mockRes();
+    await createJobRequest(
+      {
+        body: {
+          title: 'Mow lawn', name: 'Pat', email: 'pat@b.com',
+          isRecurring: true, recurrenceCadence: 'WEEKLY', recurrenceCount: 9999,
+        },
+      } as any,
+      res,
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockPrisma.lead.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('getLeadByClaimToken', () => {
@@ -354,5 +409,53 @@ describe('convertLead', () => {
     const res = mockRes();
     await convertLead({ params: { id: 'l1' }, body: {}, user: { id: 'admin' } } as any, res);
     expect(res.status).toHaveBeenCalledWith(409);
+  });
+
+  it("carries the lead's captured recurrence into the quest when the admin body omits it", async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue({
+      id: 'l1', type: 'JOB_REQUEST', title: 'Mow lawn', description: 'big yard',
+      budget: '$50', category: 'yard', convertedQuestId: null,
+      isRecurring: true, recurrenceCadence: 'WEEKLY', recurrenceInterval: 1,
+      recurrenceEndDate: null, recurrenceCount: null,
+    });
+    const questCreate = jest.fn().mockResolvedValue({ id: 'q1' });
+    mockPrisma.$transaction.mockImplementation(async (fn: any) =>
+      fn({
+        quest: { create: questCreate },
+        lead: { update: jest.fn().mockResolvedValue({ id: 'l1', status: 'CONVERTED', convertedQuestId: 'q1' }) },
+      }),
+    );
+    const res = mockRes();
+    await convertLead({ params: { id: 'l1' }, body: {}, user: { id: 'admin' } } as any, res);
+    const data = questCreate.mock.calls[0][0].data;
+    expect(data.isRecurring).toBe(true);
+    expect(data.recurrenceCadence).toBe('WEEKLY');
+    expect(data.nextOccurrenceAt).toBeInstanceOf(Date);
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it('lets the admin override the lead recurrence at conversion (force one-off)', async () => {
+    mockPrisma.lead.findUnique.mockResolvedValue({
+      id: 'l1', type: 'JOB_REQUEST', title: 'Mow lawn', description: 'big yard',
+      budget: '$50', category: 'yard', convertedQuestId: null,
+      isRecurring: true, recurrenceCadence: 'WEEKLY', recurrenceInterval: 1,
+      recurrenceEndDate: null, recurrenceCount: null,
+    });
+    const questCreate = jest.fn().mockResolvedValue({ id: 'q1' });
+    mockPrisma.$transaction.mockImplementation(async (fn: any) =>
+      fn({
+        quest: { create: questCreate },
+        lead: { update: jest.fn().mockResolvedValue({ id: 'l1', status: 'CONVERTED', convertedQuestId: 'q1' }) },
+      }),
+    );
+    const res = mockRes();
+    await convertLead(
+      { params: { id: 'l1' }, body: { isRecurring: false }, user: { id: 'admin' } } as any,
+      res,
+    );
+    const data = questCreate.mock.calls[0][0].data;
+    expect(data.isRecurring).toBe(false);
+    expect(data.recurrenceCadence).toBeNull();
+    expect(data.nextOccurrenceAt).toBeNull();
   });
 });

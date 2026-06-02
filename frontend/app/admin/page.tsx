@@ -6,7 +6,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { CADENCE_OPTIONS } from '@/lib/recurrence';
+import { CADENCE_OPTIONS, cadenceLabel } from '@/lib/recurrence';
+import type { RecurrenceCadence } from '@/lib/types';
 
 interface Stats {
   users: number;
@@ -67,6 +68,11 @@ interface AdminLead {
   budget?: string | null;
   timeline?: string | null;
   photoUrls?: string[];
+  isRecurring?: boolean;
+  recurrenceCadence?: RecurrenceCadence | null;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: string | null;
+  recurrenceCount?: number | null;
   skills?: string[];
   availability?: string | null;
   hasTools?: boolean;
@@ -152,6 +158,18 @@ export default function AdminPage() {
       setQuests(q);
       setReports(r);
       setLeads(l.leads);
+      // Prefill the per-lead recurring selection from any recurrence intent the
+      // homeowner captured on the public form, so the admin's convert control
+      // defaults to carrying it forward. Admin can still toggle it off.
+      setRecurringLeadCadence((prev) => {
+        const next = { ...prev };
+        for (const lead of l.leads) {
+          if (lead.isRecurring && lead.recurrenceCadence && !(lead.id in next)) {
+            next[lead.id] = lead.recurrenceCadence;
+          }
+        }
+        return next;
+      });
       setLeadSources(l.sourceSummary);
       setCredentials(c);
     } catch (err: any) {
@@ -367,6 +385,15 @@ export default function AdminPage() {
                             {l.source && (
                               <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">
                                 Source: {l.source}
+                              </span>
+                            )}
+                            {isJob && l.isRecurring && l.recurrenceCadence && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">
+                                🔁 Repeat: {cadenceLabel(l.recurrenceCadence, l.recurrenceInterval)}
+                                {l.recurrenceCount ? ` · ${l.recurrenceCount}×` : ''}
+                                {l.recurrenceEndDate
+                                  ? ` · until ${new Date(l.recurrenceEndDate).toLocaleDateString()}`
+                                  : ''}
                               </span>
                             )}
                           </div>

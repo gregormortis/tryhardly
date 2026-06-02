@@ -6,6 +6,7 @@ import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
 import { readLeadSource, type LeadSource } from '@/lib/leadSource';
+import { CADENCE_OPTIONS } from '@/lib/recurrence';
 import ImageUploader from '@/components/ImageUploader';
 
 interface FormState {
@@ -19,6 +20,10 @@ interface FormState {
   email: string;
   phone: string;
   photoUrls: string;
+  isRecurring: boolean;
+  recurrenceCadence: string;
+  recurrenceEndDate: string;
+  recurrenceCount: string;
   consent: boolean;
 }
 
@@ -33,6 +38,10 @@ const initialState: FormState = {
   email: '',
   phone: '',
   photoUrls: '',
+  isRecurring: false,
+  recurrenceCadence: 'WEEKLY',
+  recurrenceEndDate: '',
+  recurrenceCount: '',
   consent: false,
 };
 
@@ -84,6 +93,15 @@ export default function RequestHelpForm() {
     if (!data.title.trim()) return setError('Please add a short title for the job.');
     if (!data.name.trim()) return setError('Please add your name.');
     if (!validEmail) return setError('Please add a valid email so we can follow up.');
+    if (data.isRecurring) {
+      const count = data.recurrenceCount.trim();
+      if (count && (!/^\d+$/.test(count) || Number(count) < 1 || Number(count) > 260)) {
+        return setError('Number of visits should be a whole number between 1 and 260.');
+      }
+      if (data.recurrenceEndDate && Number.isNaN(new Date(data.recurrenceEndDate).getTime())) {
+        return setError('Please enter a valid end date, or leave it blank.');
+      }
+    }
     if (!data.consent) return setError('Please agree to the terms to continue.');
 
     setSubmitting(true);
@@ -99,6 +117,13 @@ export default function RequestHelpForm() {
         email: data.email.trim(),
         phone: data.phone.trim() || undefined,
         photoUrls: data.photoUrls.trim() || undefined,
+        // Scheduling intent only — see the recurrence section copy. No charge is
+        // made or authorized here; an admin reviews before anything is posted.
+        isRecurring: data.isRecurring,
+        recurrenceCadence: data.isRecurring ? data.recurrenceCadence : undefined,
+        recurrenceEndDate: data.isRecurring && data.recurrenceEndDate ? data.recurrenceEndDate : undefined,
+        recurrenceCount:
+          data.isRecurring && data.recurrenceCount.trim() ? data.recurrenceCount.trim() : undefined,
         ...leadSource.current,
       });
       setDone(true);
@@ -237,6 +262,69 @@ export default function RequestHelpForm() {
               className={inputClass}
               placeholder="e.g. This weekend, or by next Friday"
             />
+          </div>
+
+          <div className="rounded-lg border border-gray-800 p-4 space-y-3">
+            <label className="flex items-start gap-3 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={data.isRecurring}
+                onChange={(e) => update('isRecurring', e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+              />
+              <span>
+                This is repeat work I&apos;d like on a regular schedule
+                <span className="block text-xs text-gray-500 mt-0.5">
+                  e.g. weekly mowing or monthly cleaning. We&apos;ll line up the same kind of help on
+                  this rhythm — you confirm and pay for each visit as it&apos;s done. Nothing is charged
+                  now and no card is required to ask.
+                </span>
+              </span>
+            </label>
+
+            {data.isRecurring && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pl-7">
+                <div>
+                  <Label>How often</Label>
+                  <select
+                    value={data.recurrenceCadence}
+                    onChange={(e) => update('recurrenceCadence', e.target.value)}
+                    className={inputClass}
+                  >
+                    {CADENCE_OPTIONS.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Until (optional)</Label>
+                  <input
+                    type="date"
+                    value={data.recurrenceEndDate}
+                    onChange={(e) => update('recurrenceEndDate', e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <Label>Number of visits (optional)</Label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={260}
+                    value={data.recurrenceCount}
+                    onChange={(e) => update('recurrenceCount', e.target.value.slice(0, 4))}
+                    className={inputClass}
+                    placeholder="e.g. 12"
+                  />
+                </div>
+                <p className="sm:col-span-3 text-xs text-gray-500">
+                  This just tells us the schedule you have in mind — leave the end date and visit count
+                  blank for &ldquo;until I say stop.&rdquo; You can change or cancel anytime.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-gray-800 pt-5 space-y-4">
