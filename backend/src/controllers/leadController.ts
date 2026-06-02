@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
-import { LeadType, LeadStatus, QuestCategory, QuestDifficulty } from '@prisma/client';
+import { LeadType, LeadStatus, QuestCategory, QuestDifficulty, RecurrenceCadence } from '@prisma/client';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendEmail, emailTemplates } from '../services/mailerService';
 import { notifyMatchingWorkers } from '../services/workerMatchService';
@@ -63,6 +63,11 @@ function publicLeadView(lead: {
   budget: string | null;
   timeline: string | null;
   photoUrls: string[];
+  isRecurring?: boolean;
+  recurrenceCadence?: RecurrenceCadence | null;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: Date | null;
+  recurrenceCount?: number | null;
   convertedQuestId: string | null;
   createdAt: Date;
 }) {
@@ -79,6 +84,11 @@ function publicLeadView(lead: {
     budget: lead.budget,
     timeline: lead.timeline,
     photoUrls: lead.photoUrls,
+    isRecurring: lead.isRecurring ?? false,
+    recurrenceCadence: lead.recurrenceCadence ?? null,
+    recurrenceInterval: lead.recurrenceInterval ?? 1,
+    recurrenceEndDate: lead.recurrenceEndDate ?? null,
+    recurrenceCount: lead.recurrenceCount ?? null,
     convertedQuestId: lead.convertedQuestId,
     createdAt: lead.createdAt,
   };
@@ -165,6 +175,21 @@ export const createJobRequest = async (req: Request, res: Response): Promise<voi
 
     const normalizedEmail = email.toLowerCase();
 
+    // Optional recurrence intent (e.g. weekly mowing). Scheduling/visibility only
+    // — nothing here charges or holds money; an admin later carries this into the
+    // recurring quest template at conversion. Reuses the same validation as the
+    // quest recurrence path so cadence/interval/end-date/count rules stay in sync.
+    let recurrence;
+    try {
+      recurrence = normalizeRecurrence(req.body);
+    } catch (e) {
+      if (e instanceof RecurrenceValidationError) {
+        res.status(400).json({ error: e.message });
+        return;
+      }
+      throw e;
+    }
+
     // Generate the claim token up-front so it can be stored atomically with the
     // lead. Only the hash is persisted; the raw token is emailed below.
     const rawClaimToken = crypto.randomBytes(32).toString('hex');
@@ -184,6 +209,7 @@ export const createJobRequest = async (req: Request, res: Response): Promise<voi
         budget: str(req.body?.budget, 120) ?? null,
         timeline: str(req.body?.timeline, 200) ?? null,
         photoUrls: strArray(req.body?.photoUrls),
+        ...recurrence,
         source: source ?? null,
         utm: utm ?? undefined,
         claimTokenHash: hashToken(rawClaimToken),
@@ -368,12 +394,25 @@ export const convertLead = async (req: AuthRequest, res: Response): Promise<void
       ? (difficultyRaw as QuestDifficulty)
       : QuestDifficulty.NOVICE;
 
-    // Optional: an admin can convert a help request straight into a recurring
-    // booking template (e.g. a weekly mowing client). Scheduling/visibility only —
-    // no money is charged or held; each occurrence pays out per-task as normal.
+    // Recurrence for the resulting quest. An admin can explicitly set it on the
+    // request body; if they don't, we carry over the recurrence intent the
+    // homeowner captured on the public help request so a "weekly mowing" lead
+    // converts straight into a recurring quest template. Scheduling/visibility
+    // only — no money is charged or held; each occurrence pays out per-task as
+    // normal. Reuses normalizeRecurrence so validation rules stay in sync.
+    const bodyHasRecurrence = req.body != null && 'isRecurring' in req.body;
+    const recurrenceSource = bodyHasRecurrence
+      ? req.body
+      : {
+          isRecurring: lead.isRecurring,
+          recurrenceCadence: lead.recurrenceCadence,
+          recurrenceInterval: lead.recurrenceInterval,
+          recurrenceEndDate: lead.recurrenceEndDate,
+          recurrenceCount: lead.recurrenceCount,
+        };
     let recurrence;
     try {
-      recurrence = normalizeRecurrence(req.body);
+      recurrence = normalizeRecurrence(recurrenceSource);
     } catch (e) {
       if (e instanceof RecurrenceValidationError) {
         res.status(400).json({ error: e.message });

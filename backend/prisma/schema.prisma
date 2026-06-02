@@ -681,6 +681,16 @@ model Lead {
   budget      String?
   timeline    String?
   photoUrls   String[]   @default([])
+  // Recurrence intent captured on the public help request (e.g. weekly mowing).
+  // Scheduling/visibility only: nothing here charges, holds, or pre-authorizes
+  // money. These mirror the Quest recurrence template fields so an admin can
+  // carry the intent straight into a recurring quest at conversion. All fields
+  // default to the non-recurring case, so existing leads are unaffected.
+  isRecurring        Boolean            @default(false)
+  recurrenceCadence  RecurrenceCadence?
+  recurrenceInterval Int                @default(1)
+  recurrenceEndDate  DateTime?
+  recurrenceCount    Int?
   // WORKER_ALERT:
   skills      String[]   @default([])
   availability String?
