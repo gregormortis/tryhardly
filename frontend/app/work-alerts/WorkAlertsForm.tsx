@@ -15,6 +15,10 @@ interface FormState {
   skills: string[];
   availability: string;
   hasTools: boolean;
+  emailAlertsOptIn: boolean;
+  smsAlertsOptIn: boolean;
+  budgetMin: string;
+  budgetMax: string;
 }
 
 const initialState: FormState = {
@@ -25,6 +29,10 @@ const initialState: FormState = {
   skills: [],
   availability: '',
   hasTools: false,
+  emailAlertsOptIn: true,
+  smsAlertsOptIn: false,
+  budgetMin: '',
+  budgetMax: '',
 };
 
 const inputClass =
@@ -82,6 +90,10 @@ export default function WorkAlertsForm() {
         skills: data.skills,
         availability: data.availability.trim() || undefined,
         hasTools: data.hasTools,
+        emailAlertsOptIn: data.emailAlertsOptIn,
+        smsAlertsOptIn: data.smsAlertsOptIn,
+        budgetMin: data.budgetMin.trim() || undefined,
+        budgetMax: data.budgetMax.trim() || undefined,
         ...leadSource.current,
       });
       setDone(true);
@@ -208,6 +220,36 @@ export default function WorkAlertsForm() {
           </div>
 
           <div>
+            <Label>Minimum pay you&apos;ll take (optional)</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={data.budgetMin}
+                onChange={(e) => update('budgetMin', e.target.value.slice(0, 9))}
+                className={inputClass}
+                placeholder="Min $"
+                aria-label="Minimum pay"
+              />
+              <span className="text-gray-600 text-sm">to</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={data.budgetMax}
+                onChange={(e) => update('budgetMax', e.target.value.slice(0, 9))}
+                className={inputClass}
+                placeholder="Max $ (optional)"
+                aria-label="Maximum pay"
+              />
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              We&apos;ll skip alerts for jobs that pay below your minimum.
+            </p>
+          </div>
+
+          <div>
             <Label>Availability</Label>
             <input
               type="text"
@@ -227,6 +269,52 @@ export default function WorkAlertsForm() {
             />
             I have my own tools / truck
           </label>
+
+          <fieldset className="border border-gray-800 rounded-lg p-4 space-y-3">
+            <legend className="px-1 text-sm font-medium text-gray-300">How should we reach you?</legend>
+
+            <label className="flex items-start gap-3 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={data.emailAlertsOptIn}
+                onChange={(e) => update('emailAlertsOptIn', e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+              />
+              <span>
+                Email me when matching jobs come up
+                <span className="block text-xs text-gray-600">Recommended — this is how alerts are sent today.</span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={data.smsAlertsOptIn}
+                onChange={(e) => update('smsAlertsOptIn', e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+              />
+              <span>
+                Text me job alerts
+                <span className="ml-2 align-middle font-mono text-[10px] uppercase tracking-wider text-amber-300 bg-amber-400/10 border border-amber-500/30 rounded px-1.5 py-0.5">
+                  Coming soon
+                </span>
+                <span className="block text-xs text-gray-600">
+                  Add your phone above and we&apos;ll turn on text alerts for you as soon as they launch — we won&apos;t text you before then.
+                </span>
+              </span>
+            </label>
+
+            {data.smsAlertsOptIn && (
+              <p className="text-[11px] leading-relaxed text-gray-600 border-t border-gray-800 pt-3">
+                By opting in you agree to receive recurring automated job-alert texts from TryHardly at
+                the number you provide. Consent is not a condition of getting work. Message &amp; data
+                rates may apply. Reply <span className="text-gray-400 font-medium">STOP</span> to cancel
+                or <span className="text-gray-400 font-medium">HELP</span> for help. See our{' '}
+                <Link href="/terms" className="text-amber-400 hover:text-amber-300">Terms</Link> and{' '}
+                <Link href="/privacy" className="text-amber-400 hover:text-amber-300">Privacy Policy</Link>.
+              </p>
+            )}
+          </fieldset>
 
           {error && (
             <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-300 text-sm">

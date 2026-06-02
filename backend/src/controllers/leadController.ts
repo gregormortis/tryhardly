@@ -115,6 +115,18 @@ function str(v: unknown, max = 2000): string | undefined {
   return t.slice(0, max);
 }
 
+// Parse a whole-dollar budget bound from a free-form value (e.g. 50, "50",
+// "$50", "$1,200"). Returns undefined for anything non-numeric or non-positive,
+// and caps at a sane ceiling so a public form can't store absurd values. Used
+// for the worker's desired pay-range preference (budgetMin/budgetMax).
+const MAX_BUDGET_DOLLARS = 1_000_000;
+function dollars(v: unknown): number | undefined {
+  if (v == null) return undefined;
+  const n = Number(String(v).replace(/[^0-9.]/g, ''));
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return Math.min(Math.floor(n), MAX_BUDGET_DOLLARS);
+}
+
 // UTM/ref attribution params we accept from the public lead forms. Kept to a
 // fixed allowlist so we never persist arbitrary client-supplied keys.
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ref'] as const;
@@ -265,6 +277,25 @@ export const createWorkerAlert = async (req: Request, res: Response): Promise<vo
 
     const { source, utm } = sourceData(req.body);
 
+    const bool = (v: unknown): boolean => v === true || v === 'true';
+
+    // Delivery preferences. Email defaults ON (preserves the behavior every
+    // existing worker-alert lead signed up for) unless the client explicitly
+    // sends emailAlertsOptIn=false. SMS is opt-in only and never sent — no SMS
+    // provider is configured — so we just record the consent + a timestamp.
+    const emailAlertsOptIn = req.body?.emailAlertsOptIn === undefined
+      ? true
+      : bool(req.body.emailAlertsOptIn);
+    const smsAlertsOptIn = bool(req.body?.smsAlertsOptIn);
+
+    // Desired pay range (whole dollars). Normalize so min <= max when both are
+    // present; either may be omitted for "no preference".
+    let budgetMin = dollars(req.body?.budgetMin);
+    let budgetMax = dollars(req.body?.budgetMax);
+    if (budgetMin != null && budgetMax != null && budgetMin > budgetMax) {
+      [budgetMin, budgetMax] = [budgetMax, budgetMin];
+    }
+
     const lead = await prisma.lead.create({
       data: {
         type: LeadType.WORKER_ALERT,
@@ -274,7 +305,14 @@ export const createWorkerAlert = async (req: Request, res: Response): Promise<vo
         location: str(req.body?.location, 200) ?? null,
         skills: strArray(req.body?.skills),
         availability: str(req.body?.availability, 200) ?? null,
-        hasTools: req.body?.hasTools === true || req.body?.hasTools === 'true',
+        hasTools: bool(req.body?.hasTools),
+        emailAlertsOptIn,
+        smsAlertsOptIn,
+        // Record when SMS consent was captured so sending can be enabled later
+        // (behind a real provider) without re-collecting consent.
+        smsConsentAt: smsAlertsOptIn ? new Date() : null,
+        budgetMin: budgetMin ?? null,
+        budgetMax: budgetMax ?? null,
         source: source ?? null,
         utm: utm ?? undefined,
       },
@@ -459,6 +497,21 @@ export const convertLead = async (req: AuthRequest, res: Response): Promise<void
       });
 
       return { quest, updatedLead };
+    });
+
+    // Best-effort: email matching worker-alert leads about the now-converted job.
+    // A worker already emailed at job-request time is skipped automatically by
+    // the unique (jobLeadId, workerLeadId) dedupe row, so this only reaches
+    // workers who weren't notified earlier (e.g. they signed up since, or the
+    // lead was created before worker matching existed). notifyMatchingWorkers
+    // never throws, so it can't affect the conversion response.
+    void notifyMatchingWorkers({
+      id: lead.id,
+      title: lead.title,
+      location: lead.location,
+      category: lead.category,
+      budget: lead.budget,
+      timeline: lead.timeline,
     });
 
     res.status(201).json({ questId: result.quest.id, lead: result.updatedLead });

@@ -363,6 +363,9 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
   );
   const [activeSort, setActiveSort]         = useState<SortKey>('newest');
   const [search, setSearch]                 = useState(initialSearch ?? '');
+  const [minPay, setMinPay]                 = useState('');
+  const [maxPay, setMaxPay]                 = useState('');
+  const [recurringOnly, setRecurringOnly]   = useState(false);
   const [claimedIds, setClaimedIds]         = useState<string[]>([]);
   const [newIds]                            = useState<string[]>([]);
   const [quests, setQuests]                 = useState<Quest[]>([]);
@@ -397,9 +400,16 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const min = parseFloat(minPay);
+    const max = parseFloat(maxPay);
+    const hasMin = Number.isFinite(min) && min > 0;
+    const hasMax = Number.isFinite(max) && max > 0;
     return quests
       .filter((quest) => {
         if (activeCategory !== 'all' && quest.category !== activeCategory) return false;
+        if (recurringOnly && !quest.isRecurring) return false;
+        if (hasMin && quest.pay < min) return false;
+        if (hasMax && quest.pay > max) return false;
         if (q) {
           const hay = `${quest.title} ${quest.city} ${quest.neighborhood}`.toLowerCase();
           if (!hay.includes(q)) return false;
@@ -411,7 +421,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
         if (activeSort === 'pay_low')  return a.pay - b.pay;
         return a.posted - b.posted;
       });
-  }, [quests, activeCategory, activeSort, search]);
+  }, [quests, activeCategory, activeSort, search, minPay, maxPay, recurringOnly]);
 
   function handleClaim(quest: Quest) {
     setClaimedIds((ids) => [...ids, quest.id]);
@@ -487,6 +497,55 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           <span className="font-mono text-[11px] text-stone-600 whitespace-nowrap">
             {visible.length} result{visible.length !== 1 ? 's' : ''}
           </span>
+        </div>
+
+        <div className="flex items-center gap-2.5 mb-5 flex-wrap">
+          <span className="font-mono text-[10px] text-stone-600 tracking-widest uppercase">Budget</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={minPay}
+            onChange={(e) => setMinPay(e.target.value)}
+            placeholder="Min $"
+            aria-label="Minimum pay"
+            className="w-24 font-mono text-[12px] px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
+          />
+          <span className="font-mono text-[11px] text-stone-700">to</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={maxPay}
+            onChange={(e) => setMaxPay(e.target.value)}
+            placeholder="Max $"
+            aria-label="Maximum pay"
+            className="w-24 font-mono text-[12px] px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
+          />
+
+          <button
+            type="button"
+            onClick={() => setRecurringOnly((v) => !v)}
+            aria-pressed={recurringOnly}
+            className={clsx(
+              'font-mono text-[11px] tracking-wide px-3.5 py-2 rounded-full border whitespace-nowrap transition-all duration-150',
+              recurringOnly
+                ? 'font-semibold text-amber-400 border-amber-500/60 bg-amber-400/10'
+                : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+            )}
+          >
+            🔁 Recurring only
+          </button>
+
+          {(minPay || maxPay || recurringOnly || search) && (
+            <button
+              type="button"
+              onClick={() => { setMinPay(''); setMaxPay(''); setRecurringOnly(false); setSearch(''); }}
+              className="font-mono text-[11px] tracking-wide px-3 py-2 text-stone-600 hover:text-amber-400 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
 
         <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">

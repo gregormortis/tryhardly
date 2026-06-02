@@ -50,12 +50,31 @@ export async function getQuests(req: Request, res: Response) {
       sort = "newest",
       page = "1",
       limit = "20",
+      minReward,
+      maxReward,
+      recurringOnly,
+      q,
     } = req.query as Record<string, string>;
 
     const take = Math.min(parseInt(limit) || 20, 100);
     const skip = (Math.max(parseInt(page) || 1, 1) - 1) * take;
 
     const where: any = {};
+
+    // Budget range filter. Reward is a Decimal; Prisma accepts numbers for gte/lte.
+    // Silently ignore non-positive / non-numeric bounds so a bad query can't 500.
+    const min = Number(minReward);
+    const max = Number(maxReward);
+    if (Number.isFinite(min) && min > 0) where.reward = { ...where.reward, gte: min };
+    if (Number.isFinite(max) && max > 0) where.reward = { ...where.reward, lte: max };
+
+    // Recurring-only toggle: surface just the recurring booking templates.
+    if (recurringOnly === "true") where.isRecurring = true;
+
+    // Free-text search on the title (case-insensitive). Description carries a
+    // machine-formatted "Location:/Pay:" line, so title-only keeps results clean.
+    const term = typeof q === "string" ? q.trim().slice(0, 100) : "";
+    if (term) where.title = { contains: term, mode: "insensitive" };
 
     // Status: default to OPEN to preserve existing public board behavior; allow
     // explicit override (any|all disables the filter so callers can list their own).

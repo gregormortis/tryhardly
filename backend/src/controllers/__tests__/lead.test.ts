@@ -351,6 +351,54 @@ describe('createWorkerAlert', () => {
     await createWorkerAlert({ body: { email: 'sam@b.com' } } as any, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
+
+  it('defaults email alerts on and SMS off when preferences are omitted', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'w1', status: 'NEW' });
+    const res = mockRes();
+    await createWorkerAlert({ body: { name: 'Sam', email: 'sam@b.com' } } as any, res);
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.emailAlertsOptIn).toBe(true);
+    expect(arg.data.smsAlertsOptIn).toBe(false);
+    expect(arg.data.smsConsentAt).toBeNull();
+    expect(arg.data.budgetMin).toBeNull();
+    expect(arg.data.budgetMax).toBeNull();
+  });
+
+  it('records SMS consent timestamp only when SMS opt-in is true', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'w1', status: 'NEW' });
+    const res = mockRes();
+    await createWorkerAlert(
+      { body: { name: 'Sam', email: 'sam@b.com', smsAlertsOptIn: true, phone: '555' } } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.smsAlertsOptIn).toBe(true);
+    expect(arg.data.smsConsentAt).toBeInstanceOf(Date);
+  });
+
+  it('honors an explicit email opt-out', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'w1', status: 'NEW' });
+    const res = mockRes();
+    await createWorkerAlert(
+      { body: { name: 'Sam', email: 'sam@b.com', emailAlertsOptIn: false } } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    expect(arg.data.emailAlertsOptIn).toBe(false);
+  });
+
+  it('parses and normalizes the desired budget range (min <= max)', async () => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'w1', status: 'NEW' });
+    const res = mockRes();
+    await createWorkerAlert(
+      { body: { name: 'Sam', email: 'sam@b.com', budgetMin: '$120', budgetMax: '40' } } as any,
+      res,
+    );
+    const arg = mockPrisma.lead.create.mock.calls[0][0];
+    // Swapped so the stored range is sane.
+    expect(arg.data.budgetMin).toBe(40);
+    expect(arg.data.budgetMax).toBe(120);
+  });
 });
 
 describe('updateLead', () => {

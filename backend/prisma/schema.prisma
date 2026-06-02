@@ -696,6 +696,25 @@ model Lead {
   availability String?
   hasTools    Boolean    @default(false)
 
+  // Worker-alert delivery + matching preferences. All additive and default to
+  // the pre-existing behavior (email on, SMS off, no budget bounds) so existing
+  // worker-alert leads are unaffected.
+  //
+  //   emailAlertsOptIn — when false, the worker is on the list but won't be
+  //     emailed about matching jobs. Defaults true (existing leads keep getting
+  //     emails, matching the behavior they signed up for).
+  //   smsAlertsOptIn   — explicit opt-in to text alerts. Stored only; no SMS is
+  //     ever sent because no SMS provider is configured. Surfaced in the UI as
+  //     "text alerts coming soon". smsConsentAt records when consent was given.
+  //   budgetMin/Max    — the worker's desired pay range in whole dollars. Used
+  //     by matching to skip jobs whose budget falls entirely below the worker's
+  //     floor (a conservative, opt-in narrowing — null means "no preference").
+  emailAlertsOptIn Boolean   @default(true)
+  smsAlertsOptIn   Boolean   @default(false)
+  smsConsentAt     DateTime?
+  budgetMin        Int?
+  budgetMax        Int?
+
   // Acquisition attribution. `source` is the primary launch-channel label
   // (e.g. redding, facebook-requester, flyer-worker), captured from the form's
   // ?source= query param. `utm` holds any UTM/ref params as a small JSON blob so

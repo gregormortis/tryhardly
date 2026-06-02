@@ -152,22 +152,65 @@ export function skillMatches(
   return skills.includes(cat) || skills.includes('other');
 }
 
+/**
+ * Parse a whole-dollar amount from a free-form budget string (e.g. "$50",
+ * "$1,200", "50/hr", "around 80 bucks"). Returns null when no positive number
+ * can be read, in which case budget matching treats the job as "unknown budget"
+ * and never excludes a worker on price.
+ */
+export function parseBudget(raw: string | null | undefined): number | null {
+  if (raw == null) return null;
+  const n = Number(String(raw).replace(/[^0-9.]/g, ''));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.floor(n);
+}
+
+/**
+ * Budget match between a job's (free-form) budget and a worker's desired pay
+ * floor. Deliberately one-sided and conservative:
+ *   - Only the worker's minimum (budgetMin) can exclude a job, and only when the
+ *     job's budget is known AND strictly below that floor. This honors a
+ *     worker who said "don't bother me with jobs under $X".
+ *   - A worker's budgetMax never excludes a job — a higher-paying job is still
+ *     welcome — so we don't silently hide good work.
+ *   - An unknown/unparseable job budget never excludes anyone (we'd rather show
+ *     a job with a fuzzy budget than hide it on a parsing guess).
+ */
+export function budgetMatches(
+  jobBudget: string | null | undefined,
+  workerBudgetMin: number | null | undefined,
+): boolean {
+  if (workerBudgetMin == null || workerBudgetMin <= 0) return true;
+  const job = parseBudget(jobBudget);
+  if (job == null) return true;
+  return job >= workerBudgetMin;
+}
+
 export interface JobLeadLike {
   location?: string | null;
   category?: string | null;
+  budget?: string | null;
 }
 
 export interface WorkerLeadLike {
   location?: string | null;
   skills?: string[] | null;
+  budgetMin?: number | null;
+  emailAlertsOptIn?: boolean | null;
 }
 
 /**
- * A worker matches a job when BOTH the city matches AND the skill/category
- * matches. Pure and side-effect free for easy unit testing.
+ * A worker matches a job when the city matches AND the skill/category matches
+ * AND the job clears the worker's desired pay floor. Pure and side-effect free
+ * for easy unit testing. Email opt-in is checked separately by the notifier
+ * (it governs delivery, not relevance).
  */
 export function matchesWorker(job: JobLeadLike, worker: WorkerLeadLike): boolean {
-  return cityMatches(job.location, worker.location) && skillMatches(job.category, worker.skills);
+  return (
+    cityMatches(job.location, worker.location) &&
+    skillMatches(job.category, worker.skills) &&
+    budgetMatches(job.budget, worker.budgetMin)
+  );
 }
 
 interface NotifyDeps {
@@ -211,11 +254,24 @@ export async function notifyMatchingWorkers(
   try {
     // Pull active worker-alert leads. Capped generously so the in-memory match
     // filter has enough candidates without scanning an unbounded table.
+    // Only consider workers who opted into email alerts — SMS is never sent here
+    // (no provider) and an opted-out worker should not be emailed even on a match.
     const workers = await prisma.lead.findMany({
-      where: { type: LeadType.WORKER_ALERT, status: { not: 'IGNORED' } },
+      where: {
+        type: LeadType.WORKER_ALERT,
+        status: { not: 'IGNORED' },
+        emailAlertsOptIn: true,
+      },
       orderBy: { createdAt: 'desc' },
       take: 500,
-      select: { id: true, name: true, email: true, location: true, skills: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        location: true,
+        skills: true,
+        budgetMin: true,
+      },
     });
 
     const cap = maxWorkerEmails();
@@ -224,7 +280,10 @@ export async function notifyMatchingWorkers(
     const effectiveCap = jobLead.category ? cap : Math.min(cap, 5);
 
     const matches = workers.filter((w) =>
-      matchesWorker({ location: jobLead.location, category: jobLead.category }, w),
+      matchesWorker(
+        { location: jobLead.location, category: jobLead.category, budget: jobLead.budget },
+        w,
+      ),
     );
     result.matched = matches.length;
 
