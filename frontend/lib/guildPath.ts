@@ -1,7 +1,8 @@
 // Guild Path options. These are the human-facing labels for a user's path on
-// the platform. The stored `adventurerClass` values remain the original enum
-// keys (WARRIOR/MAGE/ROGUE/CLERIC) for backward compatibility with existing
-// accounts and the backend `UserClass` enum.
+// the platform. The stored `adventurerClass` values are the backend `UserClass`
+// enum keys. The original fantasy keys (WARRIOR/MAGE/ROGUE/CLERIC) are kept as
+// the persisted values for the relabelled paths so existing accounts keep
+// displaying correctly; HAULER and FIXER are stored under their own keys.
 
 export interface GuildPathOption {
   value: string;
@@ -12,9 +13,11 @@ export interface GuildPathOption {
 
 export const GUILD_PATHS: GuildPathOption[] = [
   { value: 'WARRIOR', icon: '🛠️', label: 'Builder', desc: 'Handyman, repairs, construction' },
+  { value: 'HAULER', icon: '🚚', label: 'Hauler', desc: 'Moving, hauling, heavy lifting' },
+  { value: 'FIXER', icon: '🔧', label: 'Fixer', desc: 'Appliance and equipment repair' },
+  { value: 'CLERIC', icon: '🤝', label: 'Helper', desc: 'Coaching, tutoring, advisory' },
   { value: 'MAGE', icon: '🎨', label: 'Craftsperson', desc: 'Design, photography, creative work' },
   { value: 'ROGUE', icon: '🧭', label: 'Scout', desc: 'Errands, delivery, writing' },
-  { value: 'CLERIC', icon: '🤝', label: 'Helper', desc: 'Coaching, tutoring, advisory' },
 ];
 
 const PATH_BY_VALUE = new Map(GUILD_PATHS.map(p => [p.value, p]));
@@ -27,6 +30,8 @@ const LEGACY_LABELS: Record<string, string> = {
   MAGE: 'Craftsperson',
   ROGUE: 'Scout',
   CLERIC: 'Helper',
+  HAULER: 'Hauler',
+  FIXER: 'Fixer',
 };
 
 export function guildPathLabel(value?: string | null): string {

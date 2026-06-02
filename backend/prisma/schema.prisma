@@ -87,10 +87,12 @@ model User {
 }
 
 enum UserClass {
-  WARRIOR      // Developer
-  MAGE         // Designer
-  ROGUE        // Writer
-  CLERIC       // Support
+  WARRIOR      // Builder
+  MAGE         // Craftsperson
+  ROGUE        // Scout
+  CLERIC       // Helper
+  HAULER       // Hauler
+  FIXER        // Fixer
 }
 
 // ─── Quest ───────────────────────────────────────────────────────────────────
