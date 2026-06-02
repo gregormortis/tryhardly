@@ -11,10 +11,10 @@ import CredentialsManager from '@/components/CredentialsManager';
 import ProfessionalismManager from '@/components/ProfessionalismManager';
 
 const ADVENTURER_CLASSES = [
-  { value: 'WARRIOR', label: '⚔️ Warrior', desc: 'Developer / Engineer' },
-  { value: 'MAGE', label: '📜 Mage', desc: 'Designer / Creative' },
-  { value: 'ROGUE', label: '🗡️ Rogue', desc: 'Writer / Content' },
-  { value: 'CLERIC', label: '✨ Cleric', desc: 'Consultant / Coach' },
+  { value: 'WARRIOR', icon: '⚔️', label: 'Warrior', desc: 'Developer / Engineer' },
+  { value: 'MAGE', icon: '📜', label: 'Mage', desc: 'Designer / Creative' },
+  { value: 'ROGUE', icon: '🗡️', label: 'Rogue', desc: 'Writer / Content' },
+  { value: 'CLERIC', icon: '✨', label: 'Cleric', desc: 'Consultant / Coach' },
 ];
 
 export default function ProfilePage() {
@@ -231,13 +231,16 @@ export default function ProfilePage() {
                       key={cls.value}
                       type="button"
                       onClick={() => setEditForm({ ...editForm, adventurerClass: cls.value })}
-                      className={`p-3 rounded-lg border text-left transition-colors ${
+                      className={`flex h-full flex-col p-3 rounded-lg border text-left transition-colors ${
                         editForm.adventurerClass === cls.value
                           ? 'border-amber-500 bg-amber-500/10'
                           : 'border-gray-700 hover:border-gray-600'
                       }`}
                     >
-                      <div className="font-medium text-sm">{cls.label}</div>
+                      <div className="flex items-center gap-2 font-medium text-sm">
+                        <span className="w-5 shrink-0 text-center">{cls.icon}</span>
+                        <span>{cls.label}</span>
+                      </div>
                       <div className="text-xs text-gray-500">{cls.desc}</div>
                     </button>
                   ))}
