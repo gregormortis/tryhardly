@@ -17,7 +17,7 @@
  * redirect (e.g. to a login wall or an error page) should be visible, not hidden.
  *
  * Usage:
- *   FRONTEND_URL=https://tryhardly.com BACKEND_URL=https://api.tryhardly.com node scripts/uptime-check.mjs
+ *   FRONTEND_URL=https://www.tryhardly.com BACKEND_URL=https://tryhardly-production.up.railway.app node scripts/uptime-check.mjs
  */
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');

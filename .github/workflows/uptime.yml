@@ -43,8 +43,8 @@ jobs:
           # Prefer manual-dispatch overrides, then repo/org variables, then a
           # safe default. Set FRONTEND_URL / BACKEND_URL under
           # Settings → Secrets and variables → Actions → Variables.
-          FRONTEND_URL: ${{ github.event.inputs.frontend_url || vars.FRONTEND_URL || 'https://tryhardly.com' }}
-          BACKEND_URL: ${{ github.event.inputs.backend_url || vars.BACKEND_URL || 'https://api.tryhardly.com' }}
+          FRONTEND_URL: ${{ github.event.inputs.frontend_url || vars.FRONTEND_URL || 'https://www.tryhardly.com' }}
+          BACKEND_URL: ${{ github.event.inputs.backend_url || vars.BACKEND_URL || 'https://tryhardly-production.up.railway.app' }}
           TIMEOUT_MS: '15000'
           RETRIES: '2'
         run: node scripts/uptime-check.mjs
