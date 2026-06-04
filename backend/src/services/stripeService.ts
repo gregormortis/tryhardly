@@ -227,4 +227,30 @@ export function constructWebhookEvent(
   return getStripe().webhooks.constructEvent(rawBody, signature, endpointSecret);
 }
 
+/**
+ * Verify a webhook signature against multiple candidate signing secrets.
+ *
+ * Stripe signs test-mode and live-mode events with different endpoint signing
+ * secrets. When both are configured we cannot know up front which mode an
+ * incoming event belongs to, so we try each secret in turn and accept the
+ * event on the first match. Throws the last verification error if none match.
+ */
+export function constructWebhookEventFromSecrets(
+  rawBody: Buffer,
+  signature: string,
+  endpointSecrets: string[]
+): Stripe.Event {
+  let lastError: unknown;
+  for (const secret of endpointSecrets) {
+    try {
+      return getStripe().webhooks.constructEvent(rawBody, signature, secret);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('No webhook signing secret matched the signature');
+}
+
 export { getStripe, PLATFORM_FEE_PERCENT };
