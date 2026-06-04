@@ -7,11 +7,13 @@
 
 const mockPaymentIntentsCreate = jest.fn();
 const mockTransfersCreate = jest.fn();
+const mockConstructEvent = jest.fn();
 
 jest.mock('stripe', () => {
   return jest.fn().mockImplementation(() => ({
     paymentIntents: { create: mockPaymentIntentsCreate },
     transfers: { create: mockTransfersCreate },
+    webhooks: { constructEvent: mockConstructEvent },
   }));
 });
 
@@ -70,5 +72,54 @@ describe('stripeService', () => {
     // Must reference a charge for source_transaction, not a PaymentIntent.
     expect(params.source_transaction).toBe('ch_123');
     expect(params.metadata.platform_fee).toBe('1200');
+  });
+
+  describe('constructWebhookEventFromSecrets', () => {
+    const body = Buffer.from('{"id":"evt_1"}');
+    const sig = 't=1,v1=abc';
+
+    it('returns the event when the FIRST secret matches', () => {
+      mockConstructEvent.mockReturnValueOnce({ id: 'evt_1', type: 'ping' });
+      const svc = require('../stripeService');
+
+      const event = svc.constructWebhookEventFromSecrets(body, sig, [
+        'whsec_test',
+        'whsec_live',
+      ]);
+
+      expect(event).toEqual({ id: 'evt_1', type: 'ping' });
+      expect(mockConstructEvent).toHaveBeenCalledTimes(1);
+      expect(mockConstructEvent).toHaveBeenCalledWith(body, sig, 'whsec_test');
+    });
+
+    it('falls through to the SECOND secret when the first fails', () => {
+      mockConstructEvent
+        .mockImplementationOnce(() => {
+          throw new Error('No signatures found matching the expected signature for payload');
+        })
+        .mockReturnValueOnce({ id: 'evt_2', type: 'ping' });
+      const svc = require('../stripeService');
+
+      const event = svc.constructWebhookEventFromSecrets(body, sig, [
+        'whsec_test',
+        'whsec_live',
+      ]);
+
+      expect(event).toEqual({ id: 'evt_2', type: 'ping' });
+      expect(mockConstructEvent).toHaveBeenCalledTimes(2);
+      expect(mockConstructEvent).toHaveBeenLastCalledWith(body, sig, 'whsec_live');
+    });
+
+    it('throws the last error when NO secret matches', () => {
+      mockConstructEvent.mockImplementation(() => {
+        throw new Error('No signatures found matching the expected signature for payload');
+      });
+      const svc = require('../stripeService');
+
+      expect(() =>
+        svc.constructWebhookEventFromSecrets(body, sig, ['whsec_test', 'whsec_live'])
+      ).toThrow('No signatures found matching');
+      expect(mockConstructEvent).toHaveBeenCalledTimes(2);
+    });
   });
 });

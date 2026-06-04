@@ -300,10 +300,18 @@ export const handleWebhook = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Stripe signs test-mode and live-mode events with different endpoint
+  // signing secrets. Try whichever are configured so a single endpoint can
+  // accept both test and live webhooks.
+  const endpointSecrets = [
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.STRIPE_LIVE_WEBHOOK_SECRET,
+  ].filter((s): s is string => !!s);
 
-  if (!endpointSecret) {
-    console.error('STRIPE_WEBHOOK_SECRET not configured');
+  if (endpointSecrets.length === 0) {
+    console.error(
+      'No webhook signing secret configured (set STRIPE_WEBHOOK_SECRET and/or STRIPE_LIVE_WEBHOOK_SECRET)'
+    );
     res.status(500).json({ error: 'Webhook secret not configured' });
     return;
   }
@@ -318,14 +326,17 @@ export const handleWebhook = async (
   let event;
 
   try {
-    // req.body must be the raw Buffer for signature verification
-    event = stripeService.constructWebhookEvent(
+    // req.body must be the raw Buffer for signature verification. We try each
+    // configured secret in turn; the secrets themselves are never logged.
+    event = stripeService.constructWebhookEventFromSecrets(
       req.body as Buffer,
       sig,
-      endpointSecret
+      endpointSecrets
     );
   } catch (error: any) {
-    console.error('Webhook signature verification failed:', error.message);
+    console.error(
+      `Webhook signature verification failed against ${endpointSecrets.length} secret(s): ${error.message}`
+    );
     res.status(400).json({ error: `Webhook Error: ${error.message}` });
     return;
   }
