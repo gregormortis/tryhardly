@@ -31,8 +31,11 @@ export const createConnectedAccount = async (
       return;
     }
 
-    // Create new Connect account
-    const account = await stripeService.createConnectedAccount(userId, user.email);
+    // Create new Connect account. Pass the user's display name for the account's
+    // contact/display info; country falls back to the configured default.
+    const account = await stripeService.createConnectedAccount(userId, user.email, {
+      displayName: (user as any).displayName,
+    });
 
     // Save the account ID to the user record
     await prisma.user.update({
@@ -96,6 +99,109 @@ export const getOnboardingLink = async (
     console.error('Error creating onboarding link:', error);
     res.status(500).json({
       error: 'Failed to create onboarding link',
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * POST /api/payments/quest/:questId/checkout
+ * Create a marketplace Checkout Session for a job (destination charge).
+ *
+ * The client (quest giver) pays the full job amount; TryHardly collects a 12%
+ * platform fee via `application_fee_amount`; the net is routed to the worker's
+ * connected account via `transfer_data.destination`. Returns the hosted
+ * Checkout URL for the client to complete payment.
+ */
+export const createQuestCheckout = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { questId } = req.params;
+    const userId = req.user!.id;
+
+    const quest = await prisma.quest.findUniqueOrThrow({
+      where: { id: questId },
+      include: { assignedAdventurer: true },
+    });
+
+    const posterId = (quest as any).questGiverId;
+    if (posterId !== userId) {
+      res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the quest giver can pay for this job',
+      });
+      return;
+    }
+
+    const worker = (quest as any).assignedAdventurer;
+    const workerId = (quest as any).assignedAdventurerId;
+    if (!workerId) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Quest has no assigned worker to pay',
+      });
+      return;
+    }
+
+    const workerUser =
+      worker || (await prisma.user.findUniqueOrThrow({ where: { id: workerId } }));
+    const workerAccountId = (workerUser as any).stripeAccountId;
+    if (!workerAccountId) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Worker has not completed Stripe onboarding',
+      });
+      return;
+    }
+
+    const amountCents = Math.round(Number((quest as any).reward) * 100);
+    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Job amount must be greater than zero',
+      });
+      return;
+    }
+
+    const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:3000')
+      .split(',')[0]
+      .trim();
+    const successUrl = `${baseUrl}/payments/checkout/success?quest=${questId}`;
+    const cancelUrl = `${baseUrl}/payments/checkout/cancel?quest=${questId}`;
+
+    const session = await stripeService.createCheckoutSession({
+      questId,
+      title: (quest as any).title,
+      amountCents,
+      workerAccountId,
+      successUrl,
+      cancelUrl,
+      currency: ((quest as any).currency || 'usd').toLowerCase(),
+    });
+
+    await prisma.quest.update({
+      where: { id: questId },
+      data: { checkoutSessionId: session.id } as any,
+    });
+
+    res.status(201).json({
+      sessionId: session.id,
+      url: session.url,
+      amount: amountCents,
+      applicationFeeAmount: stripeService.calculatePlatformFee(amountCents),
+    });
+  } catch (error: any) {
+    console.error('Error creating checkout session:', error);
+
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Not Found', message: 'Quest not found' });
+      return;
+    }
+
+    res.status(500).json({
+      error: 'Failed to create checkout session',
       message: error.message,
     });
   }
@@ -343,6 +449,32 @@ export const handleWebhook = async (
 
   try {
     switch (event.type) {
+      case 'checkout.session.completed': {
+        // Marketplace destination-charge flow: the client completed payment,
+        // the 12% platform fee was taken, and the net is routed to the worker's
+        // connected account. Persist the Stripe IDs and mark the job as paid.
+        const session = event.data.object as any;
+        const questId = session.metadata?.tryhardly_quest_id;
+
+        if (questId) {
+          const paymentIntentId =
+            typeof session.payment_intent === 'string'
+              ? session.payment_intent
+              : session.payment_intent?.id || null;
+
+          await prisma.quest.update({
+            where: { id: questId },
+            data: {
+              checkoutSessionId: session.id,
+              paymentIntentId,
+              escrowStatus: 'FUNDED',
+            } as any,
+          });
+          console.log(`✅ Checkout completed for quest ${questId} (session ${session.id})`);
+        }
+        break;
+      }
+
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as any;
         const questId = paymentIntent.metadata?.tryhardly_quest_id;

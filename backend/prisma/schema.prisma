@@ -114,6 +114,11 @@ model Quest {
   // Escrow / payment tracking
   escrowStatus    EscrowStatus    @default(NONE)
   paymentIntentId String?
+  // Marketplace destination-charge flow (Connect): the Stripe Checkout Session
+  // that collected the client payment, took the 12% platform fee, and routed the
+  // net to the worker's connected account. Additive/nullable so existing rows and
+  // the legacy payment path are unaffected.
+  checkoutSessionId String?
 
   // XP Reward
   xpReward        Int

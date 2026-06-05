@@ -8,11 +8,15 @@
 const mockPaymentIntentsCreate = jest.fn();
 const mockTransfersCreate = jest.fn();
 const mockConstructEvent = jest.fn();
+const mockAccountsCreate = jest.fn();
+const mockCheckoutSessionsCreate = jest.fn();
 
 jest.mock('stripe', () => {
   return jest.fn().mockImplementation(() => ({
     paymentIntents: { create: mockPaymentIntentsCreate },
     transfers: { create: mockTransfersCreate },
+    accounts: { create: mockAccountsCreate },
+    checkout: { sessions: { create: mockCheckoutSessionsCreate } },
     webhooks: { constructEvent: mockConstructEvent },
   }));
 });
@@ -72,6 +76,110 @@ describe('stripeService', () => {
     // Must reference a charge for source_transaction, not a PaymentIntent.
     expect(params.source_transaction).toBe('ch_123');
     expect(params.metadata.platform_fee).toBe('1200');
+  });
+
+  describe('calculatePlatformFee', () => {
+    it('is 12% of the amount, rounded to cents', () => {
+      const svc = require('../stripeService');
+      // 12% of 10000 = 1200.
+      expect(svc.calculatePlatformFee(10000)).toBe(1200);
+      // 12% of 12345 = 1481.4 → rounds to 1481.
+      expect(svc.calculatePlatformFee(12345)).toBe(1481);
+    });
+
+    it('never exceeds the amount and leaves at least 1 cent for the worker', () => {
+      const svc = require('../stripeService');
+      // Degenerate 1-cent job: 12% rounds to 0, clamp keeps it >= 0 and < amount.
+      expect(svc.calculatePlatformFee(1)).toBe(0);
+      // The fee is always strictly less than the amount.
+      for (const amt of [1, 2, 5, 8, 100, 9999]) {
+        expect(svc.calculatePlatformFee(amt)).toBeLessThan(amt);
+        expect(svc.calculatePlatformFee(amt)).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('returns 0 for non-positive or invalid amounts', () => {
+      const svc = require('../stripeService');
+      expect(svc.calculatePlatformFee(0)).toBe(0);
+      expect(svc.calculatePlatformFee(-500)).toBe(0);
+      expect(svc.calculatePlatformFee(NaN)).toBe(0);
+    });
+  });
+
+  describe('createCheckoutSession', () => {
+    it('sets application_fee_amount and transfer_data.destination on the destination charge', async () => {
+      mockCheckoutSessionsCreate.mockResolvedValue({ id: 'cs_1', url: 'https://checkout' });
+      const svc = require('../stripeService');
+
+      await svc.createCheckoutSession({
+        questId: 'quest-1',
+        title: 'Mow the lawn',
+        amountCents: 10000,
+        workerAccountId: 'acct_worker',
+        successUrl: 'https://app/success',
+        cancelUrl: 'https://app/cancel',
+      });
+
+      expect(mockCheckoutSessionsCreate).toHaveBeenCalledTimes(1);
+      const params = mockCheckoutSessionsCreate.mock.calls[0][0];
+
+      expect(params.mode).toBe('payment');
+      // 12% of $100.00 => 1200 cents application fee.
+      expect(params.payment_intent_data.application_fee_amount).toBe(1200);
+      expect(params.payment_intent_data.transfer_data.destination).toBe('acct_worker');
+      // Line item uses the job title and amount — never a placeholder product.
+      const lineItem = params.line_items[0];
+      expect(lineItem.price_data.unit_amount).toBe(10000);
+      expect(lineItem.price_data.product_data.name).toBe('Mow the lawn');
+      expect(JSON.stringify(params).toLowerCase()).not.toContain('cookie');
+      expect(params.success_url).toBe('https://app/success');
+      expect(params.cancel_url).toBe('https://app/cancel');
+    });
+
+    it('rejects non-positive amounts', async () => {
+      const svc = require('../stripeService');
+      await expect(
+        svc.createCheckoutSession({
+          questId: 'q',
+          title: 't',
+          amountCents: 0,
+          workerAccountId: 'acct',
+          successUrl: 's',
+          cancelUrl: 'c',
+        })
+      ).rejects.toThrow('positive integer');
+    });
+  });
+
+  describe('createConnectedAccount', () => {
+    it('requests transfers, uses Express dashboard, and assigns fees/losses to the platform', async () => {
+      mockAccountsCreate.mockResolvedValue({ id: 'acct_1' });
+      const svc = require('../stripeService');
+
+      await svc.createConnectedAccount('user-1', 'worker@example.com', {
+        displayName: 'Worker One',
+      });
+
+      const params = mockAccountsCreate.mock.calls[0][0];
+      expect(params.capabilities.transfers.requested).toBe(true);
+      expect(params.controller.stripe_dashboard.type).toBe('express');
+      expect(params.controller.fees.payer).toBe('application');
+      expect(params.controller.losses.payments).toBe('application');
+      expect(params.country).toBe('US');
+      expect(params.email).toBe('worker@example.com');
+      expect(params.business_profile.name).toBe('Worker One');
+      expect(params.metadata.tryhardly_user_id).toBe('user-1');
+    });
+
+    it('honors STRIPE_ACCOUNT_COUNTRY override', async () => {
+      process.env.STRIPE_ACCOUNT_COUNTRY = 'gb';
+      mockAccountsCreate.mockResolvedValue({ id: 'acct_2' });
+      const svc = require('../stripeService');
+
+      await svc.createConnectedAccount('user-2', 'gb@example.com');
+
+      expect(mockAccountsCreate.mock.calls[0][0].country).toBe('GB');
+    });
   });
 
   describe('constructWebhookEventFromSecrets', () => {
