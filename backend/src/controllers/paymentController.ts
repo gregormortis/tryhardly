@@ -452,7 +452,11 @@ export const handleWebhook = async (
       case 'checkout.session.completed': {
         // Marketplace destination-charge flow: the client completed payment,
         // the 12% platform fee was taken, and the net is routed to the worker's
-        // connected account. Persist the Stripe IDs and mark the job as paid.
+        // connected account. We persist the Stripe IDs only — this path does not
+        // touch escrowStatus (a legacy field that gates the separate
+        // charges-and-transfers milestone flow); coupling the destination-charge
+        // path to it would both add an unwanted escrow-status dependency and risk
+        // enabling legacy milestone releases against a destination charge.
         const session = event.data.object as any;
         const questId = session.metadata?.tryhardly_quest_id;
 
@@ -467,7 +471,6 @@ export const handleWebhook = async (
             data: {
               checkoutSessionId: session.id,
               paymentIntentId,
-              escrowStatus: 'FUNDED',
             } as any,
           });
           console.log(`✅ Checkout completed for quest ${questId} (session ${session.id})`);
