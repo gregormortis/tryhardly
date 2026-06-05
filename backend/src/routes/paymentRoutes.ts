@@ -3,6 +3,7 @@ import { authenticate } from '../middleware/authMiddleware';
 import {
   createConnectedAccount,
   getOnboardingLink,
+  createQuestCheckout,
   initializeEscrow,
   releaseMilestonePayment,
   getEscrowStatus,
@@ -19,6 +20,11 @@ router.post('/connect', authenticate, createConnectedAccount);
 
 // Get an onboarding link for the current user's Stripe Connect account
 router.get('/connect/onboarding', authenticate, getOnboardingLink);
+
+// --- Marketplace Payment (destination charge via Checkout Session) ---
+// Create a Checkout Session for a job: client pays, 12% platform fee is taken,
+// net is routed to the worker's connected account (quest giver only).
+router.post('/quest/:questId/checkout', authenticate, createQuestCheckout);
 
 // --- Escrow Management ---
 // Initialize escrow for a quest (quest giver only)
