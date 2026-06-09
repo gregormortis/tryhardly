@@ -296,7 +296,7 @@ export default function WorkAlertsForm() {
               <span>
                 Text me job alerts
                 <span className="ml-2 align-middle font-mono text-[10px] uppercase tracking-wider text-amber-300 bg-amber-400/10 border border-amber-500/30 rounded px-1.5 py-0.5">
-                  Coming soon
+                  Text alerts pending provider setup
                 </span>
                 <span className="block text-xs text-gray-600">
                   Add your phone above and we&apos;ll turn on text alerts for you as soon as they launch — we won&apos;t text you before then.
