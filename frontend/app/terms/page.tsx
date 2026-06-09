@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const LAST_UPDATED = 'May 30, 2026';
+const LAST_UPDATED = 'June 9, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
 
 export const metadata: Metadata = {
@@ -57,20 +57,21 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Payments &amp; Fees</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Payments, Fees &amp; Payouts</h2>
             <p className="mb-2">
-              TryHardly is in early access. Some arrangements are currently made directly
-              between clients and adventurers. Marketplace payment features, when enabled, are
-              processed by third-party payment providers; payouts may occur after task
-              completion according to the provider&apos;s and platform&apos;s flow. TryHardly is not a
-              bank or money transmitter and does not provide regulated financial services. We
-              will not represent a payment feature as live before it is.
+              Payments on TryHardly are processed by{' '}
+              <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
+              <span className="text-white font-semibold">Stripe Connect</span> after a task is verified as complete.
+              TryHardly is a marketplace intermediary: we facilitate payments between clients
+              and adventurers but we are not the service provider, and we do not hold or take
+              custody of your funds. TryHardly is not a bank or money transmitter and does not
+              provide regulated financial services.
             </p>
             <p>
-              When marketplace payments are enabled, TryHardly charges a flat 12% marketplace
-              fee to workers on completed paid jobs. Posting a job is free. The fee does not
-              change with rank, and applicable fees will be shown before you commit to a
-              transaction. Refunds and disputes are handled under our{' '}
+              Posting a job is free for clients. TryHardly charges workers a flat 12% platform
+              service fee on completed paid jobs. The fee does not change with rank, and
+              applicable fees are shown before you commit to a transaction. Refunds and
+              disputes are handled under our{' '}
               <Link href="/refunds" className="text-amber-400 hover:text-amber-300">Refund &amp; Dispute Policy</Link>.
             </p>
           </section>
@@ -90,8 +91,9 @@ export default function TermsPage() {
             <p className="mb-2">You agree not to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Post fraudulent, misleading, or illegal quests.</li>
+              <li>Offer or request prohibited services, including anything illegal, unlicensed work that requires a license, weapons, regulated substances, adult services, or work that endangers safety.</li>
               <li>Harass, threaten, or discriminate against other users.</li>
-              <li>Circumvent platform payments or fees once payments are enabled.</li>
+              <li>Circumvent platform payments or fees, or arrange payment off-platform to avoid the service fee, after connecting through TryHardly.</li>
               <li>Scrape, attack, or interfere with the platform or other users&apos; accounts.</li>
             </ul>
           </section>
@@ -134,9 +136,10 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Governing Law</h2>
             <p>
-              These Terms are governed by the laws of [STATE/COUNTRY OF INCORPORATION], without
-              regard to conflict-of-law rules. Disputes will be handled in the courts located
-              in [JURISDICTION], unless local law requires otherwise.
+              These Terms are governed by the laws of the State of California, United States,
+              without regard to conflict-of-law rules. Disputes will be handled in the state
+              or federal courts located in California, unless applicable local law requires
+              otherwise.
             </p>
           </section>
 

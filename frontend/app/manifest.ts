@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'TryHardly — Local gigs, real people, real pay',
     short_name: 'TryHardly',
     description:
-      'Post local jobs or find paid work near you. Marketplace payments, verified local workers, no middlemen.',
+      'Post local jobs or find paid work near you. Verified local workers, with secure payments and payouts powered by Stripe.',
     id: '/',
     start_url: '/',
     scope: '/',
