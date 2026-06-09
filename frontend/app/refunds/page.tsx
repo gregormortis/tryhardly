@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const LAST_UPDATED = 'May 30, 2026';
+const LAST_UPDATED = 'June 9, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
 
 export const metadata: Metadata = {
@@ -31,15 +31,17 @@ export default function RefundsPage() {
           </p>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">1. How payments work today</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">1. How payments work</h2>
             <p>
               TryHardly is a marketplace that connects people who need local help (clients)
-              with people who can do the work (adventurers). During early access, some
-              arrangements are made directly between the two parties. Marketplace payment
-              features, when enabled, are processed by third-party payment providers, with
-              payouts on task completion. TryHardly is not a bank or money transmitter and
-              does not provide regulated financial services. We will never claim a payment
-              feature is live before it is.
+              with people who can do the work (adventurers). We are an intermediary —{' '}
+              <span className="text-white font-semibold">we are not the service provider</span>, and we do not
+              hold or take custody of your money. Payments are processed by{' '}
+              <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
+              <span className="text-white font-semibold">Stripe Connect</span> after a task is verified as
+              complete. Posting a job is free; TryHardly charges workers a flat 12% platform
+              service fee on completed paid jobs. TryHardly is not a bank or money transmitter
+              and does not provide regulated financial services.
             </p>
           </section>
 
@@ -66,11 +68,11 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Platform fees</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Platform &amp; processing fees</h2>
             <p>
-              When a refund is issued, any platform commission associated with the refunded
-              amount is returned as well. Third-party payment processing fees, where they
-              apply, may be non-refundable depending on the processor.
+              When a refund is issued, the TryHardly platform service fee associated with the
+              refunded amount is returned as well. Stripe payment-processing fees, where they
+              apply, may be non-refundable in line with Stripe&apos;s standard practices.
             </p>
           </section>
 
@@ -94,19 +96,27 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Chargebacks</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Chargebacks &amp; card disputes</h2>
             <p>
-              Please contact us before initiating a card chargeback — most issues are resolved
-              faster directly. Fraudulent chargebacks may result in account suspension.
+              Card payments are processed by Stripe. If you dispute a charge with your bank or
+              card issuer, that dispute is handled through Stripe&apos;s standard process, and we
+              may submit evidence such as messages, photos, the agreed scope, and proof of
+              completed work on the relevant party&apos;s behalf. Please contact us before
+              initiating a chargeback — most issues are resolved faster directly, and as an
+              intermediary we are well placed to help. Fraudulent or abusive chargebacks may
+              result in account suspension.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Jurisdiction</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Our role &amp; jurisdiction</h2>
             <p>
-              This policy is governed by the laws of [STATE/COUNTRY OF INCORPORATION].
-              Consumer protection laws in your location may grant you additional rights that
-              this policy does not limit.
+              TryHardly is a US-based marketplace and intermediary. We are not the service
+              provider and are not a party to the work agreement between clients and
+              adventurers; our role is to connect the two and to facilitate payments through
+              Stripe. This policy is governed by the laws of the State of California, United
+              States. Consumer-protection laws in your state may grant you additional rights
+              that this policy does not limit.
             </p>
           </section>
 

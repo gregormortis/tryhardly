@@ -4,19 +4,19 @@ import Link from 'next/link';
 import { ArrowRight, Briefcase, MapPin, Shield, Star, Users, Wrench, Hammer, Check, Banknote } from 'lucide-react';
 
 const stats = [
-  { value: 'Early', label: 'Access launch' },
-  { value: '3', label: 'Starter quests live' },
-  { value: 'Payouts', label: 'On task completion' },
+  { value: 'Free', label: 'To post a job' },
+  { value: '12%', label: 'Flat worker fee' },
+  { value: 'Stripe', label: 'Secure payouts' },
   { value: 'Local', label: 'Built for neighborhood work' },
 ];
 
 const categories = [
-  { name: 'Lawn & Yard', icon: Hammer, jobs: 'Coming soon' },
-  { name: 'Moving Help', icon: Briefcase, jobs: 'Coming soon' },
-  { name: 'Handyman', icon: Wrench, jobs: 'Coming soon' },
-  { name: 'Cleaning', icon: Star, jobs: 'Coming soon' },
-  { name: 'Delivery & Errands', icon: MapPin, jobs: 'Coming soon' },
-  { name: 'Assembly & Install', icon: Hammer, jobs: 'Coming soon' },
+  { name: 'Lawn & Yard', icon: Hammer, jobs: 'Accepting requests' },
+  { name: 'Moving Help', icon: Briefcase, jobs: 'Accepting requests' },
+  { name: 'Handyman', icon: Wrench, jobs: 'Accepting requests' },
+  { name: 'Cleaning', icon: Star, jobs: 'Accepting requests' },
+  { name: 'Delivery & Errands', icon: MapPin, jobs: 'Accepting requests' },
+  { name: 'Assembly & Install', icon: Hammer, jobs: 'Accepting requests' },
 ];
 
 const howItWorks = [
@@ -26,7 +26,7 @@ const howItWorks = [
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Marketplace Payments', desc: 'Built on Stripe Connect, with payouts released on task completion.' },
+  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments run on Stripe; worker payouts use Stripe Connect, released on verified task completion.' },
   { icon: Star, title: 'Structured Reviews', desc: 'Reviews and work history are part of the marketplace flow.' },
   { icon: Users, title: 'Profile Verification', desc: 'Profiles and reviews designed for trust from day one.' },
   { icon: Banknote, title: 'Clear Rewards', desc: 'Every quest shows the reward before anyone applies.' },
@@ -56,7 +56,7 @@ export default function HomePage() {
           The gig marketplace<br />AI can&apos;t replace
         </h1>
         <p className="mx-auto max-w-2xl text-base sm:text-lg text-zinc-300 mb-3">
-          Hire verified local workers for real paid jobs — paid after completion, no middlemen.
+          Hire verified local workers for real paid jobs — paid securely through Stripe after the work is done.
         </p>
         <p className="mx-auto max-w-xl text-sm text-zinc-500 mb-8">
           Post a job in minutes, or browse starter quests as new local listings come online.
@@ -109,19 +109,23 @@ export default function HomePage() {
 
       {/* Categories */}
       <section className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-10 text-center">Browse by category</h2>
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">Browse by category</h2>
+        <p className="mx-auto max-w-xl text-sm text-zinc-400 mb-10 text-center">
+          Post a request in any category today — local workers get alerts the moment your job goes live. More categories added weekly.
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {categories.map(({ name, icon: Icon, jobs }) => (
             <Link
               key={name}
-              href={`/questboard?category=${encodeURIComponent(name)}`}
+              href={`/post-quest?category=${encodeURIComponent(name)}`}
               className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-6 hover:border-amber-500/50 hover:bg-zinc-800 transition-all group"
             >
               <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
                 <Icon className="h-5 w-5" />
               </div>
               <h3 className="font-semibold text-zinc-100 text-center">{name}</h3>
-              <p className="mt-1 text-sm text-zinc-500 text-center">{jobs}</p>
+              <p className="mt-1 text-xs font-medium text-amber-400/80 text-center">{jobs}</p>
+              <p className="mt-2 text-sm text-zinc-400 text-center group-hover:text-zinc-200 transition-colors">Request this service →</p>
             </Link>
           ))}
         </div>
@@ -142,6 +146,42 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* How payments work */}
+      <section className="mx-auto max-w-4xl px-6 py-16">
+        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-6 sm:p-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Banknote className="h-5 w-5 text-amber-400" />
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">How payments work</h2>
+          </div>
+          <p className="text-sm text-zinc-300 mb-6">
+            TryHardly is a marketplace that connects people who need local help with workers who can do it. We are an
+            intermediary — we are not the service provider, and we do not hold your money. Payments are processed by{' '}
+            <span className="font-semibold text-zinc-100">Stripe</span>, and worker payouts are handled through{' '}
+            <span className="font-semibold text-zinc-100">Stripe Connect</span> after a task is verified complete.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
+              <p className="text-sm font-semibold text-zinc-100 mb-1">Posting is free</p>
+              <p className="text-xs text-zinc-400">Customers never pay to post a job. You only pay the reward you agreed with the worker.</p>
+            </div>
+            <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
+              <p className="text-sm font-semibold text-zinc-100 mb-1">12% worker fee</p>
+              <p className="text-xs text-zinc-400">TryHardly takes a flat 12% platform service fee from worker payouts on completed paid jobs.</p>
+            </div>
+            <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
+              <p className="text-sm font-semibold text-zinc-100 mb-1">Paid after completion</p>
+              <p className="text-xs text-zinc-400">Payouts are released through Stripe Connect once the task is verified as complete.</p>
+            </div>
+          </div>
+          <Link
+            href="/pricing"
+            className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            See full pricing &amp; fees <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 

@@ -102,6 +102,32 @@ export default function PricingPage() {
           </a>
         </div>
 
+        {/* How payments work */}
+        <div className="max-w-4xl mx-auto mb-16 bg-gray-900/50 border border-gray-800 rounded-xl p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-2xl">💳</span>
+            <h2 className="text-2xl font-bold text-amber-400">How payments work</h2>
+          </div>
+          <p className="text-gray-300 mb-4">
+            TryHardly is a marketplace and intermediary that connects people who need local help with workers who can do
+            it. <span className="font-semibold text-white">We are not the service provider</span>, and we do not hold or
+            take custody of your money. Payments are processed by{' '}
+            <span className="font-semibold text-white">Stripe</span>, and worker payouts are handled through{' '}
+            <span className="font-semibold text-white">Stripe Connect</span> after a task is verified as complete.
+          </p>
+          <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Job posting is <span className="font-semibold text-white">free</span> for customers</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>TryHardly takes a flat <span className="font-semibold text-white">12% platform service fee</span> from worker payouts on completed paid jobs</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payments are processed by <span className="font-semibold text-white">Stripe</span>; payouts use <span className="font-semibold text-white">Stripe Connect</span></span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payouts are released <span className="font-semibold text-white">after verified task completion</span></span></li>
+          </ul>
+          <p className="text-gray-400 text-sm mt-4">
+            See our{' '}
+            <a href="/terms" className="text-amber-400 hover:text-amber-300">Terms of Service</a> and{' '}
+            <a href="/refunds" className="text-amber-400 hover:text-amber-300">Refund &amp; Dispute Policy</a> for full details.
+          </p>
+        </div>
+
         {/* FAQ Section */}
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-8 text-amber-400">Frequently Asked Questions</h2>
@@ -116,7 +142,11 @@ export default function PricingPage() {
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">Are there any hidden fees?</h3>
-              <p className="text-gray-300">Nope! The flat 12% marketplace fee is the only fee. Payment processing is handled securely, and you get paid when quests are completed.</p>
+              <p className="text-gray-300">Nope! The flat 12% platform service fee is the only fee TryHardly charges. Payments are processed securely by Stripe, and you get paid when quests are completed.</p>
+            </div>
+            <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
+              <h3 className="text-xl font-bold text-white mb-2">How and when do I get paid?</h3>
+              <p className="text-gray-300">Worker payouts are handled through Stripe Connect after a task is verified as complete. TryHardly is a marketplace intermediary — we connect customers and workers and are not the service provider, and we do not hold or take custody of your funds.</p>
             </div>
           </div>
         </div>
