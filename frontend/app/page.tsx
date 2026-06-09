@@ -158,7 +158,7 @@ export default function HomePage() {
           </div>
           <p className="text-sm text-zinc-300 mb-6">
             TryHardly is a marketplace that connects people who need local help with workers who can do it. We are an
-            intermediary — we are not the service provider, and we do not hold your money. Payments are processed by{' '}
+            intermediary — we are not the service provider. Payments are processed by{' '}
             <span className="font-semibold text-zinc-100">Stripe</span>, and worker payouts are handled through{' '}
             <span className="font-semibold text-zinc-100">Stripe Connect</span> after a task is verified complete.
           </p>
