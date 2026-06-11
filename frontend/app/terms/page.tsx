@@ -91,7 +91,7 @@ export default function TermsPage() {
             <p className="mb-2">You agree not to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Post fraudulent, misleading, or illegal quests.</li>
-              <li>Offer or request prohibited services, including anything illegal, unlicensed work that requires a license, weapons, regulated substances, adult services, or work that endangers safety.</li>
+              <li>Offer or request prohibited services, including anything illegal, unlicensed work that requires a license, weapons, regulated substances, adult services, or work that endangers safety. See our <Link href="/prohibited-services" className="text-amber-400 hover:text-amber-300">Prohibited Services Policy</Link> for details.</li>
               <li>Harass, threaten, or discriminate against other users.</li>
               <li>Circumvent platform payments or fees, or arrange payment off-platform to avoid the service fee, after connecting through TryHardly.</li>
               <li>Scrape, attack, or interfere with the platform or other users&apos; accounts.</li>

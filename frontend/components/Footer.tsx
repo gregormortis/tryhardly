@@ -200,6 +200,14 @@ export default function Footer() {
                   Community Guidelines
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/prohibited-services"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Prohibited Services
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
