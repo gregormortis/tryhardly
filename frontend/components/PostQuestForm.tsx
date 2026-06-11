@@ -630,7 +630,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               </div>
             </div>
             <p className="font-mono text-[10px] text-stone-800 leading-relaxed mb-5">
-              By posting, you agree to TryHardly&apos;s terms. Marketplace payments are processed by Stripe, with payout to the worker when you confirm the quest is complete.
+              By posting, you agree to TryHardly&apos;s terms and{' '}
+              <a href="/prohibited-services" className="underline hover:text-stone-600">prohibited services policy</a>. Marketplace payments are processed by Stripe, with payout to the worker when you confirm the quest is complete.
             </p>
           </div>
         )}

@@ -74,6 +74,13 @@ export default function CommunityGuidelinesPage() {
               <li>Illegal, unsafe, regulated, or policy-restricted goods or services.</li>
               <li>Anything that puts a worker&apos;s safety or legal standing at risk.</li>
             </ul>
+            <p className="mt-2">
+              Our{' '}
+              <Link href="/prohibited-services" className="text-amber-400 hover:text-amber-300">
+                Prohibited Services Policy
+              </Link>{' '}
+              lists what&apos;s allowed and what isn&apos;t in detail.
+            </p>
           </section>
 
           <section>

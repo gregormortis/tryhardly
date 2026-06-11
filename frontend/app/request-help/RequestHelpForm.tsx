@@ -398,6 +398,10 @@ export default function RequestHelpForm() {
               <Link href="/privacy" className="text-amber-400 hover:text-amber-300">
                 Privacy Policy
               </Link>
+              , and confirm my request follows the{' '}
+              <Link href="/prohibited-services" className="text-amber-400 hover:text-amber-300">
+                Prohibited Services Policy
+              </Link>
               .
             </span>
           </label>
