@@ -41,7 +41,7 @@ const faqs = [
       },
       {
         q: 'How do I get paid?',
-        a: 'Marketplace payments are processed through Stripe, with payout initiated after confirmed completion. Once the quest giver confirms the work is complete, the charge is captured and your payout is initiated through Stripe Connect — you can then transfer it to your bank account or PayPal.'
+        a: 'Marketplace payments are processed through Stripe. Eligible earnings are paid out after charge capture: when a task is completed, the authorized charge is captured under platform rules and your payout is initiated through Stripe Connect — you can then transfer it to your bank account or PayPal.'
       }
     ]
   },
@@ -71,7 +71,7 @@ const faqs = [
     questions: [
       {
         q: 'Is my payment secure?',
-        a: 'Yes! Marketplace payments are processed through Stripe, with payout initiated after confirmed completion.'
+        a: 'Yes! Marketplace payments are processed through Stripe, with eligible earnings paid out after charge capture.'
       },
       {
         q: 'What payment methods do you accept?',

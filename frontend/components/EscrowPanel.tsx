@@ -143,8 +143,8 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
           <div>
             <p className="text-sm text-zinc-400 mb-3">
               Set up payment before work begins. Your payment method is authorized through Stripe
-              and the charge is captured on completion, with payout initiated to the worker after
-              confirmed completion via Stripe Connect.
+              and the charge is captured for completed tasks, with payout initiated to the worker after
+              payment capture via Stripe Connect.
             </p>
             {error && <p className="text-xs text-rose-400 mb-2">{error}</p>}
             <button

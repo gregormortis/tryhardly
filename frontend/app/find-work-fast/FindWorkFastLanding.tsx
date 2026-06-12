@@ -74,7 +74,7 @@ const benefits = [
   {
     icon: ShieldCheck,
     title: 'Clear marketplace payouts',
-    desc: 'Built so a job’s reward is clear up front, with marketplace payouts on task completion. For now you can browse, apply, and arrange work for free.',
+    desc: 'Built so a job’s reward is clear up front, with eligible earnings paid out after charge capture. For now you can browse, apply, and arrange work for free.',
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'How do I get paid?',
-    a: 'Each job lists its reward up front. Jobs marked payment verified have a valid payment method on file. For eligible completed jobs, payout is initiated after completion is confirmed under platform rules. Workers are paid for completed approved work; canceled or uncompleted jobs are not charged. For now you can also browse, apply, and arrange the job directly — no surprises on what it pays.',
+    a: 'Each job lists its reward up front. Jobs marked payment verified have a valid payment method on file. For eligible completed jobs, payout is initiated after payment capture under platform rules. Workers are paid for completed approved work; canceled or uncompleted jobs are not charged. For now you can also browse, apply, and arrange the job directly — no surprises on what it pays.',
   },
   {
     q: 'What kind of work is on here?',
