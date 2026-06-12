@@ -115,8 +115,9 @@ export default function SupportPage() {
             <li className="flex gap-3">
               <span className="text-amber-400 mt-1">•</span>
               <span>
-                Marketplace payments (with eligible earnings paid out after charge capture, processed by a
-                third-party payment provider) may be enabled when available. We&apos;ll tell you
+                Marketplace payments run on Stripe: a payment method is authorized at booking, the
+                charge is captured for completed tasks under platform rules, and worker payouts are
+                made through Stripe Connect after completed-task payment capture. We&apos;ll tell you
                 clearly when your account can use them.
               </span>
             </li>

@@ -41,7 +41,7 @@ const faqs = [
       },
       {
         q: 'How do I get paid?',
-        a: 'Marketplace payments are processed through Stripe. Eligible earnings are paid out after charge capture: when a task is completed, the authorized charge is captured under platform rules and your payout is initiated through Stripe Connect — you can then transfer it to your bank account or PayPal.'
+        a: 'Marketplace payments are processed through Stripe. When a customer books, their payment method is authorized — this is not a final charge. Once the task is completed, that authorization is captured under platform rules, and your payout is initiated through Stripe Connect after the completed-task payment capture. You can then transfer it to your bank account or PayPal.'
       }
     ]
   },
@@ -71,7 +71,7 @@ const faqs = [
     questions: [
       {
         q: 'Is my payment secure?',
-        a: 'Yes! Marketplace payments are processed through Stripe, with eligible earnings paid out after charge capture.'
+        a: 'Yes! Marketplace payments are processed through Stripe. Your payment method is authorized at booking, the charge is captured for completed work under platform rules, and worker payouts are made through Stripe Connect after completed-task payment capture. If a quest is cancelled before capture, the authorization is voided and no final charge is created.'
       },
       {
         q: 'What payment methods do you accept?',
@@ -115,6 +115,42 @@ export default function FAQPage() {
           <p className="text-xl text-gray-300">
             Everything you need to know about your Tryhardly adventure
           </p>
+        </div>
+
+        {/* Always-visible payments summary so the key money flow is readable
+            without expanding the accordion (and in static fetches/SEO). */}
+        <div className="mb-12 bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/30 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-amber-400 mb-4">Payments and payouts</h2>
+          <ul className="space-y-3 text-gray-300">
+            <li className="flex gap-3">
+              <span className="text-amber-400 mt-1">•</span>
+              <span>
+                <strong>Authorized at booking.</strong> When a customer books a quest, their payment
+                method is authorized through Stripe. This is not a final charge.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-amber-400 mt-1">•</span>
+              <span>
+                <strong>Captured for completed work.</strong> The charge is captured only after the
+                task is completed, under platform rules.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-amber-400 mt-1">•</span>
+              <span>
+                <strong>Worker payout follows capture.</strong> Worker payouts are initiated through
+                Stripe Connect after the completed-task payment capture.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-amber-400 mt-1">•</span>
+              <span>
+                <strong>Cancel before capture, no charge.</strong> If a quest is cancelled before the
+                charge is captured, the authorization is voided and no final charge is created.
+              </span>
+            </li>
+          </ul>
         </div>
 
         <div className="space-y-12">
