@@ -2,63 +2,49 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
-import EscrowPaymentForm from './EscrowPaymentForm';
 
-interface Milestone {
-  id: string;
-  title: string;
-  description: string;
-  amount: number; // cents
-  status: 'PENDING' | 'COMPLETED' | 'PAID';
-}
-
-// Mirrors the backend escrowService.getEscrowStatus() response shape.
-interface EscrowStatus {
+// Mirrors the backend GET /api/payments/quest/:id/payment-status response.
+// This is the non-escrow marketplace flow: the customer's card is AUTHORIZED at
+// booking and the final charge is CAPTURED for completed work. TryHardly never
+// holds funds; worker payouts are routed through Stripe Connect on capture.
+interface PaymentStatus {
   questId: string;
-  escrowStatus: 'NONE' | 'PENDING' | 'FUNDED' | 'PARTIALLY_RELEASED' | 'RELEASED' | 'REFUNDED';
-  paymentIntentId: string | null;
+  paymentStatus: 'NONE' | 'AUTHORIZED' | 'CAPTURED' | 'CANCELED' | 'CAPTURE_FAILED';
+  paymentAuthorizedAt: string | null;
+  paymentCapturedAt: string | null;
+  paymentCanceledAt: string | null;
+  hasCheckoutSession: boolean;
   totalBudget: number; // cents
-  totalEscrowed: number; // cents
-  totalReleased: number; // cents
-  totalRemaining: number; // cents
   platformFee: number; // cents
-  milestones: Milestone[];
-  paymentIntent: {
-    id: string;
-    status: string;
-    amount: number;
-    amountCaptured: number;
-  } | null;
 }
 
-interface InitEscrowResponse {
-  paymentIntentId: string;
-  clientSecret: string;
-  message?: string;
+interface CheckoutResponse {
+  sessionId: string;
+  url: string;
+  amount: number;
+  applicationFeeAmount: number;
 }
 
-interface EscrowPanelProps {
+interface PaymentPanelProps {
   questId: string;
   isQuestGiver: boolean;
   questStatus: string;
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  RELEASED: 'bg-emerald-500/20 text-emerald-400',
-  FUNDED: 'bg-blue-500/20 text-blue-400',
-  PARTIALLY_RELEASED: 'bg-indigo-500/20 text-indigo-400',
-  PENDING: 'bg-amber-500/20 text-amber-400',
-  REFUNDED: 'bg-red-500/20 text-red-400',
+  CAPTURED: 'bg-emerald-500/20 text-emerald-400',
+  AUTHORIZED: 'bg-blue-500/20 text-blue-400',
+  CAPTURE_FAILED: 'bg-amber-500/20 text-amber-400',
+  CANCELED: 'bg-red-500/20 text-red-400',
   NONE: 'bg-zinc-700 text-zinc-400',
 };
 
 // User-facing labels for the internal payment status values.
 const STATUS_LABELS: Record<string, string> = {
-  RELEASED: 'PAID OUT',
-  FUNDED: 'AUTHORIZED',
-  PARTIALLY_RELEASED: 'PARTIALLY PAID',
-  PENDING: 'PENDING',
-  REFUNDED: 'REFUNDED',
+  CAPTURED: 'CHARGE CAPTURED',
+  AUTHORIZED: 'AUTHORIZED',
+  CAPTURE_FAILED: 'CAPTURE FAILED',
+  CANCELED: 'CANCELED',
   NONE: 'NOT STARTED',
 };
 
@@ -66,113 +52,114 @@ function dollars(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export default function EscrowPanel({ questId, isQuestGiver, questStatus }: EscrowPanelProps) {
-  const [escrow, setEscrow] = useState<EscrowStatus | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+/**
+ * Marketplace payment panel for the non-escrow manual-capture flow.
+ *
+ * Quest giver authorizes a payment method at booking via hosted Stripe Checkout
+ * (POST /checkout). The final charge is captured automatically when the task is
+ * confirmed complete (backend confirmCompletion → capture). Before capture, the
+ * authorization can be voided via POST /cancel-authorization. This component
+ * never calls the retired escrow routes (/escrow, /complete, /cancel).
+ */
+export default function PaymentPanel({ questId, isQuestGiver }: PaymentPanelProps) {
+  const [payment, setPayment] = useState<PaymentStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEscrowStatus = useCallback(async () => {
+  const fetchPaymentStatus = useCallback(async () => {
     try {
-      const data = await api.get<EscrowStatus>(`/payments/quest/${questId}/status`);
-      setEscrow(data);
+      const data = await api.get<PaymentStatus>(
+        `/payments/quest/${questId}/payment-status`
+      );
+      setPayment(data);
     } catch {
-      // Quest may not have escrow initialized yet — leave escrow null.
-      setEscrow(null);
+      // No payment record yet — leave null and render the pre-authorization view.
+      setPayment(null);
     }
   }, [questId]);
 
   useEffect(() => {
-    fetchEscrowStatus();
-  }, [fetchEscrowStatus]);
+    fetchPaymentStatus();
+  }, [fetchPaymentStatus]);
 
-  const handleInitEscrow = async () => {
+  // Start hosted Stripe Checkout to authorize the payment method (manual
+  // capture). On success the browser is redirected to Stripe's hosted page.
+  const handleAuthorize = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post<InitEscrowResponse>(
-        `/payments/quest/${questId}/escrow`,
-        {},
+      const res = await api.post<CheckoutResponse>(
+        `/payments/quest/${questId}/checkout`,
+        {}
       );
-      setClientSecret(res.clientSecret);
-      await fetchEscrowStatus();
+      if (res.url) {
+        window.location.href = res.url;
+        return;
+      }
+      setError('Could not start checkout. Please try again.');
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setError(e?.message || 'Failed to set up payment');
+      setError(e?.message || 'Failed to start checkout');
     } finally {
       setLoading(false);
     }
   };
 
-  // action is the backend route segment: 'complete' or 'cancel'.
-  const handleAction = async (action: 'complete' | 'cancel') => {
-    setActionLoading(action);
+  // Void the pending authorization before capture. Nothing is "released" — no
+  // funds were held; the customer is simply never charged.
+  const handleCancelAuthorization = async () => {
+    setActionLoading('cancel');
     setError(null);
     try {
-      await api.post(`/payments/quest/${questId}/${action}`, {});
-      setClientSecret(null);
-      await fetchEscrowStatus();
+      await api.post(`/payments/quest/${questId}/cancel-authorization`, {});
+      await fetchPaymentStatus();
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setError(e?.message || `Failed to ${action} payment`);
+      setError(e?.message || 'Failed to cancel authorization');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleConfirmed = async () => {
-    setClientSecret(null);
-    await fetchEscrowStatus();
-  };
+  const status = payment?.paymentStatus ?? 'NONE';
 
-  // ── No escrow yet ──────────────────────────────────────────────────────────
-  if (!escrow || escrow.escrowStatus === 'NONE') {
+  // ── No authorization yet ────────────────────────────────────────────────────
+  if (!payment || status === 'NONE') {
     return (
       <div className="mt-6 p-4 rounded-lg border border-zinc-700 bg-zinc-900">
         <h3 className="text-base font-semibold text-zinc-100 mb-2">Marketplace Payment</h3>
-        {clientSecret ? (
-          <div className="space-y-3">
-            <p className="text-sm text-zinc-400">
-              Authorization only — this is not a final charge. Your bank may show a temporary
-              pending authorization. The final charge is captured when the task is completed.
-            </p>
-            <EscrowPaymentForm clientSecret={clientSecret} onConfirmed={handleConfirmed} />
-          </div>
-        ) : isQuestGiver ? (
+        {isQuestGiver ? (
           <div>
             <p className="text-sm text-zinc-400 mb-3">
-              Set up payment before work begins. Your payment method is authorized through Stripe
-              and the charge is captured for completed tasks, with payout initiated to the worker after
-              payment capture via Stripe Connect.
+              Authorize a payment method before work begins. Your payment method is authorized
+              at booking — not charged. The final charge is captured for completed work, and the
+              worker payout is processed after capture through Stripe Connect.
             </p>
             {error && <p className="text-xs text-rose-400 mb-2">{error}</p>}
             <button
-              onClick={handleInitEscrow}
+              onClick={handleAuthorize}
               disabled={loading}
               className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
             >
-              {loading ? 'Setting up…' : 'Set up payment'}
+              {loading ? 'Starting checkout…' : 'Authorize payment method'}
             </button>
           </div>
         ) : (
           <p className="text-sm text-zinc-400">
-            Waiting for the quest giver to authorize a payment method. Jobs marked payment
-            verified have a valid payment method on file. You are paid for completed approved
-            work; canceled or uncompleted jobs are not charged.
+            Waiting for the quest giver to authorize a payment method. The payment method is
+            authorized at booking; the final charge is captured for completed work, with the
+            worker payout processed after capture through Stripe Connect. Canceled or uncompleted
+            jobs are never charged.
           </p>
         )}
       </div>
     );
   }
 
-  // ── Escrow exists ──────────────────────────────────────────────────────────
-  const canComplete =
-    isQuestGiver &&
-    ['PENDING', 'FUNDED', 'PARTIALLY_RELEASED'].includes(escrow.escrowStatus);
-  const canCancel =
-    isQuestGiver &&
-    ['PENDING', 'FUNDED', 'PARTIALLY_RELEASED'].includes(escrow.escrowStatus);
+  // ── Authorization exists ────────────────────────────────────────────────────
+  // Cancellation (void) is only possible before capture.
+  const canCancel = isQuestGiver && (status === 'AUTHORIZED' || status === 'CAPTURE_FAILED');
 
   return (
     <div className="mt-6 p-4 rounded-lg border border-zinc-700 bg-zinc-900 space-y-4">
@@ -180,85 +167,45 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
         <h3 className="text-base font-semibold text-zinc-100">Marketplace Payment</h3>
         <span
           className={`text-xs font-medium px-2 py-1 rounded-full ${
-            STATUS_STYLES[escrow.escrowStatus] ?? STATUS_STYLES.NONE
+            STATUS_STYLES[status] ?? STATUS_STYLES.NONE
           }`}
         >
-          {STATUS_LABELS[escrow.escrowStatus] ?? STATUS_LABELS.NONE}
+          {STATUS_LABELS[status] ?? STATUS_LABELS.NONE}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="bg-zinc-800 rounded p-2">
           <p className="text-zinc-500 text-xs">Total Budget</p>
-          <p className="text-zinc-100 font-semibold">{dollars(escrow.totalBudget)}</p>
+          <p className="text-zinc-100 font-semibold">{dollars(payment.totalBudget)}</p>
         </div>
         <div className="bg-zinc-800 rounded p-2">
           <p className="text-zinc-500 text-xs">Platform Fee</p>
-          <p className="text-zinc-100 font-semibold">{dollars(escrow.platformFee)}</p>
-        </div>
-        <div className="bg-zinc-800 rounded p-2">
-          <p className="text-zinc-500 text-xs">Paid Out</p>
-          <p className="text-zinc-100 font-semibold">{dollars(escrow.totalReleased)}</p>
-        </div>
-        <div className="bg-zinc-800 rounded p-2">
-          <p className="text-zinc-500 text-xs">Remaining</p>
-          <p className="text-zinc-100 font-semibold">{dollars(escrow.totalRemaining)}</p>
+          <p className="text-zinc-100 font-semibold">{dollars(payment.platformFee)}</p>
         </div>
       </div>
 
-      {escrow.milestones.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide">Milestones</p>
-          {escrow.milestones.map((m) => (
-            <div
-              key={m.id}
-              className="flex items-center justify-between text-sm bg-zinc-800/60 rounded px-2 py-1.5"
-            >
-              <span className="text-zinc-300">{m.title}</span>
-              <span className="flex items-center gap-2">
-                <span className="text-zinc-400">{dollars(m.amount)}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded ${
-                    m.status === 'PAID'
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-zinc-700 text-zinc-400'
-                  }`}
-                >
-                  {m.status}
-                </span>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* If escrow is PENDING and the giver re-opens with a fresh clientSecret. */}
-      {clientSecret && escrow.escrowStatus === 'PENDING' && (
-        <EscrowPaymentForm clientSecret={clientSecret} onConfirmed={handleConfirmed} />
-      )}
+      <p className="text-xs text-zinc-500">
+        {status === 'AUTHORIZED' &&
+          'Payment method authorized at booking. The final charge is captured automatically when the task is confirmed complete.'}
+        {status === 'CAPTURED' &&
+          'Charge captured for completed work. The worker payout is processed through Stripe Connect.'}
+        {status === 'CANCELED' && 'Authorization canceled. The customer was not charged.'}
+        {status === 'CAPTURE_FAILED' &&
+          'The charge could not be captured (the authorization may have expired). Re-authorize to try again.'}
+      </p>
 
       {error && <p className="text-xs text-rose-400">{error}</p>}
 
-      {isQuestGiver && (canComplete || canCancel) && (
+      {canCancel && (
         <div className="flex gap-2">
-          {canComplete && (
-            <button
-              onClick={() => handleAction('complete')}
-              disabled={actionLoading === 'complete'}
-              className="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-3 py-2 text-xs font-bold text-white transition-colors"
-            >
-              {actionLoading === 'complete' ? 'Capturing…' : 'Complete & Capture'}
-            </button>
-          )}
-          {canCancel && (
-            <button
-              onClick={() => handleAction('cancel')}
-              disabled={actionLoading === 'cancel'}
-              className="flex-1 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 px-3 py-2 text-xs font-bold text-white transition-colors"
-            >
-              {actionLoading === 'cancel' ? 'Canceling…' : 'Cancel Authorization'}
-            </button>
-          )}
+          <button
+            onClick={handleCancelAuthorization}
+            disabled={actionLoading === 'cancel'}
+            className="flex-1 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 px-3 py-2 text-xs font-bold text-white transition-colors"
+          >
+            {actionLoading === 'cancel' ? 'Canceling…' : 'Cancel Authorization'}
+          </button>
         </div>
       )}
     </div>

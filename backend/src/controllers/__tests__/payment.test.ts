@@ -17,6 +17,7 @@ const mockStripe = {
   getPaymentIntent: jest.fn(),
   capturePayment: jest.fn(),
   cancelPaymentIntent: jest.fn(),
+  calculatePlatformFee: (cents: number) => Math.round(cents * 0.12),
 };
 jest.mock('../../services/stripeService', () => mockStripe);
 
@@ -26,6 +27,7 @@ jest.mock('../../services/escrowService', () => ({}));
 import {
   handleWebhook,
   captureAuthorizedPayment,
+  getPaymentStatus,
 } from '../paymentController';
 
 function mockRes() {
@@ -224,5 +226,49 @@ describe('captureAuthorizedPayment', () => {
     await expect(captureAuthorizedPayment('q1')).rejects.toThrow('authorization expired');
     const data = mockPrisma.quest.update.mock.calls[0][0].data;
     expect(data.paymentStatus).toBe('CAPTURE_FAILED');
+  });
+});
+
+function statusReq(questId: string) {
+  return { params: { questId }, user: { id: 'giver' } } as any;
+}
+
+describe('getPaymentStatus — non-escrow status read', () => {
+  it('surfaces the new paymentStatus fields and budget/fee, never escrowStatus', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      reward: 100,
+      paymentStatus: 'AUTHORIZED',
+      paymentAuthorizedAt: new Date('2026-01-01T00:00:00Z'),
+      paymentCapturedAt: null,
+      paymentCanceledAt: null,
+      checkoutSessionId: 'cs_1',
+      // A legacy field present on the record must not leak into the response.
+      escrowStatus: 'FUNDED',
+    });
+
+    const res = mockRes();
+    await getPaymentStatus(statusReq('q1'), res);
+
+    const body = res.json.mock.calls[0][0];
+    expect(body.paymentStatus).toBe('AUTHORIZED');
+    expect(body.totalBudget).toBe(10000);
+    expect(body.platformFee).toBe(1200);
+    expect(body.hasCheckoutSession).toBe(true);
+    expect(body).not.toHaveProperty('escrowStatus');
+  });
+
+  it('defaults paymentStatus to NONE when unset', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({ id: 'q1', reward: 50 });
+    const res = mockRes();
+    await getPaymentStatus(statusReq('q1'), res);
+    expect(res.json.mock.calls[0][0].paymentStatus).toBe('NONE');
+  });
+
+  it('returns 404 when the quest does not exist', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockRejectedValue({ code: 'P2025' });
+    const res = mockRes();
+    await getPaymentStatus(statusReq('missing'), res);
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 });

@@ -402,7 +402,7 @@ export default function QuestDetailModal({
                   </p>
                 )}
 
-                {/* Escrow Panel */}
+                {/* Marketplace payment panel (non-escrow manual-capture flow) */}
                 <EscrowPanel
                   questId={quest.id}
                   isQuestGiver={currentUserId === quest.postedBy.id}
