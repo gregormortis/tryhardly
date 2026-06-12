@@ -536,6 +536,51 @@ export const getEscrowStatus = async (
 };
 
 /**
+ * GET /api/payments/quest/:questId/payment-status
+ * Non-sensitive payment status for the non-escrow marketplace flow.
+ *
+ * Surfaces the new `paymentStatus` state machine (NONE → AUTHORIZED → CAPTURED /
+ * CANCELED / CAPTURE_FAILED) plus the budget, so the UI can render the panel
+ * without touching the legacy escrowService path. Does not initialize or mutate
+ * any payment state, and does not call Stripe.
+ */
+export const getPaymentStatus = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { questId } = req.params;
+
+    const quest = await prisma.quest.findUniqueOrThrow({ where: { id: questId } });
+
+    const budgetCents = Math.round(Number((quest as any).reward) * 100);
+
+    res.json({
+      questId,
+      paymentStatus: (quest as any).paymentStatus || 'NONE',
+      paymentAuthorizedAt: (quest as any).paymentAuthorizedAt || null,
+      paymentCapturedAt: (quest as any).paymentCapturedAt || null,
+      paymentCanceledAt: (quest as any).paymentCanceledAt || null,
+      hasCheckoutSession: !!(quest as any).checkoutSessionId,
+      totalBudget: Number.isFinite(budgetCents) ? budgetCents : 0,
+      platformFee: stripeService.calculatePlatformFee(
+        Number.isFinite(budgetCents) ? budgetCents : 0
+      ),
+    });
+  } catch (error: any) {
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Not Found', message: 'Quest not found' });
+      return;
+    }
+    console.error('Error fetching payment status:', error);
+    res.status(500).json({
+      error: 'Failed to fetch payment status',
+      message: error.message,
+    });
+  }
+};
+
+/**
  * POST /api/payments/quest/:questId/complete
  * Complete a quest and release all remaining funds.
  */
