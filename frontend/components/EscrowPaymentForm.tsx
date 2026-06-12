@@ -15,10 +15,11 @@ interface EscrowPaymentFormProps {
 }
 
 /**
- * Inner form: renders the Stripe PaymentElement and confirms the escrow
- * PaymentIntent client-side. The PaymentIntent is created with manual capture
- * on the backend, so confirming here authorizes the funds (status moves to
- * `requires_capture`); the backend captures later on quest completion.
+ * Inner form: renders the Stripe PaymentElement and confirms the marketplace
+ * PaymentIntent client-side. The PaymentIntent is created with manual capture on
+ * the backend, so confirming here AUTHORIZES the payment method (status moves to
+ * `requires_capture`) — it is not a final charge. The backend captures the charge
+ * later, when the task is completed.
  */
 function InnerForm({ onConfirmed }: { onConfirmed: () => void }) {
   const stripe = useStripe();
@@ -67,7 +68,7 @@ function InnerForm({ onConfirmed }: { onConfirmed: () => void }) {
         disabled={!stripe || submitting}
         className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
       >
-        {submitting ? 'Confirming…' : 'Confirm Payment'}
+        {submitting ? 'Authorizing…' : 'Authorize Payment'}
       </button>
     </form>
   );

@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'How do I get paid?',
-    a: 'Each job lists its reward up front. TryHardly uses a marketplace payout flow so a job’s reward is paid after the work is completed. For now you can browse, apply, and arrange the job directly — no surprises on what it pays.',
+    a: 'Each job lists its reward up front. Jobs marked payment verified have a valid payment method on file. For eligible completed jobs, payout is initiated after completion is confirmed under platform rules. Workers are paid for completed approved work; canceled or uncompleted jobs are not charged. For now you can also browse, apply, and arrange the job directly — no surprises on what it pays.',
   },
   {
     q: 'What kind of work is on here?',

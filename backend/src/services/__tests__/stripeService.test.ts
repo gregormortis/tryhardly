@@ -124,9 +124,15 @@ describe('stripeService', () => {
       const params = mockCheckoutSessionsCreate.mock.calls[0][0];
 
       expect(params.mode).toBe('payment');
+      // Authorize-only: the destination charge uses manual capture so completing
+      // Checkout authorizes the card; the charge is captured later on completion.
+      expect(params.payment_intent_data.capture_method).toBe('manual');
       // 12% of $100.00 => 1200 cents application fee.
       expect(params.payment_intent_data.application_fee_amount).toBe(1200);
       expect(params.payment_intent_data.transfer_data.destination).toBe('acct_worker');
+      // The destination-charge PI carries the worker account in metadata so the
+      // webhook can distinguish it from the legacy escrow PaymentIntent.
+      expect(params.payment_intent_data.metadata.tryhardly_worker_account).toBe('acct_worker');
       // Line item uses the job title and amount — never a placeholder product.
       const lineItem = params.line_items[0];
       expect(lineItem.price_data.unit_amount).toBe(10000);

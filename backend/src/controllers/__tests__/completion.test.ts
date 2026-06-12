@@ -26,6 +26,13 @@ jest.mock('../../services/mailerService', () => ({
   },
 }));
 
+// confirmCompletion captures the authorized marketplace payment on completion.
+// Mock the controller dependency so this suite stays isolated from Stripe/app.
+const mockCaptureAuthorizedPayment = jest.fn();
+jest.mock('../paymentController', () => ({
+  captureAuthorizedPayment: (...args: any[]) => mockCaptureAuthorizedPayment(...args),
+}));
+
 import { submitCompletion, confirmCompletion, requestChanges } from '../completionController';
 
 function mockRes() {
@@ -55,6 +62,7 @@ beforeEach(() => {
   mockPrisma.user.update.mockResolvedValue({});
   mockPrisma.proofOfWork.create.mockResolvedValue({ id: 'p1' });
   mockAwardCompletionXp.mockResolvedValue(null);
+  mockCaptureAuthorizedPayment.mockResolvedValue({ captured: false, reason: 'no_payment_intent' });
 });
 
 describe('submitCompletion (worker)', () => {
@@ -173,6 +181,28 @@ describe('confirmCompletion (giver)', () => {
     const res = mockRes();
     await confirmCompletion({ user: { id: 'giver' }, params: { id: 'q1' }, body: {} } as any, res);
     expect(mockPrisma.proofOfWork.create).not.toHaveBeenCalled();
+  });
+
+  it('captures the authorized marketplace payment on completion', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue(IN_REVIEW_QUEST);
+    mockCaptureAuthorizedPayment.mockResolvedValue({ captured: true, paymentIntentId: 'pi_1' });
+    const res = mockRes();
+    await confirmCompletion({ user: { id: 'giver' }, params: { id: 'q1' }, body: {} } as any, res);
+    expect(mockCaptureAuthorizedPayment).toHaveBeenCalledWith('q1');
+    // The quest still completes successfully.
+    expect(res.json).toHaveBeenCalled();
+    expect(mockPrisma.quest.update.mock.calls[0][0].data.status).toBe('COMPLETED');
+  });
+
+  it('still confirms completion when capture throws (e.g. expired authorization)', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue(IN_REVIEW_QUEST);
+    mockCaptureAuthorizedPayment.mockRejectedValue(new Error('authorization expired'));
+    const res = mockRes();
+    await confirmCompletion({ user: { id: 'giver' }, params: { id: 'q1' }, body: {} } as any, res);
+    // Confirmation is not blocked by a capture failure; the worker is still credited.
+    expect(mockAwardCompletionXp).toHaveBeenCalledWith('q1');
+    expect(res.json).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(500);
   });
 });
 

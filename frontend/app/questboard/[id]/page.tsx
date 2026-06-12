@@ -497,8 +497,8 @@ export default function QuestDetailPage() {
               </div>
             )}
 
-            {/* Payment escrow — visible to the quest giver and the assigned
-                adventurer once the quest is no longer just OPEN. */}
+            {/* Marketplace payment panel — visible to the quest giver and the
+                assigned adventurer once the quest is no longer just OPEN. */}
             {user &&
               (isOwner || user.id === quest.assignedAdventurerId) &&
               quest.status !== 'OPEN' && (

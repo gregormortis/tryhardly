@@ -43,14 +43,22 @@ export default function RefundsPage() {
               service fee on completed paid jobs. TryHardly is not a bank or money transmitter
               and does not provide regulated financial services.
             </p>
+            <p className="mt-2">
+              At booking, TryHardly may obtain a payment authorization for the quoted amount. A
+              payment authorization is not a completed charge and may appear as a temporary
+              pending transaction on your statement. TryHardly captures payment when a task is
+              completed or deemed completed under the platform&rsquo;s confirmation rules. If a
+              booking is canceled or does not proceed, TryHardly may void or cancel the
+              authorization.
+            </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">2. Cancellations before work starts</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>A client may cancel a quest before an adventurer begins work for a full refund of any amount already paid.</li>
+              <li>A client may cancel before an adventurer begins work; if a payment authorization was obtained, it is voided or canceled and the client is not charged.</li>
               <li>An adventurer may withdraw before starting at no penalty.</li>
-              <li>If no funds were collected, cancelling simply closes the quest.</li>
+              <li>If no payment authorization was obtained, canceling simply closes the quest.</li>
             </ul>
           </section>
 
