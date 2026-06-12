@@ -5,6 +5,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { createNotification } from '../services/notificationService';
 import { awardCompletionXp } from '../services/progressionService';
 import { sendEmail, emailTemplates } from '../services/mailerService';
+import { captureAuthorizedPayment } from './paymentController';
 
 // ─── Work completion protocol ───────────────────────────────────────────────
 // The worker→client completion handshake that feeds XP, reviews, proof-of-work,
@@ -142,6 +143,22 @@ export const confirmCompletion = async (req: AuthRequest, res: Response): Promis
         completionConfirmedAt: now,
       },
     });
+
+    // Capture the authorized marketplace payment now that the task is confirmed
+    // complete: authorize → complete → capture → payout. This finalizes the
+    // charge and lets Stripe Connect route the worker's share + 12% fee. It is
+    // best-effort and never blocks confirmation — quests on the legacy escrow
+    // path (or with no authorization) simply have nothing to capture, and a
+    // capture error is recorded as CAPTURE_FAILED for the quest giver to retry
+    // via POST /api/payments/quest/:id/capture.
+    try {
+      const result = await captureAuthorizedPayment(quest.id);
+      if (result.captured) {
+        console.log(`✅ Captured marketplace payment for quest ${quest.id} on completion`);
+      }
+    } catch (e) {
+      console.error('confirmCompletion payment capture error:', e);
+    }
 
     if (quest.assignedAdventurerId) {
       const workerId = quest.assignedAdventurerId;

@@ -147,18 +147,27 @@ export async function createCustomer(
 }
 
 /**
- * Create a marketplace Checkout Session for a job (destination charge).
+ * Create a marketplace Checkout Session for a job (destination charge,
+ * authorize-only).
  *
- * This is the standard Connect marketplace flow: the client pays the full job
- * amount, TryHardly collects a 12% application fee, and the remainder is routed
- * to the worker's connected account via `transfer_data.destination`. Funds are
- * paid to the worker on task completion through Stripe's payout schedule — there
- * is no separate custody/holding step.
+ * Non-escrow model: `authorize → complete → capture → payout`. The session is
+ * created with `payment_intent_data.capture_method='manual'`, so completing
+ * Checkout only AUTHORIZES the customer's card — it is not a final charge. The
+ * charge is captured later, when the task is completed (see `capturePayment`,
+ * invoked from the completion-confirmation path). On capture, Stripe Connect
+ * routes the worker's share and TryHardly's 12% fee in the single destination
+ * charge via `application_fee_amount` + `transfer_data.destination`. There is no
+ * custody or fund-holding step: TryHardly never holds the customer's money.
+ *
+ * Capture window: card authorizations are typically valid for ~5–7 days. The
+ * task must be completed and captured within that window, so only near-term
+ * bookings are eligible to be authorized this way — long/open-ended projects are
+ * not supported as payment-authorized bookings.
  *
  * `application_fee_amount` and `transfer_data.destination` are set on
- * `payment_intent_data` so the single charge both takes the platform fee and
- * routes the net to the worker. The line item uses the job's own title and
- * amount — never a placeholder product.
+ * `payment_intent_data` so the single destination charge both takes the platform
+ * fee and routes the net to the worker when captured. The line item uses the
+ * job's own title and amount — never a placeholder product.
  */
 export async function createCheckoutSession(params: {
   questId: string;
@@ -205,6 +214,10 @@ export async function createCheckoutSession(params: {
     cancel_url: cancelUrl,
     customer: customerId,
     payment_intent_data: {
+      // Authorize-only: completing Checkout authorizes the card; the charge is
+      // captured later on task completion. Card authorizations expire (~5–7 days)
+      // so only near-term tasks should be booked this way.
+      capture_method: 'manual',
       application_fee_amount: applicationFeeAmount,
       transfer_data: {
         destination: workerAccountId,

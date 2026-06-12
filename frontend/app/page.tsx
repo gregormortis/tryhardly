@@ -26,7 +26,7 @@ const howItWorks = [
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments run on Stripe; worker payouts use Stripe Connect, released on verified task completion.' },
+  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments run on Stripe; worker payouts use Stripe Connect, initiated after confirmed task completion.' },
   { icon: Star, title: 'Structured Reviews', desc: 'Reviews and work history are part of the marketplace flow.' },
   { icon: Users, title: 'Profile Verification', desc: 'Profiles and reviews designed for trust from day one.' },
   { icon: Banknote, title: 'Clear Rewards', desc: 'Every quest shows the reward before anyone applies.' },
@@ -173,7 +173,7 @@ export default function HomePage() {
             </div>
             <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
               <p className="text-sm font-semibold text-zinc-100 mb-1">Paid after completion</p>
-              <p className="text-xs text-zinc-400">Payouts are released through Stripe Connect once the task is verified as complete.</p>
+              <p className="text-xs text-zinc-400">Payouts are initiated through Stripe Connect once the task is verified as complete.</p>
             </div>
           </div>
           <Link

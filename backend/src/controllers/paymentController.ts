@@ -5,6 +5,26 @@ import * as stripeService from '../services/stripeService';
 import * as escrowService from '../services/escrowService';
 
 /**
+ * Build the field patch that moves a quest to AUTHORIZED for the non-escrow
+ * marketplace flow — but only when it isn't already past authorization. This
+ * guards against out-of-order webhooks (e.g. `payment_intent.succeeded`
+ * arriving before `checkout.session.completed`) downgrading a CAPTURED or
+ * CANCELED quest back to AUTHORIZED. Returns an empty patch when no transition
+ * should happen, so callers can spread it into an existing update.
+ */
+async function authorizedPatch(
+  questId: string
+): Promise<{ paymentStatus?: 'AUTHORIZED'; paymentAuthorizedAt?: Date }> {
+  const quest = await prisma.quest.findUnique({ where: { id: questId } });
+  const current = (quest as any)?.paymentStatus;
+  // Only advance from a pre-authorization state. Never clobber CAPTURED/CANCELED.
+  if (current === 'NONE' || current === undefined || current === null) {
+    return { paymentStatus: 'AUTHORIZED', paymentAuthorizedAt: new Date() };
+  }
+  return {};
+}
+
+/**
  * POST /api/payments/connect
  * Create a Stripe Connect Express account for the current user.
  */
@@ -204,6 +224,195 @@ export const createQuestCheckout = async (
       error: 'Failed to create checkout session',
       message: error.message,
     });
+  }
+};
+
+/**
+ * Capture the authorized destination-charge PaymentIntent for a completed task.
+ *
+ * Non-escrow flow: at booking the card was AUTHORIZED (manual capture). When the
+ * task is confirmed complete we capture that authorization, finalizing the
+ * charge — Stripe Connect then routes the worker's share and TryHardly's 12% fee
+ * (set on the PaymentIntent at Checkout). No funds were ever held by TryHardly.
+ *
+ * Safe to call from the completion-confirmation path: it is idempotent and
+ * never clobbers state out of order.
+ *   - Returns `{ captured: false, reason }` (no throw) when there is nothing to
+ *     capture, so completion confirmation never fails just because a quest has
+ *     no marketplace authorization (e.g. it used the legacy escrow path, or was
+ *     paid out of band).
+ *   - Only captures a PaymentIntent in `requires_capture`. If Stripe reports it
+ *     already `succeeded`, we reconcile local state to CAPTURED without a second
+ *     capture call.
+ *   - On a Stripe capture error (e.g. expired authorization) records
+ *     CAPTURE_FAILED and rethrows so the caller can surface it.
+ */
+export async function captureAuthorizedPayment(
+  questId: string
+): Promise<{ captured: boolean; reason?: string; paymentIntentId?: string }> {
+  const quest = await prisma.quest.findUnique({ where: { id: questId } });
+  if (!quest) return { captured: false, reason: 'quest_not_found' };
+
+  const paymentIntentId = (quest as any).paymentIntentId as string | null;
+  const paymentStatus = (quest as any).paymentStatus as string | undefined;
+
+  if (!paymentIntentId) {
+    return { captured: false, reason: 'no_payment_intent' };
+  }
+  if (paymentStatus === 'CAPTURED') {
+    return { captured: false, reason: 'already_captured', paymentIntentId };
+  }
+  if (paymentStatus === 'CANCELED') {
+    return { captured: false, reason: 'authorization_canceled', paymentIntentId };
+  }
+
+  // Confirm the live state with Stripe before acting.
+  const pi = await stripeService.getPaymentIntent(paymentIntentId);
+
+  if (pi.status === 'succeeded') {
+    // Already captured upstream (e.g. a webhook beat us here). Reconcile only.
+    await prisma.quest.update({
+      where: { id: questId },
+      data: { paymentStatus: 'CAPTURED', paymentCapturedAt: new Date() } as any,
+    });
+    return { captured: false, reason: 'already_captured_upstream', paymentIntentId };
+  }
+
+  if (pi.status !== 'requires_capture') {
+    return { captured: false, reason: `not_capturable_status_${pi.status}`, paymentIntentId };
+  }
+
+  try {
+    await stripeService.capturePayment(paymentIntentId);
+    await prisma.quest.update({
+      where: { id: questId },
+      data: { paymentStatus: 'CAPTURED', paymentCapturedAt: new Date() } as any,
+    });
+    return { captured: true, paymentIntentId };
+  } catch (error: any) {
+    await prisma.quest.update({
+      where: { id: questId },
+      data: { paymentStatus: 'CAPTURE_FAILED' } as any,
+    });
+    throw error;
+  }
+}
+
+/**
+ * POST /api/payments/quest/:questId/capture
+ * Capture the authorized marketplace payment for a completed task.
+ *
+ * Narrow endpoint guarded to the quest giver (or admin): only valid once the
+ * task is completed/in review. The primary capture trigger is the completion
+ * confirmation handshake (confirmCompletion); this route exists as an explicit,
+ * authorized fallback for the quest giver/admin.
+ */
+export const captureQuestPayment = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { questId } = req.params;
+    const userId = req.user!.id;
+
+    const quest = await prisma.quest.findUniqueOrThrow({ where: { id: questId } });
+    const isGiver = (quest as any).questGiverId === userId;
+    const isAdmin = req.user!.role === 'ADMIN';
+    if (!isGiver && !isAdmin) {
+      res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the quest giver or an admin can capture payment',
+      });
+      return;
+    }
+
+    // Capture is only appropriate once the work is done (completed/in review).
+    const status = (quest as any).status;
+    if (status !== 'COMPLETED' && status !== 'IN_REVIEW') {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Payment can only be captured for a completed task',
+      });
+      return;
+    }
+
+    const result = await captureAuthorizedPayment(questId);
+    res.json({
+      captured: result.captured,
+      reason: result.reason,
+      paymentIntentId: result.paymentIntentId,
+      message: result.captured
+        ? 'Charge captured on completion'
+        : `No capture performed (${result.reason})`,
+    });
+  } catch (error: any) {
+    console.error('Error capturing quest payment:', error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Not Found', message: 'Quest not found' });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to capture payment', message: error.message });
+  }
+};
+
+/**
+ * POST /api/payments/quest/:questId/cancel-authorization
+ * Void the authorized-but-uncaptured marketplace authorization for a canceled
+ * or uncompleted job (quest giver or admin).
+ *
+ * Non-escrow flow: nothing is "released" because nothing was held. We simply
+ * cancel the pending card authorization so the customer is never charged. Safe
+ * and idempotent: if the charge was already captured we refuse (a refund, not a
+ * void, would be required); if already canceled or never authorized we no-op.
+ */
+export const cancelQuestAuthorization = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { questId } = req.params;
+    const userId = req.user!.id;
+
+    const quest = await prisma.quest.findUniqueOrThrow({ where: { id: questId } });
+    const isGiver = (quest as any).questGiverId === userId;
+    const isAdmin = req.user!.role === 'ADMIN';
+    if (!isGiver && !isAdmin) {
+      res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the quest giver or an admin can cancel the authorization',
+      });
+      return;
+    }
+
+    const paymentIntentId = (quest as any).paymentIntentId as string | null;
+    const paymentStatus = (quest as any).paymentStatus as string | undefined;
+
+    if (paymentStatus === 'CAPTURED') {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Payment was already captured; a void is no longer possible',
+      });
+      return;
+    }
+    if (!paymentIntentId || paymentStatus === 'CANCELED' || paymentStatus === 'NONE') {
+      res.json({ canceled: false, message: 'No active authorization to cancel' });
+      return;
+    }
+
+    await stripeService.cancelPaymentIntent(paymentIntentId);
+    await prisma.quest.update({
+      where: { id: questId },
+      data: { paymentStatus: 'CANCELED', paymentCanceledAt: new Date() } as any,
+    });
+
+    res.json({ canceled: true, message: 'Authorization canceled; the customer was not charged' });
+  } catch (error: any) {
+    console.error('Error canceling authorization:', error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Not Found', message: 'Quest not found' });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to cancel authorization', message: error.message });
   }
 };
 
@@ -450,13 +659,16 @@ export const handleWebhook = async (
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        // Marketplace destination-charge flow: the client completed payment,
-        // the 12% platform fee was taken, and the net is routed to the worker's
-        // connected account. We persist the Stripe IDs only — this path does not
-        // touch escrowStatus (a legacy field that gates the separate
-        // charges-and-transfers milestone flow); coupling the destination-charge
-        // path to it would both add an unwanted escrow-status dependency and risk
-        // enabling legacy milestone releases against a destination charge.
+        // Non-escrow marketplace flow: completing Checkout AUTHORIZES the
+        // customer's card (manual capture) — it is NOT a final charge yet, and
+        // TryHardly holds no funds. We persist the Stripe IDs and mark the
+        // payment AUTHORIZED. The charge is captured later, when the task is
+        // confirmed complete (see confirmCompletion / captureQuestPayment).
+        //
+        // This path deliberately does NOT touch the legacy `escrowStatus` field
+        // (it gates the old separate-charges-and-transfers milestone flow).
+        // Coupling the two would risk enabling legacy releases against a
+        // destination charge.
         const session = event.data.object as any;
         const questId = session.metadata?.tryhardly_quest_id;
 
@@ -471,18 +683,59 @@ export const handleWebhook = async (
             data: {
               checkoutSessionId: session.id,
               paymentIntentId,
+              // Authorization secured — not captured/charged. Only advance to
+              // AUTHORIZED from a pre-capture state so a later out-of-order event
+              // can't downgrade a CAPTURED quest.
+              ...(await authorizedPatch(questId)),
             } as any,
           });
-          console.log(`✅ Checkout completed for quest ${questId} (session ${session.id})`);
+          console.log(
+            `✅ Checkout completed for quest ${questId} — payment authorized (session ${session.id}), not charged`
+          );
+        }
+        break;
+      }
+
+      case 'payment_intent.amount_capturable_updated': {
+        // Manual-capture authorization is now in place (funds capturable). Mark
+        // the quest AUTHORIZED if it isn't already past that state. This is the
+        // most reliable signal that the card authorization succeeded.
+        const paymentIntent = event.data.object as any;
+        const questId = paymentIntent.metadata?.tryhardly_quest_id;
+        if (questId) {
+          await prisma.quest.update({
+            where: { id: questId },
+            data: { ...(await authorizedPatch(questId)) } as any,
+          });
+          console.log(
+            `💰 Payment authorized for quest ${questId}: ${paymentIntent.amount_capturable} capturable (not charged)`
+          );
         }
         break;
       }
 
       case 'payment_intent.succeeded': {
+        // For the non-escrow destination charge, `succeeded` means the
+        // authorized amount was CAPTURED (the charge is now final and Stripe
+        // Connect routes the worker share + 12% fee). Distinguish the new flow
+        // from the legacy escrow PaymentIntent by its metadata: the destination
+        // charge carries `tryhardly_worker_account`, the legacy escrow charge
+        // carries `tryhardly_adventurer_account`.
         const paymentIntent = event.data.object as any;
         const questId = paymentIntent.metadata?.tryhardly_quest_id;
+        const isDestinationCharge = !!paymentIntent.metadata?.tryhardly_worker_account;
 
-        if (questId) {
+        if (questId && isDestinationCharge) {
+          await prisma.quest.update({
+            where: { id: questId },
+            data: {
+              paymentStatus: 'CAPTURED',
+              paymentCapturedAt: new Date(),
+            } as any,
+          });
+          console.log(`✅ Charge captured for quest ${questId} (non-escrow marketplace flow)`);
+        } else if (questId) {
+          // Legacy escrow path (separate charges & transfers) — unchanged.
           await prisma.quest.update({
             where: { id: questId },
             data: { escrowStatus: 'FUNDED' } as any,
@@ -495,10 +748,21 @@ export const handleWebhook = async (
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as any;
         const questId = paymentIntent.metadata?.tryhardly_quest_id;
+        const isDestinationCharge = !!paymentIntent.metadata?.tryhardly_worker_account;
 
-        if (questId) {
+        if (questId && isDestinationCharge) {
+          console.error(
+            `❌ Authorization failed for quest ${questId}: ${paymentIntent.last_payment_error?.message}`
+          );
+          // No authorization was secured; clear the payment intent so the client
+          // can retry Checkout. Don't write escrowStatus on the new path.
+          await prisma.quest.update({
+            where: { id: questId },
+            data: { paymentStatus: 'NONE', paymentIntentId: null } as any,
+          });
+        } else if (questId) {
           console.error(`❌ Payment failed for quest ${questId}: ${paymentIntent.last_payment_error?.message}`);
-          // Revert to NONE so the quest giver can retry
+          // Legacy escrow path: revert to NONE so the quest giver can retry.
           await prisma.quest.update({
             where: { id: questId },
             data: { escrowStatus: 'NONE', paymentIntentId: null } as any,
@@ -507,11 +771,21 @@ export const handleWebhook = async (
         break;
       }
 
-      case 'payment_intent.amount_capturable_updated': {
+      case 'payment_intent.canceled': {
+        // The authorization was voided before capture (e.g. job canceled or the
+        // authorization expired). Mark CANCELED unless already captured.
         const paymentIntent = event.data.object as any;
         const questId = paymentIntent.metadata?.tryhardly_quest_id;
-        if (questId) {
-          console.log(`💰 Payment authorized for quest ${questId}: ${paymentIntent.amount_capturable} capturable`);
+        const isDestinationCharge = !!paymentIntent.metadata?.tryhardly_worker_account;
+        if (questId && isDestinationCharge) {
+          const current = await prisma.quest.findUnique({ where: { id: questId } });
+          if ((current as any)?.paymentStatus !== 'CAPTURED') {
+            await prisma.quest.update({
+              where: { id: questId },
+              data: { paymentStatus: 'CANCELED', paymentCanceledAt: new Date() } as any,
+            });
+            console.log(`🚫 Authorization canceled for quest ${questId} (not charged)`);
+          }
         }
         break;
       }

@@ -56,6 +56,39 @@ The only public Terms/Refunds occurrences of the word "escrow" are in the explic
 disclaimer "TryHardly is not a bank, escrow agent, or money transmitter," which
 reinforces non-custody.
 
+## Non-escrow authorization model (authorize → complete → capture → payout)
+
+The marketplace Checkout flow is now an explicit **authorize → capture** model, not
+a fund-holding one. This is the model represented to Stripe:
+
+1. The customer books/hires and adds a card at Checkout.
+2. TryHardly creates a Checkout Session with `payment_intent_data.capture_method='manual'`
+   (destination charge). The card is **authorized, not charged**.
+3. UI/policy copy says **"payment method authorized" / "authorization only — not a
+   final charge"** — never "funds held".
+4. The worker completes the task; the customer confirms completion.
+5. On confirmation, the authorized PaymentIntent is **captured** within Stripe's
+   capture window (~5–7 days for card authorizations). Stripe Connect routes the
+   worker's share and TryHardly's 12% fee via `application_fee_amount` +
+   `transfer_data.destination`.
+6. If the job is canceled before capture, the authorization is **voided/canceled**
+   (`paymentIntents.cancel`) — never "refunded from held funds".
+
+Because authorizations expire, only **near-term** tasks are eligible to be booked as
+payment-authorized; long/open-ended projects are not.
+
+New non-escrow payment state lives on `Quest`: `paymentStatus`
+(`NONE/AUTHORIZED/CAPTURED/CANCELED/CAPTURE_FAILED`), `paymentAuthorizedAt`,
+`paymentCapturedAt`, `paymentCanceledAt`. The new path never writes the legacy
+`escrowStatus` field. Webhooks: `checkout.session.completed` and
+`payment_intent.amount_capturable_updated` mark **AUTHORIZED** (not paid);
+`payment_intent.succeeded` (destination charge) marks **CAPTURED**;
+`payment_intent.canceled` marks **CANCELED**.
+
+The destination-charge PaymentIntent carries `tryhardly_worker_account` in its
+metadata so the webhook can distinguish it from the legacy escrow PaymentIntent
+(`tryhardly_adventurer_account`) and avoid touching `escrowStatus`.
+
 ## Recommended post-deploy smoke / grep checks
 
 After deploying, verify on the live site:

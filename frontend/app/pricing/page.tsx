@@ -114,12 +114,16 @@ export default function PricingPage() {
             take custody of your money. Payments are processed by{' '}
             <span className="font-semibold text-white">Stripe</span>, and worker payouts are handled through{' '}
             <span className="font-semibold text-white">Stripe Connect</span> after a task is verified as complete.
+            At booking, your payment method is authorized for the quoted amount — an authorization is
+            not a final charge and may appear as a temporary pending transaction. The charge is captured
+            when the task is completed; if a booking is canceled, the authorization is voided and you are
+            not charged.
           </p>
           <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Job posting is <span className="font-semibold text-white">free</span> for customers</span></li>
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>TryHardly takes a flat <span className="font-semibold text-white">12% platform service fee</span> from worker payouts on completed paid jobs</span></li>
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payments are processed by <span className="font-semibold text-white">Stripe</span>; payouts use <span className="font-semibold text-white">Stripe Connect</span></span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payouts are released <span className="font-semibold text-white">after verified task completion</span></span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payouts are initiated <span className="font-semibold text-white">after confirmed task completion</span></span></li>
           </ul>
           <p className="text-gray-400 text-sm mt-4">
             See our{' '}

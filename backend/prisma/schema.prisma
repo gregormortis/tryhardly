@@ -120,6 +120,19 @@ model Quest {
   // the legacy payment path are unaffected.
   checkoutSessionId String?
 
+  // ─── Non-escrow payment state (authorize → complete → capture → payout) ──────
+  // Tracks the manual-capture destination-charge lifecycle for the marketplace
+  // Checkout flow. This is intentionally SEPARATE from the legacy `escrowStatus`
+  // enum above: the new flow never holds funds, so it has no FUNDED/RELEASED
+  // states. At Checkout completion the card is AUTHORIZED (not charged); the
+  // charge is CAPTURED when the task is confirmed complete; the authorization is
+  // CANCELED if the job is canceled before capture. All fields default/null so
+  // existing rows and the legacy escrow path are unaffected.
+  paymentStatus       PaymentStatus @default(NONE)
+  paymentAuthorizedAt DateTime?
+  paymentCapturedAt   DateTime?
+  paymentCanceledAt   DateTime?
+
   // XP Reward
   xpReward        Int
 
@@ -248,6 +261,20 @@ enum EscrowStatus {
   PARTIALLY_RELEASED
   RELEASED
   REFUNDED
+}
+
+// Non-escrow marketplace payment lifecycle (authorize → complete → capture →
+// payout). Distinct from EscrowStatus: there is no fund-holding state. The card
+// is AUTHORIZED at Checkout, CAPTURED when the task is confirmed complete, or
+// CANCELED if the booking is canceled before capture. CAPTURE_FAILED records a
+// capture attempt that errored (e.g. an expired authorization) so it can be
+// surfaced/retried without losing the prior state.
+enum PaymentStatus {
+  NONE
+  AUTHORIZED
+  CAPTURED
+  CANCELED
+  CAPTURE_FAILED
 }
 
 // ─── Application ─────────────────────────────────────────────────────────────

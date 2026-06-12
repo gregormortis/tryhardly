@@ -134,16 +134,17 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
         {clientSecret ? (
           <div className="space-y-3">
             <p className="text-sm text-zinc-400">
-              Confirm your payment details to authorize the charge. Your card is charged when
-              you complete the quest, and the worker is paid out on task completion.
+              Authorization only — this is not a final charge. Your bank may show a temporary
+              pending authorization. The final charge is captured when the task is completed.
             </p>
             <EscrowPaymentForm clientSecret={clientSecret} onConfirmed={handleConfirmed} />
           </div>
         ) : isQuestGiver ? (
           <div>
             <p className="text-sm text-zinc-400 mb-3">
-              Set up payment before work begins. Marketplace payments are processed by Stripe,
-              with payout to the worker on task completion.
+              Set up payment before work begins. Your payment method is authorized through Stripe
+              and the charge is captured on completion, with payout initiated to the worker after
+              confirmed completion via Stripe Connect.
             </p>
             {error && <p className="text-xs text-rose-400 mb-2">{error}</p>}
             <button
@@ -156,7 +157,9 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
           </div>
         ) : (
           <p className="text-sm text-zinc-400">
-            Waiting for the quest giver to set up marketplace payment.
+            Waiting for the quest giver to authorize a payment method. Jobs marked payment
+            verified have a valid payment method on file. You are paid for completed approved
+            work; canceled or uncompleted jobs are not charged.
           </p>
         )}
       </div>
@@ -194,7 +197,7 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
           <p className="text-zinc-100 font-semibold">{dollars(escrow.platformFee)}</p>
         </div>
         <div className="bg-zinc-800 rounded p-2">
-          <p className="text-zinc-500 text-xs">Released</p>
+          <p className="text-zinc-500 text-xs">Paid Out</p>
           <p className="text-zinc-100 font-semibold">{dollars(escrow.totalReleased)}</p>
         </div>
         <div className="bg-zinc-800 rounded p-2">
@@ -244,7 +247,7 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
               disabled={actionLoading === 'complete'}
               className="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-3 py-2 text-xs font-bold text-white transition-colors"
             >
-              {actionLoading === 'complete' ? 'Releasing…' : 'Complete & Release'}
+              {actionLoading === 'complete' ? 'Capturing…' : 'Complete & Capture'}
             </button>
           )}
           {canCancel && (
@@ -253,7 +256,7 @@ export default function EscrowPanel({ questId, isQuestGiver, questStatus }: Escr
               disabled={actionLoading === 'cancel'}
               className="flex-1 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 px-3 py-2 text-xs font-bold text-white transition-colors"
             >
-              {actionLoading === 'cancel' ? 'Cancelling…' : 'Cancel & Refund'}
+              {actionLoading === 'cancel' ? 'Canceling…' : 'Cancel Authorization'}
             </button>
           )}
         </div>

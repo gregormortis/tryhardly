@@ -67,6 +67,15 @@ export default function TermsPage() {
               custody of your funds. TryHardly is not a bank or money transmitter and does not
               provide regulated financial services.
             </p>
+            <p className="mb-2">
+              At booking, TryHardly may obtain a payment authorization for the quoted amount. A
+              payment authorization is not a completed charge and may appear as a temporary
+              pending transaction on your statement. TryHardly captures payment when a task is
+              completed or deemed completed under the platform&rsquo;s confirmation rules. If a
+              booking is canceled or does not proceed, TryHardly may void or cancel the
+              authorization, and you are not charged. Worker payouts are initiated after
+              confirmed completion through Stripe Connect.
+            </p>
             <p>
               Posting a job is free for clients. TryHardly charges workers a flat 12% platform
               service fee on completed paid jobs. The fee does not change with rank, and
