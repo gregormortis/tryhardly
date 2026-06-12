@@ -74,7 +74,7 @@ const trust = [
   {
     icon: ShieldCheck,
     title: 'Marketplace payout flow',
-    desc: 'Built so marketplace payouts are initiated after confirmed task completion. You can post and hire for free today.',
+    desc: 'Built so marketplace payouts are initiated after payment capture for completed tasks. You can post and hire for free today.',
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'Do I have to pay through the site?',
-    a: 'Not required today. TryHardly uses a marketplace payout flow so payout is initiated after confirmed completion. For now you can post, get applications, and arrange the job for free.',
+    a: 'Not required today. TryHardly uses a marketplace payout flow so payout is initiated after payment capture for completed tasks. For now you can post, get applications, and arrange the job for free.',
   },
   {
     q: 'What kind of jobs work here?',

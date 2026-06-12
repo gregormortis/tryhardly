@@ -113,7 +113,7 @@ export default function PricingPage() {
             it. <span className="font-semibold text-white">We are not the service provider</span>, and we are not a
             bank or money transmitter. All payments are processed directly by{' '}
             <span className="font-semibold text-white">Stripe</span>, and worker payouts are handled through{' '}
-            <span className="font-semibold text-white">Stripe Connect</span> after a task is verified as complete.
+            <span className="font-semibold text-white">Stripe Connect</span> after completed-task payment capture.
             At booking, your payment method is authorized for the quoted amount — an authorization is
             not a final charge and may appear as a temporary pending transaction. The charge is captured
             when the task is completed; if a booking is canceled, the authorization is voided and you are
@@ -123,7 +123,7 @@ export default function PricingPage() {
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Job posting is <span className="font-semibold text-white">free</span> for customers</span></li>
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>TryHardly takes a flat <span className="font-semibold text-white">12% platform service fee</span> from worker payouts on completed paid jobs</span></li>
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payments are processed by <span className="font-semibold text-white">Stripe</span>; payouts use <span className="font-semibold text-white">Stripe Connect</span></span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payouts are initiated <span className="font-semibold text-white">after confirmed task completion</span></span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Payouts are initiated <span className="font-semibold text-white">after payment capture for completed tasks</span></span></li>
           </ul>
           <p className="text-gray-400 text-sm mt-4">
             See our{' '}
@@ -150,7 +150,7 @@ export default function PricingPage() {
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">How and when do I get paid?</h3>
-              <p className="text-gray-300">Worker payouts are handled through Stripe Connect after a task is verified as complete. TryHardly is a marketplace facilitator — we connect customers and workers, we are not the service provider, and we are not a bank or money transmitter. All payments are processed directly by Stripe.</p>
+              <p className="text-gray-300">Worker payouts are processed through Stripe Connect after completed-task payment capture. TryHardly is a marketplace facilitator — we connect customers and workers, we are not the service provider, and we are not a bank or money transmitter. All payments are processed directly by Stripe.</p>
             </div>
           </div>
         </div>

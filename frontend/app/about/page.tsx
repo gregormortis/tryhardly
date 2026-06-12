@@ -50,7 +50,7 @@ export default function AboutPage() {
               <div className="text-4xl mb-4">💎</div>
               <h3 className="text-xl font-bold mb-3 text-amber-400">Quest Rewards</h3>
               <p className="text-gray-300">
-                Fair marketplace payouts on quest completion. Earn gold, gain experience, and build your legendary portfolio.
+                Fair marketplace payouts — eligible earnings are paid out after charge capture. Earn gold, gain experience, and build your legendary portfolio.
               </p>
             </div>
           </div>

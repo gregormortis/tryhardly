@@ -38,8 +38,8 @@ export default function RefundsPage() {
               <span className="text-white font-semibold">we are not the service provider</span>, and we are not a
               bank or money transmitter. All payments are processed directly by{' '}
               <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
-              <span className="text-white font-semibold">Stripe Connect</span> after a task is verified as
-              complete. Posting a job is free; TryHardly charges workers a flat 12% platform
+              <span className="text-white font-semibold">Stripe Connect</span> after completed-task payment
+              capture. Posting a job is free; TryHardly charges workers a flat 12% platform
               service fee on completed paid jobs. TryHardly does not provide regulated financial
               services.
             </p>

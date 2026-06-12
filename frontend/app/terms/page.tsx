@@ -61,7 +61,7 @@ export default function TermsPage() {
             <p className="mb-2">
               Payments on TryHardly are processed by{' '}
               <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
-              <span className="text-white font-semibold">Stripe Connect</span> after a task is verified as complete.
+              <span className="text-white font-semibold">Stripe Connect</span> after completed-task payment capture.
               TryHardly is a marketplace facilitator: we facilitate payments between clients
               and adventurers but we are not the service provider. TryHardly is not a bank or
               money transmitter and does not provide regulated financial services. All payments
@@ -74,7 +74,7 @@ export default function TermsPage() {
               completed or deemed completed under the platform&rsquo;s confirmation rules. If a
               booking is canceled or does not proceed, TryHardly may void or cancel the
               authorization, and you are not charged. Worker payouts are initiated after
-              confirmed completion through Stripe Connect.
+              payment capture for completed tasks through Stripe Connect.
             </p>
             <p>
               Posting a job is free for clients. TryHardly charges workers a flat 12% platform

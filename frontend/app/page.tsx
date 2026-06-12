@@ -22,11 +22,11 @@ const categories = [
 const howItWorks = [
   { title: 'Post a quest', desc: 'Describe the job, set your budget, and post it live in minutes.' },
   { title: 'Get matched', desc: 'Local workers apply. Review profiles, ratings, and past work.' },
-  { title: 'Pay securely', desc: 'Marketplace payments are handled by Stripe, with payouts on task completion.' },
+  { title: 'Pay securely', desc: 'Marketplace payments are handled by Stripe; eligible earnings are paid out after charge capture.' },
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments run on Stripe; worker payouts use Stripe Connect, initiated after confirmed task completion.' },
+  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments run on Stripe; worker payouts use Stripe Connect, initiated after payment capture for completed tasks.' },
   { icon: Star, title: 'Structured Reviews', desc: 'Reviews and work history are part of the marketplace flow.' },
   { icon: Users, title: 'Profile Verification', desc: 'Profiles and reviews designed for trust from day one.' },
   { icon: Banknote, title: 'Clear Rewards', desc: 'Every quest shows the reward before anyone applies.' },
@@ -56,7 +56,7 @@ export default function HomePage() {
           The gig marketplace<br />AI can&apos;t replace
         </h1>
         <p className="mx-auto max-w-2xl text-base sm:text-lg text-zinc-300 mb-3">
-          Hire verified local workers for real paid jobs — paid securely through Stripe after the work is done.
+          Hire verified local workers for real paid jobs — payment methods are authorized at booking and charges are captured for completed tasks under platform rules.
         </p>
         <p className="mx-auto max-w-xl text-sm text-zinc-500 mb-8">
           Post a job in minutes, or browse starter quests as new local listings come online.
@@ -160,7 +160,7 @@ export default function HomePage() {
             TryHardly is a marketplace that connects people who need local help with workers who can do it. We are an
             intermediary — we are not the service provider. Payments are processed by{' '}
             <span className="font-semibold text-zinc-100">Stripe</span>, and worker payouts are handled through{' '}
-            <span className="font-semibold text-zinc-100">Stripe Connect</span> after a task is verified complete.
+            <span className="font-semibold text-zinc-100">Stripe Connect</span> after completed-task payment capture.
           </p>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
@@ -173,7 +173,7 @@ export default function HomePage() {
             </div>
             <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
               <p className="text-sm font-semibold text-zinc-100 mb-1">Paid after completion</p>
-              <p className="text-xs text-zinc-400">Payouts are initiated through Stripe Connect once the task is verified as complete.</p>
+              <p className="text-xs text-zinc-400">Payouts are initiated through Stripe Connect after payment capture for completed tasks.</p>
             </div>
           </div>
           <Link
