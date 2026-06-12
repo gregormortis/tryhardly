@@ -30,8 +30,8 @@ export default function PricingPage() {
           </p>
           <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Free to post</span> — describe the job and your budget</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Your payment method is authorized at booking</span> — the agreed reward is charged only for completed tasks under platform rules</span></li>
-            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Marketplace payouts</span> — paid after charge capture for completed tasks</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Your payment method is authorized at booking, and the agreed charge is captured for completed work under platform rules.</span></li>
+            <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>Marketplace payouts are initiated after payment capture for completed tasks.</span></li>
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>The 12% marketplace fee applies to <span className="font-semibold text-white">workers</span>, not posters</span></li>
           </ul>
           <div className="mt-5 flex flex-wrap gap-3">
