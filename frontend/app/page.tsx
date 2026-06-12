@@ -165,7 +165,7 @@ export default function HomePage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
               <p className="text-sm font-semibold text-zinc-100 mb-1">Posting is free</p>
-              <p className="text-xs text-zinc-400">Customers never pay to post a job. You only pay the reward you agreed with the worker.</p>
+              <p className="text-xs text-zinc-400">Customers never pay to post a job. Your payment method is authorized at booking, and the agreed charge is captured for completed work under platform rules.</p>
             </div>
             <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
               <p className="text-sm font-semibold text-zinc-100 mb-1">12% worker fee</p>

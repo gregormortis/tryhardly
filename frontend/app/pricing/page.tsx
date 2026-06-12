@@ -26,7 +26,7 @@ export default function PricingPage() {
             <h2 className="text-2xl font-bold text-amber-400">For job posters</h2>
           </div>
           <p className="text-gray-200 mb-4">
-            Posting a job on TryHardly is <span className="font-semibold text-white">free</span>. You only pay the reward you agreed with the worker — nothing more, no hidden fees.
+            Posting a job on TryHardly is <span className="font-semibold text-white">free</span>. Your payment method is authorized at booking, and the agreed charge is captured for completed work under platform rules — nothing more, no hidden fees.
           </p>
           <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span><span className="font-semibold text-white">Free to post</span> — describe the job and your budget</span></li>
@@ -146,7 +146,7 @@ export default function PricingPage() {
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">Are there any hidden fees?</h3>
-              <p className="text-gray-300">Nope! The flat 12% platform service fee is the only fee TryHardly charges. Payments are processed securely by Stripe, and you get paid when quests are completed.</p>
+              <p className="text-gray-300">Nope! The flat 12% platform service fee is the only fee TryHardly charges. Payments are processed securely by Stripe, and worker payouts are processed after completed-task payment capture through Stripe Connect.</p>
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">How and when do I get paid?</h3>
