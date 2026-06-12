@@ -62,10 +62,10 @@ export default function TermsPage() {
               Payments on TryHardly are processed by{' '}
               <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
               <span className="text-white font-semibold">Stripe Connect</span> after a task is verified as complete.
-              TryHardly is a marketplace intermediary: we facilitate payments between clients
-              and adventurers but we are not the service provider, and we do not hold or take
-              custody of your funds. TryHardly is not a bank or money transmitter and does not
-              provide regulated financial services.
+              TryHardly is a marketplace facilitator: we facilitate payments between clients
+              and adventurers but we are not the service provider. TryHardly is not a bank or
+              money transmitter and does not provide regulated financial services. All payments
+              are processed directly by Stripe.
             </p>
             <p className="mb-2">
               At booking, TryHardly may obtain a payment authorization for the quoted amount. A
