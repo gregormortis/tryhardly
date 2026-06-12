@@ -109,9 +109,9 @@ export default function PricingPage() {
             <h2 className="text-2xl font-bold text-amber-400">How payments work</h2>
           </div>
           <p className="text-gray-300 mb-4">
-            TryHardly is a marketplace and intermediary that connects people who need local help with workers who can do
-            it. <span className="font-semibold text-white">We are not the service provider</span>, and we do not hold or
-            take custody of your money. Payments are processed by{' '}
+            TryHardly is a marketplace facilitator that connects people who need local help with workers who can do
+            it. <span className="font-semibold text-white">We are not the service provider</span>, and we are not a
+            bank or money transmitter. All payments are processed directly by{' '}
             <span className="font-semibold text-white">Stripe</span>, and worker payouts are handled through{' '}
             <span className="font-semibold text-white">Stripe Connect</span> after a task is verified as complete.
             At booking, your payment method is authorized for the quoted amount — an authorization is
@@ -138,7 +138,7 @@ export default function PricingPage() {
           <div className="space-y-6">
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">How does the marketplace fee work?</h3>
-              <p className="text-gray-300">We take a flat 12% only when you complete a paid job. No upfront fees, no monthly subscriptions. You only pay when you earn.</p>
+              <p className="text-gray-300">We take a flat 12% only when you complete a paid job. No advance fees, no monthly subscriptions. You only pay when you earn.</p>
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">Do higher ranks pay a lower fee?</h3>
@@ -150,7 +150,7 @@ export default function PricingPage() {
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">How and when do I get paid?</h3>
-              <p className="text-gray-300">Worker payouts are handled through Stripe Connect after a task is verified as complete. TryHardly is a marketplace intermediary — we connect customers and workers and are not the service provider, and we do not hold or take custody of your funds.</p>
+              <p className="text-gray-300">Worker payouts are handled through Stripe Connect after a task is verified as complete. TryHardly is a marketplace facilitator — we connect customers and workers, we are not the service provider, and we are not a bank or money transmitter. All payments are processed directly by Stripe.</p>
             </div>
           </div>
         </div>

@@ -34,14 +34,14 @@ export default function RefundsPage() {
             <h2 className="text-2xl font-bold text-amber-400 mb-4">1. How payments work</h2>
             <p>
               TryHardly is a marketplace that connects people who need local help (clients)
-              with people who can do the work (adventurers). We are an intermediary —{' '}
-              <span className="text-white font-semibold">we are not the service provider</span>, and we do not
-              hold or take custody of your money. Payments are processed by{' '}
+              with people who can do the work (adventurers). We are a marketplace facilitator —{' '}
+              <span className="text-white font-semibold">we are not the service provider</span>, and we are not a
+              bank or money transmitter. All payments are processed directly by{' '}
               <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
               <span className="text-white font-semibold">Stripe Connect</span> after a task is verified as
               complete. Posting a job is free; TryHardly charges workers a flat 12% platform
-              service fee on completed paid jobs. TryHardly is not a bank or money transmitter
-              and does not provide regulated financial services.
+              service fee on completed paid jobs. TryHardly does not provide regulated financial
+              services.
             </p>
             <p className="mt-2">
               At booking, TryHardly may obtain a payment authorization for the quoted amount. A
