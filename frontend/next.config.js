@@ -37,6 +37,26 @@ const nextConfig = {
         destination: '/find-work-fast',
         permanent: false,
       },
+      {
+        source: '/find-work',
+        destination: '/find-work-fast',
+        permanent: false,
+      },
+      {
+        source: '/post-job',
+        destination: '/post-quest',
+        permanent: false,
+      },
+      {
+        source: '/checkout/success',
+        destination: '/payments/checkout/success',
+        permanent: false,
+      },
+      {
+        source: '/checkout/cancel',
+        destination: '/payments/checkout/cancel',
+        permanent: false,
+      },
     ];
   },
 };

@@ -57,26 +57,29 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Where we are Section */}
       <section className="py-16 px-4 bg-gray-900/50">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center text-amber-400">🎮 By The Numbers</h2>
+          <h2 className="text-3xl font-bold mb-4 text-center text-amber-400">🎮 Where we are today</h2>
+          <p className="text-center text-gray-400 max-w-2xl mx-auto mb-12">
+            We&apos;re in early access. No inflated numbers — here&apos;s the honest picture as we build.
+          </p>
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-amber-400 mb-2">2,400+</div>
-              <div className="text-gray-400">Active Quests</div>
+              <div className="text-2xl font-bold text-amber-400 mb-2">Redding-first</div>
+              <div className="text-gray-400">Early access</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-purple-400 mb-2">18,000+</div>
-              <div className="text-gray-400">Adventurers</div>
+              <div className="text-2xl font-bold text-purple-400 mb-2">Real local requests</div>
+              <div className="text-gray-400">From your neighborhood</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-blue-400 mb-2">340+</div>
-              <div className="text-gray-400">Guilds</div>
+              <div className="text-2xl font-bold text-blue-400 mb-2">Human-reviewed</div>
+              <div className="text-gray-400">Accounts &amp; quests moderated</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-green-400 mb-2">$1.2M+</div>
-              <div className="text-gray-400">Gold Paid Out</div>
+              <div className="text-2xl font-bold text-green-400 mb-2">Stripe Connect</div>
+              <div className="text-gray-400">Payouts after completed-task capture</div>
             </div>
           </div>
         </div>
@@ -87,7 +90,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6 text-amber-400">Ready to Start Your Adventure?</h2>
           <p className="text-xl text-gray-300 mb-8">
-            Join thousands of adventurers turning their skills into legendary quests.
+            Join our early-access community in Redding and help shape a marketplace for real local work.
           </p>
           <div className="flex gap-4 justify-center">
             <a 
