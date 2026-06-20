@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import type { Application, User } from '@/lib/types';
 import CredentialsManager from '@/components/CredentialsManager';
 import ProfessionalismManager from '@/components/ProfessionalismManager';
+import StripeConnectButton from '@/components/StripeConnectButton';
 import { GUILD_PATHS, guildPathLabel } from '@/lib/guildPath';
 
 export default function ProfilePage() {
@@ -280,6 +281,15 @@ export default function ProfilePage() {
               </Link>
             </div>
           )}
+        </div>
+
+        {/* Payout account (Stripe Connect) */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="font-semibold text-gray-200 mb-1">Payout Account</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Set up Stripe Connect to receive payouts for completed quests.
+          </p>
+          <StripeConnectButton stripeAccountId={(displayProfile as any).stripeAccountId} />
         </div>
 
         {/* Professional credentials */}

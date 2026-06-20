@@ -8,6 +8,7 @@
 
 const mockPrisma = {
   quest: { findUnique: jest.fn(), findUniqueOrThrow: jest.fn(), update: jest.fn() },
+  user: { findUniqueOrThrow: jest.fn(), update: jest.fn() },
 };
 
 jest.mock('../../app', () => ({ prisma: mockPrisma }));
@@ -17,6 +18,9 @@ const mockStripe = {
   getPaymentIntent: jest.fn(),
   capturePayment: jest.fn(),
   cancelPaymentIntent: jest.fn(),
+  createConnectedAccount: jest.fn(),
+  createAccountLink: jest.fn(),
+  getAccount: jest.fn(),
   calculatePlatformFee: (cents: number) => Math.round(cents * 0.12),
 };
 jest.mock('../../services/stripeService', () => mockStripe);
@@ -28,6 +32,8 @@ import {
   handleWebhook,
   captureAuthorizedPayment,
   getPaymentStatus,
+  createConnectedAccount,
+  getOnboardingLink,
 } from '../paymentController';
 
 function mockRes() {
@@ -270,5 +276,101 @@ describe('getPaymentStatus — non-escrow status read', () => {
     const res = mockRes();
     await getPaymentStatus(statusReq('missing'), res);
     expect(res.status).toHaveBeenCalledWith(404);
+  });
+});
+
+describe('createConnectedAccount — Stripe Connect onboarding', () => {
+  function authReq(user: { id: string; role: string }) {
+    return { user, body: {} } as any;
+  }
+
+  it('creates a connected account and stores its id for any authenticated user (including ADMIN)', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      email: 'legendarygm@gmail.com',
+      role: 'ADMIN',
+      displayName: 'guildmaster',
+      stripeAccountId: null,
+    });
+    mockStripe.createConnectedAccount.mockResolvedValue({
+      id: 'acct_new',
+      charges_enabled: false,
+      payouts_enabled: false,
+      details_submitted: false,
+    });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await createConnectedAccount(authReq({ id: 'u1', role: 'ADMIN' }), res);
+
+    expect(mockStripe.createConnectedAccount).toHaveBeenCalledWith(
+      'u1',
+      'legendarygm@gmail.com',
+      { displayName: 'guildmaster' }
+    );
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { stripeAccountId: 'acct_new' },
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json.mock.calls[0][0].accountId).toBe('acct_new');
+  });
+
+  it('returns the existing account instead of creating a duplicate', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      email: 'legendarygm@gmail.com',
+      role: 'ADMIN',
+      stripeAccountId: 'acct_existing',
+    });
+    mockStripe.getAccount.mockResolvedValue({
+      id: 'acct_existing',
+      charges_enabled: true,
+      payouts_enabled: true,
+      details_submitted: true,
+    });
+
+    const res = mockRes();
+    await createConnectedAccount(authReq({ id: 'u1', role: 'ADMIN' }), res);
+
+    expect(mockStripe.createConnectedAccount).not.toHaveBeenCalled();
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    expect(res.json.mock.calls[0][0].accountId).toBe('acct_existing');
+  });
+});
+
+describe('getOnboardingLink — Stripe Connect onboarding', () => {
+  function authReq(user: { id: string; role: string }) {
+    return { user, body: {} } as any;
+  }
+
+  it('returns an account link url for a user with a connected account', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      stripeAccountId: 'acct_1',
+    });
+    mockStripe.createAccountLink.mockResolvedValue({
+      url: 'https://connect.stripe.com/setup/acct_1',
+      expires_at: 1700000000,
+    });
+
+    const res = mockRes();
+    await getOnboardingLink(authReq({ id: 'u1', role: 'ADMIN' }), res);
+
+    expect(mockStripe.createAccountLink).toHaveBeenCalledTimes(1);
+    expect(res.json.mock.calls[0][0].url).toBe('https://connect.stripe.com/setup/acct_1');
+  });
+
+  it('returns 400 when the user has no connected account yet', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      stripeAccountId: null,
+    });
+
+    const res = mockRes();
+    await getOnboardingLink(authReq({ id: 'u1', role: 'ADMIN' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockStripe.createAccountLink).not.toHaveBeenCalled();
   });
 });

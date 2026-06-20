@@ -40,7 +40,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         level: true, xp: true, adventurerClass: true, role: true, reputationScore: true,
         totalQuestsCompleted: true, verified: true, createdAt: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
-        codeOfCraftPledgedAt: true,
+        codeOfCraftPledgedAt: true, stripeAccountId: true,
         guild: { select: { id: true, name: true, tag: true } },
         achievements: { include: { achievement: true } },
       },
