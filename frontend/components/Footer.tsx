@@ -208,6 +208,14 @@ export default function Footer() {
                   Prohibited Services
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/account-deletion"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Delete Account &amp; Data
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

@@ -327,6 +327,20 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+
+        {/* Account & data */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="font-semibold text-gray-200 mb-1">Account &amp; Data</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Manage or delete your account and personal data.
+          </p>
+          <Link
+            href="/account-deletion"
+            className="inline-block text-sm text-gray-400 hover:text-red-400 transition-colors border border-gray-700 hover:border-red-700 px-4 py-2 rounded-lg"
+          >
+            Delete account &amp; data
+          </Link>
+        </div>
       </div>
     </div>
   );

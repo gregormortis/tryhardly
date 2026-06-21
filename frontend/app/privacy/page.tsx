@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const LAST_UPDATED = 'May 30, 2026';
+const LAST_UPDATED = 'June 21, 2026';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -80,7 +80,13 @@ export default function PrivacyPage() {
             <p className="mb-2">You have the right to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Access and update your personal information</li>
-              <li>Request deletion of your account</li>
+              <li>
+                Request deletion of your account and data — see our{' '}
+                <Link href="/account-deletion" className="text-amber-400 hover:text-amber-300">
+                  Account &amp; Data Deletion
+                </Link>{' '}
+                page
+              </li>
               <li>Opt out of marketing communications</li>
               <li>Export your data</li>
               <li>Object to certain processing of your information</li>
@@ -88,35 +94,62 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Cookies and Tracking</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Deleting Your Account &amp; Data</h2>
+            <p className="mb-2">
+              You can request deletion of your account and personal data at any time — from within
+              the app or on the web (sign in, then use the option in your profile settings), or by
+              emailing{' '}
+              <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
+                support@tryhardly.com
+              </a>{' '}
+              from your account email.
+            </p>
+            <p className="mb-2">
+              When processed, we remove or anonymize your profile, contact details, account
+              credentials, and the content you posted where removal doesn&apos;t break another
+              user&apos;s records. Some records — such as transaction and payout history — may be
+              retained where the law requires (for tax, accounting, fraud-prevention, and dispute
+              purposes). We aim to complete deletion requests within 30 days.
+            </p>
+            <p>
+              Full details and a request button are on the{' '}
+              <Link href="/account-deletion" className="text-amber-400 hover:text-amber-300">
+                Account &amp; Data Deletion
+              </Link>{' '}
+              page.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Cookies and Tracking</h2>
             <p>
               We use cookies and similar tracking technologies to track activity on our service and hold certain information. You can instruct your browser to refuse cookies or alert you when cookies are being sent.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Children&apos;s Privacy</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Children&apos;s Privacy</h2>
             <p>
               Our service is not intended for users under the age of 18. We do not knowingly collect information from children under 18. If you believe we have collected information from a child, please contact us.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. International Users &amp; Governing Law</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. International Users &amp; Governing Law</h2>
             <p>
               Your information may be transferred to and maintained on servers located outside of your country. By using Tryhardly, you consent to this transfer. This policy is governed by the laws of [STATE/COUNTRY OF INCORPORATION], and local privacy laws in your location may grant you additional rights.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. Changes to This Policy</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. Changes to This Policy</h2>
             <p>
               We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. Contact Us</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Contact Us</h2>
             <p>
               If you have questions about this Privacy Policy, please contact us at:
             </p>
