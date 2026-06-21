@@ -24,6 +24,9 @@ interface Quest {
   payType: PayType;
   posted: number; // minutes ago
   urgent: boolean;
+  // Quote-needed jobs carry a conservative placeholder reward; the card shows
+  // "Quote needed" instead of that number so it doesn't read as a fixed price.
+  quoteNeeded: boolean;
   tools: string[];
   postedBy: string;
   jobsPosted: number;
@@ -170,6 +173,7 @@ function mapBackendQuest(q: BackendQuest): Quest {
     payType,
     posted: minutesSince(q.createdAt),
     urgent: false,
+    quoteNeeded: !!q.tags?.includes('quote-needed'),
     tools: [],
     postedBy: q.questGiver?.username ?? 'Quest Giver',
     jobsPosted: 0,
@@ -304,12 +308,23 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
 
       <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 w-full sm:w-auto">
         <div className="text-left sm:text-right">
-          <div className="font-bold text-xl text-amber-400 leading-none">
-            {payDisplay(quest.pay, quest.payType)}
-          </div>
-          <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
-            {quest.payType === 'hourly' ? 'per hour' : 'flat rate'}
-          </div>
+          {quest.quoteNeeded ? (
+            <>
+              <div className="font-bold text-base text-amber-400 leading-none">Quote needed</div>
+              <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
+                apply with an estimate
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="font-bold text-xl text-amber-400 leading-none">
+                {payDisplay(quest.pay, quest.payType)}
+              </div>
+              <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
+                {quest.payType === 'hourly' ? 'per hour' : 'flat rate'}
+              </div>
+            </>
+          )}
         </div>
 
         <button

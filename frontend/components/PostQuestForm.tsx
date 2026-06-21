@@ -13,7 +13,16 @@ import ImageUploader from './ImageUploader';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PayType = 'flat' | 'hourly';
+// How the poster wants to price the job. `fixed` is the classic flow (poster
+// names a budget). `quote` lets qualified workers apply with their own estimate
+// through TryHardly — used for complex/contractor-type work where a poster
+// shouldn't anchor a single unrealistic number. Both are paid in-app via Stripe.
+type BudgetMode = 'fixed' | 'quote';
 type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
+
+// Tag that flags a quest as quote-needed without any backend schema change. The
+// detail/board UI and applications can key off this string.
+const QUOTE_TAG = 'quote-needed';
 
 interface FormData {
   title: string;
@@ -25,6 +34,8 @@ interface FormData {
   description: string;
   // `reward` is kept as the backend/API field name; it is the poster's budget.
   reward: string;
+  // Fixed budget vs. let workers quote. Drives validation and what we send.
+  budgetMode: BudgetMode;
   payType: PayType;
   deadline: string;
   // System-calculated from budget; never configured by the poster.
@@ -111,6 +122,23 @@ function calcXpReward(reward: number): number {
   return Math.max(10, Math.min(1500, Math.round(90 * Math.log2(reward + 1))));
 }
 
+// In quote mode the poster doesn't name a price, but the backend `reward` field
+// (and the per-job Stripe payment) still needs a non-zero number. We send a
+// conservative placeholder so the quest is valid and XP stays sane — never the
+// inflated materials+labor total. Workers refine the real number with an in-app
+// quote later. Kept small on purpose: quote jobs must not mint huge XP.
+const QUOTE_PLACEHOLDER_REWARD = 50;
+
+function quoteModeReward(rec: { measured?: { laborMin: number } | null }): number {
+  // Prefer the low end of any measured labor band (still conservative), else a
+  // flat small placeholder. We deliberately avoid laborSuggested/total here.
+  const fromMeasure = rec.measured?.laborMin;
+  if (Number.isFinite(fromMeasure) && (fromMeasure as number) >= 10) {
+    return Math.min(fromMeasure as number, 200);
+  }
+  return QUOTE_PLACEHOLDER_REWARD;
+}
+
 function formatDate(iso: string): string {
   if (!iso) return '—';
   return new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', {
@@ -128,8 +156,12 @@ function validate(step: number, data: FormData): string[] {
   }
   if (step === 2) {
     if (data.description.trim().length < 30) errs.push('Description must be at least 30 characters.');
-    const r = parseFloat(data.reward);
-    if (!data.reward || isNaN(r) || r < 10)  errs.push('Your budget must be at least $10.');
+    // A fixed budget must be a real number; in quote mode the poster doesn't
+    // name a price, so we skip that check (workers quote in-app instead).
+    if (data.budgetMode === 'fixed') {
+      const r = parseFloat(data.reward);
+      if (!data.reward || isNaN(r) || r < 10) errs.push('Your budget must be at least $10.');
+    }
     if (!data.deadline)                      errs.push('Deadline is required.');
     if (data.photoUrl.trim() && !isValidPhotoUrl(data.photoUrl.trim())) {
       errs.push('Photo URL must be a valid http(s) link.');
@@ -231,7 +263,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
   const [data, setData] = useState<FormData>({
     title: '', category: '', areaZip: '', state: '',
-    description: '', reward: '', payType: 'flat', deadline: '', xpReward: 0,
+    description: '', reward: '', budgetMode: 'fixed', payType: 'flat', deadline: '', xpReward: 0,
     difficulty: '', urgency: '',
     photoUrl: '',
     isRecurring: false, recurrenceCadence: 'WEEKLY', recurrenceEndDate: '',
@@ -261,11 +293,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     }
   }, [currentUserId]);
 
-  // Auto-calc XP (log-scaled + capped; see calcXpReward).
+  // Auto-calc XP (log-scaled + capped; see calcXpReward). In quote mode the
+  // poster hasn't named a price, so XP is based on the conservative placeholder
+  // reward — never an inflated total — and stays small until a real quote is
+  // approved later. Posters never see this number.
   useEffect(() => {
-    const r = parseFloat(data.reward);
-    setData((prev) => ({ ...prev, xpReward: isNaN(r) ? 0 : calcXpReward(r) }));
-  }, [data.reward]);
+    const effective =
+      data.budgetMode === 'quote' ? quoteModeReward(budgetRec) : parseFloat(data.reward);
+    setData((prev) => ({ ...prev, xpReward: isNaN(effective) ? 0 : calcXpReward(effective) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.reward, data.budgetMode, budgetRec.measured?.laborMin]);
 
   function update<K extends keyof FormData>(field: K, value: FormData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -310,19 +347,32 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
       const state = data.state.trim().toUpperCase();
       const payType = data.payType;
       const photoUrl = data.photoUrl.trim();
+      const isQuote = data.budgetMode === 'quote';
+      // Backend `reward` is a required number and the per-job Stripe payment
+      // needs a value, so quote-mode quests carry a conservative placeholder.
+      // The real price is set by an in-app worker quote later; nothing is
+      // charged or held at posting.
+      const effectiveReward = isQuote ? quoteModeReward(budgetRec) : parseFloat(data.reward);
       // Location collected as area/ZIP + state only (no street address). Kept in
       // the same `Location:` line the detail page already parses.
-      const locationLine = `Location: ${areaZip}, ${state} · Pay: $${data.reward} ${payType === 'hourly' ? '/ hour' : 'flat'}`;
+      const payLabel = isQuote ? 'Quote needed' : `$${data.reward} ${payType === 'hourly' ? '/ hour' : 'flat'}`;
+      const locationLine = `Location: ${areaZip}, ${state} · Pay: ${payLabel}`;
+      // For quote jobs, lead the description with a plain, on-platform note so
+      // workers know to apply with an estimate. No off-platform negotiation.
+      const quoteNote = isQuote
+        ? 'Time & Materials / Quote Needed — qualified workers can apply with an estimate through TryHardly.\n\n'
+        : '';
       // Photo support is URL-only (no cloud storage): the link is encoded as a
       // `photo:<url>` tag so the detail page can render it without a schema change.
       const tags = [areaZip, state, payType, data.category].filter(Boolean);
+      if (isQuote) tags.push(QUOTE_TAG);
       if (photoUrl) tags.push(`photo:${photoUrl}`);
       const payload = {
         title:       data.title.trim(),
-        description: `${locationLine}\n\n${data.description.trim()}`,
+        description: `${locationLine}\n\n${quoteNote}${data.description.trim()}`,
         category:    CATEGORY_ENUM_MAP[data.category] ?? 'OTHER',
         difficulty:  TIER_TO_DIFFICULTY[tierInfo.tier],
-        reward:      parseFloat(data.reward),
+        reward:      effectiveReward,
         xpReward:    data.xpReward,
         deadline:    data.deadline ? new Date(`${data.deadline}T00:00:00`).toISOString() : undefined,
         tags,
@@ -537,50 +587,99 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               )}
             </div>
 
-            {/* Pay type */}
+            {/* Budget mode: fixed price vs. let workers quote the job. */}
             <div>
-              <FieldLabel>Pay type</FieldLabel>
-              <div className="flex gap-2">
-                {(['flat', 'hourly'] as PayType[]).map((pt) => (
+              <FieldLabel>How do you want to price this?</FieldLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {([
+                  { mode: 'fixed' as BudgetMode, title: 'Fixed budget', sub: 'You set the amount you plan to pay.' },
+                  { mode: 'quote' as BudgetMode, title: 'Time & Materials / Quote Needed', sub: 'Let qualified workers quote this job.' },
+                ]).map((opt) => (
                   <button
-                    key={pt}
+                    key={opt.mode}
                     type="button"
-                    onClick={() => update('payType', pt)}
+                    onClick={() => { update('budgetMode', opt.mode); setBudgetApplied(false); }}
                     className={clsx(
-                      'font-mono text-[11px] font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
-                      data.payType === pt
-                        ? 'text-amber-400 border-amber-500/60 bg-amber-400/10'
-                        : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                      'text-left rounded-md border px-3.5 py-2.5 transition-all duration-150',
+                      data.budgetMode === opt.mode
+                        ? 'border-amber-500/60 bg-amber-400/10'
+                        : 'border-white/[0.08] hover:border-amber-500/40',
                     )}
                   >
-                    {pt === 'flat' ? 'Flat rate' : 'Hourly'}
+                    <span className={clsx(
+                      'block font-mono text-[11px] font-semibold tracking-wide',
+                      data.budgetMode === opt.mode ? 'text-amber-400' : 'text-stone-400',
+                    )}>{opt.title}</span>
+                    <span className="block font-mono text-[9px] text-stone-600 mt-0.5 leading-relaxed">{opt.sub}</span>
                   </button>
                 ))}
               </div>
+              {data.budgetMode === 'quote' && (
+                <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
+                  Good for complex or contractor-type work. Qualified workers apply with an
+                  estimate through TryHardly — you pick one and pay in-app when the job is done.
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Pay type — only meaningful when you're naming a fixed budget. */}
+            {data.budgetMode === 'fixed' && (
               <div>
-                <FieldLabel required>Your Budget ($)</FieldLabel>
-                <div className="relative">
-                  <span className={clsx(
-                    'absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-base',
-                    rewardNum > 0 ? 'text-amber-400' : 'text-stone-800',
-                  )}>$</span>
-                  <input
-                    type="number"
-                    value={data.reward}
-                    onChange={(e) => { update('reward', e.target.value); setBudgetApplied(false); }}
-                    placeholder="0"
-                    min="10"
-                    step="5"
-                    className={clsx(inputCls, 'pl-7')}
-                  />
+                <FieldLabel>Pay type</FieldLabel>
+                <div className="flex gap-2">
+                  {(['flat', 'hourly'] as PayType[]).map((pt) => (
+                    <button
+                      key={pt}
+                      type="button"
+                      onClick={() => update('payType', pt)}
+                      className={clsx(
+                        'font-mono text-[11px] font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
+                        data.payType === pt
+                          ? 'text-amber-400 border-amber-500/60 bg-amber-400/10'
+                          : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                      )}
+                    >
+                      {pt === 'flat' ? 'Flat rate' : 'Hourly'}
+                    </button>
+                  ))}
                 </div>
-                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
-                  Enter the total amount you plan to pay for this job.
-                </p>
               </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              {data.budgetMode === 'fixed' ? (
+                <div>
+                  <FieldLabel required>Your Budget ($)</FieldLabel>
+                  <div className="relative">
+                    <span className={clsx(
+                      'absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-base',
+                      rewardNum > 0 ? 'text-amber-400' : 'text-stone-800',
+                    )}>$</span>
+                    <input
+                      type="number"
+                      value={data.reward}
+                      onChange={(e) => { update('reward', e.target.value); setBudgetApplied(false); }}
+                      placeholder="0"
+                      min="10"
+                      step="5"
+                      className={clsx(inputCls, 'pl-7')}
+                    />
+                  </div>
+                  <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                    Enter the total amount you plan to pay for this job.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <FieldLabel>Budget</FieldLabel>
+                  <div className={clsx(inputCls, 'flex items-center text-stone-500')}>
+                    Workers will quote this job
+                  </div>
+                  <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                    No need to guess a number — qualified workers send an estimate through TryHardly.
+                  </p>
+                </div>
+              )}
               <div>
                 <FieldLabel>Timing</FieldLabel>
                 <input
@@ -619,13 +718,15 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                           suggest ~${budgetRec.measured.laborSuggested}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => applyBudgetAmount(budgetRec.measured!.laborSuggested)}
-                        className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
-                      >
-                        <Wand2 size={11} /> USE LABOR
-                      </button>
+                      {data.budgetMode === 'fixed' && (
+                        <button
+                          type="button"
+                          onClick={() => applyBudgetAmount(budgetRec.measured!.laborSuggested)}
+                          className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                        >
+                          <Wand2 size={11} /> USE LABOR
+                        </button>
+                      )}
                     </div>
 
                     {budgetRec.measured.totalMin != null && (
@@ -638,13 +739,15 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                             ~${budgetRec.measured.totalMin}–${budgetRec.measured.totalMax}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => applyBudgetAmount(budgetRec.measured!.totalMin!)}
-                          className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors flex items-center gap-1.5"
-                        >
-                          <Wand2 size={11} /> USE TOTAL
-                        </button>
+                        {data.budgetMode === 'fixed' && (
+                          <button
+                            type="button"
+                            onClick={() => applyBudgetAmount(budgetRec.measured!.totalMin!)}
+                            className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors flex items-center gap-1.5"
+                          >
+                            <Wand2 size={11} /> USE TOTAL
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -674,20 +777,36 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     <span className="font-bold text-lg text-amber-300">
                       ${budgetRec.min}–${budgetRec.max}{data.payType === 'hourly' ? '/hr' : ''}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => applyBudgetAmount(budgetRec.min)}
-                      className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
-                    >
-                      <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
-                    </button>
+                    {data.budgetMode === 'fixed' && (
+                      <button
+                        type="button"
+                        onClick={() => applyBudgetAmount(budgetRec.min)}
+                        className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                      >
+                        <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
 
               <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
-                Just a suggestion from the job details — you set the final number.
+                {data.budgetMode === 'quote'
+                  ? 'A rough sizing from the job details — workers refine it with an in-app quote.'
+                  : 'Just a suggestion from the job details — you set the final number.'}
               </p>
+
+              {/* When the job looks contractor-scale, nudge toward letting workers
+                  quote rather than anchoring a single (often too-low) number. */}
+              {budgetRec.contractor.required && data.budgetMode === 'fixed' && (
+                <button
+                  type="button"
+                  onClick={() => { update('budgetMode', 'quote'); setBudgetApplied(false); }}
+                  className="mt-3 w-full font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors"
+                >
+                  This looks like a bigger job — let qualified workers quote it instead
+                </button>
+              )}
 
               {/* California contractor-license guidance (informational, not legal advice). */}
               {budgetRec.contractor.message && (
@@ -823,7 +942,14 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 </span>
               </div>
               <ReviewRow label="Location" value={`${data.areaZip}, ${data.state.toUpperCase()}`} />
-              <ReviewRow label="Budget"   value={`$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`} />
+              <ReviewRow
+                label="Budget"
+                value={
+                  data.budgetMode === 'quote'
+                    ? 'Quote needed — workers apply with an estimate'
+                    : `$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`
+                }
+              />
               <ReviewRow label="Timing"   value={formatDate(data.deadline)} />
               {data.isRecurring && (
                 <ReviewRow
