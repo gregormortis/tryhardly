@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, CheckCircle, Wand2, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle, Wand2, Sparkles, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
 import { CADENCE_OPTIONS } from '../lib/recurrence';
@@ -18,8 +18,10 @@ type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'l
 interface FormData {
   title: string;
   category: string;
-  city: string;
-  neighborhood: string;
+  // Job location is collected as area code / ZIP + state only — no full street
+  // address during posting. These map onto the existing backend location fields.
+  areaZip: string;
+  state: string;
   description: string;
   // `reward` is kept as the backend/API field name; it is the poster's budget.
   reward: string;
@@ -53,6 +55,7 @@ const CATEGORIES = [
   { id: 'cleaning', label: 'Cleaning'         },
   { id: 'painting', label: 'Painting'         },
   { id: 'pressure', label: 'Pressure Washing' },
+  { id: 'fencing',  label: 'Fencing'          },
   { id: 'other',    label: 'Odd Jobs'         },
 ];
 
@@ -66,6 +69,7 @@ const CATEGORY_ENUM_MAP: Record<string, string> = {
   cleaning: 'OTHER',
   painting: 'OTHER',
   pressure: 'OTHER',
+  fencing:  'OTHER',
   other:    'OTHER',
 };
 
@@ -96,6 +100,17 @@ function getTier(reward: number) {
   return TIER_MAP.find((t) => reward >= t.min && reward <= t.max) ?? TIER_MAP[0];
 }
 
+// Worker XP from the budget. Log-scaled and capped so a big-dollar job (e.g. a
+// $1,200 fence) doesn't mint absurd XP versus a $50 yard task, and so XP can't
+// be farmed by inflating the budget. A flat `reward * 10` made large jobs
+// trivialize progression (a single $1,200 quest = 12,000 XP); this keeps the
+// curve sane (≈300 XP at $10, ≈900 at $1,200, hard cap 1,500). Posters never
+// see or set XP — it's assigned after posting.
+function calcXpReward(reward: number): number {
+  if (!Number.isFinite(reward) || reward <= 0) return 0;
+  return Math.max(10, Math.min(1500, Math.round(90 * Math.log2(reward + 1))));
+}
+
 function formatDate(iso: string): string {
   if (!iso) return '—';
   return new Date(`${iso}T00:00:00`).toLocaleDateString('en-US', {
@@ -108,8 +123,8 @@ function validate(step: number, data: FormData): string[] {
   if (step === 1) {
     if (data.title.trim().length < 10)  errs.push('Title must be at least 10 characters.');
     if (!data.category)                 errs.push('Please select a category.');
-    if (!data.city.trim())              errs.push('City is required.');
-    if (!data.neighborhood.trim())      errs.push('Neighborhood is required.');
+    if (!data.areaZip.trim())           errs.push('Area code or ZIP is required.');
+    if (!data.state.trim())             errs.push('State is required.');
   }
   if (step === 2) {
     if (data.description.trim().length < 30) errs.push('Description must be at least 30 characters.');
@@ -215,7 +230,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   const [budgetApplied, setBudgetApplied] = useState(false);
 
   const [data, setData] = useState<FormData>({
-    title: '', category: '', city: '', neighborhood: '',
+    title: '', category: '', areaZip: '', state: '',
     description: '', reward: '', payType: 'flat', deadline: '', xpReward: 0,
     difficulty: '', urgency: '',
     photoUrl: '',
@@ -231,8 +246,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     payType: data.payType,
   });
 
-  function applyBudget() {
-    update('reward', String(budgetRec.min));
+  // Apply a specific suggested amount to the budget field. Nothing is applied
+  // automatically — the poster clicks one of the suggestions explicitly, so a
+  // manually typed amount is never overwritten.
+  function applyBudgetAmount(amount: number) {
+    update('reward', String(amount));
     setBudgetApplied(true);
   }
 
@@ -243,10 +261,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     }
   }, [currentUserId]);
 
-  // Auto-calc XP
+  // Auto-calc XP (log-scaled + capped; see calcXpReward).
   useEffect(() => {
     const r = parseFloat(data.reward);
-    setData((prev) => ({ ...prev, xpReward: isNaN(r) ? 0 : Math.round(r * 10) }));
+    setData((prev) => ({ ...prev, xpReward: isNaN(r) ? 0 : calcXpReward(r) }));
   }, [data.reward]);
 
   function update<K extends keyof FormData>(field: K, value: FormData[K]) {
@@ -288,14 +306,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     if (errs.length) { setErrors(errs); return; }
     setSubmitting(true);
     try {
-      const city = data.city.trim();
-      const neighborhood = data.neighborhood.trim();
+      const areaZip = data.areaZip.trim();
+      const state = data.state.trim().toUpperCase();
       const payType = data.payType;
       const photoUrl = data.photoUrl.trim();
-      const locationLine = `Location: ${neighborhood}, ${city} · Pay: $${data.reward} ${payType === 'hourly' ? '/ hour' : 'flat'}`;
+      // Location collected as area/ZIP + state only (no street address). Kept in
+      // the same `Location:` line the detail page already parses.
+      const locationLine = `Location: ${areaZip}, ${state} · Pay: $${data.reward} ${payType === 'hourly' ? '/ hour' : 'flat'}`;
       // Photo support is URL-only (no cloud storage): the link is encoded as a
       // `photo:<url>` tag so the detail page can render it without a schema change.
-      const tags = [city, neighborhood, payType, data.category].filter(Boolean);
+      const tags = [areaZip, state, payType, data.category].filter(Boolean);
       if (photoUrl) tags.push(`photo:${photoUrl}`);
       const payload = {
         title:       data.title.trim(),
@@ -438,26 +458,28 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             </div>
 
             <p className="font-mono text-[9px] text-stone-700 leading-relaxed -mb-2">
-              Job location — where should the work be done?
+              Job location — area code or ZIP and state only. No street address needed to post.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <FieldLabel required>City</FieldLabel>
+                <FieldLabel required>Area code or ZIP</FieldLabel>
                 <input
                   type="text"
-                  value={data.city}
-                  onChange={(e) => update('city', e.target.value)}
-                  placeholder="e.g. Rocklin, CA"
+                  value={data.areaZip}
+                  onChange={(e) => update('areaZip', e.target.value)}
+                  placeholder="e.g. 95677 or 916"
+                  maxLength={10}
                   className={inputCls}
                 />
               </div>
               <div>
-                <FieldLabel required>Neighborhood</FieldLabel>
+                <FieldLabel required>State</FieldLabel>
                 <input
                   type="text"
-                  value={data.neighborhood}
-                  onChange={(e) => update('neighborhood', e.target.value)}
-                  placeholder="e.g. Whitney Ranch"
+                  value={data.state}
+                  onChange={(e) => update('state', e.target.value)}
+                  placeholder="e.g. CA"
+                  maxLength={20}
                   className={inputCls}
                 />
               </div>
@@ -580,24 +602,117 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <p className="font-mono text-[10px] font-semibold tracking-widest text-amber-400/90 uppercase mb-1.5 flex items-center gap-1.5">
                 <Sparkles size={11} /> Recommended budget
               </p>
-              <p className="font-mono text-[11px] text-stone-400 leading-relaxed">
-                {budgetRec.explanation}
-              </p>
-              <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
-                <span className="font-bold text-lg text-amber-300">
-                  ${budgetRec.min}–${budgetRec.max}{data.payType === 'hourly' ? '/hr' : ''}
-                </span>
-                <button
-                  type="button"
-                  onClick={applyBudget}
-                  className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
-                >
-                  <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
-                </button>
-              </div>
+
+              {budgetRec.measured ? (
+                <>
+                  {/* Sized estimate: separate labor-only and materials+labor lines. */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
+                          Labor only (you supply materials)
+                        </p>
+                        <span className="font-bold text-lg text-amber-300">
+                          ${budgetRec.measured.laborMin}–${budgetRec.measured.laborMax}
+                        </span>
+                        <span className="font-mono text-[10px] text-stone-600 ml-2">
+                          suggest ~${budgetRec.measured.laborSuggested}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => applyBudgetAmount(budgetRec.measured!.laborSuggested)}
+                        className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                      >
+                        <Wand2 size={11} /> USE LABOR
+                      </button>
+                    </div>
+
+                    {budgetRec.measured.totalMin != null && (
+                      <div className="flex items-center justify-between gap-3 flex-wrap border-t border-white/[0.06] pt-2.5">
+                        <div>
+                          <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
+                            Materials + labor (rough total)
+                          </p>
+                          <span className="font-bold text-base text-stone-300">
+                            ~${budgetRec.measured.totalMin}–${budgetRec.measured.totalMax}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => applyBudgetAmount(budgetRec.measured!.totalMin!)}
+                          className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors flex items-center gap-1.5"
+                        >
+                          <Wand2 size={11} /> USE TOTAL
+                        </button>
+                      </div>
+                    )}
+
+                    <p className="font-mono text-[10px] text-stone-500 leading-relaxed border-t border-white/[0.06] pt-2.5">
+                      <span className="text-stone-600 uppercase tracking-widest text-[9px]">Time</span>{' '}
+                      {budgetRec.measured.timeEstimate}
+                    </p>
+
+                    {budgetRec.measured.assumptions.length > 0 && (
+                      <ul className="font-mono text-[9px] text-stone-600 leading-relaxed list-disc list-inside space-y-0.5">
+                        {budgetRec.measured.assumptions.map((a) => (
+                          <li key={a}>{a}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  {budgetApplied && (
+                    <p className="font-mono text-[9px] text-amber-300/80 mt-2">Applied ✓ — edit the budget field any time.</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="font-mono text-[11px] text-stone-400 leading-relaxed">
+                    {budgetRec.explanation}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+                    <span className="font-bold text-lg text-amber-300">
+                      ${budgetRec.min}–${budgetRec.max}{data.payType === 'hourly' ? '/hr' : ''}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => applyBudgetAmount(budgetRec.min)}
+                      className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                    >
+                      <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
+                    </button>
+                  </div>
+                </>
+              )}
+
               <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
                 Just a suggestion from the job details — you set the final number.
               </p>
+
+              {/* California contractor-license guidance (informational, not legal advice). */}
+              {budgetRec.contractor.message && (
+                <div
+                  className={clsx(
+                    'mt-3 rounded-md border p-3 flex items-start gap-2',
+                    budgetRec.contractor.required
+                      ? 'border-rose-400/40 bg-rose-400/[0.07]'
+                      : 'border-white/[0.08] bg-white/[0.02]',
+                  )}
+                >
+                  <AlertTriangle
+                    size={13}
+                    className={clsx('mt-0.5 flex-shrink-0', budgetRec.contractor.required ? 'text-rose-400' : 'text-stone-600')}
+                  />
+                  <p
+                    className={clsx(
+                      'font-mono text-[10px] leading-relaxed',
+                      budgetRec.contractor.required ? 'text-rose-300' : 'text-stone-500',
+                    )}
+                  >
+                    {budgetRec.contractor.message}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Optional refinements */}
@@ -707,7 +822,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   {CATEGORIES.find((c) => c.id === data.category)?.label}
                 </span>
               </div>
-              <ReviewRow label="Location" value={`${data.neighborhood}, ${data.city}`} />
+              <ReviewRow label="Location" value={`${data.areaZip}, ${data.state.toUpperCase()}`} />
               <ReviewRow label="Budget"   value={`$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`} />
               <ReviewRow label="Timing"   value={formatDate(data.deadline)} />
               {data.isRecurring && (

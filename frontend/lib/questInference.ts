@@ -15,6 +15,7 @@ export type CategoryId =
   | 'cleaning'
   | 'painting'
   | 'pressure'
+  | 'fencing'
   | 'other';
 
 const CATEGORY_LABELS: Record<CategoryId, string> = {
@@ -25,6 +26,7 @@ const CATEGORY_LABELS: Record<CategoryId, string> = {
   cleaning: 'Cleaning',
   painting: 'Painting',
   pressure: 'Pressure Washing',
+  fencing: 'Fencing',
   other: 'Odd Jobs',
 };
 
@@ -52,10 +54,18 @@ const CATEGORY_KEYWORDS: { id: CategoryId; keywords: string[] }[] = [
     ],
   },
   {
+    id: 'fencing',
+    keywords: [
+      'fence', 'fencing', 't-post', 't post', 'tpost', 'woven wire', 'woven',
+      'goat fence', 'field fence', 'no climb', 'no-climb', 'hog wire',
+      'welded wire', 'chain link', 'chain-link', 'barbed wire', 'barb wire',
+    ],
+  },
+  {
     id: 'handyman',
     keywords: [
       'fix', 'repair', 'install', 'mount', 'assemble', 'assembly', 'hang', 'drywall',
-      'plumb', 'leak', 'faucet', 'fence', 'door', 'shelf', 'shelves', 'handyman',
+      'plumb', 'leak', 'faucet', 'door', 'shelf', 'shelves', 'handyman',
       'tighten', 'replace', 'patch',
     ],
   },
