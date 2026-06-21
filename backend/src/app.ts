@@ -15,6 +15,7 @@ import adminRoutes from './routes/adminRoutes';
 import reportRoutes from './routes/reportRoutes';
 import leadRoutes from './routes/leadRoutes';
 import progressionRoutes from './routes/progressionRoutes';
+import accountRoutes from './routes/accountRoutes';
 import { reportError } from './lib/errorReporting';
 
 // Initialize Prisma Client
@@ -77,6 +78,7 @@ app.get('/', (_req: Request, res: Response) => {
       admin: '/api/admin',
       reports: '/api/reports',
       leads: '/api/leads',
+      account: '/api/account',
     },
   });
 });
@@ -94,6 +96,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/progression', progressionRoutes);
+app.use('/api/account', accountRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { Zap, Shield, Sword, Award, MapPin, BadgeCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { guildPathLabel } from '@/lib/guildPath';
+import ReportButton from '@/components/ReportButton';
 import type {
   PublicCredential,
   CredentialType,
@@ -413,6 +415,7 @@ function SkillBadgeCard({ badge }: { badge: SkillBadge }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
+  const { user } = useAuth();
   const [adventurer, setAdventurer] = useState<Adventurer | null>(null);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState<string | null>(null);
@@ -632,6 +635,14 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   <p className="font-mono text-[10px] text-stone-800">
                     Adventurer since {formatMonthYear(adventurer.memberSince)}
                   </p>
+
+                  {/* Report entry point — only when viewing someone else's
+                      profile. ReportButton hides itself for signed-out users. */}
+                  {user && user.id !== adventurer.id && (
+                    <div className="mt-2">
+                      <ReportButton targetType="USER" targetId={adventurer.id} label="Report this user" />
+                    </div>
+                  )}
                 </div>
               </div>
 

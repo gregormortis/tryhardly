@@ -256,4 +256,22 @@ export const emailTemplates = {
     );
     return { to, subject, text, html };
   },
+
+  // Confirms to the user that we received their account-deletion request.
+  accountDeletionRequested(to: string, username: string): EmailMessage {
+    const { text, html } = wrap(
+      'We received your deletion request',
+      `Hi ${username} — we received your request to delete your TryHardly account and data. Our team will process it and follow up at this email address. Some records tied to completed quests or payments may be retained where the law requires, but your personal profile data will be removed. If you didn't make this request, contact us right away at ${FROM}.`,
+    );
+    return { to, subject: 'Your TryHardly deletion request was received', text, html };
+  },
+
+  // Internal alert so support/admin can action a deletion request out of band.
+  accountDeletionSupportAlert(to: string, username: string, userEmail: string, requestId: string): EmailMessage {
+    const { text, html } = wrap(
+      'Account deletion request',
+      `User ${username} (${userEmail}) requested account/data deletion.\n\nRequest ID: ${requestId}\n\nReview and action it in the admin deletion-requests queue.`,
+    );
+    return { to, subject: `Deletion request from ${username}`, text, html };
+  },
 };

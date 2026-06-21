@@ -11,6 +11,7 @@ import {
   revokeUserAchievement,
 } from '../controllers/adminController';
 import { listReports, updateReport } from '../controllers/reportController';
+import { listDeletionRequests, updateDeletionRequest } from '../controllers/accountDeletionController';
 import { listLeads, updateLead, convertLead } from '../controllers/leadController';
 import { listCredentialsForReview, reviewCredential } from '../controllers/credentialController';
 
@@ -29,6 +30,8 @@ router.post('/users/:id/achievements', awardUserAchievement);
 router.delete('/users/:id/achievements/:key', revokeUserAchievement);
 router.get('/reports', listReports);
 router.put('/reports/:id', updateReport);
+router.get('/deletion-requests', listDeletionRequests);
+router.put('/deletion-requests/:id', updateDeletionRequest);
 router.get('/leads', listLeads);
 router.put('/leads/:id', updateLead);
 router.post('/leads/:id/convert', convertLead);

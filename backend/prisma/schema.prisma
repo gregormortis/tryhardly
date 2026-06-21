@@ -81,6 +81,8 @@ model User {
   skillRatingsReceived SkillRating[]          @relation("SkillRatingSubject")
   skillRatingsGiven    SkillRating[]          @relation("SkillRatingAuthor")
   proofOfWork          ProofOfWork[]          @relation("ProofOwner")
+  deletionRequests     AccountDeletionRequest[] @relation("DeletionRequester")
+  deletionRequestsHandled AccountDeletionRequest[] @relation("DeletionHandler")
 
   @@index([email])
   @@index([username])
@@ -830,4 +832,42 @@ enum LeadStatus {
   CONTACTED
   CONVERTED
   IGNORED
+}
+
+// ─── Account Deletion Request ─────────────────────────────────────────────────
+// Google Play requires a way for users to request account/data deletion. A
+// hard delete is unsafe here: a user is referenced by quests, reviews, messages,
+// payments, and Stripe records, and removing the row would orphan or break those
+// histories. So a logged-in user files a deletion request, which support/admin
+// reviews and actions (anonymize/remove) out of band. The request itself is the
+// auditable record that the user asked. At most one PENDING request per user.
+model AccountDeletionRequest {
+  id          String   @id @default(uuid())
+
+  userId      String
+  user        User     @relation("DeletionRequester", fields: [userId], references: [id])
+
+  // Snapshot of contact info at request time so support can still reach the
+  // user even if the account is later anonymized.
+  email       String
+  reason      String?
+
+  status      DeletionRequestStatus @default(PENDING)
+
+  handledById String?
+  handledBy   User?    @relation("DeletionHandler", fields: [handledById], references: [id])
+  handledAt   DateTime?
+  handlerNote String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+enum DeletionRequestStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
 }
