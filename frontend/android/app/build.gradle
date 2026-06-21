@@ -1,5 +1,32 @@
 apply plugin: 'com.android.application'
 
+// Release signing is configured from non-committed sources, in priority order:
+//   1. keystore.properties at the android project root (frontend/android/keystore.properties)
+//   2. TRYHARDLY_UPLOAD_* environment variables
+// Both are gitignored / never committed. See frontend/MOBILE_APP.md for setup.
+def releaseSigning = [
+    storeFile    : null,
+    storePassword: null,
+    keyAlias     : null,
+    keyPassword  : null,
+]
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) {
+    def props = new Properties()
+    keystorePropsFile.withInputStream { props.load(it) }
+    releaseSigning.storeFile     = props['storeFile']
+    releaseSigning.storePassword = props['storePassword']
+    releaseSigning.keyAlias      = props['keyAlias']
+    releaseSigning.keyPassword   = props['keyPassword']
+}
+// Environment variables override / fill in anything not set via keystore.properties.
+releaseSigning.storeFile     = System.getenv('TRYHARDLY_UPLOAD_STORE_FILE')     ?: releaseSigning.storeFile
+releaseSigning.storePassword = System.getenv('TRYHARDLY_UPLOAD_STORE_PASSWORD') ?: releaseSigning.storePassword
+releaseSigning.keyAlias      = System.getenv('TRYHARDLY_UPLOAD_KEY_ALIAS')      ?: releaseSigning.keyAlias
+releaseSigning.keyPassword   = System.getenv('TRYHARDLY_UPLOAD_KEY_PASSWORD')   ?: releaseSigning.keyPassword
+
+def hasReleaseSigning = releaseSigning.storeFile != null && !releaseSigning.storeFile.trim().isEmpty()
+
 android {
     namespace "com.tryhardly.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -16,11 +43,46 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(releaseSigning.storeFile)
+                storePassword releaseSigning.storePassword
+                keyAlias releaseSigning.keyAlias
+                keyPassword releaseSigning.keyPassword
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Only attach the signing config when it was actually provided. When it is
+            // absent the release artifact is left unsigned (fine for local inspection),
+            // and the guard below fails the build with a clear message if you try to
+            // assemble/bundle a release without configuring signing.
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
+    }
+}
+
+// Fail fast with an actionable message if a release artifact is requested without
+// signing configured. Debug builds and all other tasks are unaffected.
+gradle.taskGraph.whenReady { taskGraph ->
+    def needsRelease = taskGraph.allTasks.any { t ->
+        t.name in ['assembleRelease', 'bundleRelease', 'packageRelease']
+    }
+    if (needsRelease && !hasReleaseSigning) {
+        throw new GradleException(
+            "Release signing is not configured.\n" +
+            "Provide an upload keystore via one of:\n" +
+            "  - frontend/android/keystore.properties (storeFile, storePassword, keyAlias, keyPassword)\n" +
+            "  - env vars TRYHARDLY_UPLOAD_STORE_FILE, TRYHARDLY_UPLOAD_STORE_PASSWORD, " +
+            "TRYHARDLY_UPLOAD_KEY_ALIAS, TRYHARDLY_UPLOAD_KEY_PASSWORD\n" +
+            "See frontend/MOBILE_APP.md ('Release signing & building a signed AAB')."
+        )
     }
 }
 
