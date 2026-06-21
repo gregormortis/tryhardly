@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, CheckCircle, Zap, Wand2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle, Wand2, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
 import { CADENCE_OPTIONS } from '../lib/recurrence';
 import { inferQuestFromText, summarizeInference } from '../lib/questInference';
+import { recommendBudget, type Difficulty, type Urgency } from '../lib/budgetInference';
 import type { RecurrenceCadence } from '../lib/types';
 import ImageUploader from './ImageUploader';
 
@@ -20,10 +21,15 @@ interface FormData {
   city: string;
   neighborhood: string;
   description: string;
+  // `reward` is kept as the backend/API field name; it is the poster's budget.
   reward: string;
   payType: PayType;
   deadline: string;
+  // System-calculated from budget; never configured by the poster.
   xpReward: number;
+  // Optional poster signals that refine the budget suggestion.
+  difficulty: Difficulty | '';
+  urgency: Urgency | '';
   photoUrl: string;
   // Recurring booking (scheduling/visibility only — no money is charged or held).
   isRecurring: boolean;
@@ -108,7 +114,7 @@ function validate(step: number, data: FormData): string[] {
   if (step === 2) {
     if (data.description.trim().length < 30) errs.push('Description must be at least 30 characters.');
     const r = parseFloat(data.reward);
-    if (!data.reward || isNaN(r) || r < 10)  errs.push('Reward must be at least $10.');
+    if (!data.reward || isNaN(r) || r < 10)  errs.push('Your budget must be at least $10.');
     if (!data.deadline)                      errs.push('Deadline is required.');
     if (data.photoUrl.trim() && !isValidPhotoUrl(data.photoUrl.trim())) {
       errs.push('Photo URL must be a valid http(s) link.');
@@ -204,12 +210,31 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   const inference = needText.trim().length >= 3 ? inferQuestFromText(needText) : null;
   const inferenceSummary = inference ? summarizeInference(inference) : '';
 
+  // The suggestion only fills the budget on an explicit click, so a manually
+  // entered amount is never overwritten. `budgetApplied` just toggles the label.
+  const [budgetApplied, setBudgetApplied] = useState(false);
+
   const [data, setData] = useState<FormData>({
     title: '', category: '', city: '', neighborhood: '',
     description: '', reward: '', payType: 'flat', deadline: '', xpReward: 0,
+    difficulty: '', urgency: '',
     photoUrl: '',
     isRecurring: false, recurrenceCadence: 'WEEKLY', recurrenceEndDate: '',
   });
+
+  // Deterministic local budget suggestion from the details entered so far.
+  const budgetRec = recommendBudget({
+    category: data.category || null,
+    text: `${data.title} ${data.description} ${needText}`.trim() || null,
+    difficulty: data.difficulty || null,
+    urgency: data.urgency || null,
+    payType: data.payType,
+  });
+
+  function applyBudget() {
+    update('reward', String(budgetRec.min));
+    setBudgetApplied(true);
+  }
 
   // Auth gate
   useEffect(() => {
@@ -381,7 +406,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             </div>
 
             <div>
-              <FieldLabel required>Quest title</FieldLabel>
+              <FieldLabel required>Job title</FieldLabel>
               <input
                 type="text"
                 value={data.title}
@@ -390,7 +415,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 maxLength={100}
                 className={inputCls}
               />
-              <p className="font-mono text-[9px] text-stone-800 mt-1.5 text-right">{data.title.length}/100</p>
+              <div className="flex items-start justify-between gap-3 mt-1.5">
+                <p className="font-mono text-[9px] text-stone-700 leading-relaxed">
+                  Give your job a clear title so workers can quickly understand what you need.
+                </p>
+                <p className="font-mono text-[9px] text-stone-800 whitespace-nowrap">{data.title.length}/100</p>
+              </div>
             </div>
 
             <div>
@@ -407,6 +437,9 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               </select>
             </div>
 
+            <p className="font-mono text-[9px] text-stone-700 leading-relaxed -mb-2">
+              Job location — where should the work be done?
+            </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <FieldLabel required>City</FieldLabel>
@@ -440,12 +473,17 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <textarea
                 value={data.description}
                 onChange={(e) => update('description', e.target.value)}
-                placeholder="Describe exactly what needs to be done, any special instructions, and what to expect on the job…"
+                placeholder="Describe the task, what's included, and anything the worker should bring or know…"
                 rows={5}
                 maxLength={1000}
                 className={clsx(inputCls, 'resize-y min-h-[120px] leading-relaxed')}
               />
-              <p className="font-mono text-[9px] text-stone-800 mt-1.5 text-right">{data.description.length}/1000</p>
+              <div className="flex items-start justify-between gap-3 mt-1.5">
+                <p className="font-mono text-[9px] text-stone-700 leading-relaxed">
+                  Describe the task, what&apos;s included, and anything the worker should bring or know.
+                </p>
+                <p className="font-mono text-[9px] text-stone-800 whitespace-nowrap">{data.description.length}/1000</p>
+              </div>
             </div>
 
             {/* Optional photo */}
@@ -501,7 +539,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <FieldLabel required>Reward amount ($)</FieldLabel>
+                <FieldLabel required>Your Budget ($)</FieldLabel>
                 <div className="relative">
                   <span className={clsx(
                     'absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-base',
@@ -510,16 +548,19 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <input
                     type="number"
                     value={data.reward}
-                    onChange={(e) => update('reward', e.target.value)}
+                    onChange={(e) => { update('reward', e.target.value); setBudgetApplied(false); }}
                     placeholder="0"
                     min="10"
                     step="5"
                     className={clsx(inputCls, 'pl-7')}
                   />
                 </div>
+                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                  Enter the total amount you plan to pay for this job.
+                </p>
               </div>
               <div>
-                <FieldLabel>Deadline</FieldLabel>
+                <FieldLabel>Timing</FieldLabel>
                 <input
                   type="date"
                   value={data.deadline}
@@ -527,6 +568,71 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   onChange={(e) => update('deadline', e.target.value)}
                   className={clsx(inputCls, '[color-scheme:dark]')}
                 />
+                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                  When do you need this done?
+                </p>
+              </div>
+            </div>
+
+            {/* Recommended budget helper — deterministic local estimate, applied
+                only on an explicit click so a typed budget is never overwritten. */}
+            <div className="rounded-lg border border-amber-500/25 bg-amber-400/[0.04] p-4">
+              <p className="font-mono text-[10px] font-semibold tracking-widest text-amber-400/90 uppercase mb-1.5 flex items-center gap-1.5">
+                <Sparkles size={11} /> Recommended budget
+              </p>
+              <p className="font-mono text-[11px] text-stone-400 leading-relaxed">
+                {budgetRec.explanation}
+              </p>
+              <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+                <span className="font-bold text-lg text-amber-300">
+                  ${budgetRec.min}–${budgetRec.max}{data.payType === 'hourly' ? '/hr' : ''}
+                </span>
+                <button
+                  type="button"
+                  onClick={applyBudget}
+                  className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                >
+                  <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
+                </button>
+              </div>
+              <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
+                Just a suggestion from the job details — you set the final number.
+              </p>
+            </div>
+
+            {/* Optional refinements */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <FieldLabel>Difficulty (optional)</FieldLabel>
+                <select
+                  value={data.difficulty}
+                  onChange={(e) => update('difficulty', e.target.value as Difficulty | '')}
+                  className={clsx(inputCls, 'cursor-pointer')}
+                >
+                  <option value="">No preference</option>
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="hard">Hard</option>
+                </select>
+                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                  How challenging is this job?
+                </p>
+              </div>
+              <div>
+                <FieldLabel>Urgency (optional)</FieldLabel>
+                <select
+                  value={data.urgency}
+                  onChange={(e) => update('urgency', e.target.value as Urgency | '')}
+                  className={clsx(inputCls, 'cursor-pointer')}
+                >
+                  <option value="">No preference</option>
+                  <option value="flexible">Flexible</option>
+                  <option value="soon">Soon</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                  How soon do you need help?
+                </p>
               </div>
             </div>
 
@@ -578,23 +684,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               )}
             </div>
 
-            {/* XP preview */}
-            {rewardNum > 0 && (
-              <div className="flex items-center justify-between p-3.5 bg-white/[0.02] border border-white/[0.06] rounded-lg">
-                <div>
-                  <p className="font-mono text-[10px] text-stone-700 tracking-widest uppercase mb-1 flex items-center gap-1">
-                    <Zap size={10} /> XP reward (auto-calculated)
-                  </p>
-                  <p className="font-bold text-xl text-amber-400">{data.xpReward} XP</p>
-                </div>
-                <span className={clsx(
-                  'font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5',
-                  tierInfo.classes,
-                )}>
-                  {tierInfo.tier.toUpperCase()} TIER
-                </span>
-              </div>
-            )}
+            {/* Secondary TryHardly layer: posting stays simple; tier and worker
+                XP are handled by us after the job is posted. No XP to configure. */}
+            <p className="font-mono text-[9px] text-stone-700 leading-relaxed flex items-start gap-1.5">
+              <Sparkles size={11} className="mt-0.5 flex-shrink-0 text-amber-400/60" />
+              We&apos;ll automatically assign the right quest tier and worker XP after posting.
+            </p>
           </div>
         )}
 
@@ -613,9 +708,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 </span>
               </div>
               <ReviewRow label="Location" value={`${data.neighborhood}, ${data.city}`} />
-              <ReviewRow label="Pay"      value={`$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`} />
-              <ReviewRow label="XP"       value={`${data.xpReward} XP`} />
-              <ReviewRow label="Deadline" value={formatDate(data.deadline)} />
+              <ReviewRow label="Budget"   value={`$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`} />
+              <ReviewRow label="Timing"   value={formatDate(data.deadline)} />
               {data.isRecurring && (
                 <ReviewRow
                   label="Repeats"
