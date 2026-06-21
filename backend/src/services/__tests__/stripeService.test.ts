@@ -158,7 +158,7 @@ describe('stripeService', () => {
   });
 
   describe('createConnectedAccount', () => {
-    it('requests transfers, uses Express dashboard, and assigns fees/losses to the platform', async () => {
+    it('creates an Express account with card_payments + transfers for destination charges', async () => {
       mockAccountsCreate.mockResolvedValue({ id: 'acct_1' });
       const svc = require('../stripeService');
 
@@ -167,14 +167,26 @@ describe('stripeService', () => {
       });
 
       const params = mockAccountsCreate.mock.calls[0][0];
+      expect(params.type).toBe('express');
       expect(params.capabilities.transfers.requested).toBe(true);
-      expect(params.controller.stripe_dashboard.type).toBe('express');
-      expect(params.controller.fees.payer).toBe('application');
-      expect(params.controller.losses.payments).toBe('application');
+      expect(params.capabilities.card_payments.requested).toBe(true);
       expect(params.country).toBe('US');
       expect(params.email).toBe('worker@example.com');
       expect(params.business_profile.name).toBe('Worker One');
       expect(params.metadata.tryhardly_user_id).toBe('user-1');
+    });
+
+    it('does NOT set a custom controller (losses/fees) — avoids the platform-profile loss-liability rejection', async () => {
+      mockAccountsCreate.mockResolvedValue({ id: 'acct_1' });
+      const svc = require('../stripeService');
+
+      await svc.createConnectedAccount('user-1', 'worker@example.com');
+
+      const params = mockAccountsCreate.mock.calls[0][0];
+      // The custom controller with platform-owned losses/fees is what triggered
+      // "review the responsibilities of managing losses for connected accounts".
+      // type:'express' must inherit the platform-profile defaults instead.
+      expect(params.controller).toBeUndefined();
     });
 
     it('honors STRIPE_ACCOUNT_COUNTRY override', async () => {
