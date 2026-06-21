@@ -316,6 +316,32 @@ describe('createConnectedAccount — Stripe Connect onboarding', () => {
     expect(res.json.mock.calls[0][0].accountId).toBe('acct_new');
   });
 
+  it('surfaces a concise Stripe error message on failure without leaking the error object', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      email: 'legendarygm@gmail.com',
+      role: 'ADMIN',
+      displayName: 'guildmaster',
+      stripeAccountId: null,
+    });
+    const stripeErr: any = new Error(
+      'Please review the responsibilities of managing losses for connected accounts'
+    );
+    stripeErr.type = 'StripeInvalidRequestError';
+    stripeErr.code = 'parameter_invalid';
+    mockStripe.createConnectedAccount.mockRejectedValue(stripeErr);
+
+    const res = mockRes();
+    await createConnectedAccount(authReq({ id: 'u1', role: 'ADMIN' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toBe('Failed to create Stripe Connect account');
+    expect(body.message).toContain('managing losses');
+    // The user record must not be updated when account creation fails.
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
+
   it('returns the existing account instead of creating a duplicate', async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: 'u1',

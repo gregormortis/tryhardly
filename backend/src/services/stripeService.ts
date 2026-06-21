@@ -61,24 +61,32 @@ function getStripe(): Stripe {
 }
 
 /**
- * Create a Stripe Connect account for a worker/seller so they can receive
- * marketplace payouts on task completion.
+ * Create a Stripe Connect Express account for a worker/seller so they can
+ * receive marketplace payouts when a task is captured.
  *
- * Blueprint mapping / SDK gap:
- * The blueprint describes Accounts v2 semantics — a recipient configuration
- * with `stripe_transfers` requested, an Express dashboard, and responsibilities
- * placing losses and fees collection on the platform ("application"). The pinned
- * Stripe SDK (`stripe@^14`, Accounts v1) does not expose Accounts v2 directly,
- * so we implement the closest currently-supported equivalent that preserves the
- * same capabilities and Express onboarding:
- *   - `transfers` capability requested  → the recipient `stripe_transfers` ask
- *   - `controller.stripe_dashboard.type = 'express'`  → Express dashboard
- *   - `controller.losses.payments = 'application'`     → losses_collector = platform
- *   - `controller.fees.payer = 'application'`          → fees_collector = platform
- *   - `country` from STRIPE_ACCOUNT_COUNTRY/default     → identity country
- *   - `email` / `business_profile`                      → display & contact
- * When the SDK is upgraded to one supporting Accounts v2, swap the v1
- * `accounts.create` shape below for the v2 recipient configuration.
+ * Charge model: destination charges. The customer's card is charged on the
+ * PLATFORM account (Checkout with `application_fee_amount` + `transfer_data.
+ * destination`), and the net is routed to this connected account on capture.
+ * For that model the platform is, by construction, the settlement merchant and
+ * therefore liable for the charge — so the account is created as a plain
+ * `type: 'express'` account and Stripe applies the responsibility defaults that
+ * match the platform's configured Connect profile.
+ *
+ * We deliberately do NOT pass a custom `controller` block (e.g.
+ * `controller.losses.payments = 'application'` / `controller.fees.payer =
+ * 'application'`). That shape requires the platform profile to have explicitly
+ * accepted platform-owned loss liability; when the profile is configured with
+ * Stripe as the loss collector (our case), Stripe rejects the call with
+ * "review the responsibilities of managing losses for connected accounts". The
+ * `type: 'express'` form inherits whatever the profile specifies, so account
+ * creation succeeds without changing the payment model away from destination
+ * charges.
+ *
+ * Capabilities requested:
+ *   - `transfers`     — required to receive the destination-charge payout
+ *   - `card_payments` — the payments capability Stripe expects for accounts
+ *                       settling destination charges (also needed if the
+ *                       account is ever used as the settlement merchant)
  */
 export async function createConnectedAccount(
   userId: string,
@@ -90,18 +98,11 @@ export async function createConnectedAccount(
     .toUpperCase();
 
   const account = await getStripe().accounts.create({
-    // The `controller` object captures the responsibilities the blueprint
-    // assigns: the platform (application) collects fees and bears losses, and
-    // the connected user gets the Express dashboard.
-    controller: {
-      stripe_dashboard: { type: 'express' },
-      fees: { payer: 'application' },
-      losses: { payments: 'application' },
-      requirement_collection: 'stripe',
-    },
+    type: 'express',
     country,
     email,
     capabilities: {
+      card_payments: { requested: true },
       transfers: { requested: true },
     },
     business_profile: options?.displayName

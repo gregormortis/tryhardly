@@ -5,6 +5,23 @@ import * as stripeService from '../services/stripeService';
 import * as escrowService from '../services/escrowService';
 
 /**
+ * Extract a concise, user-safe message from an error thrown by the Stripe SDK.
+ *
+ * Stripe errors carry a human-readable `message` plus a `type`/`code` that are
+ * safe to surface (e.g. "account_invalid", "parameter_unknown"). None of these
+ * contain secrets — the secret key lives only on the client config, never on
+ * the error. We return just the message string so callers can show it to the
+ * user without echoing the full error object (which can include request IDs and
+ * internal params we don't want to leak into a response body).
+ */
+function stripeErrorMessage(error: any): string {
+  if (error && typeof error.message === 'string' && error.message.length > 0) {
+    return error.message;
+  }
+  return 'Unexpected error talking to the payment provider';
+}
+
+/**
  * Build the field patch that moves a quest to AUTHORIZED for the non-escrow
  * marketplace flow — but only when it isn't already past authorization. This
  * guards against out-of-order webhooks (e.g. `payment_intent.succeeded`
@@ -70,10 +87,17 @@ export const createConnectedAccount = async (
       detailsSubmitted: account.details_submitted,
     });
   } catch (error: any) {
-    console.error('Error creating connected account:', error);
+    // Log the structured Stripe fields (type/code/message) to aid debugging
+    // without dumping the whole error object. The secret key is never on the
+    // error, so these fields are safe to log.
+    console.error('Error creating connected account:', {
+      type: error?.type,
+      code: error?.code,
+      message: error?.message,
+    });
     res.status(500).json({
       error: 'Failed to create Stripe Connect account',
-      message: error.message,
+      message: stripeErrorMessage(error),
     });
   }
 };
@@ -116,10 +140,14 @@ export const getOnboardingLink = async (
       expiresAt: new Date(accountLink.expires_at * 1000).toISOString(),
     });
   } catch (error: any) {
-    console.error('Error creating onboarding link:', error);
+    console.error('Error creating onboarding link:', {
+      type: error?.type,
+      code: error?.code,
+      message: error?.message,
+    });
     res.status(500).json({
       error: 'Failed to create onboarding link',
-      message: error.message,
+      message: stripeErrorMessage(error),
     });
   }
 };
