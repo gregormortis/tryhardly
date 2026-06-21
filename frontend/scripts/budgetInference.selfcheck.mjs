@@ -50,12 +50,26 @@ function resolveBase(category) {
   if (category && CATEGORY_BASE[category]) return CATEGORY_BASE[category];
   return DEFAULT_BASE;
 }
+const FEET_UNIT = "linear\\s*(?:feet|foot|ft)|feet|foot|ft\\b|lf\\b|['’′]";
 function extractQuantityNear(text, unitPattern) {
   const re = new RegExp(`(\\d{1,5}(?:\\.\\d+)?)\\s*(?:${unitPattern})`, 'i');
   const m = text.match(re);
   if (!m) return null;
   const n = parseFloat(m[1]);
   return Number.isFinite(n) && n > 0 ? n : null;
+}
+function extractDimensions(text) {
+  const unit = "(?:\\s*(?:'|’|′|ft|feet|foot))?";
+  const re = new RegExp(
+    `(\\d{1,4}(?:\\.\\d+)?)${unit}\\s*(?:x|\\*|by)\\s*(\\d{1,4}(?:\\.\\d+)?)${unit}`,
+    'i',
+  );
+  const m = text.match(re);
+  if (!m) return null;
+  const w = parseFloat(m[1]);
+  const h = parseFloat(m[2]);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+  return { w, h, sqft: w * h };
 }
 function extractCount(text, unitPattern) {
   const numbered = extractQuantityNear(text, unitPattern);
@@ -71,7 +85,7 @@ function fencingEstimate(text) {
     'chain link', 'chain-link', 'barbed wire', 'barb wire',
   ]);
   if (!isFence) return null;
-  const feet = extractQuantityNear(text, 'linear\\s*(?:feet|foot|ft)|feet|foot|ft\\b|lf\\b');
+  const feet = extractQuantityNear(text, FEET_UNIT);
   if (!feet) return null;
 
   let laborPerFtMin = 4.1;
@@ -131,6 +145,50 @@ function fencingEstimate(text) {
   return {
     laborMin, laborMax, laborSuggested, totalMin, totalMax, timeEstimate, assumptions,
     basis: `fencing ${feet} ft${factors.length ? ' (' + factors.join(', ') + ')' : ''}`,
+  };
+}
+
+function flatworkEstimate(text) {
+  const isConcrete = hasKeyword(text, ['concrete', 'slab', 'cement', 'foundation', 'footing', 'pad']);
+  const isDeck = hasKeyword(text, ['deck', 'patio', 'paver', 'pavers']);
+  if (!isConcrete && !isDeck) return null;
+  const dims = extractDimensions(text);
+  if (!dims) return null;
+  const { w, h, sqft } = dims;
+  let totalPerSqftMin, totalPerSqftMax, laborPerSqftMin, laborPerSqftMax, laborPerSqftMid, typeNote;
+  if (isConcrete) {
+    totalPerSqftMin = 8; totalPerSqftMax = 15;
+    laborPerSqftMin = 4.5; laborPerSqftMax = 8; laborPerSqftMid = 6;
+    typeNote = 'Concrete flatwork (form, pour, finish) on prepared ground.';
+  } else {
+    totalPerSqftMin = 15; totalPerSqftMax = 35;
+    laborPerSqftMin = 8; laborPerSqftMax = 16; laborPerSqftMid = 11;
+    typeNote = 'Deck / patio surface on prepared ground.';
+  }
+  const factors = [];
+  const assumptions = [typeNote, `${w}×${h} ≈ ${Math.round(sqft)} sq ft.`];
+  if (hasKeyword(text, ['rebar', 'reinforced', 'thick', 'driveway', 'footing', 'foundation'])) {
+    laborPerSqftMin *= 1.15; laborPerSqftMax *= 1.2; laborPerSqftMid *= 1.15;
+    totalPerSqftMin *= 1.15; totalPerSqftMax *= 1.2;
+    factors.push('reinforced / structural');
+    assumptions.push('Reinforcement or structural work raises cost vs a plain pad.');
+  }
+  const laborMin = round25(sqft * laborPerSqftMin);
+  const laborMax = round25(sqft * laborPerSqftMax);
+  const laborSuggested = round25(sqft * laborPerSqftMid);
+  const totalMin = round25(sqft * totalPerSqftMin);
+  const totalMax = round25(sqft * totalPerSqftMax);
+  const hoursMin = Math.max(6, Math.round(sqft / 40));
+  const hoursMax = Math.max(hoursMin + 2, Math.round(sqft / 25));
+  const daysMin = Math.max(1, Math.round(hoursMin / 8));
+  const daysMax = Math.max(daysMin, Math.round(hoursMax / 8));
+  const timeEstimate = daysMin === daysMax
+    ? `~${daysMin} day / ${hoursMin}–${hoursMax} labor hours`
+    : `~${daysMin}–${daysMax} days / ${hoursMin}–${hoursMax} labor hours`;
+  assumptions.push('Labor-only assumes you supply concrete/materials and prep.');
+  return {
+    laborMin, laborMax, laborSuggested, totalMin, totalMax, timeEstimate, assumptions,
+    basis: `${isConcrete ? 'concrete' : 'deck/patio'} ${Math.round(sqft)} sqft${factors.length ? ' (' + factors.join(', ') + ')' : ''}`,
   };
 }
 
@@ -248,6 +306,7 @@ function handymanEstimate(text) {
 function measure(text) {
   return (
     fencingEstimate(text) ??
+    flatworkEstimate(text) ??
     haulingEstimate(text) ??
     movingEstimate(text) ??
     cleaningEstimate(text) ??
@@ -256,9 +315,11 @@ function measure(text) {
 }
 
 const LICENSE_RELEVANT = [
-  'fence', 'fencing', 'deck', 'paint', 'painting', 'drywall', 'concrete',
-  'install', 'build', 'construction', 'remodel', 'roof', 'electrical',
-  'plumbing', 'handyman', 'repair', 'framing', 'tile', 'flooring',
+  'fence', 'fencing', 'deck', 'patio', 'paint', 'painting', 'drywall',
+  'concrete', 'slab', 'cement', 'foundation', 'footing', 'pad',
+  'install', 'build', 'construction', 'remodel', 'roof', 'roofing',
+  'electrical', 'plumbing', 'handyman', 'repair', 'framing', 'tile',
+  'flooring', 'tree',
 ];
 function contractorNotice(text, category, roughTotal) {
   const relevant = hasKeyword(text, LICENSE_RELEVANT)
@@ -332,6 +393,15 @@ function recommendBudget(inputs) {
 function calcXpReward(reward) {
   if (!Number.isFinite(reward) || reward <= 0) return 0;
   return Math.max(10, Math.min(1500, Math.round(90 * Math.log2(reward + 1))));
+}
+
+// Mirror of quoteModeReward() in components/PostQuestForm.tsx: the conservative
+// placeholder reward used for quote-needed jobs so XP can't explode.
+const QUOTE_PLACEHOLDER_REWARD = 50;
+function quoteModeReward(rec) {
+  const fromMeasure = rec.measured?.laborMin;
+  if (Number.isFinite(fromMeasure) && fromMeasure >= 10) return Math.min(fromMeasure, 200);
+  return QUOTE_PLACEHOLDER_REWARD;
 }
 
 // ── Assertions ───────────────────────────────────────────────────────────────
@@ -480,10 +550,84 @@ check('moving / 3 bedroom', {
   assert.match(m.timeEstimate, /2-person crew/);
 });
 
+// ── Screenshot anchor: exact text "220' goat fence with tpost needs built" ───
+// This is the bug the user reported: the foot-mark (') was not parsed, so the
+// fencing heuristic never fired and the poster saw the tiny $200–$600 base.
+check("screenshot: 220' goat fence with tpost", {
+  category: 'fencing',
+  text: "220' goat fence with tpost needs built",
+}, (r) => {
+  assert.ok(r.measured, "220' must produce a measured estimate (foot-mark parsed)");
+  const m = r.measured;
+  assert.equal(m.laborMin, 900, 'labor min ≈ $900');
+  assert.equal(m.laborMax, 1500, 'labor max ≈ $1,500');
+  assert.equal(m.laborSuggested, 1200, 'labor suggested ≈ $1,200');
+  assert.ok(m.totalMin >= 1650 && m.totalMin <= 2000, `total min ≈ $1,700, got ${m.totalMin}`);
+  assert.ok(m.totalMax >= 2500 && m.totalMax <= 2800, `total max in range, got ${m.totalMax}`);
+  // Headline range tracks labor-only, NOT the old $200–$600 base.
+  assert.equal(r.min, 900);
+  assert.equal(r.max, 1500);
+  assert.notEqual(r.max, 600, 'must not fall back to the $200–$600 fencing base');
+  assert.equal(r.contractor.required, true, 'contractor warning should fire');
+});
+
+// Curly foot-mark variant parses too.
+check("fence / 220’ curly foot-mark", {
+  category: 'fencing',
+  text: "220’ goat fence, tpost",
+}, (r) => {
+  assert.ok(r.measured, 'curly foot-mark should parse');
+  assert.equal(r.measured.laborMin, 900);
+});
+
+// ── 20x20 concrete pad: dimension parsing → realistic, contractor-required ───
+check('concrete / 20x20 pad', {
+  category: 'other',
+  text: 'pour a 20x20 concrete pad in the backyard',
+}, (r) => {
+  assert.ok(r.measured, '20x20 should produce a sized estimate');
+  const m = r.measured;
+  // 400 sq ft @ $4.50–$8 labor, $8–$15 total.
+  assert.equal(m.laborMin, 1800, `labor min, got ${m.laborMin}`);
+  assert.equal(m.laborMax, 3200, `labor max, got ${m.laborMax}`);
+  assert.equal(m.totalMin, 3200, `total min, got ${m.totalMin}`);
+  assert.equal(m.totalMax, 6000, `total max, got ${m.totalMax}`);
+  assert.match(m.basis, /concrete 400 sqft/);
+  // Well above the CSLB threshold → licensed-contractor warning.
+  assert.equal(r.contractor.required, true, 'a 20x20 slab requires the contractor notice');
+});
+
+// Dimension variants "20 by 20" and "20 * 20" parse identically.
+check('concrete / 20 by 20', { category: 'other', text: 'need a 20 by 20 concrete slab' }, (r) => {
+  assert.ok(r.measured);
+  assert.equal(r.measured.totalMin, 3200);
+});
+check('deck / 12 x 16 patio', { category: 'other', text: 'build a 12 x 16 deck / patio' }, (r) => {
+  assert.ok(r.measured, 'deck dimension parses');
+  // 192 sq ft @ $15–$35 total.
+  assert.ok(r.measured.totalMin >= 2800 && r.measured.totalMax >= 6000, 'deck total scales by area');
+  assert.equal(r.contractor.required, true);
+});
+
+// ── Quote mode: conservative placeholder reward → XP can't explode ───────────
+check('quote mode XP (no measured assert)', { category: 'other', text: 'placeholder' }, () => {
+  // No measurement → flat placeholder.
+  assert.equal(quoteModeReward({ measured: null }), 50);
+  assert.ok(calcXpReward(quoteModeReward({ measured: null })) < 600, 'quote XP stays modest');
+  // A measured contractor job (20x20 concrete labor min $1,800) is capped at 200,
+  // so XP for a quote-needed job is far below what a $1,800 fixed reward would mint.
+  const concrete = recommendBudget({ category: 'other', text: 'pour a 20x20 concrete pad' });
+  const qReward = quoteModeReward(concrete);
+  assert.ok(qReward <= 200, `quote reward capped, got ${qReward}`);
+  assert.ok(calcXpReward(qReward) < calcXpReward(concrete.measured.laborMin),
+    'quote XP must be lower than XP for the full measured reward');
+});
+
 // XP is log-scaled and capped — a $1,200 fence must not mint absurd XP.
 check('xp sanity (no measured assert)', { category: 'other', text: 'placeholder' }, () => {
   assert.equal(calcXpReward(10), 311);
   assert.ok(calcXpReward(50) < 600, '$50 stays modest');
+  assert.equal(calcXpReward(1200), 921, '$1,200 job ≈ 921 XP');
   assert.ok(calcXpReward(1200) < 1000, '$1,200 fence is not absurd');
   assert.equal(calcXpReward(1000000), 1500, 'hard cap at 1,500');
   // Monotonic non-decreasing.

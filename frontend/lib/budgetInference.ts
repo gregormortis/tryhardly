@@ -163,6 +163,13 @@ function resolveBase(category?: string | null) {
 
 // ── Number extraction ────────────────────────────────────────────────────────
 
+// Linear-feet unit pattern. Accepts spelled-out units ("feet"/"foot"/"ft"/"lf",
+// optionally prefixed by "linear") AND the foot-mark symbols a poster types
+// without a unit word: a straight apostrophe ' , a curly right quote ’ , or a
+// prime ′ . This is what makes "220' goat fence" parse as 220 feet instead of
+// being missed and falling back to the tiny fencing base range.
+const FEET_UNIT = "linear\\s*(?:feet|foot|ft)|feet|foot|ft\\b|lf\\b|['’′]";
+
 // First integer/decimal that appears near one of the given unit words, e.g.
 // "220 ft", "220 linear feet", "120ft of fence". Returns null if none found.
 function extractQuantityNear(text: string, unitPattern: string): number | null {
@@ -171,6 +178,23 @@ function extractQuantityNear(text: string, unitPattern: string): number | null {
   if (!m) return null;
   const n = parseFloat(m[1]);
   return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// Two dimensions written as "20x20", "20 x 20", "20 * 20", "20 by 20", or
+// "20ft x 20ft" → returns { w, h, sqft }. Returns null if no pair is found.
+function extractDimensions(text: string): { w: number; h: number; sqft: number } | null {
+  // Optional foot marks/units after each number are tolerated and ignored.
+  const unit = "(?:\\s*(?:'|’|′|ft|feet|foot))?";
+  const re = new RegExp(
+    `(\\d{1,4}(?:\\.\\d+)?)${unit}\\s*(?:x|\\*|by)\\s*(\\d{1,4}(?:\\.\\d+)?)${unit}`,
+    'i',
+  );
+  const m = text.match(re);
+  if (!m) return null;
+  const w = parseFloat(m[1]);
+  const h = parseFloat(m[2]);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+  return { w, h, sqft: w * h };
 }
 
 // Count occurrences of a small set of words (e.g. how many "gate" mentions, how
@@ -195,7 +219,7 @@ function fencingEstimate(text: string): MeasuredEstimate | null {
   ]);
   if (!isFence) return null;
 
-  const feet = extractQuantityNear(text, 'linear\\s*(?:feet|foot|ft)|feet|foot|ft\\b|lf\\b');
+  const feet = extractQuantityNear(text, FEET_UNIT);
   if (!feet) return null;
 
   // Per-foot labor band. 220 ft → ~$900–$1,500 labor, midpoint ~$1,200.
@@ -277,6 +301,95 @@ function fencingEstimate(text: string): MeasuredEstimate | null {
     timeEstimate,
     assumptions,
     basis: `fencing ${feet} ft${factors.length ? ' (' + factors.join(', ') + ')' : ''}`,
+  };
+}
+
+// Flatwork by area: concrete pad / slab, deck, patio, paver/shed pad. Priced
+// per square foot from a WxH dimension (e.g. "20x20 concrete pad" → 400 sq ft).
+// These are the jobs most likely to be anchored at an unrealistic fixed budget,
+// so we surface both labor-only and materials+labor and let the contractor
+// notice fire — a 20x20 slab is firmly above the CSLB $1,000 threshold.
+function flatworkEstimate(text: string): MeasuredEstimate | null {
+  const isConcrete = hasKeyword(text, [
+    'concrete', 'slab', 'cement', 'foundation', 'footing', 'pad',
+  ]);
+  const isDeck = hasKeyword(text, ['deck', 'patio', 'paver', 'pavers']);
+  if (!isConcrete && !isDeck) return null;
+
+  const dims = extractDimensions(text);
+  if (!dims) return null;
+  const { w, h, sqft } = dims;
+
+  // Per-sq-ft bands (installed). Concrete flatwork runs higher than wood decking
+  // labor; both split into a labor-only portion and a materials+labor total.
+  let totalPerSqftMin: number;
+  let totalPerSqftMax: number;
+  let laborPerSqftMin: number;
+  let laborPerSqftMax: number;
+  let laborPerSqftMid: number;
+  let typeNote: string;
+
+  if (isConcrete) {
+    // ~$8–$15/sq ft installed; labor is roughly $4.50–$8/sq ft of that.
+    totalPerSqftMin = 8;
+    totalPerSqftMax = 15;
+    laborPerSqftMin = 4.5;
+    laborPerSqftMax = 8;
+    laborPerSqftMid = 6;
+    typeNote = 'Concrete flatwork (form, pour, finish) on prepared ground.';
+  } else {
+    // Deck / patio paver: ~$15–$35/sq ft installed; labor ~$8–$16/sq ft.
+    totalPerSqftMin = 15;
+    totalPerSqftMax = 35;
+    laborPerSqftMin = 8;
+    laborPerSqftMax = 16;
+    laborPerSqftMid = 11;
+    typeNote = 'Deck / patio surface on prepared ground.';
+  }
+
+  const factors: string[] = [];
+  const assumptions: string[] = [typeNote, `${w}×${h} ≈ ${Math.round(sqft)} sq ft.`];
+
+  // Thickened edges / rebar / heavy reinforcement raise both labor and total.
+  if (hasKeyword(text, ['rebar', 'reinforced', 'thick', 'driveway', 'footing', 'foundation'])) {
+    laborPerSqftMin *= 1.15;
+    laborPerSqftMax *= 1.2;
+    laborPerSqftMid *= 1.15;
+    totalPerSqftMin *= 1.15;
+    totalPerSqftMax *= 1.2;
+    factors.push('reinforced / structural');
+    assumptions.push('Reinforcement or structural work raises cost vs a plain pad.');
+  }
+
+  const laborMin = round25(sqft * laborPerSqftMin);
+  const laborMax = round25(sqft * laborPerSqftMax);
+  const laborSuggested = round25(sqft * laborPerSqftMid);
+  const totalMin = round25(sqft * totalPerSqftMin);
+  const totalMax = round25(sqft * totalPerSqftMax);
+
+  // ~25–40 sq ft of finished flatwork per labor-hour for a small crew.
+  const hoursMin = Math.max(6, Math.round(sqft / 40));
+  const hoursMax = Math.max(hoursMin + 2, Math.round(sqft / 25));
+  const daysMin = Math.max(1, Math.round(hoursMin / 8));
+  const daysMax = Math.max(daysMin, Math.round(hoursMax / 8));
+  const timeEstimate =
+    daysMin === daysMax
+      ? `~${daysMin} day / ${hoursMin}–${hoursMax} labor hours`
+      : `~${daysMin}–${daysMax} days / ${hoursMin}–${hoursMax} labor hours`;
+
+  assumptions.push('Labor-only assumes you supply concrete/materials and prep.');
+
+  return {
+    laborMin,
+    laborMax,
+    laborSuggested,
+    totalMin,
+    totalMax,
+    timeEstimate,
+    assumptions,
+    basis: `${isConcrete ? 'concrete' : 'deck/patio'} ${Math.round(sqft)} sqft${
+      factors.length ? ' (' + factors.join(', ') + ')' : ''
+    }`,
   };
 }
 
@@ -439,6 +552,7 @@ function handymanEstimate(text: string): MeasuredEstimate | null {
 function measure(text: string): MeasuredEstimate | null {
   return (
     fencingEstimate(text) ??
+    flatworkEstimate(text) ??
     haulingEstimate(text) ??
     movingEstimate(text) ??
     cleaningEstimate(text) ??
@@ -450,9 +564,11 @@ function measure(text: string): MeasuredEstimate | null {
 
 // Tasks where CSLB licensing is relevant (construction / improvement work).
 const LICENSE_RELEVANT = [
-  'fence', 'fencing', 'deck', 'paint', 'painting', 'drywall', 'concrete',
-  'install', 'build', 'construction', 'remodel', 'roof', 'electrical',
-  'plumbing', 'handyman', 'repair', 'framing', 'tile', 'flooring',
+  'fence', 'fencing', 'deck', 'patio', 'paint', 'painting', 'drywall',
+  'concrete', 'slab', 'cement', 'foundation', 'footing', 'pad',
+  'install', 'build', 'construction', 'remodel', 'roof', 'roofing',
+  'electrical', 'plumbing', 'handyman', 'repair', 'framing', 'tile',
+  'flooring', 'tree',
 ];
 
 function contractorNotice(
