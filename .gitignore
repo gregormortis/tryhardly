@@ -2,6 +2,11 @@
 exports/
 *.export.json
 
+# Android signing — never commit keystores or signing credentials
+*.jks
+*.keystore
+keystore.properties
+
 # Logs
 logs
 *.log
