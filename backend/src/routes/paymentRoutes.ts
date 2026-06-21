@@ -3,6 +3,7 @@ import { authenticate } from '../middleware/authMiddleware';
 import {
   createConnectedAccount,
   getOnboardingLink,
+  getConnectStatus,
   createQuestCheckout,
   captureQuestPayment,
   cancelQuestAuthorization,
@@ -48,6 +49,10 @@ router.post('/connect', authenticate, createConnectedAccount);
 
 // Get an onboarding link for the current user's Stripe Connect account
 router.get('/connect/onboarding', authenticate, getOnboardingLink);
+
+// Read the current user's payout-account status from Stripe (charges/payouts/
+// details + requirements due). Used by the UI to render connect/resume/complete.
+router.get('/connect/status', authenticate, getConnectStatus);
 
 // --- Marketplace Payment (destination charge via Checkout Session) ---
 // Create a Checkout Session for a job (authorize-only, manual capture): the

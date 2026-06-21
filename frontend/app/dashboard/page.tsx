@@ -118,10 +118,7 @@ export default function DashboardPage() {
 
       {/* Stripe Connect */}
       <div className="mb-6">
-        <StripeConnectButton
-          stripeAccountId={user.stripeAccountId || null}
-          onboarded={!!user.stripeAccountId}
-        />
+        <StripeConnectButton stripeAccountId={user.stripeAccountId || null} />
       </div>
 
       {/* Pending completion reviews — quests a worker submitted for your review. */}
