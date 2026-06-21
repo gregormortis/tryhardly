@@ -111,6 +111,50 @@ function getTier(reward: number) {
   return TIER_MAP.find((t) => reward >= t.min && reward <= t.max) ?? TIER_MAP[0];
 }
 
+// Dollar floor at which a fixed-price job reads as "large" to a poster. Kept in
+// step with the upper end of category bands (e.g. fencing tops out ~$600) so the
+// label only appears on genuinely big jobs, not a routine yard task.
+const LARGE_JOB_REWARD = 500;
+
+// Practical, poster-facing badge for the Review step. Posters should never see
+// gamified worker ranks (LEGENDARY/EPIC/…); those stay on worker-facing quest
+// surfaces. We derive a plain marketplace label from data the poster already
+// provided — contractor/license guidance first (most important), then quote
+// mode, then sheer size — and otherwise show nothing (the category chip stands
+// alone). Returns null when no practical badge applies.
+function reviewBadge(args: {
+  contractorRequired: boolean;
+  contractorRelevant: boolean;
+  budgetMode: BudgetMode;
+  reward: number;
+}): { label: string; classes: string } | null {
+  if (args.contractorRequired) {
+    return {
+      label: 'Licensed contractor may be required',
+      classes: 'text-rose-300 bg-rose-400/10 border-rose-400/20',
+    };
+  }
+  if (args.contractorRelevant) {
+    return {
+      label: 'Contractor-scale job',
+      classes: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
+    };
+  }
+  if (args.budgetMode === 'quote') {
+    return {
+      label: 'Quote needed',
+      classes: 'text-stone-300 bg-white/[0.06] border-white/[0.1]',
+    };
+  }
+  if (args.reward >= LARGE_JOB_REWARD) {
+    return {
+      label: 'Large job',
+      classes: 'text-stone-300 bg-white/[0.06] border-white/[0.1]',
+    };
+  }
+  return null;
+}
+
 // Worker XP from the budget. Log-scaled and capped so a big-dollar job (e.g. a
 // $1,200 fence) doesn't mint absurd XP versus a $50 yard task, and so XP can't
 // be farmed by inflating the budget. A flat `reward * 10` made large jobs
@@ -400,6 +444,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
   const rewardNum = parseFloat(data.reward) || 0;
   const tierInfo  = getTier(rewardNum);
+
+  // Poster-facing Review badge. tierInfo (the gamified worker rank) is kept for
+  // worker-facing surfaces and the post-submit XP plumbing, but is no longer
+  // shown to the poster — they see a plain marketplace label instead.
+  const posterBadge = reviewBadge({
+    contractorRequired: budgetRec.contractor.required,
+    contractorRelevant: budgetRec.contractor.message !== '',
+    budgetMode: data.budgetMode,
+    reward: rewardNum,
+  });
 
   if (submitted) {
     return (
@@ -933,10 +987,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-6 mb-6">
               <h3 className="font-bold text-base text-stone-100 mb-1.5">{data.title}</h3>
               <div className="flex gap-2 flex-wrap mb-4">
-                <span className={clsx(
-                  'font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5',
-                  tierInfo.classes,
-                )}>{tierInfo.tier.toUpperCase()}</span>
+                {posterBadge && (
+                  <span className={clsx(
+                    'font-mono text-[9px] font-semibold tracking-wide border rounded-sm px-2 py-0.5',
+                    posterBadge.classes,
+                  )}>{posterBadge.label}</span>
+                )}
                 <span className="font-mono text-[9px] text-stone-500 bg-white/[0.05] border border-white/[0.08] rounded-sm px-2 py-0.5">
                   {CATEGORIES.find((c) => c.id === data.category)?.label}
                 </span>
