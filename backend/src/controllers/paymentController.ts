@@ -153,6 +153,76 @@ export const getOnboardingLink = async (
 };
 
 /**
+ * GET /api/payments/connect/status
+ * Report the current user's Stripe Connect payout-account status.
+ *
+ * Reads the live account from Stripe (the DB only stores `stripeAccountId`, not
+ * the enabled flags) so the UI can distinguish three states:
+ *   - no account       → prompt "Connect Payout Account"
+ *   - account, not done → "Resume Stripe onboarding" (requirements still due)
+ *   - account, complete → "Payout account connected"
+ *
+ * `onboarded` is true only when charges + payouts are enabled, details are
+ * submitted, and nothing is currently due. Read-only: never creates or mutates
+ * any Stripe or DB state.
+ */
+export const getConnectStatus = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    const accountId = (user as any).stripeAccountId as string | null;
+    if (!accountId) {
+      res.json({
+        hasAccount: false,
+        accountId: null,
+        chargesEnabled: false,
+        payoutsEnabled: false,
+        detailsSubmitted: false,
+        requirementsDue: false,
+        onboarded: false,
+      });
+      return;
+    }
+
+    const account = await stripeService.getAccount(accountId);
+
+    const currentlyDue = account.requirements?.currently_due ?? [];
+    const pastDue = account.requirements?.past_due ?? [];
+    const requirementsDue = currentlyDue.length > 0 || pastDue.length > 0;
+
+    const onboarded =
+      !!account.charges_enabled &&
+      !!account.payouts_enabled &&
+      !!account.details_submitted &&
+      !requirementsDue;
+
+    res.json({
+      hasAccount: true,
+      accountId: account.id,
+      chargesEnabled: !!account.charges_enabled,
+      payoutsEnabled: !!account.payouts_enabled,
+      detailsSubmitted: !!account.details_submitted,
+      requirementsDue,
+      onboarded,
+    });
+  } catch (error: any) {
+    console.error('Error fetching connect status:', {
+      type: error?.type,
+      code: error?.code,
+      message: error?.message,
+    });
+    res.status(500).json({
+      error: 'Failed to fetch payout account status',
+      message: stripeErrorMessage(error),
+    });
+  }
+};
+
+/**
  * POST /api/payments/quest/:questId/checkout
  * Create a marketplace Checkout Session for a job (destination charge).
  *

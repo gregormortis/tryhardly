@@ -34,6 +34,7 @@ import {
   getPaymentStatus,
   createConnectedAccount,
   getOnboardingLink,
+  getConnectStatus,
 } from '../paymentController';
 
 function mockRes() {
@@ -398,5 +399,95 @@ describe('getOnboardingLink — Stripe Connect onboarding', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(mockStripe.createAccountLink).not.toHaveBeenCalled();
+  });
+});
+
+describe('getConnectStatus — payout account status', () => {
+  function authReq(user: { id: string; role: string }) {
+    return { user, body: {} } as any;
+  }
+
+  it('reports not connected when the user has no account id', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ id: 'u1', stripeAccountId: null });
+
+    const res = mockRes();
+    await getConnectStatus(authReq({ id: 'u1', role: 'WORKER' }), res);
+
+    const body = res.json.mock.calls[0][0];
+    expect(body.hasAccount).toBe(false);
+    expect(body.onboarded).toBe(false);
+    expect(mockStripe.getAccount).not.toHaveBeenCalled();
+  });
+
+  it('reports onboarded when charges+payouts+details are enabled and nothing is due', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ id: 'u1', stripeAccountId: 'acct_1' });
+    mockStripe.getAccount.mockResolvedValue({
+      id: 'acct_1',
+      charges_enabled: true,
+      payouts_enabled: true,
+      details_submitted: true,
+      requirements: { currently_due: [], past_due: [] },
+    });
+
+    const res = mockRes();
+    await getConnectStatus(authReq({ id: 'u1', role: 'WORKER' }), res);
+
+    const body = res.json.mock.calls[0][0];
+    expect(body.hasAccount).toBe(true);
+    expect(body.onboarded).toBe(true);
+    expect(body.requirementsDue).toBe(false);
+    expect(body.chargesEnabled).toBe(true);
+    expect(body.payoutsEnabled).toBe(true);
+  });
+
+  it('reports NOT onboarded (resume) when requirements are still due', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ id: 'u1', stripeAccountId: 'acct_1' });
+    mockStripe.getAccount.mockResolvedValue({
+      id: 'acct_1',
+      charges_enabled: true,
+      payouts_enabled: false,
+      details_submitted: true,
+      requirements: { currently_due: ['external_account'], past_due: [] },
+    });
+
+    const res = mockRes();
+    await getConnectStatus(authReq({ id: 'u1', role: 'WORKER' }), res);
+
+    const body = res.json.mock.calls[0][0];
+    expect(body.hasAccount).toBe(true);
+    expect(body.onboarded).toBe(false);
+    expect(body.requirementsDue).toBe(true);
+  });
+
+  it('treats missing requirements object as nothing due', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ id: 'u1', stripeAccountId: 'acct_1' });
+    mockStripe.getAccount.mockResolvedValue({
+      id: 'acct_1',
+      charges_enabled: true,
+      payouts_enabled: true,
+      details_submitted: true,
+    });
+
+    const res = mockRes();
+    await getConnectStatus(authReq({ id: 'u1', role: 'WORKER' }), res);
+
+    const body = res.json.mock.calls[0][0];
+    expect(body.requirementsDue).toBe(false);
+    expect(body.onboarded).toBe(true);
+  });
+
+  it('returns 500 with a concise message when Stripe errors', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ id: 'u1', stripeAccountId: 'acct_1' });
+    const stripeErr: any = new Error('No such account: acct_1');
+    stripeErr.type = 'StripeInvalidRequestError';
+    mockStripe.getAccount.mockRejectedValue(stripeErr);
+
+    const res = mockRes();
+    await getConnectStatus(authReq({ id: 'u1', role: 'WORKER' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toBe('Failed to fetch payout account status');
+    expect(body.message).toContain('No such account');
   });
 });
