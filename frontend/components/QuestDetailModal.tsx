@@ -123,7 +123,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   yard:     'Lawn & Yard',     hauling: 'Hauling & Junk',
   moving:   'Moving Help',     handyman: 'Handyman',
   cleaning: 'Cleaning',        painting: 'Painting',
-  pressure: 'Pressure Washing',other:   'Odd Jobs',
+  pressure: 'Pressure Washing',fencing: 'Fencing',
+  other:    'Odd Jobs',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
