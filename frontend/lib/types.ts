@@ -86,15 +86,18 @@ export interface Application {
   questId: string;
   adventurerId: string;
   coverLetter?: string;
-  proposedRate?: number;
+  // Prisma Decimal columns serialize to JSON strings, so these arrive as
+  // `string` over the wire (not number). Coerce with Number()/a numeric helper
+  // before doing math or comparisons on them.
+  proposedRate?: number | string | null;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
   appliedAt: string;
   // Detailed bid fields (additive). Present when the worker submitted a full
   // bid rather than just expressing interest.
-  bidAmount?: number | null;
-  materialCostEstimate?: number | null;
-  laborCostEstimate?: number | null;
-  estimatedLaborHours?: number | null;
+  bidAmount?: number | string | null;
+  materialCostEstimate?: number | string | null;
+  laborCostEstimate?: number | string | null;
+  estimatedLaborHours?: number | string | null;
   materialItems?: MaterialItem[] | null;
   toolsNeeded?: string | null;
   timeline?: string | null;

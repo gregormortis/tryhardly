@@ -79,10 +79,10 @@ export default function QuestDetailPage() {
     setActioningId(appId);
     try {
       await api.put(`/users/applications/${appId}/accept`, {});
-      toast.success('Applicant accepted. The quest is now in progress.');
+      toast.success('Bid accepted. The job is now in progress.');
       await fetchQuest();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to accept applicant');
+      toast.error(err.message || 'Failed to accept bid');
     } finally {
       setActioningId(null);
     }
@@ -92,10 +92,10 @@ export default function QuestDetailPage() {
     setActioningId(appId);
     try {
       await api.put(`/users/applications/${appId}/reject`, {});
-      toast.success('Applicant rejected.');
+      toast.success('Bid set aside.');
       await fetchQuest();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to reject applicant');
+      toast.error(err.message || 'Failed to update bid');
     } finally {
       setActioningId(null);
     }

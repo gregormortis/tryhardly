@@ -207,6 +207,34 @@ describe('acceptApplication — multi-bid selection + payment handoff', () => {
     expect(questPatch.status).toBe('IN_PROGRESS');
   });
 
+  it('sets reward correctly when the bid amount arrives as a Decimal-like string', async () => {
+    // Prisma Decimal columns are objects whose String()/Number() coercion is
+    // exact; a string stand-in here verifies the Number(selectedAmount) > 0
+    // guard accepts non-plain-number bid amounts.
+    mockPrisma.application.findUnique.mockResolvedValue({
+      id: 'a5',
+      adventurerId: 'worker5',
+      questId: 'q5',
+      bidAmount: '1200.50',
+      quest: { id: 'q5', questGiverId: 'owner1', title: 'Deck rebuild' },
+    });
+    mockPrisma.application.update.mockResolvedValue({ id: 'a5', status: 'ACCEPTED' });
+    mockPrisma.quest.update.mockResolvedValue({ id: 'q5' });
+    mockPrisma.application.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.user.findUnique.mockResolvedValue({ email: null });
+
+    const res = mockRes();
+    await acceptApplication(
+      { params: { id: 'a5' }, user: { id: 'owner1' } } as any,
+      res
+    );
+
+    const questPatch = mockPrisma.quest.update.mock.calls[0][0].data;
+    expect(questPatch.reward).toBe('1200.50');
+    expect(questPatch.status).toBe('IN_PROGRESS');
+    expect(questPatch.assignedAdventurerId).toBe('worker5');
+  });
+
   it('forbids a non-owner from accepting a bid', async () => {
     mockPrisma.application.findUnique.mockResolvedValue({
       id: 'a1',

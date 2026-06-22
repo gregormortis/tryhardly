@@ -25,9 +25,19 @@ const WALKTHROUGH_LABELS: Record<WalkthroughType, string> = {
   IN_PERSON: 'On-site review requested',
 };
 
-function money(n?: number | null): string | null {
-  if (n === undefined || n === null) return null;
-  return `$${Number(n).toLocaleString()}`;
+// Prisma serializes Decimal columns (bidAmount, proposedRate, cost/hour
+// estimates) to JSON *strings*, not numbers — so coerce before any numeric
+// comparison or formatting. Returns null for missing/garbage values.
+function numeric(value?: number | string | null): number | null {
+  if (value === undefined || value === null || value === '') return null;
+  const n = typeof value === 'string' ? Number(value) : value;
+  return Number.isFinite(n) ? n : null;
+}
+
+function money(n?: number | string | null): string | null {
+  const num = numeric(n);
+  if (num === null) return null;
+  return `$${num.toLocaleString()}`;
 }
 
 function statusBadge(status: Application['status']): string {
@@ -58,9 +68,9 @@ export default function BidComparison({
   // Best (lowest) total bid among pending bids that named a price — a light
   // comparison aid, not a recommendation.
   const lowestBid = applications
-    .filter((a) => a.status !== 'REJECTED' && typeof a.bidAmount === 'number')
+    .filter((a) => a.status !== 'REJECTED' && numeric(a.bidAmount) !== null)
     .reduce<number | null>(
-      (min, a) => (min === null ? a.bidAmount! : Math.min(min, a.bidAmount!)),
+      (min, a) => (min === null ? numeric(a.bidAmount) : Math.min(min, numeric(a.bidAmount)!)),
       null
     );
 
@@ -77,7 +87,7 @@ export default function BidComparison({
       {applications.map((app) => {
         const total = app.bidAmount ?? app.proposedRate ?? null;
         const isLowest =
-          lowestBid !== null && app.bidAmount === lowestBid && app.status !== 'REJECTED';
+          lowestBid !== null && numeric(app.bidAmount) === lowestBid && app.status !== 'REJECTED';
         const isOpen = !!expanded[app.id];
         const walkthrough =
           app.walkthroughRequested && app.walkthroughType && app.walkthroughType !== 'NONE'
@@ -153,8 +163,8 @@ export default function BidComparison({
               <StatTile
                 label="Hours"
                 value={
-                  app.estimatedLaborHours !== undefined && app.estimatedLaborHours !== null
-                    ? `${app.estimatedLaborHours} h`
+                  numeric(app.estimatedLaborHours) !== null
+                    ? `${numeric(app.estimatedLaborHours)} h`
                     : '—'
                 }
               />
