@@ -30,16 +30,19 @@ export default function AccountDeletionPage() {
             <h2 className="text-2xl font-bold text-amber-400 mb-3">How to request deletion</h2>
             <ul className="list-disc list-inside space-y-2 ml-1">
               <li>
-                <span className="text-gray-100 font-medium">In the app or on the web:</span> sign in,
-                then use the button below or the &ldquo;Delete account&rdquo; option in your{' '}
+                <span className="text-gray-100 font-medium">In the app or on the web (recommended):</span> sign
+                in, then use the button below or the &ldquo;Delete account&rdquo; option in your{' '}
                 <Link href="/profile" className="text-amber-400 hover:text-amber-300">profile settings</Link>.
+                Your request is logged immediately and queued for our team to review — this is the most reliable
+                way to reach us.
               </li>
               <li>
-                <span className="text-gray-100 font-medium">By email:</span> write to{' '}
+                <span className="text-gray-100 font-medium">By email:</span> you can also write to{' '}
                 <a href={`mailto:${SUPPORT_EMAIL}`} className="text-amber-400 hover:text-amber-300">
                   {SUPPORT_EMAIL}
                 </a>{' '}
-                from the email address on your account.
+                from the email address on your account. If you don&apos;t hear back, please use the in-app request
+                above so your request is recorded in our system.
               </li>
             </ul>
           </section>
@@ -69,8 +72,10 @@ export default function AccountDeletionPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-3">How long it takes</h2>
             <p>
-              We aim to process deletion requests within 30 days. We&apos;ll confirm by email when
-              your request is received and again once it&apos;s complete. See our{' '}
+              When you submit the in-app request, it&apos;s recorded right away and shown as
+              &ldquo;Request received&rdquo; — there&apos;s nothing else you need to do. We aim to process
+              deletion requests within 30 days and will notify you at your account email once it&apos;s
+              complete. See our{' '}
               <Link href="/privacy" className="text-amber-400 hover:text-amber-300">Privacy Policy</Link>{' '}
               for more on how we handle your data.
             </p>

@@ -4,6 +4,7 @@ import { rateLimit } from '../middleware/rateLimit';
 import {
   requestAccountDeletion,
   getMyDeletionRequest,
+  cancelMyDeletionRequest,
 } from '../controllers/accountDeletionController';
 
 const router = Router();
@@ -13,5 +14,6 @@ const deletionLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, keyPrefix
 
 router.get('/deletion-request', authenticate, getMyDeletionRequest);
 router.post('/deletion-request', authenticate, deletionLimiter, requestAccountDeletion);
+router.delete('/deletion-request', authenticate, deletionLimiter, cancelMyDeletionRequest);
 
 export default router;

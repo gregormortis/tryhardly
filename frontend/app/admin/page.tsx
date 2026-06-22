@@ -112,6 +112,18 @@ interface AdminCredential {
   verifiedBy?: { id: string; username: string } | null;
 }
 
+interface AdminDeletionRequest {
+  id: string;
+  email: string;
+  reason?: string | null;
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  handlerNote?: string | null;
+  handledAt?: string | null;
+  createdAt: string;
+  user?: { id: string; username: string; email: string } | null;
+  handledBy?: { id: string; username: string } | null;
+}
+
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -126,6 +138,7 @@ export default function AdminPage() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
   const [leadSources, setLeadSources] = useState<LeadSourceCount[]>([]);
   const [credentials, setCredentials] = useState<AdminCredential[]>([]);
+  const [deletionRequests, setDeletionRequests] = useState<AdminDeletionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -143,7 +156,7 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const [s, u, q, r, l, c] = await Promise.all([
+      const [s, u, q, r, l, c, d] = await Promise.all([
         api.get<Stats>('/admin/stats'),
         api.get<AdminUser[]>('/admin/users'),
         api.get<AdminQuest[]>('/admin/quests'),
@@ -152,6 +165,9 @@ export default function AdminPage() {
           .get<LeadsResponse>('/admin/leads')
           .catch(() => ({ leads: [], sourceSummary: [] } as LeadsResponse)),
         api.get<AdminCredential[]>('/admin/credentials').catch(() => [] as AdminCredential[]),
+        api
+          .get<AdminDeletionRequest[]>('/admin/deletion-requests')
+          .catch(() => [] as AdminDeletionRequest[]),
       ]);
       setStats(s);
       setUsers(u);
@@ -172,6 +188,7 @@ export default function AdminPage() {
       });
       setLeadSources(l.sourceSummary);
       setCredentials(c);
+      setDeletionRequests(d);
     } catch (err: any) {
       setError(err.message || 'Failed to load admin data');
     } finally {
@@ -245,6 +262,23 @@ export default function AdminPage() {
       toast.success(`Credential ${status.toLowerCase()}`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to update credential');
+    }
+  };
+
+  const handleDeletionRequest = async (
+    id: string,
+    status: 'COMPLETED' | 'CANCELLED',
+    handlerNote?: string,
+  ) => {
+    try {
+      const updated = await api.put<AdminDeletionRequest>(`/admin/deletion-requests/${id}`, {
+        status,
+        handlerNote,
+      });
+      setDeletionRequests((prev) => prev.map((r) => (r.id === id ? { ...r, ...updated } : r)));
+      toast.success(status === 'COMPLETED' ? 'Marked handled' : 'Request cancelled');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update deletion request');
     }
   };
 
@@ -600,6 +634,86 @@ export default function AdminPage() {
                             </button>
                           )}
                         </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Account deletion requests — the source of truth for actioning
+            deletions (email notifications are best-effort only). */}
+        <section className="mb-10">
+          <h2 className="text-lg font-semibold text-white mb-4">
+            Account deletion requests{' '}
+            <span className="text-sm font-normal text-gray-500">
+              ({deletionRequests.filter((d) => d.status === 'PENDING').length} pending)
+            </span>
+          </h2>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            {deletionRequests.length === 0 ? (
+              <p className="p-6 text-sm text-gray-500">
+                No deletion requests. When a user requests account/data deletion, it appears here for review.
+              </p>
+            ) : (
+              <div className="divide-y divide-gray-800">
+                {deletionRequests.map((d) => {
+                  const statusColor =
+                    d.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
+                    d.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400' :
+                    'bg-gray-700 text-gray-300';
+                  return (
+                    <div key={d.id} className="p-4">
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}>{d.status}</span>
+                          </div>
+                          <p className="text-sm text-gray-300 mt-2">
+                            {d.user ? (
+                              <Link href={`/profile/${d.user.username}`} className="text-amber-400 hover:text-amber-300">
+                                {d.user.username}
+                              </Link>
+                            ) : 'deleted user'}
+                            {' · '}
+                            <a href={`mailto:${d.email}`} className="text-amber-400 hover:text-amber-300">{d.email}</a>
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Requested {new Date(d.createdAt).toLocaleDateString()}
+                            {d.handledAt ? ` · handled ${new Date(d.handledAt).toLocaleDateString()}` : ''}
+                            {d.handledBy ? ` by ${d.handledBy.username}` : ''}
+                          </p>
+                          {d.reason && (
+                            <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">Reason: {d.reason}</p>
+                          )}
+                          {d.handlerNote && (
+                            <p className="text-xs text-gray-500 mt-1 whitespace-pre-line">Note: {d.handlerNote}</p>
+                          )}
+                        </div>
+                        {d.status === 'PENDING' && (
+                          <div className="flex flex-col gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                const note = window.prompt('Note (optional) — e.g. record of what was deleted:') ?? undefined;
+                                handleDeletionRequest(d.id, 'COMPLETED', note);
+                              }}
+                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                            >
+                              Mark handled
+                            </button>
+                            <button
+                              onClick={() => {
+                                const note = window.prompt('Reason for cancelling (optional):') ?? undefined;
+                                handleDeletionRequest(d.id, 'CANCELLED', note);
+                              }}
+                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                            >
+                              Cancel request
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

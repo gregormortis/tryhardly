@@ -96,9 +96,13 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Deleting Your Account &amp; Data</h2>
             <p className="mb-2">
-              You can request deletion of your account and personal data at any time — from within
-              the app or on the web (sign in, then use the option in your profile settings), or by
-              emailing{' '}
+              You can request deletion of your account and personal data at any time. The most
+              reliable way is from within the app or on the web: sign in, then use the option in your
+              profile settings or on the{' '}
+              <Link href="/account-deletion" className="text-amber-400 hover:text-amber-300">
+                Account &amp; Data Deletion
+              </Link>{' '}
+              page. Your request is logged and queued for our team to review. You may also email{' '}
               <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
                 support@tryhardly.com
               </a>{' '}
