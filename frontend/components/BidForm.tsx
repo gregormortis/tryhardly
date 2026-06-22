@@ -84,6 +84,15 @@ export default function BidForm({ contractorScale, submitting, onSubmit }: BidFo
     [materials]
   );
 
+  // Live estimate summary so the worker sees how their material + labor figures
+  // add up as they type. Shown only once a relevant figure is entered.
+  const materialNum = toNumber(materialCost);
+  const laborNum = toNumber(laborCost);
+  const totalNum = toNumber(bidAmount);
+  const showSummary =
+    materialNum !== undefined || laborNum !== undefined || totalNum !== undefined;
+  const fmt = (n: number) => `$${n.toLocaleString()}`;
+
   const addMaterial = () => setMaterials((prev) => [...prev, { ...EMPTY_MATERIAL }]);
   const removeMaterial = (i: number) =>
     setMaterials((prev) => prev.filter((_, idx) => idx !== i));
@@ -211,6 +220,24 @@ export default function BidForm({ contractorScale, submitting, onSubmit }: BidFo
           />
         </div>
       </div>
+
+      {/* Live estimate summary */}
+      {showSummary && (
+        <div className="rounded-lg border border-gray-700 bg-gray-800/40 px-3 py-2.5 text-sm">
+          <div className="flex items-center justify-between text-gray-400">
+            <span>Materials</span>
+            <span>{materialNum !== undefined ? fmt(materialNum) : '—'}</span>
+          </div>
+          <div className="flex items-center justify-between text-gray-400 mt-1">
+            <span>Labor</span>
+            <span>{laborNum !== undefined ? fmt(laborNum) : '—'}</span>
+          </div>
+          <div className="flex items-center justify-between font-semibold text-white mt-2 pt-2 border-t border-gray-700/60">
+            <span>Total bid</span>
+            <span className="text-amber-400">{totalNum !== undefined ? fmt(totalNum) : '—'}</span>
+          </div>
+        </div>
+      )}
 
       {/* Itemized materials */}
       <div>
@@ -411,7 +438,11 @@ export default function BidForm({ contractorScale, submitting, onSubmit }: BidFo
         disabled={submitting}
         className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-900 font-bold py-3 rounded-lg transition-colors"
       >
-        {submitting ? 'Submitting bid…' : 'Submit bid'}
+        {submitting
+          ? 'Submitting bid…'
+          : totalNum !== undefined
+          ? `Submit bid · ${fmt(totalNum)}`
+          : 'Submit bid'}
       </button>
     </div>
   );

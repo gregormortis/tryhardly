@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Check, MessageSquare, Video, MapPin, ShieldCheck } from 'lucide-react';
 import type { Application, WalkthroughType } from '@/lib/types';
 import { guildPathLabel } from '@/lib/guildPath';
 
@@ -25,6 +26,12 @@ const WALKTHROUGH_LABELS: Record<WalkthroughType, string> = {
   IN_PERSON: 'On-site review requested',
 };
 
+const STATUS_LABELS: Record<Application['status'], string> = {
+  PENDING: 'Pending',
+  ACCEPTED: 'Accepted',
+  REJECTED: 'Set aside',
+};
+
 // Prisma serializes Decimal columns (bidAmount, proposedRate, cost/hour
 // estimates) to JSON *strings*, not numbers — so coerce before any numeric
 // comparison or formatting. Returns null for missing/garbage values.
@@ -42,7 +49,7 @@ function money(n?: number | string | null): string | null {
 
 function statusBadge(status: Application['status']): string {
   if (status === 'ACCEPTED') return 'bg-green-500/20 text-green-400';
-  if (status === 'REJECTED') return 'bg-red-500/20 text-red-400';
+  if (status === 'REJECTED') return 'bg-gray-700 text-gray-400';
   return 'bg-yellow-500/20 text-yellow-400';
 }
 
@@ -65,25 +72,52 @@ export default function BidComparison({
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const hasAccepted = applications.some((a) => a.status === 'ACCEPTED');
 
-  // Best (lowest) total bid among pending bids that named a price — a light
-  // comparison aid, not a recommendation.
-  const lowestBid = applications
+  // Priced bids that are still in play — used for the lowest-bid aid and the
+  // summary price range at the top.
+  const activePrices = applications
     .filter((a) => a.status !== 'REJECTED' && numeric(a.bidAmount) !== null)
-    .reduce<number | null>(
-      (min, a) => (min === null ? numeric(a.bidAmount) : Math.min(min, numeric(a.bidAmount)!)),
-      null
-    );
+    .map((a) => numeric(a.bidAmount)!)
+    .sort((x, y) => x - y);
+
+  const lowestBid = activePrices.length > 0 ? activePrices[0] : null;
+  const highestBid = activePrices.length > 0 ? activePrices[activePrices.length - 1] : null;
 
   if (applications.length === 0) {
     return (
-      <p className="text-sm text-gray-500">
-        No bids yet. Share your job to attract qualified workers.
-      </p>
+      <div className="text-center py-10 border border-dashed border-gray-800 rounded-lg bg-gray-950/30">
+        <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gray-800/80 mb-3">
+          <MessageSquare size={20} className="text-gray-500" />
+        </div>
+        <p className="text-sm text-gray-300 font-medium">No bids yet</p>
+        <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto leading-relaxed">
+          Workers can submit a full estimate with materials, labor, and timeline. Share your job to
+          attract qualified workers.
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="space-y-3">
+      {/* Summary bar — at-a-glance price range across active bids */}
+      {activePrices.length > 1 && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 bg-gray-950/40 px-4 py-2.5">
+          <span className="text-xs text-gray-400">
+            {activePrices.length} priced {activePrices.length === 1 ? 'bid' : 'bids'}
+          </span>
+          <span className="text-xs text-gray-300">
+            Range{' '}
+            <span className="font-semibold text-amber-400">{money(lowestBid)}</span>
+            {highestBid !== lowestBid && (
+              <>
+                {' – '}
+                <span className="font-semibold text-amber-400">{money(highestBid)}</span>
+              </>
+            )}
+          </span>
+        </div>
+      )}
+
       {applications.map((app) => {
         const total = app.bidAmount ?? app.proposedRate ?? null;
         const isLowest =
@@ -93,14 +127,17 @@ export default function BidComparison({
           app.walkthroughRequested && app.walkthroughType && app.walkthroughType !== 'NONE'
             ? WALKTHROUGH_LABELS[app.walkthroughType]
             : null;
+        const isSetAside = app.status === 'REJECTED';
 
         return (
           <div
             key={app.id}
-            className={`p-4 rounded-lg border ${
+            className={`p-4 rounded-lg border transition-colors ${
               app.status === 'ACCEPTED'
                 ? 'border-green-500/40 bg-green-500/5'
-                : 'border-gray-800 bg-gray-800/60'
+                : isSetAside
+                ? 'border-gray-800 bg-gray-800/30 opacity-70'
+                : 'border-gray-800 bg-gray-800/60 hover:border-gray-700'
             }`}
           >
             {/* Header: worker + total bid */}
@@ -132,29 +169,33 @@ export default function BidComparison({
                     app.status
                   )}`}
                 >
-                  {app.status}
+                  {STATUS_LABELS[app.status]}
                 </span>
               </div>
             </div>
 
             {/* Comparison badges */}
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {isLowest && app.status !== 'ACCEPTED' && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
-                  Lowest bid
-                </span>
-              )}
-              {walkthrough && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/10 text-sky-300">
-                  {walkthrough}
-                </span>
-              )}
-              {app.legalQualificationAck && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">
-                  Qualification acknowledged
-                </span>
-              )}
-            </div>
+            {(isLowest || walkthrough || app.legalQualificationAck) && (
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {isLowest && app.status !== 'ACCEPTED' && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
+                    Lowest bid
+                  </span>
+                )}
+                {walkthrough && (
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/10 text-sky-300">
+                    {app.walkthroughType === 'REMOTE' ? <Video size={11} /> : <MapPin size={11} />}
+                    {walkthrough}
+                  </span>
+                )}
+                {app.legalQualificationAck && (
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">
+                    <ShieldCheck size={11} />
+                    Qualification acknowledged
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* At-a-glance stats */}
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -257,24 +298,27 @@ export default function BidComparison({
             )}
 
             {/* Actions */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {app.status === 'PENDING' && !hasAccepted && (
                 <>
                   <button
                     onClick={() => onAccept(app.id)}
                     disabled={actioningId === app.id}
-                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-500/90 hover:bg-green-400 text-gray-900 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-green-500 hover:bg-green-400 text-gray-900 disabled:opacity-50 transition-colors"
                   >
-                    {actioningId === app.id
-                      ? '...'
-                      : money(total)
-                      ? `Accept bid (${money(total)})`
-                      : 'Accept bid'}
+                    {actioningId === app.id ? (
+                      'Accepting…'
+                    ) : (
+                      <>
+                        <Check size={15} />
+                        {money(total) ? `Accept bid · ${money(total)}` : 'Accept bid'}
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => onReject(app.id)}
                     disabled={actioningId === app.id}
-                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-gray-600 hover:text-gray-100 disabled:opacity-50 transition-colors"
                   >
                     Set aside
                   </button>
@@ -283,8 +327,9 @@ export default function BidComparison({
               {app.adventurerId && (
                 <Link
                   href={`/messages/${questId}/${app.adventurerId}`}
-                  className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors"
                 >
+                  <MessageSquare size={14} />
                   Message
                 </Link>
               )}

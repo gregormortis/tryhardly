@@ -348,6 +348,7 @@ export default function QuestDetailPage() {
                       ${quest.reward?.toLocaleString()}
                     </div>
                     <div className="text-gray-500 text-sm mt-1">Client budget</div>
+                    <div className="text-gray-600 text-xs mt-1">Workers can bid with their own estimate</div>
                   </>
                 )}
               </div>
