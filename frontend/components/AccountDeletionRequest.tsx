@@ -12,9 +12,17 @@ interface PendingRequest {
   createdAt: string;
 }
 
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 // Logged-in entry point for requesting account/data deletion. Shown on the
-// public /account-deletion page and linked from the profile page. Visitors who
-// aren't signed in get a prompt to log in (or email support) instead.
+// public /account-deletion page and linked from the profile page. Requests are
+// queued for review in the admin deletion queue (the source of truth); we don't
+// promise email delivery. Visitors who aren't signed in get a prompt to log in.
 export default function AccountDeletionRequest() {
   const { user, loading: authLoading } = useAuth();
   const [pending, setPending] = useState<PendingRequest | null>(null);
@@ -22,6 +30,7 @@ export default function AccountDeletionRequest() {
   const [confirming, setConfirming] = useState(false);
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,16 +48,30 @@ export default function AccountDeletionRequest() {
   const submit = async () => {
     setSubmitting(true);
     try {
-      const res = await api.post<{ id: string; status: string }>('/account/deletion-request', {
-        reason: reason.trim() || undefined,
-      });
-      setPending({ id: res.id, status: res.status, createdAt: new Date().toISOString() });
+      const res = await api.post<{ id: string; status: string; createdAt?: string }>(
+        '/account/deletion-request',
+        { reason: reason.trim() || undefined },
+      );
+      setPending({ id: res.id, status: res.status, createdAt: res.createdAt ?? new Date().toISOString() });
       setConfirming(false);
-      toast.success("Deletion request submitted. We'll follow up by email.");
+      toast.success('Request received — it’s queued for review.');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit request');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const withdraw = async () => {
+    setWithdrawing(true);
+    try {
+      await api.delete('/account/deletion-request');
+      setPending(null);
+      toast.success('Deletion request withdrawn.');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to withdraw request');
+    } finally {
+      setWithdrawing(false);
     }
   };
 
@@ -60,31 +83,43 @@ export default function AccountDeletionRequest() {
     return (
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <p className="text-gray-300 mb-3">
-          To request deletion from your account, please{' '}
-          <Link href="/auth/login" className="text-amber-400 hover:text-amber-300">log in</Link>.
+          To request deletion of your account,{' '}
+          <Link href="/auth/login" className="text-amber-400 hover:text-amber-300">log in</Link>{' '}
+          and use the button on this page. Your request is logged for our team to review and action.
         </p>
         <p className="text-sm text-gray-500">
-          You can also email{' '}
+          Prefer not to sign in? Email{' '}
           <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
             support@tryhardly.com
           </a>{' '}
-          from the address on your account and we&apos;ll process your request.
+          from the address on your account. The fastest, most reliable route is the in-app request above.
         </p>
       </div>
     );
   }
 
   if (pending) {
+    const requested = pending.createdAt ? formatDate(pending.createdAt) : '';
     return (
       <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6">
-        <h3 className="font-semibold text-amber-300 mb-1">Deletion request received</h3>
+        <h3 className="font-semibold text-amber-300 mb-1">Request received</h3>
         <p className="text-sm text-gray-300">
-          We have a pending deletion request for your account. Our team will process it and follow
-          up at your account email. If you change your mind, contact{' '}
-          <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
-            support@tryhardly.com
-          </a>.
+          Your deletion request is <span className="font-medium text-amber-200">queued for review</span> by our
+          team{requested ? ` (requested ${requested})` : ''}. It’s recorded in our system — you don’t need to do
+          anything else. We aim to process requests within 30 days, and you’ll be notified at your account email
+          once it’s complete.
         </p>
+        <p className="text-sm text-gray-400 mt-3">
+          Changed your mind? You can withdraw this request while it’s still pending.
+        </p>
+        <button
+          type="button"
+          onClick={withdraw}
+          disabled={withdrawing}
+          className="mt-3 px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-300 disabled:opacity-50"
+        >
+          {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
+        </button>
       </div>
     );
   }
@@ -94,8 +129,9 @@ export default function AccountDeletionRequest() {
       {!confirming ? (
         <>
           <p className="text-gray-300 mb-4">
-            Requesting deletion removes your profile and personal data from TryHardly. Records tied
-            to completed quests or payments may be retained where the law requires.
+            Requesting deletion removes your profile and personal data from TryHardly. Your request is logged for
+            our team to review and action — records tied to completed quests or payments may be retained where the
+            law requires.
           </p>
           <button
             type="button"

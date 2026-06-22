@@ -4,14 +4,32 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { DeletionRequestStatus } from '@prisma/client';
 import { sendEmail, emailTemplates } from '../services/mailerService';
 
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@tryhardly.com';
+// Optional internal alert recipient. Email is best-effort only: the admin queue
+// (GET /api/admin/deletion-requests) is the source of truth for actioning
+// deletions, so we never depend on this address being deliverable. Left unset
+// until a real, MX-backed inbox exists — see backend/.env.example.
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL?.trim() || '';
 const VALID_STATUSES = new Set(Object.values(DeletionRequestStatus));
+
+// Best-effort send that records the outcome without ever logging email contents
+// (which may include the user's address/PII). label identifies which message it
+// was; ok/failed is enough to debug delivery without exposing the payload.
+function notify(label: string, message: Parameters<typeof sendEmail>[0]): void {
+  void sendEmail(message)
+    .then(() => console.log(`[account-deletion] notification "${label}" dispatched to provider`))
+    .catch((err) =>
+      console.error(
+        `[account-deletion] notification "${label}" failed: ${err instanceof Error ? err.message : 'unknown error'}`,
+      ),
+    );
+}
 
 // POST /api/account/deletion-request  { reason? }
 // A logged-in user asks for their account and data to be deleted. We record the
-// request (idempotent while one is PENDING) and notify support so it can be
-// actioned. We do not hard-delete inline: the user is referenced by quests,
-// reviews, messages, and payment records, so removal happens out of band.
+// request (idempotent while one is PENDING); the admin deletion queue is the
+// source of truth for actioning it. Email is a best-effort courtesy only. We do
+// not hard-delete inline: the user is referenced by quests, reviews, messages,
+// and payment records, so removal happens out of band after review.
 export const requestAccountDeletion = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
@@ -33,6 +51,7 @@ export const requestAccountDeletion = async (req: AuthRequest, res: Response): P
       res.status(200).json({
         id: existing.id,
         status: existing.status,
+        createdAt: existing.createdAt,
         alreadyRequested: true,
       });
       return;
@@ -46,13 +65,23 @@ export const requestAccountDeletion = async (req: AuthRequest, res: Response): P
       },
     });
 
-    // Fire-and-forget notifications; sending must never block the request.
-    void sendEmail(emailTemplates.accountDeletionRequested(user.email, user.username));
-    void sendEmail(
-      emailTemplates.accountDeletionSupportAlert(SUPPORT_EMAIL, user.username, user.email, request.id),
-    );
+    // The request is now queued for admin review (the source of truth). Email is
+    // a best-effort courtesy on top and must never block or fail the request.
+    console.log(`[account-deletion] request ${request.id} queued for admin review`);
+    notify('user-confirmation', emailTemplates.accountDeletionRequested(user.email, user.username));
+    if (SUPPORT_EMAIL) {
+      notify(
+        'support-alert',
+        emailTemplates.accountDeletionSupportAlert(SUPPORT_EMAIL, user.username, user.email, request.id),
+      );
+    }
 
-    res.status(201).json({ id: request.id, status: request.status, alreadyRequested: false });
+    res.status(201).json({
+      id: request.id,
+      status: request.status,
+      createdAt: request.createdAt,
+      alreadyRequested: false,
+    });
   } catch (error) {
     console.error('requestAccountDeletion error:', error);
     res.status(500).json({ error: 'Failed to submit deletion request' });
@@ -70,6 +99,33 @@ export const getMyDeletionRequest = async (req: AuthRequest, res: Response): Pro
   } catch (error) {
     console.error('getMyDeletionRequest error:', error);
     res.status(500).json({ error: 'Failed to fetch deletion request' });
+  }
+};
+
+// DELETE /api/account/deletion-request  -> the user withdraws their own pending
+// request (e.g. they changed their mind). Only their own PENDING request can be
+// cancelled; admin-actioned terminal states are left untouched.
+export const cancelMyDeletionRequest = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const existing = await prisma.accountDeletionRequest.findFirst({
+      where: { userId, status: DeletionRequestStatus.PENDING },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!existing) {
+      res.status(404).json({ error: 'No pending deletion request to cancel' });
+      return;
+    }
+
+    await prisma.accountDeletionRequest.update({
+      where: { id: existing.id },
+      data: { status: DeletionRequestStatus.CANCELLED },
+    });
+    console.log(`[account-deletion] request ${existing.id} withdrawn by user`);
+    res.status(204).end();
+  } catch (error) {
+    console.error('cancelMyDeletionRequest error:', error);
+    res.status(500).json({ error: 'Failed to cancel deletion request' });
   }
 };
 
