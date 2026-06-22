@@ -267,6 +267,42 @@ export interface ProofOfWorkItem {
   updatedAt?: string;
 }
 
+// ─── Service packages ─────────────────────────────────────────────────────────
+// A repeatable local service listing a worker publishes. A package is a listing
+// only — it never charges or holds money; payment happens later in the normal
+// job → bid → worker-selection flow.
+export type ServicePriceType = 'STARTING_AT' | 'FLAT_RATE' | 'HOURLY' | 'QUOTE_NEEDED';
+
+export interface ServicePackage {
+  id: string;
+  userId: string;
+  title: string;
+  category: string;
+  description?: string | null;
+  priceType: ServicePriceType;
+  // Prisma Decimal serializes to a string over the wire; coerce before math.
+  startingPrice?: number | string | null;
+  currency: string;
+  includedScope?: string | null;
+  addOns?: string | null;
+  exclusions?: string | null;
+  materialsPolicy?: string | null;
+  serviceArea?: string | null;
+  availability?: string | null;
+  toolsProvided?: string | null;
+  imageUrl?: string | null;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  // Present on public (browse / profile / detail) responses.
+  user?: {
+    id: string;
+    username: string;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+  };
+}
+
 // Verified Pro checklist + eligibility (GET /users/:userId/verified-pro).
 export interface VerifiedProCheckItem {
   key: string;

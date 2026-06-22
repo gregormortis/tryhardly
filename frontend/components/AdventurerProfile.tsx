@@ -8,11 +8,13 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { guildPathLabel } from '@/lib/guildPath';
 import ReportButton from '@/components/ReportButton';
+import ServicePackageCard from '@/components/ServicePackageCard';
 import type {
   PublicCredential,
   CredentialType,
   ProofOfWorkItem,
   VerifiedProStatus,
+  ServicePackage,
 } from '@/lib/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -426,6 +428,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [achievements, setAchievements] = useState<EarnedAchievement[]>([]);
   const [proof, setProof] = useState<ProofOfWorkItem[]>([]);
   const [verifiedPro, setVerifiedPro] = useState<VerifiedProStatus | null>(null);
+  const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -438,6 +441,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
     setAchievements([]);
     setProof([]);
     setVerifiedPro(null);
+    setServicePackages([]);
+    // Active service packages are keyed by username and returned active-only;
+    // fetch separately so the profile still renders if empty or it fails.
+    api
+      .get<ServicePackage[]>(`/service-packages/user/${encodeURIComponent(userId)}`)
+      .then((s) => { if (active) setServicePackages(Array.isArray(s) ? s : []); })
+      .catch(() => { if (active) setServicePackages([]); });
     // Verified credentials are keyed by username; fetch separately so the
     // profile still renders if the endpoint is empty or fails.
     api
@@ -761,6 +771,24 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   </div>
                 );
               })()}
+
+              {/* Service packages — repeatable local services the worker has
+                  published (active only). Each card's CTA routes into the normal
+                  /request-help intake; no payment is taken from a package. */}
+              {servicePackages.length > 0 && (
+                <div>
+                  <SectionLabel>Service packages</SectionLabel>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {servicePackages.map((p) => (
+                      <ServicePackageCard key={p.id} pkg={p} showWorker={false} />
+                    ))}
+                  </div>
+                  <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
+                    Requesting a service starts a normal job — you and the worker agree on details and price
+                    before any payment. Nothing is charged from a listing.
+                  </p>
+                </div>
+              )}
 
               {/* Proof of work — worker-curated gallery of past jobs (image URLs
                   only; we store no files). Only items the worker marked visible

@@ -8,6 +8,7 @@ import NotificationBell from "./NotificationBell";
 
 const navLinks = [
   { href: "/questboard", label: "Browse jobs" },
+  { href: "/service-packages", label: "Services" },
   { href: "/post-quest", label: "Post a job" },
   { href: "/leaderboards", label: "Leaderboards" },
   { href: "/about", label: "About" },

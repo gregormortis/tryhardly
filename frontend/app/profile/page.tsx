@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Application, User } from '@/lib/types';
 import CredentialsManager from '@/components/CredentialsManager';
+import ServicePackagesManager from '@/components/ServicePackagesManager';
 import ProfessionalismManager from '@/components/ProfessionalismManager';
 import StripeConnectButton from '@/components/StripeConnectButton';
 import { GUILD_PATHS, guildPathLabel } from '@/lib/guildPath';
@@ -294,6 +295,9 @@ export default function ProfilePage() {
 
         {/* Professional credentials */}
         <CredentialsManager />
+
+        {/* Worker service packages */}
+        <ServicePackagesManager />
 
         {/* Professionalism: Code of Craft pledge, Verified Pro, proof of work */}
         <ProfessionalismManager userId={displayProfile.id} />
