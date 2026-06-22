@@ -179,8 +179,6 @@ export default function QuestDetailModal({
   const [quest,    setQuest]    = useState<Quest | null>(null);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
-  const [claiming, setClaiming] = useState(false);
-  const [claimed,  setClaimed]  = useState(false);
   const [visible,  setVisible]  = useState(false);
 
   // Animate in/out + body scroll lock
@@ -194,7 +192,6 @@ export default function QuestDetailModal({
         document.body.style.overflow = '';
         setQuest(null);
         setError(null);
-        setClaimed(false);
       }, 280);
       return () => clearTimeout(t);
     }
@@ -223,17 +220,13 @@ export default function QuestDetailModal({
 
   function handleClaim() {
     if (!currentUserId) {
-      window.location.href = `/login?redirect=/quests/${questId}`;
+      window.location.href = `/login?redirect=/questboard/${questId}`;
       return;
     }
-    setClaiming(true);
-    // Backend exposes application via POST /quests/:id/apply (there is no
-    // /claim route). lib/api attaches the auth token automatically.
-    api
-      .post(`/quests/${questId}/apply`, {})
-      .then(() => setClaimed(true))
-      .catch((e: unknown) => setError(errorMessage(e)))
-      .finally(() => setClaiming(false));
+    // Bidding is now a detailed flow (amount, materials, labor, walkthrough), so
+    // send the worker to the full job page to submit a proper bid rather than
+    // posting an empty application here.
+    window.location.href = `/questboard/${questId}`;
   }
 
   if (!isOpen) return null;
@@ -376,26 +369,14 @@ export default function QuestDetailModal({
                 </div>
 
                 {/* CTA */}
-                {claimed ? (
-                  <div className="w-full p-4 bg-green-400/[0.08] border border-green-400/30 rounded-lg text-center font-mono text-[13px] font-semibold text-green-400 tracking-wider">
-                    ✓ QUEST CLAIMED — CHECK YOUR DASHBOARD
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleClaim}
-                    disabled={claiming}
-                    className={clsx(
-                      'w-full py-4 rounded-lg font-mono text-[13px] font-semibold tracking-widest transition-all duration-200 flex items-center justify-center gap-2',
-                      claiming
-                        ? 'bg-amber-400/15 text-amber-400 border border-amber-400/40 cursor-default'
-                        : 'bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer',
-                    )}
-                  >
-                    {claiming ? 'CLAIMING…' : currentUserId ? (
-                      <><span>CLAIM THIS QUEST</span><ChevronRight size={14} /></>
-                    ) : 'LOG IN TO CLAIM'}
-                  </button>
-                )}
+                <button
+                  onClick={handleClaim}
+                  className="w-full py-4 rounded-lg font-mono text-[13px] font-semibold tracking-widest transition-all duration-200 flex items-center justify-center gap-2 bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer"
+                >
+                  {currentUserId ? (
+                    <><span>PLACE A BID</span><ChevronRight size={14} /></>
+                  ) : 'LOG IN TO BID'}
+                </button>
 
                 {!currentUserId && (
                   <p className="font-mono text-[10px] text-stone-700 text-center mt-2.5">

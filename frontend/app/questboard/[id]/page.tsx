@@ -12,9 +12,15 @@ import ReportButton from '@/components/ReportButton';
 import QuestReviews from '@/components/QuestReviews';
 import CompletionPanel from '@/components/CompletionPanel';
 import TradeStandardChecklist from '@/components/TradeStandardChecklist';
+import BidForm, { type BidPayload } from '@/components/BidForm';
+import BidComparison from '@/components/BidComparison';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
-import { guildPathLabel } from '@/lib/guildPath';
 import { recurrenceSummary } from '@/lib/recurrence';
+
+// Dollar floor above which a fixed-price job reads as contractor-scale, matching
+// the poster-side LARGE_JOB_REWARD threshold. Used to surface the legal-
+// qualification acknowledgement on the worker's bid form.
+const CONTRACTOR_SCALE_REWARD = 500;
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   NOVICE: 'text-green-400 border-green-400',
@@ -33,7 +39,6 @@ export default function QuestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
-  const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState('');
   const [applications, setApplications] = useState<Application[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
@@ -109,7 +114,7 @@ export default function QuestDetailPage() {
     }
   };
 
-  const handleApply = async () => {
+  const handleApply = async (payload: BidPayload) => {
     if (!user) {
       router.push('/auth/login');
       return;
@@ -117,13 +122,11 @@ export default function QuestDetailPage() {
     setApplying(true);
     setError('');
     try {
-      await api.post(`/quests/${params.id}/apply`, {
-        coverLetter: coverLetter || undefined,
-      });
+      await api.post(`/quests/${params.id}/apply`, payload);
       setApplied(true);
-      toast.success('Application submitted! The quest giver will review it.');
+      toast.success('Bid submitted! The client will review it.');
     } catch (err: any) {
-      const msg = err.message || 'Failed to apply';
+      const msg = err.message || 'Failed to submit bid';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -173,6 +176,14 @@ export default function QuestDetailPage() {
   const skillTags = allTags.filter((t) => !t.startsWith('photo:'));
   const tradeStandard = resolveTradeStandard(quest.category, skillTags);
 
+  // Quote-needed jobs are flagged with the `quote-needed` tag at posting time;
+  // the poster's `reward` is then just a placeholder for workers to refine via a
+  // bid. Either a quote-needed flag or a large fixed budget makes the job read as
+  // contractor-scale, which surfaces the legal-qualification acknowledgement.
+  const isQuoteMode = skillTags.includes('quote-needed');
+  const isContractorScale =
+    isQuoteMode || (quest.reward ?? 0) >= CONTRACTOR_SCALE_REWARD;
+
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -208,7 +219,7 @@ export default function QuestDetailPage() {
                   <span>Posted by <span className="text-amber-400">{poster.username}</span></span>
                 )}
                 <span>•</span>
-                <span>{quest._count?.applications || 0} adventurers applied</span>
+                <span>{quest._count?.applications || 0} bids</span>
                 {daysLeft !== null && (
                   <>
                     <span>•</span>
@@ -298,86 +309,46 @@ export default function QuestDetailPage() {
               suggestedSkills={allTags.filter((t: string) => !t.startsWith('photo:'))}
             />
 
-            {/* Applications (visible to quest owner) */}
+            {/* Bids (visible to quest owner) — full breakdown + comparison. */}
             {isOwner && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">
-                  Applications ({applications.length})
+                <h2 className="text-lg font-semibold text-white mb-1">
+                  Bids ({applications.length})
                 </h2>
-                {applications.length === 0 ? (
-                  <p className="text-sm text-gray-500">No applications yet. Share your quest to attract adventurers.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {applications.map((app: Application) => (
-                      <div key={app.id} className="p-4 bg-gray-800 rounded-lg">
-                        <div className="flex items-center justify-between gap-3">
-                          <Link href={`/profile/${app.adventurer?.username}`} className="flex items-center gap-3 group">
-                            <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold text-sm">
-                              {app.adventurer?.username?.[0]?.toUpperCase() || '?'}
-                            </div>
-                            <div>
-                              <p className="text-white font-medium group-hover:text-amber-400">{app.adventurer?.username}</p>
-                              <p className="text-xs text-gray-500">
-                                Lv.{app.adventurer?.level} • {guildPathLabel(app.adventurer?.adventurerClass)}
-                              </p>
-                            </div>
-                          </Link>
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            app.status === 'ACCEPTED' ? 'bg-green-500/20 text-green-400' :
-                            app.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                            'bg-yellow-500/20 text-yellow-400'
-                          }`}>
-                            {app.status}
-                          </span>
-                        </div>
-                        {app.coverLetter && (
-                          <p className="mt-3 text-sm text-gray-400 whitespace-pre-line">{app.coverLetter}</p>
-                        )}
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {app.status === 'PENDING' && (
-                            <>
-                              <button
-                                onClick={() => handleAccept(app.id)}
-                                disabled={actioningId === app.id}
-                                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-500/90 hover:bg-green-400 text-gray-900 disabled:opacity-50"
-                              >
-                                {actioningId === app.id ? '...' : 'Accept'}
-                              </button>
-                              <button
-                                onClick={() => handleReject(app.id)}
-                                disabled={actioningId === app.id}
-                                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-50"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                          {app.adventurerId && (
-                            <Link
-                              href={`/messages/${quest.id}/${app.adventurerId}`}
-                              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
-                            >
-                              Message
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <p className="text-xs text-gray-500 mb-4">
+                  Compare bids and accept one. Accepting a bid assigns that worker and sets the
+                  agreed amount — no payment is arranged until you choose.
+                </p>
+                <BidComparison
+                  applications={applications}
+                  questId={quest.id}
+                  actioningId={actioningId}
+                  onAccept={handleAccept}
+                  onReject={handleReject}
+                />
               </div>
             )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Reward card */}
+            {/* Budget / quote card */}
             <div className="bg-gray-900 border border-amber-500/30 rounded-xl p-6">
               <div className="text-center mb-6">
-                <div className="text-4xl font-bold text-amber-400">${quest.reward?.toLocaleString()}</div>
-                <div className="text-gray-500 text-sm mt-1">Quest Reward</div>
-                {quest.xpReward && (
-                  <div className="text-sm text-yellow-400 mt-1">+{quest.xpReward} XP</div>
+                {isQuoteMode ? (
+                  <>
+                    <div className="text-2xl font-bold text-amber-400">Open to bids</div>
+                    <div className="text-gray-500 text-sm mt-1">
+                      Quote needed — workers set the price
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-4xl font-bold text-amber-400">
+                      ${quest.reward?.toLocaleString()}
+                    </div>
+                    <div className="text-gray-500 text-sm mt-1">Client budget</div>
+                  </>
                 )}
               </div>
 
@@ -389,31 +360,29 @@ export default function QuestDetailPage() {
 
               {isOwner ? (
                 <div className="text-center p-3 bg-blue-900/30 border border-blue-700 rounded-lg text-blue-400 text-sm">
-                  This is your quest
+                  This is your job
                 </div>
               ) : applied ? (
                 <div className="text-center p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-400">
-                  ✓ Application submitted!
+                  ✓ Bid submitted! The client will review it.
+                </div>
+              ) : !user ? (
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-3 rounded-lg transition-colors text-lg"
+                >
+                  Sign in to bid
+                </button>
+              ) : quest.status !== 'OPEN' ? (
+                <div className="text-center p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 text-sm">
+                  This job is no longer open for bids.
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {user && (
-                    <textarea
-                      value={coverLetter}
-                      onChange={e => setCoverLetter(e.target.value)}
-                      placeholder="Optional: Tell the quest giver why you're perfect for this..."
-                      rows={3}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
-                    />
-                  )}
-                  <button
-                    onClick={handleApply}
-                    disabled={applying || quest.status !== 'OPEN'}
-                    className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-900 font-black py-3 rounded-lg transition-colors text-lg"
-                  >
-                    {applying ? 'Submitting...' : user ? 'Accept Quest' : 'Sign in to Apply'}
-                  </button>
-                </div>
+                <BidForm
+                  contractorScale={isContractorScale}
+                  submitting={applying}
+                  onSubmit={handleApply}
+                />
               )}
 
               <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
