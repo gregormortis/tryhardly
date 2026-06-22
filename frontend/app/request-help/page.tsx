@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import RequestHelpForm from './RequestHelpForm';
 
 const title = 'Request help — no account needed';
@@ -32,5 +33,9 @@ export const metadata: Metadata = {
 };
 
 export default function RequestHelpPage() {
-  return <RequestHelpForm />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-950" />}>
+      <RequestHelpForm />
+    </Suspense>
+  );
 }

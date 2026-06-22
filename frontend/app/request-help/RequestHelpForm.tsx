@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { JOB_CATEGORIES } from '@/lib/jobCategories';
+import { JOB_CATEGORIES, getJobCategory } from '@/lib/jobCategories';
 import { readLeadSource, type LeadSource } from '@/lib/leadSource';
 import { CADENCE_OPTIONS } from '@/lib/recurrence';
 import ImageUploader from '@/components/ImageUploader';
@@ -58,10 +59,43 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
 }
 
 export default function RequestHelpForm() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<FormState>(initialState);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+
+  // Context when arriving from a worker's service package "Request this service"
+  // CTA. The package id/worker travel with the lead so we know which listing
+  // prompted the request; a package is a listing, never a payment.
+  const packageId = useRef<string | null>(null);
+  const [packageContext, setPackageContext] = useState<{ title: string; worker: string } | null>(null);
+
+  // Prefill from query params once on mount (service-package CTA). Category is a
+  // jobCategories slug, so it maps straight to the select; an unknown slug is
+  // ignored rather than producing a broken option.
+  useEffect(() => {
+    const title = searchParams.get('title');
+    const category = searchParams.get('category');
+    const pkgId = searchParams.get('packageId');
+    const worker = searchParams.get('worker');
+
+    if (pkgId) packageId.current = pkgId;
+    if (title || pkgId) {
+      setPackageContext({ title: title || '', worker: worker || '' });
+    }
+
+    setData((prev) => ({
+      ...prev,
+      title: title ? title.slice(0, 200) : prev.title,
+      category: category && getJobCategory(category) ? category : prev.category,
+      description:
+        title && worker
+          ? `Requested from ${worker}'s service package: "${title}".`
+          : prev.description,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Capture acquisition attribution from the URL once on mount, before the user
   // navigates within the SPA could drop the query string. Stored in a ref so it
@@ -176,6 +210,21 @@ export default function RequestHelpForm() {
             Tell us what you need done. Takes about a minute — no account required.
           </p>
         </div>
+
+        {packageContext && (
+          <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+            <p className="text-sm text-amber-300 font-medium">
+              Requesting a service{packageContext.worker ? ` from ${packageContext.worker}` : ''}
+            </p>
+            {packageContext.title && (
+              <p className="text-sm text-gray-300 mt-1">&ldquo;{packageContext.title}&rdquo;</p>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              We&apos;ve started your request below. No payment is taken now — you and the worker agree on
+              details and price first.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>

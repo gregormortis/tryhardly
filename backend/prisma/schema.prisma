@@ -81,6 +81,7 @@ model User {
   skillRatingsReceived SkillRating[]          @relation("SkillRatingSubject")
   skillRatingsGiven    SkillRating[]          @relation("SkillRatingAuthor")
   proofOfWork          ProofOfWork[]          @relation("ProofOwner")
+  servicePackages      ServicePackage[]       @relation("ServicePackageOwner")
   deletionRequests     AccountDeletionRequest[] @relation("DeletionRequester")
   deletionRequestsHandled AccountDeletionRequest[] @relation("DeletionHandler")
 
@@ -740,6 +741,77 @@ model ProofOfWork {
 
   @@index([userId])
   @@index([questId])
+}
+
+// ─── ServicePackage ─────────────────────────────────────────────────────────
+// A repeatable, local service listing a worker publishes (e.g. "Dump Run —
+// Pickup Truck Load", "2-Hour Yard Cleanup"). Job posters browse these and tap
+// "Request this service", which routes into the existing /request-help intake
+// with the package as context. A ServicePackage is a LISTING, never a payment:
+// no money is charged, held, or authorized here. Payment still happens later in
+// the normal job → bid → worker-selection → capture flow. Additive and
+// backward-compatible: every field has a default or is nullable, and the model
+// is brand new, so existing rows and the Stripe/manual-capture flow are
+// untouched.
+model ServicePackage {
+  id          String   @id @default(uuid())
+
+  userId      String
+  user        User     @relation("ServicePackageOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  // Free-form category slug aligned with the public jobCategories list (yard,
+  // hauling, moving, handyman, cleaning, painting, pressure, other). Kept as a
+  // string rather than the legacy software-oriented QuestCategory enum so it
+  // matches the physical-gig taxonomy the rest of the app browses on.
+  category    String
+  description String?
+
+  // Pricing is informational only — it sets expectations on the listing and is
+  // never a charge. `priceType` says how to read `startingPrice`; QUOTE_NEEDED
+  // means no number is shown.
+  priceType     ServicePriceType @default(STARTING_AT)
+  // Decimal so currency math stays exact, matching Quest.reward. Nullable for
+  // QUOTE_NEEDED listings that intentionally show no price.
+  startingPrice Decimal?
+  currency      String           @default("USD")
+
+  // What's included in the base scope of the service.
+  includedScope   String?
+  // Optional add-ons, exclusions and materials policy. Free-form text so a
+  // worker can describe them naturally; no structured pricing is implied.
+  addOns          String?
+  exclusions      String?
+  materialsPolicy String?
+
+  // Where the worker will travel for this service (city, ZIPs, radius) and when
+  // they're generally available. Free-form text, Redding-first.
+  serviceArea  String?
+  availability String?
+  // Tools/equipment the worker brings (e.g. "Pickup truck + dolly provided").
+  toolsProvided String?
+
+  // Optional single hero photo URL (worker-supplied link; no file storage, in
+  // keeping with credentials/proof-of-work).
+  imageUrl String?
+
+  // Worker controls whether the listing is publicly visible. Defaults to false
+  // so a freshly created package isn't published until the worker is ready.
+  active   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([active])
+  @@index([category])
+}
+
+enum ServicePriceType {
+  STARTING_AT
+  FLAT_RATE
+  HOURLY
+  QUOTE_NEEDED
 }
 
 // ─── Lead ────────────────────────────────────────────────────────────────────
