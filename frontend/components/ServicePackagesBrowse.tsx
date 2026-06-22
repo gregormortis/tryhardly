@@ -2,10 +2,37 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Search, PackageOpen } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { ServicePackage } from '@/lib/types';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
 import ServicePackageCard from '@/components/ServicePackageCard';
+
+// Illustrative service ideas shown only on the empty state so the page never
+// reads as dead. These are clearly labelled examples — not real listings and
+// not requestable — to help posters picture what they can ask for and to nudge
+// workers to publish.
+const EXAMPLE_IDEAS: { title: string; price: string; area: string }[] = [
+  { title: 'Dump Run — Pickup Truck Load', price: 'From $85', area: 'Hauling & junk removal' },
+  { title: '2-Hour Yard Cleanup', price: 'From $60', area: 'Lawn & yard' },
+  { title: 'Move One Couch or Appliance', price: 'Flat $75', area: 'Moving help' },
+];
+
+function CardSkeleton() {
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-pulse">
+      <div className="h-28 bg-gray-800/60" />
+      <div className="p-5 space-y-3">
+        <div className="h-4 w-20 bg-gray-800 rounded-full" />
+        <div className="h-4 w-3/4 bg-gray-800 rounded" />
+        <div className="h-5 w-24 bg-gray-800 rounded" />
+        <div className="h-3 w-full bg-gray-800/70 rounded" />
+        <div className="h-3 w-5/6 bg-gray-800/70 rounded" />
+        <div className="h-10 w-full bg-gray-800 rounded-lg mt-4" />
+      </div>
+    </div>
+  );
+}
 
 export default function ServicePackagesBrowse() {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -36,11 +63,13 @@ export default function ServicePackagesBrowse() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
+  const hasFilters = category !== '' || search.trim() !== '';
+
   return (
     <div className="min-h-screen bg-gray-950 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Service packages</h1>
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Service packages</h1>
           <p className="text-gray-400 max-w-2xl leading-relaxed">
             Browse repeatable local services from workers near you — yard work, hauling, moving help,
             cleaning, and more. Request one to start a normal job; you agree on details and price before any
@@ -59,7 +88,7 @@ export default function ServicePackagesBrowse() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+            className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40"
           >
             <option value="">All categories</option>
             {JOB_CATEGORIES.map((c) => (
@@ -68,13 +97,16 @@ export default function ServicePackagesBrowse() {
               </option>
             ))}
           </select>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search services or areas (e.g. mowing, 96001)"
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-500"
-          />
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search services or area"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40"
+            />
+          </div>
           <button
             type="submit"
             className="bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-6 py-2.5 rounded-lg transition-colors"
@@ -83,18 +115,88 @@ export default function ServicePackagesBrowse() {
           </button>
         </form>
 
+        {!loading && packages.length > 0 && (
+          <p className="text-sm text-gray-500 mb-4">
+            {packages.length} {packages.length === 1 ? 'service' : 'services'} available
+          </p>
+        )}
+
         {loading ? (
-          <p className="text-gray-500">Loading service packages...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </div>
         ) : packages.length === 0 ? (
-          <div className="text-center py-16 border border-gray-800 rounded-xl bg-gray-900/40">
-            <p className="text-gray-400">No service packages match yet.</p>
-            <p className="text-gray-600 text-sm mt-2">
-              TryHardly is growing locally. Need something done?{' '}
-              <Link href="/request-help" className="text-amber-400 hover:text-amber-300">
-                Request help
-              </Link>{' '}
-              and we&apos;ll line up a worker.
-            </p>
+          <div className="border border-dashed border-gray-800 rounded-xl bg-gray-900/40 p-8 sm:p-10">
+            <div className="text-center max-w-xl mx-auto">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-800/80 mb-4">
+                <PackageOpen size={22} className="text-gray-400" />
+              </div>
+              <p className="text-gray-100 font-semibold text-lg">
+                {hasFilters ? 'No services match your search yet' : 'No services listed here yet'}
+              </p>
+              <p className="text-gray-400 text-sm mt-2 leading-relaxed">
+                {hasFilters
+                  ? 'Try a broader category or a different area. You can also describe the job and we’ll line up a worker.'
+                  : 'TryHardly is growing locally. Tell us what you need and we’ll match you with a worker — or list your own service if you do this work.'}
+              </p>
+              <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategory('');
+                      setSearch('');
+                    }}
+                    className="border border-gray-700 hover:border-gray-600 text-gray-200 font-medium px-5 py-2.5 rounded-lg transition-colors"
+                  >
+                    Clear filters
+                  </button>
+                )}
+                <Link
+                  href="/request-help"
+                  className="bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-5 py-2.5 rounded-lg transition-colors"
+                >
+                  Request help
+                </Link>
+                <Link
+                  href="/post-quest"
+                  className="border border-gray-700 hover:border-amber-500 hover:text-amber-400 text-gray-200 font-medium px-5 py-2.5 rounded-lg transition-colors"
+                >
+                  Post a job
+                </Link>
+              </div>
+            </div>
+
+            {/* Illustrative examples — clearly not real listings. */}
+            <div className="mt-9 max-w-2xl mx-auto">
+              <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-600 mb-3">
+                Examples of services workers list
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {EXAMPLE_IDEAS.map((ex) => (
+                  <div
+                    key={ex.title}
+                    className="rounded-lg border border-gray-800 bg-gray-900/60 p-4 opacity-80"
+                  >
+                    <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 mb-2">
+                      Example
+                    </span>
+                    <p className="text-sm font-medium text-gray-200 leading-snug">{ex.title}</p>
+                    <p className="text-sm font-bold text-amber-400/90 mt-1.5">{ex.price}</p>
+                    <p className="text-xs text-gray-500 mt-1">{ex.area}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-xs text-gray-600 mt-3">
+                Do this kind of work?{' '}
+                <Link href="/profile" className="text-amber-400 hover:text-amber-300 font-medium">
+                  List your service
+                </Link>{' '}
+                from your profile.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
