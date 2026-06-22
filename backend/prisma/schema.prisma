@@ -288,9 +288,54 @@ model Application {
   adventurerId  String
   adventurer    User              @relation(fields: [adventurerId], references: [id])
 
-  coverLetter   String
+  // Made optional alongside the detailed-bid fields below: a worker can now
+  // submit a structured bid (amounts, materials, timeline) without a free-text
+  // cover letter. Existing rows already have a value, so this is backward
+  // compatible. The controller still requires *some* content (cover letter or a
+  // bid amount) so an empty application can't be created.
+  coverLetter   String?
   proposedRate  Decimal?
   status        ApplicationStatus @default(PENDING)
+
+  // ─── Detailed bid fields ─────────────────────────────────────────────────────
+  // Additive, backward-compatible fields backing the multi-bid worker workflow.
+  // A worker can submit a full bid for a job: a total amount split into material
+  // and labor estimates, an itemized material list, a timeline, and an optional
+  // request for a remote or on-site walkthrough before committing. The legacy
+  // "express interest" application (coverLetter + optional proposedRate) keeps
+  // working unchanged — every field below is nullable / defaulted so existing
+  // rows and the simple apply path are unaffected. None of these fields touch
+  // payment mechanics: money is only authorized later, after the poster selects a
+  // bid, via the existing manual-capture Checkout flow (which reads quest.reward).
+  //
+  // Total bid (what the worker is quoting for the whole job). When the poster
+  // accepts this bid, this becomes the amount the job is paid at.
+  bidAmount            Decimal?
+  // Cost breakdown the worker is quoting. Advisory detail for the poster; the
+  // payable figure is bidAmount.
+  materialCostEstimate Decimal?
+  laborCostEstimate    Decimal?
+  estimatedLaborHours  Decimal?
+  // Itemized material list as JSON: array of
+  // { name, quantity, unit, estimatedCost, notes }. Stored as JSON so the
+  // structure can evolve without further migrations; null when not provided.
+  materialItems        Json?
+  // Free-text list of tools / equipment / materials the worker will bring.
+  toolsNeeded          String?
+  // When the worker can do the work (free text / availability).
+  timeline             String?
+  // Walkthrough request: whether the worker wants to see the site first, how
+  // (remote video call or in-person on-site review), and the times they propose.
+  walkthroughRequested Boolean           @default(false)
+  walkthroughType      WalkthroughType   @default(NONE)
+  // Proposed walkthrough times — free text or JSON list of slots.
+  proposedWalkthroughTimes String?
+  // Bid breakdown notes / notes to the client.
+  bidNotes             String?
+  // Contractor/legal qualification acknowledgement for contractor-scale jobs.
+  // Worker affirms they are responsible for only accepting work they are legally
+  // qualified to perform. Does NOT imply TryHardly verifies legal status.
+  legalQualificationAck Boolean          @default(false)
 
   appliedAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -303,6 +348,16 @@ enum ApplicationStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+// How a worker wants to review the job site before/while bidding.
+//   NONE      — no walkthrough requested
+//   REMOTE    — remote/virtual walkthrough (video call, photos, live screen)
+//   IN_PERSON — on-site review / in-person visit
+enum WalkthroughType {
+  NONE
+  REMOTE
+  IN_PERSON
 }
 
 // ─── Guild ───────────────────────────────────────────────────────────────────

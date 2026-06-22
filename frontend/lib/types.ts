@@ -70,6 +70,17 @@ export interface Quest {
   _count?: { applications: number };
 }
 
+export type WalkthroughType = 'NONE' | 'REMOTE' | 'IN_PERSON';
+
+// A single line in a worker's itemized material list.
+export interface MaterialItem {
+  name: string;
+  quantity?: number | null;
+  unit?: string | null;
+  estimatedCost?: number | null;
+  notes?: string | null;
+}
+
 export interface Application {
   id: string;
   questId: string;
@@ -78,6 +89,20 @@ export interface Application {
   proposedRate?: number;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
   appliedAt: string;
+  // Detailed bid fields (additive). Present when the worker submitted a full
+  // bid rather than just expressing interest.
+  bidAmount?: number | null;
+  materialCostEstimate?: number | null;
+  laborCostEstimate?: number | null;
+  estimatedLaborHours?: number | null;
+  materialItems?: MaterialItem[] | null;
+  toolsNeeded?: string | null;
+  timeline?: string | null;
+  walkthroughRequested?: boolean;
+  walkthroughType?: WalkthroughType;
+  proposedWalkthroughTimes?: string | null;
+  bidNotes?: string | null;
+  legalQualificationAck?: boolean;
   quest?: {
     id: string;
     title: string;
