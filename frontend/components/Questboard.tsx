@@ -351,6 +351,19 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
   );
 }
 
+function QuestRowSkeleton() {
+  return (
+    <div className="flex items-center gap-4 rounded-lg border border-white/[0.06] bg-white/[0.02] px-5 py-4 animate-pulse">
+      <div className="w-10 h-10 rounded-md bg-white/[0.05] flex-shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3.5 w-1/2 bg-white/[0.05] rounded" />
+        <div className="h-2.5 w-1/3 bg-white/[0.04] rounded" />
+      </div>
+      <div className="h-7 w-24 bg-white/[0.05] rounded hidden sm:block" />
+    </div>
+  );
+}
+
 function StatPill({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center px-5 py-2.5 border-r border-white/[0.06] last:border-r-0">
@@ -457,8 +470,9 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
 
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="font-mono text-[11px] text-stone-600">
-                <span className="text-stone-100 font-semibold">{quests.length.toLocaleString()}</span> starter quests live
+              <span className="font-mono text-[11px] text-stone-500">
+                <span className="text-stone-100 font-semibold">{quests.length.toLocaleString()}</span>{' '}
+                {quests.length === 1 ? 'open job' : 'open jobs'}
               </span>
             </div>
 
@@ -585,19 +599,75 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
 
         <div className="flex flex-col gap-2">
           {loading ? (
-            <div className="text-center py-16 font-mono text-[13px] text-stone-600">
-              Loading quests…
-            </div>
+            <>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <QuestRowSkeleton key={i} />
+              ))}
+            </>
           ) : error ? (
-            <div className="text-center py-16 font-mono text-[12px] text-rose-400 flex flex-col items-center gap-2">
-              <AlertTriangle size={20} />
-              <span>Could not load quests: {error}</span>
+            <div className="text-center py-14 px-6 border border-dashed border-rose-400/20 rounded-lg bg-rose-400/[0.03] flex flex-col items-center gap-3">
+              <AlertTriangle size={22} className="text-rose-400" />
+              <p className="font-mono text-[12px] text-rose-300">Could not load jobs</p>
+              <p className="font-mono text-[11px] text-stone-500 max-w-xs">{error}</p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2 border border-white/15 rounded-md text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+              >
+                TRY AGAIN
+              </button>
             </div>
           ) : visible.length === 0 ? (
-            <div className="text-center py-16 font-mono text-[13px] text-stone-700">
-              {quests.length === 0
-                ? 'No quests posted yet. Be the first to post one!'
-                : 'No quests match your filters. Try a different category or search term.'}
+            <div className="text-center py-14 px-6 border border-dashed border-white/[0.08] rounded-lg bg-white/[0.015]">
+              {quests.length === 0 ? (
+                <>
+                  <p className="text-stone-200 font-semibold text-[15px]">No open jobs right now</p>
+                  <p className="font-mono text-[12px] text-stone-500 mt-2 max-w-sm mx-auto leading-relaxed">
+                    The board is quiet at the moment. Post the first job, request help with a task, or
+                    get notified when new local work goes live.
+                  </p>
+                  <div className="mt-5 flex flex-col sm:flex-row gap-2.5 justify-center">
+                    <a
+                      href="/post-quest"
+                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+                    >
+                      POST A JOB
+                    </a>
+                    <a
+                      href="/request-help"
+                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                    >
+                      REQUEST HELP
+                    </a>
+                    <a
+                      href="/work-alerts"
+                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                    >
+                      WORKER ALERTS
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-stone-200 font-semibold text-[15px]">No jobs match your filters</p>
+                  <p className="font-mono text-[12px] text-stone-500 mt-2 max-w-sm mx-auto leading-relaxed">
+                    Try a broader category, a wider budget range, or a different search term.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMinPay('');
+                      setMaxPay('');
+                      setRecurringOnly(false);
+                      setSearch('');
+                      setActiveCategory('all');
+                    }}
+                    className="mt-5 font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                  >
+                    CLEAR FILTERS
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             visible.map((quest) => (

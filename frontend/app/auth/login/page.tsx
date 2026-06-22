@@ -13,14 +13,38 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const redirectParam = searchParams.get('redirect');
+  const redirect = redirectParam && redirectParam.startsWith('/') ? redirectParam : null;
+
+  // Tailor the heading/subtext to where the user was headed so a login wall
+  // never feels like a generic dead end. Keep copy practical (post a job).
+  const context =
+    redirect === '/post-quest'
+      ? {
+          heading: 'Sign in to post a job',
+          sub: 'Sign in or create a free account to post a job and start receiving bids.',
+        }
+      : redirect && redirect.startsWith('/questboard')
+      ? {
+          heading: 'Sign in to continue',
+          sub: 'Sign in or create an account to bid on this job.',
+        }
+      : {
+          heading: 'Welcome back',
+          sub: 'Sign in or create an account to continue.',
+        };
+
+  const registerHref = redirect
+    ? `/auth/register?redirect=${encodeURIComponent(redirect)}`
+    : '/auth/register';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
       await login(form.email, form.password);
-      const redirect = searchParams.get('redirect');
-      router.push(redirect && redirect.startsWith('/') ? redirect : '/questboard');
+      router.push(redirect ?? '/questboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -32,8 +56,8 @@ function LoginForm() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-amber-400 mb-2">Welcome back</h1>
-          <p className="text-gray-400">Sign in to your TryHardly account</p>
+          <h1 className="text-3xl font-bold text-amber-400 mb-2">{context.heading}</h1>
+          <p className="text-gray-300">{context.sub}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
           {error && (
@@ -77,12 +101,16 @@ function LoginForm() {
               Forgot your password?
             </Link>
           </p>
-          <p className="mt-2 text-center text-gray-500 text-sm">
-            No account?{' '}
-            <Link href="/auth/register" className="text-amber-400 hover:text-amber-300">
-              Register here
+
+          <div className="mt-6 pt-5 border-t border-gray-800">
+            <p className="text-center text-gray-400 text-sm mb-3">New to TryHardly?</p>
+            <Link
+              href={registerHref}
+              className="block w-full text-center border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 font-semibold py-2.5 rounded-lg transition-colors"
+            >
+              Create a free account
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

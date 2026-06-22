@@ -1,17 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../lib/auth';
 import { GUILD_PATHS } from '../../../lib/guildPath';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register } = useAuth();
   const [form, setForm] = useState({ username: '', email: '', password: '', adventurerClass: 'WARRIOR' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const redirectParam = searchParams.get('redirect');
+  const redirect = redirectParam && redirectParam.startsWith('/') ? redirectParam : null;
+  const loginHref = redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +24,7 @@ export default function RegisterPage() {
     setError('');
     try {
       await register(form.username, form.email, form.password);
-      router.push('/questboard');
+      router.push(redirect ?? '/questboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -107,14 +112,28 @@ export default function RegisterPage() {
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
-          <p className="mt-6 text-center text-gray-500 text-sm">
+          <p className="mt-6 text-center text-gray-400 text-sm">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-amber-400 hover:text-amber-300">
+            <Link href={loginHref} className="text-amber-400 hover:text-amber-300 font-medium">
               Sign in
             </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

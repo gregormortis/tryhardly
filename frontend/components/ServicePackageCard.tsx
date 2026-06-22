@@ -46,7 +46,7 @@ export default function ServicePackageCard({ pkg, showWorker = true }: ServicePa
           {categoryLabel(pkg.category)}
         </span>
 
-        <h3 className="text-white font-semibold text-[15px] leading-snug">{pkg.title}</h3>
+        <h3 className="text-white font-semibold text-[15px] leading-snug break-words">{pkg.title}</h3>
 
         {showWorker && workerName && (
           <p className="text-xs text-gray-500 mt-1">

@@ -8,6 +8,16 @@ import type { ServicePackage } from '@/lib/types';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
 import ServicePackageCard from '@/components/ServicePackageCard';
 
+// Illustrative service ideas shown only on the empty state so the page never
+// reads as dead. These are clearly labelled examples — not real listings and
+// not requestable — to help posters picture what they can ask for and to nudge
+// workers to publish.
+const EXAMPLE_IDEAS: { title: string; price: string; area: string }[] = [
+  { title: 'Dump Run — Pickup Truck Load', price: 'From $85', area: 'Hauling & junk removal' },
+  { title: '2-Hour Yard Cleanup', price: 'From $60', area: 'Lawn & yard' },
+  { title: 'Move One Couch or Appliance', price: 'Flat $75', area: 'Moving help' },
+];
+
 function CardSkeleton() {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-pulse">
@@ -53,6 +63,8 @@ export default function ServicePackagesBrowse() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
+  const hasFilters = category !== '' || search.trim() !== '';
+
   return (
     <div className="min-h-screen bg-gray-950 py-12 px-4">
       <div className="max-w-6xl mx-auto">
@@ -91,7 +103,7 @@ export default function ServicePackagesBrowse() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search services or areas (e.g. mowing, 96001)"
+              placeholder="Search services or area"
               className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40"
             />
           </div>
@@ -116,18 +128,75 @@ export default function ServicePackagesBrowse() {
             ))}
           </div>
         ) : packages.length === 0 ? (
-          <div className="text-center py-20 border border-dashed border-gray-800 rounded-xl bg-gray-900/40">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-800/80 mb-4">
-              <PackageOpen size={22} className="text-gray-500" />
+          <div className="border border-dashed border-gray-800 rounded-xl bg-gray-900/40 p-8 sm:p-10">
+            <div className="text-center max-w-xl mx-auto">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-800/80 mb-4">
+                <PackageOpen size={22} className="text-gray-400" />
+              </div>
+              <p className="text-gray-100 font-semibold text-lg">
+                {hasFilters ? 'No services match your search yet' : 'No services listed here yet'}
+              </p>
+              <p className="text-gray-400 text-sm mt-2 leading-relaxed">
+                {hasFilters
+                  ? 'Try a broader category or a different area. You can also describe the job and we’ll line up a worker.'
+                  : 'TryHardly is growing locally. Tell us what you need and we’ll match you with a worker — or list your own service if you do this work.'}
+              </p>
+              <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategory('');
+                      setSearch('');
+                    }}
+                    className="border border-gray-700 hover:border-gray-600 text-gray-200 font-medium px-5 py-2.5 rounded-lg transition-colors"
+                  >
+                    Clear filters
+                  </button>
+                )}
+                <Link
+                  href="/request-help"
+                  className="bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-5 py-2.5 rounded-lg transition-colors"
+                >
+                  Request help
+                </Link>
+                <Link
+                  href="/post-quest"
+                  className="border border-gray-700 hover:border-amber-500 hover:text-amber-400 text-gray-200 font-medium px-5 py-2.5 rounded-lg transition-colors"
+                >
+                  Post a job
+                </Link>
+              </div>
             </div>
-            <p className="text-gray-300 font-medium">No service packages match yet.</p>
-            <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto leading-relaxed">
-              TryHardly is growing locally. Need something done?{' '}
-              <Link href="/request-help" className="text-amber-400 hover:text-amber-300 font-medium">
-                Request help
-              </Link>{' '}
-              and we&apos;ll line up a worker.
-            </p>
+
+            {/* Illustrative examples — clearly not real listings. */}
+            <div className="mt-9 max-w-2xl mx-auto">
+              <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-600 mb-3">
+                Examples of services workers list
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {EXAMPLE_IDEAS.map((ex) => (
+                  <div
+                    key={ex.title}
+                    className="rounded-lg border border-gray-800 bg-gray-900/60 p-4 opacity-80"
+                  >
+                    <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 mb-2">
+                      Example
+                    </span>
+                    <p className="text-sm font-medium text-gray-200 leading-snug">{ex.title}</p>
+                    <p className="text-sm font-bold text-amber-400/90 mt-1.5">{ex.price}</p>
+                    <p className="text-xs text-gray-500 mt-1">{ex.area}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-xs text-gray-600 mt-3">
+                Do this kind of work?{' '}
+                <Link href="/profile" className="text-amber-400 hover:text-amber-300 font-medium">
+                  List your service
+                </Link>{' '}
+                from your profile.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

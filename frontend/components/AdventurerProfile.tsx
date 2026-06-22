@@ -434,6 +434,15 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
     let active = true;
     setLoading(true);
     setError(null);
+    // Safety net: if the primary profile fetch hangs (slow network, stalled
+    // request), flip out of the skeleton so the user gets an actionable error
+    // and a navigation escape instead of a spinner that never resolves.
+    const timeout = setTimeout(() => {
+      if (active) {
+        setError('This is taking longer than expected. Please check your connection and try again.');
+        setLoading(false);
+      }
+    }, 12000);
     setReviewData(null);
     setCredentials([]);
     setSkillBadges([]);
@@ -497,8 +506,8 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
           .catch(() => { if (active) setAchievements([]); });
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e)); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .finally(() => { if (active) { clearTimeout(timeout); setLoading(false); } });
+    return () => { active = false; clearTimeout(timeout); };
   }, [userId]);
 
   return (
@@ -527,9 +536,35 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
           </div>
         )}
 
-        {/* Error */}
+        {/* Error / not-found fallback — always offers a navigation escape so the
+            page never dead-ends on a stuck skeleton. */}
         {error && !loading && (
-          <div className="text-center pt-20 font-mono text-[13px] text-rose-400">{error}</div>
+          <div className="text-center pt-20 flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white/[0.05] flex items-center justify-center">
+              <Shield size={22} className="text-stone-500" />
+            </div>
+            <div>
+              <p className="text-stone-200 font-semibold text-[15px]">Profile unavailable</p>
+              <p className="font-mono text-[12px] text-stone-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
+                {error}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/15 rounded-md text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+              >
+                TRY AGAIN
+              </button>
+              <Link
+                href="/questboard"
+                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded-md hover:bg-amber-300 transition-colors"
+              >
+                BROWSE JOBS
+              </Link>
+            </div>
+          </div>
         )}
 
         {/* Profile */}

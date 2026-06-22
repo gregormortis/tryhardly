@@ -15,8 +15,13 @@ export default function PostQuestPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <p className="text-zinc-400">Loading...</p>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-zinc-300">
+            {loading ? 'Loading…' : 'Sign in to post a job — taking you there…'}
+          </p>
+        </div>
       </div>
     );
   }
