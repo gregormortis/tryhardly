@@ -121,6 +121,50 @@ describe('applyToQuest — detailed bid payload', () => {
     expect(mockPrisma.application.create).not.toHaveBeenCalled();
   });
 
+  it('blocks a bid whose notes share off-platform contact info', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+
+    const res = mockRes();
+    await applyToQuest(
+      {
+        params: { questId: 'q1' },
+        user: { id: 'worker1' },
+        body: { bidAmount: '500', bidNotes: 'Call me at 555-123-4567 to arrange.' },
+      } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'For safety, keep contact details and payment arrangements on TryHardly until a bid is accepted.',
+    });
+    expect(mockPrisma.application.create).not.toHaveBeenCalled();
+  });
+
+  it('allows a bid with legitimate material/measurement notes', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.application.create.mockResolvedValue({ id: 'a3', adventurer: { username: 'w' } });
+    mockPrisma.user.findUnique.mockResolvedValue({ email: null });
+
+    const res = mockRes();
+    await applyToQuest(
+      {
+        params: { questId: 'q1' },
+        user: { id: 'worker1' },
+        body: {
+          bidAmount: '500',
+          bidNotes: 'Includes 12 T-posts and twenty 2x4 boards; deck is 10x12, about 8 ft tall.',
+        },
+      } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(mockPrisma.application.create).toHaveBeenCalledTimes(1);
+  });
+
   it('defaults walkthrough fields when none requested', async () => {
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
     mockPrisma.application.findFirst.mockResolvedValue(null);

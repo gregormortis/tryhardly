@@ -15,6 +15,7 @@ import type {
   ProofOfWorkItem,
   VerifiedProStatus,
   ServicePackage,
+  WorkerPassport,
 } from '@/lib/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -429,6 +430,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [proof, setProof] = useState<ProofOfWorkItem[]>([]);
   const [verifiedPro, setVerifiedPro] = useState<VerifiedProStatus | null>(null);
   const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
+  const [passport, setPassport] = useState<WorkerPassport | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -451,6 +453,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
     setProof([]);
     setVerifiedPro(null);
     setServicePackages([]);
+    setPassport(null);
+    // Worker Passport — a real-data trust snapshot, keyed by username. Fetch
+    // separately so the profile still renders if it's empty or fails.
+    api
+      .get<WorkerPassport>(`/users/${encodeURIComponent(userId)}/passport`)
+      .then((p) => { if (active) setPassport(p); })
+      .catch(() => { if (active) setPassport(null); });
     // Active service packages are keyed by username and returned active-only;
     // fetch separately so the profile still renders if empty or it fails.
     api
@@ -705,6 +714,40 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   </>
                 )}
               </div>
+
+              {/* Worker Passport — a real-data proof-of-work / reliability
+                  snapshot. Only signals the worker has actually earned are
+                  shown (others are flagged unavailable server-side and hidden
+                  here) so the section never implies standing that isn't real. */}
+              {passport && (() => {
+                const shown = passport.stats.filter((s) => s.available);
+                // Always worth showing even on a brand-new worker: it carries
+                // "member since" plus the (possibly zero) completed-jobs tally.
+                return (
+                  <div>
+                    <SectionLabel>Worker Passport</SectionLabel>
+                    <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-4 mb-3">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BadgeCheck size={14} className="text-amber-400" />
+                        <span className="font-mono text-[10px] font-semibold tracking-widest text-stone-400 uppercase">
+                          Proof of work &amp; reliability signals
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        {shown.map((s) => (
+                          <div key={s.key} className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-3">
+                            <p className="font-bold text-[14px] text-stone-200 leading-tight">{s.value}</p>
+                            <p className="font-mono text-[10px] text-stone-600 mt-1 uppercase tracking-wide">{s.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="font-mono text-[10px] text-stone-600 mt-3">
+                        Member since {formatFullDate(passport.memberSince)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Rank & progression — current rank plus per-rank achieved/locked
                   requirements, derived server-side from real signals. */}
