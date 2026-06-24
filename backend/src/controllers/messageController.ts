@@ -3,6 +3,7 @@ import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createNotification } from '../services/notificationService';
 import { sendEmail, emailTemplates } from '../services/mailerService';
+import { containsContactInfo, CONTACT_INFO_VALIDATION_MESSAGE } from '../utils/contactDetection';
 
 // A user may participate in a quest thread if they are the quest giver, the
 // assigned adventurer, or have applied to the quest. Returns the quest if the
@@ -73,6 +74,16 @@ export const sendQuestMessage = async (req: AuthRequest, res: Response): Promise
     // The recipient must also be a participant in the quest.
     const recipientQuest = await getAccessibleQuest(questId, recipientId);
     if (!recipientQuest) { res.status(400).json({ error: 'Recipient is not part of this quest' }); return; }
+
+    // Platform-safe messaging (pre-acceptance only). While the quest has no
+    // assigned worker, the parties are still bidding/negotiating, so we keep
+    // contact details and off-platform payment talk on TryHardly. Once a bid is
+    // accepted (assignedAdventurerId set) the worker and poster need to
+    // coordinate logistics freely, so we stop scanning then.
+    if (!quest.assignedAdventurerId && containsContactInfo(content)) {
+      res.status(400).json({ error: CONTACT_INFO_VALIDATION_MESSAGE });
+      return;
+    }
 
     const message = await prisma.message.create({
       data: { senderId: me, recipientId, questId, content: content.trim() },

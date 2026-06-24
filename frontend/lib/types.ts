@@ -317,3 +317,30 @@ export interface VerifiedProStatus {
   totalCount: number;
   checklist: VerifiedProCheckItem[];
 }
+
+// Worker Passport — a public, real-data trust snapshot (see backend
+// workerPassportService). Every figure is derived from the worker's actual
+// track record; `available` lets the UI hide signals that can't be shown
+// honestly instead of rendering a misleading zero.
+export interface PassportStat {
+  key: string;
+  label: string;
+  value: string;
+  available: boolean;
+}
+
+export interface WorkerPassport {
+  memberSince: string;
+  completedJobs: number;
+  applicationsSubmitted: number;
+  activeServicePackages: number;
+  repeatCustomers: number;
+  ratingCount: number;
+  averageRating: number | null;
+  codeOfCraftPledged: boolean;
+  payoutAccountConnected: boolean;
+  verifiedCredentials: number;
+  pendingCredentials: number;
+  guildPath: string | null;
+  stats: PassportStat[];
+}

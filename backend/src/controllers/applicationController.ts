@@ -3,6 +3,10 @@ import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createNotification } from '../services/notificationService';
 import { sendEmail, emailTemplates } from '../services/mailerService';
+import {
+  findContactInfoInFields,
+  CONTACT_INFO_VALIDATION_MESSAGE,
+} from '../utils/contactDetection';
 
 // Walkthrough types a worker can request before/while bidding. Mirrors the
 // Prisma WalkthroughType enum; kept local so we can validate request input
@@ -110,6 +114,23 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
     // Prevents creating an empty application now that coverLetter is optional.
     if (!cover && bidData.bidAmount === undefined && rate === undefined) {
       res.status(400).json({ error: 'Add a cover note or a bid amount before submitting' });
+      return;
+    }
+
+    // Platform-safe messaging: a bid is submitted BEFORE it is accepted, so the
+    // worker's free-text fields must not carry contact info or off-platform
+    // payment arrangements. Material lists/measurements are intentionally not
+    // scanned (so "T-post", "2x4", measurements never trip this). Once the
+    // poster accepts a bid the parties can coordinate freely via messaging.
+    const contactHit = findContactInfoInFields({
+      coverLetter: cover,
+      bidNotes: bidData.bidNotes,
+      toolsNeeded: bidData.toolsNeeded,
+      timeline: bidData.timeline,
+      proposedWalkthroughTimes: bidData.proposedWalkthroughTimes,
+    });
+    if (contactHit) {
+      res.status(400).json({ error: CONTACT_INFO_VALIDATION_MESSAGE });
       return;
     }
 

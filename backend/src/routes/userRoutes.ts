@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
-import { getUserProfile, getMe, updateMe, getLeaderboard } from '../controllers/userController';
+import {
+  getUserProfile,
+  getMe,
+  updateMe,
+  getLeaderboard,
+  getWorkerPassportPublic,
+  getMyWorkerPassport,
+} from '../controllers/userController';
 import { getMyApplications, acceptApplication, rejectApplication } from '../controllers/applicationController';
 import { getUserReviews, getUserSkillBadges } from '../controllers/reviewController';
 import { updateFavoriteSkills } from '../controllers/progressionController';
@@ -34,6 +41,10 @@ router.get('/:userId/skill-badges', getUserSkillBadges);
 router.get('/:userId/verified-pro', getVerifiedPro);
 router.get('/:username/credentials', getPublicCredentials);
 router.get('/:username/proof', getPublicProof);
+// The current user's own passport. Declared before the `/:username/passport`
+// public route below so `/me/passport` isn't matched as username = "me".
+router.get('/me/passport', authenticate, getMyWorkerPassport);
+router.get('/:username/passport', getWorkerPassportPublic);
 
 // Authenticated — current user
 router.get('/me', authenticate, getMe);

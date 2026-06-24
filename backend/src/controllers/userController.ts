@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { getWorkerPassport } from '../services/workerPassportService';
 
 // GET /api/users/:username - Public profile
 export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -27,6 +28,37 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+};
+
+// GET /api/users/:username/passport - Public Worker Passport (trust snapshot).
+// Derived entirely from existing data; no PII (Stripe account id is reduced to a
+// connected/not-connected flag inside the service).
+export const getWorkerPassportPublic = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { username: req.params.username },
+      select: { id: true },
+    });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    const passport = await getWorkerPassport(user.id);
+    res.json(passport);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch worker passport' });
+  }
+};
+
+// GET /api/users/me/passport - The current user's own Worker Passport, for the
+// private profile dashboard. Same data as the public view.
+export const getMyWorkerPassport = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const passport = await getWorkerPassport(req.user!.id);
+    res.json(passport);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch worker passport' });
   }
 };
 
