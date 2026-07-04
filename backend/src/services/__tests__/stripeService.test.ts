@@ -200,6 +200,51 @@ describe('stripeService', () => {
     });
   });
 
+  describe('evaluateAccountReadiness', () => {
+    it('is ready only when charges + payouts + details are enabled and nothing is due', () => {
+      const svc = require('../stripeService');
+      const result = svc.evaluateAccountReadiness({
+        charges_enabled: true,
+        payouts_enabled: true,
+        details_submitted: true,
+        requirements: { currently_due: [], past_due: [] },
+      });
+      expect(result.ready).toBe(true);
+      expect(result.requirementsDue).toBe(false);
+    });
+
+    it('is NOT ready when payouts are disabled or requirements are outstanding', () => {
+      const svc = require('../stripeService');
+      expect(
+        svc.evaluateAccountReadiness({
+          charges_enabled: true,
+          payouts_enabled: false,
+          details_submitted: true,
+          requirements: { currently_due: [], past_due: [] },
+        }).ready
+      ).toBe(false);
+      expect(
+        svc.evaluateAccountReadiness({
+          charges_enabled: true,
+          payouts_enabled: true,
+          details_submitted: true,
+          requirements: { currently_due: ['external_account'], past_due: [] },
+        }).ready
+      ).toBe(false);
+    });
+
+    it('treats a missing requirements object as nothing due', () => {
+      const svc = require('../stripeService');
+      const result = svc.evaluateAccountReadiness({
+        charges_enabled: true,
+        payouts_enabled: true,
+        details_submitted: true,
+      });
+      expect(result.requirementsDue).toBe(false);
+      expect(result.ready).toBe(true);
+    });
+  });
+
   describe('constructWebhookEventFromSecrets', () => {
     const body = Buffer.from('{"id":"evt_1"}');
     const sig = 't=1,v1=abc';

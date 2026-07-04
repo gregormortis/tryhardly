@@ -21,7 +21,25 @@ const mockStripe = {
   createConnectedAccount: jest.fn(),
   createAccountLink: jest.fn(),
   getAccount: jest.fn(),
+  createCheckoutSession: jest.fn(),
+  MIN_CHARGE_CENTS: 50,
   calculatePlatformFee: (cents: number) => Math.round(cents * 0.12),
+  // Mirror the real readiness logic so the checkout guard can be exercised.
+  evaluateAccountReadiness: (account: any) => {
+    const currentlyDue = account.requirements?.currently_due ?? [];
+    const pastDue = account.requirements?.past_due ?? [];
+    const requirementsDue = currentlyDue.length > 0 || pastDue.length > 0;
+    const chargesEnabled = !!account.charges_enabled;
+    const payoutsEnabled = !!account.payouts_enabled;
+    const detailsSubmitted = !!account.details_submitted;
+    return {
+      chargesEnabled,
+      payoutsEnabled,
+      detailsSubmitted,
+      requirementsDue,
+      ready: chargesEnabled && payoutsEnabled && detailsSubmitted && !requirementsDue,
+    };
+  },
 };
 jest.mock('../../services/stripeService', () => mockStripe);
 
@@ -35,6 +53,7 @@ import {
   createConnectedAccount,
   getOnboardingLink,
   getConnectStatus,
+  createQuestCheckout,
 } from '../paymentController';
 
 function mockRes() {
@@ -489,5 +508,172 @@ describe('getConnectStatus — payout account status', () => {
     const body = res.json.mock.calls[0][0];
     expect(body.error).toBe('Failed to fetch payout account status');
     expect(body.message).toContain('No such account');
+  });
+});
+
+describe('createQuestCheckout — precondition guards', () => {
+  function checkoutReq(questId: string, userId = 'giver') {
+    return { params: { questId }, user: { id: userId }, body: {} } as any;
+  }
+
+  const readyAccount = {
+    id: 'acct_w',
+    charges_enabled: true,
+    payouts_enabled: true,
+    details_submitted: true,
+    requirements: { currently_due: [], past_due: [] },
+  };
+
+  it('returns 400 with actionable message when the worker has no connected account', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: null },
+    });
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.workerPayoutNotReady).toBe(true);
+    expect(body.message).toContain('finish Stripe payout setup');
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the worker account exists but onboarding is incomplete', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+    mockStripe.getAccount.mockResolvedValue({
+      id: 'acct_w',
+      charges_enabled: false,
+      payouts_enabled: false,
+      details_submitted: false,
+      requirements: { currently_due: ['external_account'], past_due: [] },
+    });
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.workerPayoutNotReady).toBe(true);
+    expect(body.message).toContain('finish Stripe payout setup');
+    expect(body.details.payoutsEnabled).toBe(false);
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the worker account cannot be retrieved from Stripe', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+    const stripeErr: any = new Error('No such account: acct_w');
+    stripeErr.type = 'StripeInvalidRequestError';
+    mockStripe.getAccount.mockRejectedValue(stripeErr);
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.workerPayoutNotReady).toBe(true);
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the job amount is below the Stripe minimum', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tiny job',
+      reward: 0.25, // 25 cents, below the 50-cent floor
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+    mockStripe.getAccount.mockResolvedValue(readyAccount);
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toBe('Invalid job amount');
+    expect(body.message).toContain('at least');
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the job amount is not a valid number', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Bad amount',
+      reward: null,
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+    mockStripe.getAccount.mockResolvedValue(readyAccount);
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].error).toBe('Invalid job amount');
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when the caller is not the quest giver', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'someone-else',
+      reward: 200,
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockStripe.getAccount).not.toHaveBeenCalled();
+  });
+
+  it('creates the Checkout Session when the worker is fully onboarded and the amount is valid', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      currency: 'usd',
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+    mockStripe.getAccount.mockResolvedValue(readyAccount);
+    mockStripe.createCheckoutSession.mockResolvedValue({
+      id: 'cs_1',
+      url: 'https://checkout.stripe.com/c/pay/cs_1',
+    });
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(mockStripe.createCheckoutSession).toHaveBeenCalledTimes(1);
+    const args = mockStripe.createCheckoutSession.mock.calls[0][0];
+    expect(args.amountCents).toBe(20000);
+    expect(args.workerAccountId).toBe('acct_w');
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json.mock.calls[0][0].url).toBe('https://checkout.stripe.com/c/pay/cs_1');
   });
 });

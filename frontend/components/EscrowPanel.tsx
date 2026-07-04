@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '../lib/api';
+import { api, ApiRequestError } from '../lib/api';
 
 // Mirrors the backend GET /api/payments/quest/:id/payment-status response.
 // This is the non-escrow marketplace flow: the customer's card is AUTHORIZED at
@@ -99,8 +99,14 @@ export default function PaymentPanel({ questId, isQuestGiver }: PaymentPanelProp
       }
       setError('Could not start checkout. Please try again.');
     } catch (err: unknown) {
-      const e = err as { message?: string };
-      setError(e?.message || 'Failed to start checkout');
+      if (err instanceof ApiRequestError && err.workerPayoutNotReady) {
+        setError(
+          `${err.message} The worker connects their payout account from their dashboard under payout setup.`
+        );
+      } else {
+        const e = err as { message?: string };
+        setError(e?.message || 'Failed to start checkout');
+      }
     } finally {
       setLoading(false);
     }

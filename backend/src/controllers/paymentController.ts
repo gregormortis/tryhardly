@@ -268,17 +268,72 @@ export const createQuestCheckout = async (
     const workerAccountId = (workerUser as any).stripeAccountId;
     if (!workerAccountId) {
       res.status(400).json({
-        error: 'Bad Request',
-        message: 'Worker has not completed Stripe onboarding',
+        error: 'Worker payout setup incomplete',
+        message:
+          'Selected worker must finish Stripe payout setup before payment can be authorized.',
+        workerPayoutNotReady: true,
       });
       return;
     }
 
-    const amountCents = Math.round(Number((quest as any).reward) * 100);
-    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+    // Precondition: the worker's connected account must actually be able to
+    // receive the destination charge / routed payout. A worker can have a
+    // `stripeAccountId` (account created) while onboarding is still incomplete
+    // (charges/payouts not enabled, or requirements outstanding). Without this
+    // guard, Checkout creation fails deep inside Stripe with an opaque error
+    // that surfaces to the giver as a generic Bad Request. Retrieve the live
+    // account and verify readiness up front so we can return a clear,
+    // actionable message instead. The retrieve is read-only.
+    let workerAccount;
+    try {
+      workerAccount = await stripeService.getAccount(workerAccountId);
+    } catch (accountError: any) {
+      console.error('Error retrieving worker connected account before checkout:', {
+        type: accountError?.type,
+        code: accountError?.code,
+        message: accountError?.message,
+      });
       res.status(400).json({
-        error: 'Bad Request',
-        message: 'Job amount must be greater than zero',
+        error: 'Worker payout setup incomplete',
+        message:
+          'Could not verify the selected worker’s Stripe payout account. Ask the worker to finish payout setup, then try again.',
+        workerPayoutNotReady: true,
+      });
+      return;
+    }
+
+    const readiness = stripeService.evaluateAccountReadiness(workerAccount);
+    if (!readiness.ready) {
+      res.status(400).json({
+        error: 'Worker payout setup incomplete',
+        message:
+          'Selected worker must finish Stripe payout setup before payment can be authorized.',
+        workerPayoutNotReady: true,
+        details: {
+          chargesEnabled: readiness.chargesEnabled,
+          payoutsEnabled: readiness.payoutsEnabled,
+          detailsSubmitted: readiness.detailsSubmitted,
+          requirementsDue: readiness.requirementsDue,
+        },
+      });
+      return;
+    }
+
+    const rewardAmount = Number((quest as any).reward);
+    const amountCents = Math.round(rewardAmount * 100);
+    if (!Number.isFinite(rewardAmount) || !Number.isInteger(amountCents) || amountCents <= 0) {
+      res.status(400).json({
+        error: 'Invalid job amount',
+        message: 'Job amount must be a valid amount greater than zero.',
+      });
+      return;
+    }
+    if (amountCents < stripeService.MIN_CHARGE_CENTS) {
+      res.status(400).json({
+        error: 'Invalid job amount',
+        message: `Job amount must be at least ${(
+          stripeService.MIN_CHARGE_CENTS / 100
+        ).toFixed(2)} to authorize a payment.`,
       });
       return;
     }
@@ -311,7 +366,11 @@ export const createQuestCheckout = async (
       applicationFeeAmount: stripeService.calculatePlatformFee(amountCents),
     });
   } catch (error: any) {
-    console.error('Error creating checkout session:', error);
+    console.error('Error creating checkout session:', {
+      type: error?.type,
+      code: error?.code,
+      message: error?.message,
+    });
 
     if (error.code === 'P2025') {
       res.status(404).json({ error: 'Not Found', message: 'Quest not found' });
@@ -320,7 +379,7 @@ export const createQuestCheckout = async (
 
     res.status(500).json({
       error: 'Failed to create checkout session',
-      message: error.message,
+      message: stripeErrorMessage(error),
     });
   }
 };
