@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
-import { DeletionRequestStatus } from '@prisma/client';
+import { DeletionRequestStatus, Prisma } from '@prisma/client';
 import { sendEmail, emailTemplates } from '../services/mailerService';
 
 // Optional internal alert recipient. Email is best-effort only: the admin queue
@@ -57,13 +57,35 @@ export const requestAccountDeletion = async (req: AuthRequest, res: Response): P
       return;
     }
 
-    const request = await prisma.accountDeletionRequest.create({
-      data: {
-        userId,
-        email: user.email,
-        reason: reason?.trim() || null,
-      },
-    });
+    let request;
+    try {
+      request = await prisma.accountDeletionRequest.create({
+        data: {
+          userId,
+          email: user.email,
+          reason: reason?.trim() || null,
+        },
+      });
+    } catch (err) {
+      // Lost the race against a concurrent request: the partial unique index on
+      // (userId) WHERE status = PENDING rejected the duplicate. Treat it as
+      // idempotent and return the pending request that won, rather than erroring.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        const winner = await prisma.accountDeletionRequest.findFirst({
+          where: { userId, status: DeletionRequestStatus.PENDING },
+        });
+        if (winner) {
+          res.status(200).json({
+            id: winner.id,
+            status: winner.status,
+            createdAt: winner.createdAt,
+            alreadyRequested: true,
+          });
+          return;
+        }
+      }
+      throw err;
+    }
 
     // The request is now queued for admin review (the source of truth). Email is
     // a best-effort courtesy on top and must never block or fail the request.
@@ -171,13 +193,48 @@ export const updateDeletionRequest = async (req: AuthRequest, res: Response): Pr
 
     const isTerminal =
       normStatus === DeletionRequestStatus.COMPLETED || normStatus === DeletionRequestStatus.CANCELLED;
+    const handledById = isTerminal ? req.user!.id : null;
+    const handledAt = isTerminal ? new Date() : null;
+    const note = handlerNote?.trim() ?? request.handlerNote;
+
+    // Completing a request is the actual finalization step: it disables the
+    // account (soft-delete) and resolves every other pending request for the
+    // same user/email in one transaction, so the queue can't be left with
+    // duplicate pending rows for an account that's already gone. We soft-delete
+    // rather than hard-delete because the User row is referenced by quests,
+    // reviews, messages, and payment records retained for legal/compliance
+    // reasons — deletedAt disables login and hides the public profile instead.
+    if (normStatus === DeletionRequestStatus.COMPLETED) {
+      const [updated] = await prisma.$transaction([
+        prisma.accountDeletionRequest.update({
+          where: { id: req.params.id },
+          data: { status: DeletionRequestStatus.COMPLETED, handlerNote: note, handledById, handledAt },
+        }),
+        prisma.user.update({
+          where: { id: request.userId },
+          data: { deletedAt: handledAt!, accountStatus: 'DELETED' },
+        }),
+        prisma.accountDeletionRequest.updateMany({
+          where: {
+            id: { not: req.params.id },
+            status: DeletionRequestStatus.PENDING,
+            OR: [{ userId: request.userId }, { email: request.email }],
+          },
+          data: { status: DeletionRequestStatus.COMPLETED, handledById, handledAt },
+        }),
+      ]);
+      console.log(`[account-deletion] request ${req.params.id} completed; user ${request.userId} disabled`);
+      res.json(updated);
+      return;
+    }
+
     const updated = await prisma.accountDeletionRequest.update({
       where: { id: req.params.id },
       data: {
         status: normStatus as DeletionRequestStatus,
-        handlerNote: handlerNote?.trim() ?? request.handlerNote,
-        handledById: isTerminal ? req.user!.id : null,
-        handledAt: isTerminal ? new Date() : null,
+        handlerNote: note,
+        handledById,
+        handledAt,
       },
     });
     res.json(updated);

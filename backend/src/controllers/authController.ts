@@ -72,6 +72,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // A finalized account deletion disables login. The credential row is retained
+    // only so historical quests/reviews/payments keep their references; the
+    // account itself must not be able to authenticate. Return the same generic
+    // 401 as bad credentials so we don't disclose that an account was deleted.
+    if (user.deletedAt || user.accountStatus === 'DELETED') {
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
+    }
+
     const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
     const token = jwt.sign(
       { userId: user.id },

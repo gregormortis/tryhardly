@@ -58,6 +58,16 @@ model User {
   // list — this only controls which skills the worker chooses to feature.
   favoriteSkills  String[] @default([])
 
+  // Account lifecycle. Soft-deletion: when an account-deletion request is
+  // finalized we set deletedAt (and flip accountStatus to DELETED) instead of
+  // hard-deleting the row, which is referenced by quests, reviews, messages, and
+  // payment records we must retain for legal/compliance reasons. A non-null
+  // deletedAt disables login and hides the public profile — the credential row
+  // survives only so those historical references stay intact. Additive and
+  // nullable/defaulted, so every existing row stays ACTIVE and unaffected.
+  accountStatus AccountStatus @default(ACTIVE)
+  deletedAt     DateTime?
+
   // Timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -87,6 +97,15 @@ model User {
 
   @@index([email])
   @@index([username])
+}
+
+// Account lifecycle state. ACTIVE is the only state at registration; DELETED is
+// set when an account-deletion request is finalized. A DELETED account cannot
+// log in and its public profile is hidden, but the row is retained so historical
+// quests, reviews, and payment records keep their references.
+enum AccountStatus {
+  ACTIVE
+  DELETED
 }
 
 enum UserClass {
