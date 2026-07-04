@@ -3,10 +3,39 @@ import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createNotification } from '../services/notificationService';
 import { sendEmail, emailTemplates } from '../services/mailerService';
+import * as stripeService from '../services/stripeService';
 import {
   findContactInfoInFields,
   CONTACT_INFO_VALIDATION_MESSAGE,
 } from '../utils/contactDetection';
+
+// Shown when a worker tries to submit a bid before their Stripe Connect payout
+// account is onboarded/ready. Workers may view jobs and draft a bid, but a bid
+// can only be SUBMITTED once payouts can actually be routed to them on capture.
+export const PAYOUT_SETUP_REQUIRED_MESSAGE =
+  'Connect your payout account before submitting bids. This lets TryHardly process worker payouts through Stripe Connect after completed-task payment capture.';
+
+// Whether the bidding worker's Stripe Connect account is ready to receive the
+// routed payout for the marketplace destination-charge flow. Mirrors the
+// readiness definition used by the pre-checkout guard and GET
+// /api/payments/connect/status, so "payout setup complete" means the same thing
+// everywhere. A missing account, an incomplete onboarding, or an error talking
+// to Stripe all read as not-ready (fail closed) so we never accept a bid we
+// couldn't pay out on.
+async function isWorkerPayoutReady(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stripeAccountId: true },
+  });
+  const accountId = (user as any)?.stripeAccountId as string | null | undefined;
+  if (!accountId) return false;
+  try {
+    const account = await stripeService.getAccount(accountId);
+    return stripeService.evaluateAccountReadiness(account).ready;
+  } catch {
+    return false;
+  }
+}
 
 // Walkthrough types a worker can request before/while bidding. Mirrors the
 // Prisma WalkthroughType enum; kept local so we can validate request input
@@ -105,6 +134,20 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
       where: { questId, adventurerId: req.user!.id },
     });
     if (existing) { res.status(400).json({ error: 'Already applied to this quest' }); return; }
+
+    // Payout precondition: a worker must have a connected/ready Stripe Connect
+    // payout account before a bid can be SUBMITTED. This does not touch the
+    // payment model — no card is charged here; it only ensures that, once the
+    // poster accepts and authorizes payment, the completed-task capture can
+    // route the worker's payout through Stripe Connect.
+    if (!(await isWorkerPayoutReady(req.user!.id))) {
+      res.status(400).json({
+        error: 'Payout setup required',
+        message: PAYOUT_SETUP_REQUIRED_MESSAGE,
+        payoutSetupRequired: true,
+      });
+      return;
+    }
 
     const bidData = buildBidData(req.body || {});
     const cover = toTrimmedString(coverLetter);
