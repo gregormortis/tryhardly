@@ -3,6 +3,13 @@ import Stripe from 'stripe';
 const PLATFORM_FEE_PERCENT = 12; // 12% platform commission
 
 /**
+ * Stripe's minimum chargeable amount, in cents, for USD-denominated charges.
+ * Checkout/PaymentIntent creation is rejected below this floor, so we validate
+ * against it up front to return a clear message instead of a Stripe error.
+ */
+const MIN_CHARGE_CENTS = 50;
+
+/**
  * Default country for newly created connected accounts. Stripe uses this as the
  * account's identity country. Overridable via STRIPE_ACCOUNT_COUNTRY; falls back
  * to US. (Not a secret — a two-letter ISO country code.)
@@ -385,6 +392,35 @@ export async function getAccount(
 }
 
 /**
+ * Evaluate whether a connected account can receive a destination charge / the
+ * routed payout for the non-escrow marketplace flow.
+ *
+ * `ready` is true only when the account can be charged (charges_enabled), can be
+ * paid out (payouts_enabled), has submitted its details, and has no outstanding
+ * requirements. This mirrors the `onboarded` definition surfaced by
+ * GET /api/payments/connect/status, so the pre-checkout guard and the status UI
+ * agree on what "payout setup complete" means. Pure/synchronous: never calls
+ * Stripe.
+ */
+export function evaluateAccountReadiness(account: Stripe.Account): {
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  requirementsDue: boolean;
+  ready: boolean;
+} {
+  const currentlyDue = account.requirements?.currently_due ?? [];
+  const pastDue = account.requirements?.past_due ?? [];
+  const requirementsDue = currentlyDue.length > 0 || pastDue.length > 0;
+  const chargesEnabled = !!account.charges_enabled;
+  const payoutsEnabled = !!account.payouts_enabled;
+  const detailsSubmitted = !!account.details_submitted;
+  const ready =
+    chargesEnabled && payoutsEnabled && detailsSubmitted && !requirementsDue;
+  return { chargesEnabled, payoutsEnabled, detailsSubmitted, requirementsDue, ready };
+}
+
+/**
  * Construct a webhook event from the raw body and signature.
  */
 export function constructWebhookEvent(
@@ -421,4 +457,4 @@ export function constructWebhookEventFromSecrets(
     : new Error('No webhook signing secret matched the signature');
 }
 
-export { getStripe, PLATFORM_FEE_PERCENT, calculatePlatformFee };
+export { getStripe, PLATFORM_FEE_PERCENT, MIN_CHARGE_CENTS, calculatePlatformFee };
