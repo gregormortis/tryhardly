@@ -10,6 +10,16 @@ import StripeConnectButton from '../../components/StripeConnectButton';
 
 const XP_PER_LEVEL = 1000;
 
+// Turn a raw quest status (e.g. "IN_PROGRESS") into a readable label ("In progress").
+function formatStatus(status?: string): string {
+  if (!status) return 'Unknown';
+  return status
+    .toLowerCase()
+    .split('_')
+    .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+    .join(' ');
+}
+
 interface DashboardData {
   postedQuests: Quest[];
   applications: Application[];
@@ -193,13 +203,20 @@ export default function DashboardPage() {
         ) : data?.postedQuests?.length ? (
           <div className="space-y-2">
             {data.postedQuests.slice(0, 5).map(q => (
-              <div key={q.id} className="flex justify-between items-center p-3 rounded-lg bg-zinc-800">
+              <Link
+                key={q.id}
+                href={`/questboard/${q.id}`}
+                className="group flex justify-between items-center p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60 cursor-pointer transition-colors"
+              >
                 <div>
                   <p className="text-sm font-medium text-zinc-100">{q.title}</p>
                   <p className="text-xs text-zinc-500">{q._count?.applications || 0} applicant{(q._count?.applications || 0) !== 1 ? 's' : ''}</p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-300">{q.status}</span>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-300">{formatStatus(q.status)}</span>
+                  <span className="text-xs text-amber-400 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">Manage →</span>
+                </div>
+              </Link>
             ))}
           </div>
         ) : (
