@@ -6,8 +6,8 @@ import { getWorkerPassport } from '../services/workerPassportService';
 // GET /api/users/:username - Public profile
 export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { username: req.params.username },
+    const user = await prisma.user.findFirst({
+      where: { username: req.params.username, deletedAt: null },
       select: {
         id: true, username: true, displayName: true, bio: true, avatarUrl: true,
         level: true, xp: true, adventurerClass: true, reputationScore: true,
@@ -36,8 +36,8 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
 // connected/not-connected flag inside the service).
 export const getWorkerPassportPublic = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { username: req.params.username },
+    const user = await prisma.user.findFirst({
+      where: { username: req.params.username, deletedAt: null },
       select: { id: true },
     });
     if (!user) {

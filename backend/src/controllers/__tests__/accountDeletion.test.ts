@@ -1,12 +1,16 @@
 const mockPrisma = {
-  user: { findUnique: jest.fn() },
+  user: { findUnique: jest.fn(), update: jest.fn() },
   accountDeletionRequest: {
     findFirst: jest.fn(),
     create: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     findMany: jest.fn(),
   },
+  // The controller builds an array of operations and awaits them together; the
+  // mock just resolves each so the first element (the updated request) is returned.
+  $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 };
 
 jest.mock('../../app', () => ({ prisma: mockPrisma }));
@@ -18,6 +22,7 @@ jest.mock('../../services/mailerService', () => ({
   },
 }));
 
+import { Prisma } from '@prisma/client';
 import {
   requestAccountDeletion,
   cancelMyDeletionRequest,
@@ -61,6 +66,24 @@ describe('requestAccountDeletion', () => {
       expect.objectContaining({ id: 'd1', status: 'PENDING', alreadyRequested: true }),
     );
     expect(mockPrisma.accountDeletionRequest.create).not.toHaveBeenCalled();
+  });
+
+  it('is idempotent under a race: a unique-constraint violation returns the winning pending request', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'u@e.com', username: 'u' });
+    // No pending row seen on the initial check, so we attempt to create...
+    mockPrisma.accountDeletionRequest.findFirst
+      .mockResolvedValueOnce(null)
+      // ...but the partial unique index rejects it; we then look up the winner.
+      .mockResolvedValueOnce({ id: 'winner', status: 'PENDING', createdAt: new Date('2026-06-04') });
+    mockPrisma.accountDeletionRequest.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('dupe', { code: 'P2002', clientVersion: 'test' } as any),
+    );
+    const res = mockRes();
+    await requestAccountDeletion({ user: { id: 'u1' }, body: {} } as any, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'winner', alreadyRequested: true }),
+    );
   });
 
   it('creates a request and sends the user confirmation but no support alert when SUPPORT_EMAIL is unset', async () => {
@@ -145,8 +168,12 @@ describe('updateDeletionRequest (admin)', () => {
   });
 
   it('stamps handler fields on a terminal status', async () => {
-    mockPrisma.accountDeletionRequest.findUnique.mockResolvedValue({ id: 'd1', handlerNote: null });
+    mockPrisma.accountDeletionRequest.findUnique.mockResolvedValue({
+      id: 'd1', handlerNote: null, userId: 'u1', email: 'u@e.com',
+    });
     mockPrisma.accountDeletionRequest.update.mockResolvedValue({ id: 'd1', status: 'COMPLETED' });
+    mockPrisma.user.update.mockResolvedValue({ id: 'u1' });
+    mockPrisma.accountDeletionRequest.updateMany.mockResolvedValue({ count: 0 });
     const res = mockRes();
     await updateDeletionRequest(
       { user: { id: 'admin' }, params: { id: 'd1' }, body: { status: 'completed', handlerNote: ' done ' } } as any,
@@ -157,5 +184,48 @@ describe('updateDeletionRequest (admin)', () => {
     expect(arg.data.handledById).toBe('admin');
     expect(arg.data.handledAt).toBeInstanceOf(Date);
     expect(arg.data.handlerNote).toBe('done');
+  });
+
+  it('soft-deletes the user and resolves all pending requests for that user/email when completed', async () => {
+    mockPrisma.accountDeletionRequest.findUnique.mockResolvedValue({
+      id: 'd1', handlerNote: null, userId: 'u1', email: 'projhub10x@gmail.com',
+    });
+    mockPrisma.accountDeletionRequest.update.mockResolvedValue({ id: 'd1', status: 'COMPLETED' });
+    mockPrisma.user.update.mockResolvedValue({ id: 'u1', accountStatus: 'DELETED' });
+    mockPrisma.accountDeletionRequest.updateMany.mockResolvedValue({ count: 2 });
+    const res = mockRes();
+    await updateDeletionRequest(
+      { user: { id: 'admin' }, params: { id: 'd1' }, body: { status: 'COMPLETED' } } as any,
+      res,
+    );
+
+    // Login is disabled via soft-delete on the User row.
+    const userArg = mockPrisma.user.update.mock.calls[0][0];
+    expect(userArg.where).toEqual({ id: 'u1' });
+    expect(userArg.data.accountStatus).toBe('DELETED');
+    expect(userArg.data.deletedAt).toBeInstanceOf(Date);
+
+    // Every other pending request for the same user OR email is resolved too, so
+    // the admin queue is never left with duplicate pending rows for a gone account.
+    const manyArg = mockPrisma.accountDeletionRequest.updateMany.mock.calls[0][0];
+    expect(manyArg.where.status).toBe('PENDING');
+    expect(manyArg.where.id).toEqual({ not: 'd1' });
+    expect(manyArg.where.OR).toEqual([{ userId: 'u1' }, { email: 'projhub10x@gmail.com' }]);
+    expect(manyArg.data.status).toBe('COMPLETED');
+    expect(res.json).toHaveBeenCalledWith({ id: 'd1', status: 'COMPLETED' });
+  });
+
+  it('does NOT touch the user or other requests when merely cancelled', async () => {
+    mockPrisma.accountDeletionRequest.findUnique.mockResolvedValue({
+      id: 'd1', handlerNote: null, userId: 'u1', email: 'u@e.com',
+    });
+    mockPrisma.accountDeletionRequest.update.mockResolvedValue({ id: 'd1', status: 'CANCELLED' });
+    const res = mockRes();
+    await updateDeletionRequest(
+      { user: { id: 'admin' }, params: { id: 'd1' }, body: { status: 'CANCELLED' } } as any,
+      res,
+    );
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    expect(mockPrisma.accountDeletionRequest.updateMany).not.toHaveBeenCalled();
   });
 });

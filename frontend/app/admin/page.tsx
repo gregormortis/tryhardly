@@ -276,7 +276,7 @@ export default function AdminPage() {
         handlerNote,
       });
       setDeletionRequests((prev) => prev.map((r) => (r.id === id ? { ...r, ...updated } : r)));
-      toast.success(status === 'COMPLETED' ? 'Marked handled' : 'Request cancelled');
+      toast.success(status === 'COMPLETED' ? 'Deletion completed — account disabled' : 'Request cancelled');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update deletion request');
     }
@@ -696,12 +696,15 @@ export default function AdminPage() {
                           <div className="flex flex-col gap-2 flex-shrink-0">
                             <button
                               onClick={() => {
+                                if (!window.confirm(
+                                  'Complete deletion? This permanently disables the account so it can no longer log in. Historical quest/payment records are retained. This cannot be undone.',
+                                )) return;
                                 const note = window.prompt('Note (optional) — e.g. record of what was deleted:') ?? undefined;
                                 handleDeletionRequest(d.id, 'COMPLETED', note);
                               }}
                               className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
                             >
-                              Mark handled
+                              Complete deletion
                             </button>
                             <button
                               onClick={() => {

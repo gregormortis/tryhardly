@@ -32,6 +32,14 @@ export const authenticate = async (
       return;
     }
 
+    // A finalized deletion invalidates any outstanding JWTs: the token may still
+    // verify, but the account is gone. Reject so a deleted user can't keep using
+    // a token issued before deletion.
+    if (user.deletedAt || user.accountStatus === 'DELETED') {
+      res.status(401).json({ error: 'Unauthorized', message: 'User not found' });
+      return;
+    }
+
     req.user = { id: user.id, email: user.email, username: user.username, role: user.role };
     next();
   } catch (_error) {
@@ -70,7 +78,7 @@ export const optionalAuth = async (
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string };
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-    if (user) {
+    if (user && !user.deletedAt && user.accountStatus !== 'DELETED') {
       req.user = { id: user.id, email: user.email, username: user.username, role: user.role };
     }
     next();
