@@ -14,6 +14,7 @@ import CompletionPanel from '@/components/CompletionPanel';
 import TradeStandardChecklist from '@/components/TradeStandardChecklist';
 import BidForm, { type BidPayload } from '@/components/BidForm';
 import BidComparison from '@/components/BidComparison';
+import AcceptedBidPanel from '@/components/AcceptedBidPanel';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
 import { recurrenceSummary } from '@/lib/recurrence';
 
@@ -43,11 +44,42 @@ export default function QuestDetailPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [generatingOccurrence, setGeneratingOccurrence] = useState(false);
+  // Worker-side payout readiness: a worker may draft a bid but can only submit
+  // once their own Stripe Connect payout account is onboarded/ready.
+  const [payoutReady, setPayoutReady] = useState(false);
+  const [payoutStatusLoading, setPayoutStatusLoading] = useState(true);
 
   useEffect(() => {
     fetchQuest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, user?.id]);
+
+  // Load the current user's payout-account readiness so the bid form can gate
+  // submission. Only meaningful for a signed-in non-owner who could bid; skip
+  // otherwise. Fails closed (not ready) if the status can't be read.
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setPayoutReady(false);
+      setPayoutStatusLoading(false);
+      return;
+    }
+    setPayoutStatusLoading(true);
+    api
+      .get<{ onboarded: boolean }>('/payments/connect/status')
+      .then((s) => {
+        if (!cancelled) setPayoutReady(!!s.onboarded);
+      })
+      .catch(() => {
+        if (!cancelled) setPayoutReady(false);
+      })
+      .finally(() => {
+        if (!cancelled) setPayoutStatusLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const fetchQuest = async () => {
     setLoading(true);
@@ -184,6 +216,11 @@ export default function QuestDetailPage() {
   const isContractorScale =
     isQuoteMode || (quest.reward ?? 0) >= CONTRACTOR_SCALE_REWARD;
 
+  // The accepted bid (if any) drives the owner's post-acceptance next-step panel.
+  const acceptedApplication = applications.find((a) => a.status === 'ACCEPTED') ?? null;
+  const showAcceptedNextSteps =
+    !!isOwner && quest.status !== 'OPEN' && quest.status !== 'CANCELLED';
+
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -230,6 +267,13 @@ export default function QuestDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Post-acceptance next steps (owner) — authorize payment + share job
+                coordination details with the selected worker. Prominent and in
+                place so the poster isn't left guessing what to do next. */}
+            {showAcceptedNextSteps && (
+              <AcceptedBidPanel quest={quest} acceptedApplication={acceptedApplication} />
+            )}
 
             {/* Description */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
@@ -383,6 +427,9 @@ export default function QuestDetailPage() {
                   contractorScale={isContractorScale}
                   submitting={applying}
                   onSubmit={handleApply}
+                  payoutReady={payoutReady}
+                  payoutStatusLoading={payoutStatusLoading}
+                  payoutSetupHref="/dashboard"
                 />
               )}
 
@@ -467,14 +514,17 @@ export default function QuestDetailPage() {
               </div>
             )}
 
-            {/* Marketplace payment panel — visible to the quest giver and the
-                assigned adventurer once the quest is no longer just OPEN. */}
+            {/* Marketplace payment panel — worker-facing view. The owner sees
+                the payment authorization CTA inside AcceptedBidPanel (main
+                column) once a bid is accepted, so we only render the sidebar
+                panel for the assigned worker to avoid a duplicate CTA. */}
             {user &&
-              (isOwner || user.id === quest.assignedAdventurerId) &&
+              !isOwner &&
+              user.id === quest.assignedAdventurerId &&
               quest.status !== 'OPEN' && (
                 <EscrowPanel
                   questId={quest.id}
-                  isQuestGiver={!!isOwner}
+                  isQuestGiver={false}
                   questStatus={quest.status}
                 />
               )}

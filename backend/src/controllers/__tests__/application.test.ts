@@ -32,6 +32,26 @@ jest.mock('../../services/mailerService', () => ({
   },
 }));
 
+// Worker payout readiness is enforced before a bid can be submitted. The real
+// evaluateAccountReadiness is a pure function, so we keep it and only stub the
+// Stripe network call (getAccount). Individual tests drive readiness by what the
+// stubbed account exposes.
+const mockGetAccount = jest.fn();
+jest.mock('../../services/stripeService', () => ({
+  getAccount: (...args: any[]) => mockGetAccount(...args),
+  evaluateAccountReadiness: jest.requireActual('../../services/stripeService')
+    .evaluateAccountReadiness,
+}));
+
+// A connected account that passes the readiness check (charges + payouts
+// enabled, details submitted, nothing due).
+const READY_ACCOUNT = {
+  charges_enabled: true,
+  payouts_enabled: true,
+  details_submitted: true,
+  requirements: { currently_due: [], past_due: [] },
+};
+
 import { applyToQuest, acceptApplication } from '../applicationController';
 
 function mockRes() {
@@ -58,7 +78,11 @@ describe('applyToQuest — detailed bid payload', () => {
       id: 'a1',
       adventurer: { username: 'worker1' },
     });
-    mockPrisma.user.findUnique.mockResolvedValue({ email: 'owner@example.com' });
+    mockPrisma.user.findUnique.mockResolvedValue({
+      stripeAccountId: 'acct_ready',
+      email: 'owner@example.com',
+    });
+    mockGetAccount.mockResolvedValue(READY_ACCOUNT);
 
     const res = mockRes();
     await applyToQuest(
@@ -110,6 +134,8 @@ describe('applyToQuest — detailed bid payload', () => {
   it('rejects an empty application (no cover letter, no bid)', async () => {
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
     mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: 'acct_ready' });
+    mockGetAccount.mockResolvedValue(READY_ACCOUNT);
 
     const res = mockRes();
     await applyToQuest(
@@ -124,6 +150,8 @@ describe('applyToQuest — detailed bid payload', () => {
   it('blocks a bid whose notes share off-platform contact info', async () => {
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
     mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: 'acct_ready' });
+    mockGetAccount.mockResolvedValue(READY_ACCOUNT);
 
     const res = mockRes();
     await applyToQuest(
@@ -146,7 +174,8 @@ describe('applyToQuest — detailed bid payload', () => {
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
     mockPrisma.application.findFirst.mockResolvedValue(null);
     mockPrisma.application.create.mockResolvedValue({ id: 'a3', adventurer: { username: 'w' } });
-    mockPrisma.user.findUnique.mockResolvedValue({ email: null });
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: 'acct_ready', email: null });
+    mockGetAccount.mockResolvedValue(READY_ACCOUNT);
 
     const res = mockRes();
     await applyToQuest(
@@ -169,7 +198,8 @@ describe('applyToQuest — detailed bid payload', () => {
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
     mockPrisma.application.findFirst.mockResolvedValue(null);
     mockPrisma.application.create.mockResolvedValue({ id: 'a2', adventurer: { username: 'w' } });
-    mockPrisma.user.findUnique.mockResolvedValue({ email: null });
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: 'acct_ready', email: null });
+    mockGetAccount.mockResolvedValue(READY_ACCOUNT);
 
     const res = mockRes();
     await applyToQuest(
@@ -185,6 +215,59 @@ describe('applyToQuest — detailed bid payload', () => {
     expect(data.walkthroughRequested).toBe(false);
     expect(data.walkthroughType).toBe('NONE');
     expect(data.bidAmount).toBeUndefined();
+  });
+
+  it('blocks submitting a bid when the worker has no payout account', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    // No stripeAccountId → not payout-ready.
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: null });
+
+    const res = mockRes();
+    await applyToQuest(
+      {
+        params: { questId: 'q1' },
+        user: { id: 'worker1' },
+        body: { bidAmount: '500' },
+      } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ payoutSetupRequired: true })
+    );
+    expect(mockGetAccount).not.toHaveBeenCalled();
+    expect(mockPrisma.application.create).not.toHaveBeenCalled();
+  });
+
+  it('blocks submitting a bid when the payout account is not fully onboarded', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: 'acct_pending' });
+    // Account exists but still has outstanding requirements → not ready.
+    mockGetAccount.mockResolvedValue({
+      charges_enabled: false,
+      payouts_enabled: false,
+      details_submitted: false,
+      requirements: { currently_due: ['external_account'], past_due: [] },
+    });
+
+    const res = mockRes();
+    await applyToQuest(
+      {
+        params: { questId: 'q1' },
+        user: { id: 'worker1' },
+        body: { bidAmount: '500' },
+      } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ payoutSetupRequired: true })
+    );
+    expect(mockPrisma.application.create).not.toHaveBeenCalled();
   });
 });
 

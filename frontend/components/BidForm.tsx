@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import type { MaterialItem, WalkthroughType } from '@/lib/types';
 
 // Professional, non-gamified bid submission form for a worker applying to a job.
@@ -31,7 +32,19 @@ interface BidFormProps {
   contractorScale: boolean;
   submitting: boolean;
   onSubmit: (payload: BidPayload) => void;
+  // Payout readiness gating. A worker may draft a bid freely, but Submit Bid is
+  // disabled until their Stripe Connect payout account is onboarded/ready. When
+  // `payoutReady` is undefined the status is still loading; when false we block
+  // submission and surface the connect-payout guidance. Defaults keep the form
+  // fully enabled for callers that don't gate on payout status.
+  payoutReady?: boolean;
+  payoutStatusLoading?: boolean;
+  // Where to send the worker to connect/finish their payout account.
+  payoutSetupHref?: string;
 }
+
+export const PAYOUT_SETUP_COPY =
+  'Connect your payout account before submitting bids. This lets TryHardly process worker payouts through Stripe Connect after completed-task payment capture.';
 
 interface DraftMaterial {
   name: string;
@@ -58,7 +71,14 @@ function toNumber(value: string): number | undefined {
   return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
 
-export default function BidForm({ contractorScale, submitting, onSubmit }: BidFormProps) {
+export default function BidForm({
+  contractorScale,
+  submitting,
+  onSubmit,
+  payoutReady = true,
+  payoutStatusLoading = false,
+  payoutSetupHref = '/dashboard',
+}: BidFormProps) {
   const [bidAmount, setBidAmount] = useState('');
   const [materialCost, setMaterialCost] = useState('');
   const [laborCost, setLaborCost] = useState('');
@@ -103,6 +123,15 @@ export default function BidForm({ contractorScale, submitting, onSubmit }: BidFo
 
   const handleSubmit = () => {
     setError('');
+
+    // Payout precondition: a worker can draft a bid, but cannot submit until
+    // their Stripe Connect payout account is ready. Guard here as well as via the
+    // disabled button so the copy is always shown when they try.
+    if (!payoutReady) {
+      setError(PAYOUT_SETUP_COPY);
+      return;
+    }
+
     const amount = toNumber(bidAmount);
     const cover = coverLetter.trim();
 
@@ -432,13 +461,31 @@ export default function BidForm({ contractorScale, submitting, onSubmit }: BidFo
         </label>
       )}
 
+      {/* Payout-readiness gate: draft freely, but Submit is blocked until the
+          worker's Stripe Connect payout account is onboarded/ready. */}
+      {!payoutStatusLoading && !payoutReady && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
+          <p className="text-xs text-amber-200/90 leading-relaxed">{PAYOUT_SETUP_COPY}</p>
+          <Link
+            href={payoutSetupHref}
+            className="mt-2 inline-block text-xs font-semibold text-amber-400 hover:text-amber-300 underline"
+          >
+            Connect your payout account →
+          </Link>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={submitting}
-        className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-900 font-bold py-3 rounded-lg transition-colors"
+        disabled={submitting || payoutStatusLoading || !payoutReady}
+        className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 font-bold py-3 rounded-lg transition-colors"
       >
-        {submitting
+        {payoutStatusLoading
+          ? 'Checking payout account…'
+          : !payoutReady
+          ? 'Connect payout account to submit'
+          : submitting
           ? 'Submitting bid…'
           : totalNum !== undefined
           ? `Submit bid · ${fmt(totalNum)}`
