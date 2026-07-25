@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test": "jest",
     "mobile:sync": "cap sync",
     "mobile:copy": "cap copy",
     "mobile:ios": "cap sync ios",
@@ -46,10 +47,13 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/node": "20.19.37",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
     "eslint": "^8.56.0",
-    "eslint-config-next": "14.0.4"
+    "eslint-config-next": "14.0.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.12"
   }
 }

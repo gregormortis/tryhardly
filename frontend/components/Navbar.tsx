@@ -69,7 +69,15 @@ export default function Navbar() {
                     </span>
                   </button>
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-lg border border-zinc-800 bg-zinc-900 py-1 shadow-xl">
+                    <div className="absolute right-0 mt-2 w-56 rounded-lg border border-zinc-800 bg-zinc-900 py-1 shadow-xl">
+                      {/* Names the account in use — browsers share one session
+                          across tabs, so posters and workers testing both sides
+                          otherwise can't tell who they are signed in as. */}
+                      <div className="px-4 py-2">
+                        <p className="text-xs text-zinc-500">Signed in as</p>
+                        <p className="truncate text-sm text-zinc-300">{user.email}</p>
+                      </div>
+                      <hr className="my-1 border-zinc-800" />
                       <Link
                         href="/profile"
                         onClick={() => setUserMenuOpen(false)}

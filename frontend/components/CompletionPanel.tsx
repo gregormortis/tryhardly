@@ -4,6 +4,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import type { Quest } from '@/lib/types';
+import ImageUploader from './ImageUploader';
 
 interface CompletionPanelProps {
   quest: Quest;
@@ -48,6 +49,9 @@ export default function CompletionPanel({
   const inReview = status === 'IN_REVIEW';
   const completed = status === 'COMPLETED';
   const proofUrls = quest.completionProofUrls || [];
+  // Reviews are one per person per quest, so the prompt has to retire once this
+  // viewer's review is in — otherwise it leads them into a duplicate-review error.
+  const viewerHasReviewed = !!quest.viewerHasReviewed;
 
   // The worker can submit while the quest is in progress, or resubmit while it is
   // in review (e.g. after a change request).
@@ -59,6 +63,11 @@ export default function CompletionPanel({
   if ((!isQuestGiver && !isAssignedWorker) || status === 'OPEN' || status === 'CANCELLED') {
     return null;
   }
+
+  // Uploaded photos land in the same textarea the worker can type URLs into, so
+  // both entry paths share one list and one submit payload.
+  const addProofUrl = (url: string) =>
+    setProofText((prev) => (prev.trim() ? `${prev.trim()}\n${url}` : url));
 
   const submit = async () => {
     setBusy('submit');
@@ -179,6 +188,14 @@ export default function CompletionPanel({
             placeholder="Completion notes — what you did, anything the client should know…"
             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
           />
+          {/* Renders nothing unless Cloudinary is configured, so the URL box
+              below stays the fallback rather than becoming a dead button. */}
+          <ImageUploader
+            multiple
+            disabled={busy !== null}
+            onUploaded={addProofUrl}
+            label="Proof photos (optional)"
+          />
           <textarea
             value={proofText}
             onChange={(e) => setProofText(e.target.value)}
@@ -246,12 +263,21 @@ export default function CompletionPanel({
           <p className="text-sm text-green-400">
             This task is complete{quest.completedAt ? ` (${new Date(quest.completedAt).toLocaleDateString()})` : ''}.
           </p>
-          <a
-            href="#reviews"
-            className="inline-block px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900"
-          >
-            Leave a review
-          </a>
+          {viewerHasReviewed ? (
+            <p className="text-sm text-gray-400">
+              Review submitted.{' '}
+              <a href="#reviews" className="text-amber-400 hover:text-amber-300">
+                See all reviews
+              </a>
+            </p>
+          ) : (
+            <a
+              href="#reviews"
+              className="inline-block px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900"
+            >
+              Leave a review
+            </a>
+          )}
         </div>
       )}
     </div>

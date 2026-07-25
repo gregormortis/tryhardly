@@ -74,6 +74,8 @@ const CATEGORIES = [
   { id: 'cleaning', label: 'Cleaning'        },
   { id: 'painting', label: 'Painting'        },
   { id: 'pressure', label: 'Pressure Washing'},
+  { id: 'fencing',  label: 'Fencing'         },
+  { id: 'labor',    label: 'Labor Only'      },
   { id: 'other',    label: 'Odd Jobs'        },
 ];
 
@@ -95,7 +97,8 @@ const DIFFICULTY_TO_TIER: Record<string, TierKey> = {
 
 // Recognised UI-category tag values that PostQuestForm writes into tags[].
 const UI_CATEGORY_IDS = new Set([
-  'yard', 'hauling', 'moving', 'handyman', 'cleaning', 'painting', 'pressure', 'other',
+  'yard', 'hauling', 'moving', 'handyman', 'cleaning', 'painting', 'pressure', 'fencing',
+  'labor', 'other',
 ]);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

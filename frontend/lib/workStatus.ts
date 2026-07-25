@@ -7,6 +7,47 @@
 
 export type WorkRole = 'worker' | 'poster';
 
+// A job stops being "active work" only once it is finished or called off.
+// Everything else (IN_PROGRESS, IN_REVIEW, and any status a newer backend may
+// add) still counts, so we exclude rather than allow-list.
+const FINISHED_QUEST_STATUSES = ['COMPLETED', 'CANCELLED'];
+
+export function isActiveWorkStatus(questStatus: string | undefined | null): boolean {
+  if (!questStatus) return false;
+  return !FINISHED_QUEST_STATUSES.includes(questStatus);
+}
+
+// A quest the viewer posted counts as active once it has left the public board.
+// An OPEN quest is still collecting bids, so it is listed but not counted.
+export function isActivePostedQuest(quest: { status?: string }): boolean {
+  return quest.status !== 'OPEN' && isActiveWorkStatus(quest.status);
+}
+
+// A bid the viewer won that still has work left on it.
+export function isActiveAssignment(application: {
+  status?: string;
+  quest?: { id?: string; status?: string };
+}): boolean {
+  return (
+    application.status === 'ACCEPTED' &&
+    !!application.quest?.id &&
+    isActiveWorkStatus(application.quest.status)
+  );
+}
+
+// The "Active Quests" dashboard metric spans both sides of the marketplace: work
+// the viewer won plus jobs they posted that a worker is currently on. Counting
+// only the worker side reported 0 to posters whose job was in progress.
+export function countActiveQuests(
+  postedQuests: { status?: string }[],
+  applications: { status?: string; quest?: { id?: string; status?: string } }[],
+): number {
+  return (
+    postedQuests.filter(isActivePostedQuest).length +
+    applications.filter(isActiveAssignment).length
+  );
+}
+
 export interface WorkStatusView {
   label: string;
   // Tailwind classes for the status pill.

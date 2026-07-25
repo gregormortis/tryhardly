@@ -82,8 +82,10 @@ export default function QuestDetailPage() {
     };
   }, [user?.id]);
 
-  const fetchQuest = async () => {
-    setLoading(true);
+  // `silent` refreshes the data in place without tearing the page down to the
+  // loading skeleton — used after actions that only change a counter or status.
+  const fetchQuest = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const data = await api.get<Quest>(`/quests/${params.id}`);
       setQuest(data);
@@ -100,9 +102,9 @@ export default function QuestDetailPage() {
         }
       }
     } catch {
-      setQuest(null);
+      if (!silent) setQuest(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -158,6 +160,8 @@ export default function QuestDetailPage() {
       await api.post(`/quests/${params.id}/apply`, payload);
       setApplied(true);
       toast.success('Bid submitted! The client will review it.');
+      // Refresh so the header's bid count includes the bid just placed.
+      await fetchQuest(true);
     } catch (err: any) {
       const msg = err.message || 'Failed to submit bid';
       setError(msg);
@@ -364,6 +368,7 @@ export default function QuestDetailPage() {
                 !!quest.assignedAdventurerId
               }
               suggestedSkills={allTags.filter((t: string) => !t.startsWith('photo:'))}
+              onReviewSubmitted={() => fetchQuest(true)}
             />
 
             {/* Bids (visible to quest owner) — full breakdown + comparison. */}
