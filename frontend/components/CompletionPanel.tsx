@@ -114,7 +114,7 @@ export default function CompletionPanel({
       : { label: 'In progress', cls: 'bg-blue-500/20 text-blue-400 border-blue-500/40' };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div id="work-completion" className="bg-gray-900 border border-gray-800 rounded-xl p-6 scroll-mt-24">
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <h2 className="text-lg font-semibold text-white">Work completion</h2>
         <span className={`text-xs font-medium px-2 py-1 rounded-full border ${statusBadge.cls}`}>

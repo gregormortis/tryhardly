@@ -15,6 +15,7 @@ import TradeStandardChecklist from '@/components/TradeStandardChecklist';
 import BidForm, { type BidPayload } from '@/components/BidForm';
 import BidComparison from '@/components/BidComparison';
 import AcceptedBidPanel from '@/components/AcceptedBidPanel';
+import AssignedWorkerPanel from '@/components/AssignedWorkerPanel';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
 import { recurrenceSummary } from '@/lib/recurrence';
 
@@ -221,6 +222,12 @@ export default function QuestDetailPage() {
   const showAcceptedNextSteps =
     !!isOwner && quest.status !== 'OPEN' && quest.status !== 'CANCELLED';
 
+  // The worker who won the bid: the quest is off the public board at this point,
+  // so the page has to stand alone as their job workspace.
+  const isAssignedWorker =
+    !!user && !isOwner && user.id === quest.assignedAdventurerId;
+  const showAssignedWorkerNextSteps = isAssignedWorker && quest.status !== 'CANCELLED';
+
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -275,6 +282,11 @@ export default function QuestDetailPage() {
               <AcceptedBidPanel quest={quest} acceptedApplication={acceptedApplication} />
             )}
 
+            {/* Post-acceptance next steps (assigned worker) — agreed amount,
+                where the client's job details arrive, and a jump to the
+                completion handshake below. */}
+            {showAssignedWorkerNextSteps && <AssignedWorkerPanel quest={quest} />}
+
             {/* Description */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-white mb-4">Quest Details</h2>
@@ -326,11 +338,11 @@ export default function QuestDetailPage() {
             {/* Work completion handshake — role-aware actions for the worker and
                 giver, plus shared status/proof history. Only relevant once the
                 quest has started (assigned), so the component self-hides otherwise. */}
-            {user && (isOwner || user.id === quest.assignedAdventurerId) && (
+            {(isOwner || isAssignedWorker) && (
               <CompletionPanel
                 quest={quest}
                 isQuestGiver={!!isOwner}
-                isAssignedWorker={user.id === quest.assignedAdventurerId}
+                isAssignedWorker={isAssignedWorker}
                 onChange={fetchQuest}
               />
             )}
@@ -418,6 +430,10 @@ export default function QuestDetailPage() {
                 >
                   Sign in to bid
                 </button>
+              ) : isAssignedWorker ? (
+                <div className="text-center p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-400 text-sm">
+                  This job is yours — you&apos;re the assigned worker.
+                </div>
               ) : quest.status !== 'OPEN' ? (
                 <div className="text-center p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 text-sm">
                   This job is no longer open for bids.
@@ -518,16 +534,9 @@ export default function QuestDetailPage() {
                 the payment authorization CTA inside AcceptedBidPanel (main
                 column) once a bid is accepted, so we only render the sidebar
                 panel for the assigned worker to avoid a duplicate CTA. */}
-            {user &&
-              !isOwner &&
-              user.id === quest.assignedAdventurerId &&
-              quest.status !== 'OPEN' && (
-                <EscrowPanel
-                  questId={quest.id}
-                  isQuestGiver={false}
-                  questStatus={quest.status}
-                />
-              )}
+            {isAssignedWorker && quest.status !== 'OPEN' && (
+              <EscrowPanel questId={quest.id} isQuestGiver={false} questStatus={quest.status} />
+            )}
           </div>
         </div>
       </div>
