@@ -31,7 +31,7 @@ const problems = [
 const steps = [
   {
     title: 'Browse local work',
-    desc: 'Open the questboard and see nearby jobs with clear details and pay — no scrolling a feed hoping something shows up.',
+    desc: 'Open the job board and see nearby jobs with clear details and pay — no scrolling a feed hoping something shows up.',
     icon: ListChecks,
   },
   {
@@ -148,7 +148,7 @@ export default function FindWorkFastLanding() {
             href="/questboard"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
-            Browse starter quests <ArrowRight className="h-4 w-4" />
+            Browse local jobs <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href="/work-alerts"
@@ -210,7 +210,7 @@ export default function FindWorkFastLanding() {
             href="/questboard"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
-            Browse starter quests <ArrowRight className="h-4 w-4" />
+            Browse local jobs <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
@@ -355,7 +355,7 @@ export default function FindWorkFastLanding() {
               href="/questboard"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-8 py-3.5 font-semibold text-zinc-950 transition hover:bg-amber-400"
             >
-              Browse starter quests <ArrowRight className="h-5 w-5" />
+              Browse local jobs <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
               href="/work-alerts"

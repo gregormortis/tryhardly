@@ -33,32 +33,32 @@ export default function RefundsPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">1. How payments work</h2>
             <p>
-              TryHardly is a marketplace that connects people who need local help (clients)
-              with people who can do the work (adventurers). We are a marketplace facilitator —{' '}
+              TryHardly is a marketplace that connects people who need local help (job posters,
+              or clients) with people who can do the work (workers). We are a marketplace facilitator —{' '}
               <span className="text-white font-semibold">we are not the service provider</span>, and we are not a
               bank or money transmitter. All payments are processed directly by{' '}
               <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
-              <span className="text-white font-semibold">Stripe Connect</span> after completed-task payment
+              <span className="text-white font-semibold">Stripe Connect</span> after completed-job payment
               capture. Posting a job is free; TryHardly charges workers a flat 12% platform
               service fee on completed paid jobs. TryHardly does not provide regulated financial
               services.
             </p>
             <p className="mt-2">
-              At booking, TryHardly may obtain a payment authorization for the quoted amount. A
-              payment authorization is not a completed charge and may appear as a temporary
-              pending transaction on your statement. TryHardly captures payment when a task is
-              completed or deemed completed under the platform&rsquo;s confirmation rules. If a
-              booking is canceled or does not proceed, TryHardly may void or cancel the
-              authorization.
+              When a job poster selects a worker, TryHardly may obtain a payment authorization
+              for the quoted amount. A payment authorization is not a completed charge and may
+              appear as a temporary pending transaction on your statement. TryHardly captures
+              payment when the job is confirmed completed, or is deemed completed under the
+              platform&rsquo;s confirmation rules. If a job is canceled or does not proceed,
+              TryHardly may void or cancel the authorization.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">2. Cancellations before work starts</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>A client may cancel before an adventurer begins work; if a payment authorization was obtained, it is voided or canceled and the client is not charged.</li>
-              <li>An adventurer may withdraw before starting at no penalty.</li>
-              <li>If no payment authorization was obtained, canceling simply closes the quest.</li>
+              <li>A job poster may cancel before the worker begins work; if a payment authorization was obtained, it is voided or canceled and the job poster is not charged.</li>
+              <li>A worker may withdraw before starting at no penalty.</li>
+              <li>If no payment authorization was obtained, canceling simply closes the job listing.</li>
             </ul>
           </section>
 
@@ -69,8 +69,8 @@ export default function RefundsPage() {
               actually delivered:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>If the work was not delivered or does not match what was agreed, the client may request a full or partial refund.</li>
-              <li>If the work was delivered as agreed, the adventurer is entitled to payment for what was completed.</li>
+              <li>If the work was not delivered or does not match what was agreed, the job poster may request a full or partial refund.</li>
+              <li>If the work was delivered as agreed, the worker is entitled to payment for what was completed.</li>
               <li>Partial work generally means a partial refund proportional to what remains undone.</li>
             </ul>
           </section>
@@ -87,7 +87,7 @@ export default function RefundsPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Filing a dispute</h2>
             <p className="mb-2">
-              If a client and adventurer cannot agree, either party can open a dispute:
+              If a job poster and worker cannot agree, either party can open a dispute:
             </p>
             <ol className="list-decimal list-inside space-y-2 ml-4">
               <li>
@@ -95,7 +95,7 @@ export default function RefundsPage() {
                 <a href={`mailto:${SUPPORT_EMAIL}`} className="text-amber-400 hover:text-amber-300">
                   {SUPPORT_EMAIL}
                 </a>{' '}
-                within 14 days of the disputed work, with the quest details and what went wrong.
+                within 14 days of the disputed work, with the job details and what went wrong.
               </li>
               <li>Include any photos, messages, or deliverables that show the agreed scope and the result.</li>
               <li>We review both sides and aim to respond within 5 business days.</li>
@@ -120,8 +120,8 @@ export default function RefundsPage() {
             <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Our role &amp; jurisdiction</h2>
             <p>
               TryHardly is a US-based marketplace and intermediary. We are not the service
-              provider and are not a party to the work agreement between clients and
-              adventurers; our role is to connect the two and to facilitate payments through
+              provider and are not a party to the work agreement between job posters and
+              workers; our role is to connect the two and to facilitate payments through
               Stripe. This policy is governed by the laws of the State of California, United
               States. Consumer-protection laws in your state may grant you additional rights
               that this policy does not limit.

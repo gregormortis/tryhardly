@@ -21,7 +21,7 @@ function CheckoutCancel() {
               charge was made</span>. Nothing has been billed to your payment method.
             </p>
             <p>
-              You can return to the quest and authorize a payment method whenever you&rsquo;re ready.
+              You can return to the job and authorize a payment method whenever you&rsquo;re ready.
               A payment is only captured after the work is completed and confirmed.
             </p>
           </div>
@@ -31,14 +31,14 @@ function CheckoutCancel() {
                 href={`/questboard/${questId}`}
                 className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2.5 px-5 rounded-lg transition-colors"
               >
-                Back to quest
+                Back to job
               </Link>
             )}
             <Link
               href="/questboard"
               className="inline-block bg-gray-800 hover:bg-gray-700 text-gray-100 font-semibold py-2.5 px-5 rounded-lg transition-colors"
             >
-              Browse the questboard
+              Browse the job board
             </Link>
           </div>
           <p className="pt-1">

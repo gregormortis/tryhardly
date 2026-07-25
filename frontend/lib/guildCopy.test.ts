@@ -1,4 +1,10 @@
-import { jobSkillLevelLabel, jobStatusLabel, GUILD_DEFINITION, GUILD_TAGLINE } from './guildCopy';
+import {
+  jobSkillLevelLabel,
+  jobStatusLabel,
+  GUILD_DEFINITION,
+  GUILD_EARLY_NOTE,
+  GUILD_TAGLINE,
+} from './guildCopy';
 
 describe('jobSkillLevelLabel', () => {
   it('translates stored rank names into plain experience levels', () => {
@@ -38,10 +44,18 @@ describe('jobStatusLabel', () => {
 
 describe('public guild copy', () => {
   it('describes guilds in marketplace terms, not fantasy terms', () => {
-    const copy = `${GUILD_DEFINITION} ${GUILD_TAGLINE}`.toLowerCase();
+    const copy = `${GUILD_DEFINITION} ${GUILD_TAGLINE} ${GUILD_EARLY_NOTE}`.toLowerCase();
     for (const word of ['adventurer', 'quest', 'realm', 'epic', 'legendary', 'wizard', 'magic']) {
       expect(copy).not.toContain(word);
     }
     expect(copy).toContain('worker-led teams');
+  });
+
+  it('frames the seeded starter teams as early launch rather than traction', () => {
+    const note = GUILD_EARLY_NOTE.toLowerCase();
+    expect(note).toContain('starter teams');
+    for (const word of ['showcase', 'thousands', 'trusted by']) {
+      expect(note).not.toContain(word);
+    }
   });
 });

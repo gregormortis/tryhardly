@@ -28,6 +28,12 @@ const nextConfig = {
         permanent: false,
       },
       {
+        // Job history moved onto the guild detail page; this path has no page of its own.
+        source: '/guilds/:id/quests',
+        destination: '/guilds/:id',
+        permanent: false,
+      },
+      {
         source: '/facebook',
         destination: '/post-job-fast',
         permanent: false,

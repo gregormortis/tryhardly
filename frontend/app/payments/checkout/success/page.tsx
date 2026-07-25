@@ -17,7 +17,7 @@ function CheckoutSuccess() {
           <h1 className="text-2xl font-bold text-amber-400">Payment method authorized</h1>
           <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
             <p>
-              Your payment method has been authorized for this quest&mdash;
+              Your payment method has been authorized for this job&mdash;
               <span className="text-white font-semibold"> you have not been charged yet</span>. An
               authorization is not a final charge, and may appear as a pending transaction on your
               statement.
@@ -27,7 +27,7 @@ function CheckoutSuccess() {
               Stripe Connect, with TryHardly&rsquo;s flat 12% platform service fee applied.
             </p>
             <p>
-              If the quest is canceled before the work is confirmed, the authorization is voided and
+              If the job is canceled before the work is confirmed, the authorization is voided and
               no final charge is created.
             </p>
           </div>
@@ -37,7 +37,7 @@ function CheckoutSuccess() {
                 href={`/questboard/${questId}`}
                 className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2.5 px-5 rounded-lg transition-colors"
               >
-                Back to quest
+                Back to job
               </Link>
             )}
             <Link
@@ -49,7 +49,7 @@ function CheckoutSuccess() {
           </div>
           <p className="pt-1">
             <Link href="/questboard" className="text-amber-400 hover:text-amber-300 text-sm">
-              Browse the questboard
+              Browse the job board
             </Link>
           </p>
         </div>

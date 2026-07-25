@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { GUILD_DEFINITION, GUILD_TAGLINE } from '@/lib/guildCopy';
+import { GUILD_DEFINITION, GUILD_EARLY_NOTE, GUILD_TAGLINE } from '@/lib/guildCopy';
 
 interface Guild {
   id: string;
@@ -120,7 +120,10 @@ export default function GuildsPage() {
       )}
 
       {/* Guild List */}
-      <h2 className="text-xl font-bold text-white mb-4">All guilds</h2>
+      <h2 className="text-xl font-bold text-white mb-2">All guilds</h2>
+      {guilds.length > 0 && (
+        <p className="text-gray-500 text-sm mb-4">{GUILD_EARLY_NOTE}</p>
+      )}
       <div className="space-y-3">
         {filtered.map((guild) => (
           <Link key={guild.id} href={`/guilds/${guild.id}`}>

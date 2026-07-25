@@ -7,7 +7,7 @@ const SUPPORT_EMAIL = 'support@tryhardly.com';
 export const metadata: Metadata = {
   title: 'Community Guidelines',
   description:
-    'The rules that keep TryHardly safe and fair for everyone — clients and adventurers. Plain-language community standards for our local services marketplace.',
+    'The rules that keep TryHardly safe and fair for everyone — job posters and workers. Plain-language community standards for our local services marketplace.',
   alternates: { canonical: '/community-guidelines' },
 };
 
@@ -23,7 +23,7 @@ export default function CommunityGuidelinesPage() {
 
           <p>
             TryHardly only works if people trust each other. These guidelines apply to
-            everyone — clients posting quests and adventurers doing the work. Breaking them
+            everyone — job posters posting work requests and workers doing the work. Breaking them
             can lead to content removal, warnings, or account suspension. They work alongside
             our{' '}
             <Link href="/terms" className="text-amber-400 hover:text-amber-300">
@@ -35,9 +35,9 @@ export default function CommunityGuidelinesPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">Be honest</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Describe quests accurately — real scope, real budget, real timeline.</li>
+              <li>Describe jobs accurately — real scope, real budget, real timeline.</li>
               <li>Only claim skills and experience you actually have.</li>
-              <li>Don&apos;t post fake reviews, fake quests, or misleading listings.</li>
+              <li>Don&apos;t post fake reviews, fake job posts, or misleading listings.</li>
             </ul>
           </section>
 
@@ -69,7 +69,7 @@ export default function CommunityGuidelinesPage() {
 
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">Prohibited work</h2>
-            <p className="mb-2">Quests must not involve:</p>
+            <p className="mb-2">Job posts must not involve:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Illegal, unsafe, regulated, or policy-restricted goods or services.</li>
               <li>Anything that puts a worker&apos;s safety or legal standing at risk.</li>
