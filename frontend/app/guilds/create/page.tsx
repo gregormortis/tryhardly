@@ -5,12 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { JOB_CATEGORIES } from '@/lib/jobCategories';
 
-const SPECIALTIES = [
-  'Web Development', 'Mobile Development', 'Game Development',
-  'Data Science', 'AI/ML', 'DevOps', 'Design', 'Content Creation',
-  'Video Production', 'Writing', 'Marketing', '3D Art',
-];
+// Skill focus options come from the shared job-category config so a guild's
+// stated focus lines up with the work actually posted on the board.
+const SPECIALTIES = JOB_CATEGORIES.map(c => c.shortLabel);
 
 export default function CreateGuildPage() {
   const router = useRouter();
@@ -30,9 +29,8 @@ export default function CreateGuildPage() {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">🏰</div>
           <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
-          <p className="text-gray-400 mb-6">You must be logged in to found a guild.</p>
+          <p className="text-gray-400 mb-6">You need an account to start a guild.</p>
           <Link href="/auth/login" className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-6 py-3 rounded-lg">
             Login
           </Link>
@@ -66,10 +64,10 @@ export default function CreateGuildPage() {
         {/* Header */}
         <div className="mb-8">
           <Link href="/guilds" className="text-amber-400 hover:text-amber-300 text-sm flex items-center gap-1 mb-4">
-            ← Back to Guilds
+            ← Back to all guilds
           </Link>
-          <h1 className="text-3xl font-bold text-white">Found a Guild</h1>
-          <p className="text-gray-400 mt-1">Build your crew of adventurers and tackle quests together</p>
+          <h1 className="text-3xl font-bold text-white">Start a guild</h1>
+          <p className="text-gray-400 mt-1">Bring workers together to share standards, mentor each other, and take on local jobs as a team</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -79,17 +77,17 @@ export default function CreateGuildPage() {
             </div>
           )}
 
-          {/* Guild Name */}
+          {/* Guild name */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
             <h2 className="text-lg font-semibold text-white">Identity</h2>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Guild Name *</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Guild name *</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
-                placeholder="Iron Code Syndicate"
+                placeholder="North Side Trades"
                 maxLength={50}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
               />
@@ -97,7 +95,7 @@ export default function CreateGuildPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
-                Guild Tag * <span className="text-gray-500">(2-5 uppercase letters)</span>
+                Guild tag * <span className="text-gray-500">(2-5 uppercase letters)</span>
               </label>
               <input
                 type="text"
@@ -114,7 +112,7 @@ export default function CreateGuildPage() {
               <textarea
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
-                placeholder="What does your guild specialize in? What kind of adventurers are you looking for?"
+                placeholder="What work does your team take on, and what kind of workers are you looking for?"
                 rows={4}
                 maxLength={500}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
@@ -128,7 +126,7 @@ export default function CreateGuildPage() {
             <h2 className="text-lg font-semibold text-white">Settings</h2>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Specialty</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Skill focus</label>
               <div className="grid grid-cols-3 gap-2">
                 {SPECIALTIES.map(spec => (
                   <button
@@ -148,7 +146,7 @@ export default function CreateGuildPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Max Members</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Maximum workers</label>
               <input
                 type="number"
                 value={form.maxMembers}
@@ -172,8 +170,8 @@ export default function CreateGuildPage() {
                 }`} />
               </button>
               <div>
-                <div className="text-white font-medium">Open Recruiting</div>
-                <div className="text-xs text-gray-500">Allow adventurers to apply to join</div>
+                <div className="text-white font-medium">Open to new members</div>
+                <div className="text-xs text-gray-500">Let workers ask to join your team</div>
               </div>
             </div>
           </div>
@@ -191,7 +189,7 @@ export default function CreateGuildPage() {
               disabled={loading}
               className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-bold px-6 py-4 rounded-xl transition-colors"
             >
-              {loading ? 'Founding...' : '⚔️ Found Guild'}
+              {loading ? 'Creating...' : 'Create guild'}
             </button>
           </div>
         </form>
