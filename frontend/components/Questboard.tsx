@@ -1,21 +1,24 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { MapPin, Clock, AlertTriangle, Search, ChevronDown } from 'lucide-react';
+import { MapPin, Clock, AlertTriangle, Search, ChevronDown, CalendarClock, Users, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { JOB_CATEGORIES, jobCategoryFromTags } from '@/lib/jobCategories';
+import { timingLabel, bidCountLabel } from '@/lib/questCardCopy';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PayType = 'flat' | 'hourly';
 type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
-type SortKey = 'newest' | 'pay_high' | 'pay_low' | 'nearby';
+type SortKey = 'newest' | 'pay_high' | 'pay_low';
 
 interface Quest {
   id: string;
   category: string;
+  categoryLabel: string;
   tier: TierKey;
   title: string;
   neighborhood: string;
@@ -31,6 +34,10 @@ interface Quest {
   postedBy: string;
   jobsPosted: number;
   isRecurring: boolean;
+  // Decision info a worker scans before opening a job.
+  bidCount: number;
+  deadline: string | null;
+  status: string;
 }
 
 interface BackendQuest {
@@ -43,8 +50,10 @@ interface BackendQuest {
   status: string;
   tags?: string[];
   createdAt: string;
+  deadline?: string | null;
   questGiver?: { username?: string } | null;
   isRecurring?: boolean;
+  _count?: { applications?: number } | null;
 }
 
 interface TierConfig {
@@ -65,25 +74,17 @@ const TIERS: Record<TierKey, TierConfig> = {
   legendary:  { label: 'LEGENDARY',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20',      accentColor: '#f43f5e', iconBg: 'rgba(244,63,94,0.1)'   },
 };
 
-const CATEGORIES = [
-  { id: 'all',      label: 'All Quests'       },
-  { id: 'yard',     label: 'Lawn & Yard'      },
-  { id: 'hauling',  label: 'Hauling & Junk'   },
-  { id: 'moving',   label: 'Moving Help'      },
-  { id: 'handyman', label: 'Handyman'         },
-  { id: 'cleaning', label: 'Cleaning'        },
-  { id: 'painting', label: 'Painting'        },
-  { id: 'pressure', label: 'Pressure Washing'},
-  { id: 'fencing',  label: 'Fencing'         },
-  { id: 'labor',    label: 'Labor Only'      },
-  { id: 'other',    label: 'Odd Jobs'        },
+// Derived from the shared job-category config so the filter chips, the SEO
+// landing pages, and the ids PostQuestForm writes into tags[] can't drift apart.
+const CATEGORIES: { id: string; label: string }[] = [
+  { id: 'all', label: 'All jobs' },
+  ...JOB_CATEGORIES.map((c) => ({ id: c.slug, label: c.shortLabel })),
 ];
 
 const SORT_OPTIONS: { id: SortKey; label: string }[] = [
-  { id: 'newest',   label: 'Newest first'  },
-  { id: 'pay_high', label: 'Highest pay'   },
-  { id: 'pay_low',  label: 'Lowest pay'    },
-  { id: 'nearby',   label: 'Nearest to me' },
+  { id: 'newest',   label: 'Newest first'    },
+  { id: 'pay_high', label: 'Highest budget'  },
+  { id: 'pay_low',  label: 'Lowest budget'   },
 ];
 
 const DIFFICULTY_TO_TIER: Record<string, TierKey> = {
@@ -94,12 +95,6 @@ const DIFFICULTY_TO_TIER: Record<string, TierKey> = {
   MASTER: 'master',
   LEGENDARY: 'legendary',
 };
-
-// Recognised UI-category tag values that PostQuestForm writes into tags[].
-const UI_CATEGORY_IDS = new Set([
-  'yard', 'hauling', 'moving', 'handyman', 'cleaning', 'painting', 'pressure', 'fencing',
-  'labor', 'other',
-]);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -143,13 +138,6 @@ function parseLocationLine(description?: string): {
   return { neighborhood, city, payType, bodyText: body };
 }
 
-// Pull the UI category id (yard/hauling/etc.) out of the tags PostQuestForm wrote.
-function extractCategoryFromTags(tags: string[] | undefined): string {
-  if (!tags?.length) return 'other';
-  const hit = tags.find((t) => UI_CATEGORY_IDS.has(t));
-  return hit ?? 'other';
-}
-
 // Pull payType from tags as a secondary signal (PostQuestForm writes 'flat'|'hourly').
 function extractPayTypeFromTags(tags: string[] | undefined): PayType | null {
   if (!tags?.length) return null;
@@ -164,10 +152,11 @@ function mapBackendQuest(q: BackendQuest): Quest {
   const payType: PayType = tagPayType ?? parsed.payType;
   const rewardNum = typeof q.reward === 'string' ? parseFloat(q.reward) : Number(q.reward);
   const tier: TierKey = DIFFICULTY_TO_TIER[q.difficulty] ?? 'novice';
-  const category = extractCategoryFromTags(q.tags);
+  const jobCategory = jobCategoryFromTags(q.tags);
   return {
     id: q.id,
-    category,
+    category: jobCategory.slug,
+    categoryLabel: jobCategory.shortLabel,
     tier,
     title: q.title,
     neighborhood: parsed.neighborhood,
@@ -181,6 +170,9 @@ function mapBackendQuest(q: BackendQuest): Quest {
     postedBy: q.questGiver?.username ?? 'Quest Giver',
     jobsPosted: 0,
     isRecurring: !!q.isRecurring,
+    bidCount: q._count?.applications ?? 0,
+    deadline: q.deadline ?? null,
+    status: q.status,
   };
 }
 
@@ -205,37 +197,19 @@ function UrgentBadge() {
 
 interface QuestCardProps {
   quest: Quest;
-  onClaim: (quest: Quest) => void;
   isNew: boolean;
   isAuthenticated: boolean;
 }
 
-function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
+function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
   const router = useRouter();
-  const [hovered, setHovered]   = useState(false);
-  const [claimed, setClaimed]   = useState(false);
-  const [claiming, setClaiming] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const tier = TIERS[quest.tier];
-
-  function handleClaim(e: React.MouseEvent<HTMLButtonElement>) {
-    e.stopPropagation();
-    if (claimed || claiming) return;
-    if (!isAuthenticated) {
-      const redirect = encodeURIComponent(`/questboard/${quest.id}`);
-      router.push(`/auth/register?redirect=${redirect}`);
-      return;
-    }
-    setClaiming(true);
-    setTimeout(() => {
-      setClaiming(false);
-      setClaimed(true);
-      onClaim(quest);
-    }, 900);
-  }
+  const isOpen = quest.status === 'OPEN';
 
   const locationLabel = quest.neighborhood && quest.city
     ? `${quest.neighborhood} · ${quest.city}`
-    : quest.city || quest.neighborhood || 'Location TBD';
+    : quest.city || quest.neighborhood || 'Location not listed';
 
   function goToDetail() {
     router.push(`/questboard/${quest.id}`);
@@ -254,7 +228,7 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
           goToDetail();
         }
       }}
-      aria-label={`View quest: ${quest.title}`}
+      aria-label={`View job: ${quest.title}`}
       className={clsx(
         'relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-lg border px-4 sm:px-5 py-4 cursor-pointer transition-all duration-200 overflow-hidden',
         hovered ? 'bg-white/[0.04] border-amber-500/35' : 'bg-white/[0.02] border-white/[0.07]',
@@ -280,7 +254,7 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start gap-2 mb-1.5 flex-wrap">
-            <span className="font-semibold text-[13px] text-stone-100 break-words line-clamp-2 leading-snug">
+            <span className="font-semibold text-[15px] text-stone-100 break-words line-clamp-2 leading-snug">
               {quest.title}
             </span>
             {quest.urgent && <UrgentBadge />}
@@ -290,15 +264,42 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
-            <TierBadge tier={quest.tier} />
-            <span className="font-mono text-[11px] text-stone-500 flex items-center gap-1 break-words">
-              <MapPin size={10} className="inline shrink-0" />
+
+          {/* Row 1: the facts a worker decides on — where, by when, how contested. */}
+          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-[12px] text-stone-400">
+            <span className="flex items-center gap-1 break-words">
+              <MapPin size={11} className="shrink-0" />
               <span className="break-words">{locationLabel}</span>
             </span>
-            <span className="font-mono text-[11px] text-stone-600 flex items-center gap-1">
+            <span className="flex items-center gap-1">
+              <CalendarClock size={11} className="shrink-0" />
+              {timingLabel(quest.deadline)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users size={11} className="shrink-0" />
+              {bidCountLabel(quest.bidCount)}
+            </span>
+          </div>
+
+          {/* Row 2: classification + freshness, deliberately quieter than row 1. */}
+          <div className="flex items-center gap-x-2.5 gap-y-1.5 flex-wrap mt-1.5">
+            <span className="font-mono text-[10px] text-stone-400 bg-white/[0.04] border border-white/[0.08] rounded px-1.5 py-0.5">
+              {quest.categoryLabel}
+            </span>
+            <span
+              className={clsx(
+                'font-mono text-[10px] rounded px-1.5 py-0.5 border',
+                isOpen
+                  ? 'text-green-400 bg-green-400/10 border-green-400/20'
+                  : 'text-stone-500 bg-white/[0.03] border-white/[0.08]',
+              )}
+            >
+              {isOpen ? 'Open for bids' : quest.status.replace(/_/g, ' ').toLowerCase()}
+            </span>
+            <TierBadge tier={quest.tier} />
+            <span className="font-mono text-[10px] text-stone-600 flex items-center gap-1">
               <Clock size={10} className="inline shrink-0" />
-              {timeAgo(quest.posted)}
+              posted {timeAgo(quest.posted)}
             </span>
             {quest.tools.map((t) => (
               <span key={t} className="font-mono text-[10px] text-stone-600 bg-white/[0.04] border border-white/[0.07] rounded px-1.5 py-0.5">
@@ -313,9 +314,9 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
         <div className="text-left sm:text-right">
           {quest.quoteNeeded ? (
             <>
-              <div className="font-bold text-base text-amber-400 leading-none">Quote needed</div>
+              <div className="font-bold text-base text-amber-400 leading-none">Open to bids</div>
               <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
-                apply with an estimate
+                you set the price
               </div>
             </>
           ) : (
@@ -324,31 +325,25 @@ function QuestCard({ quest, onClaim, isNew, isAuthenticated }: QuestCardProps) {
                 {payDisplay(quest.pay, quest.payType)}
               </div>
               <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
-                {quest.payType === 'hourly' ? 'per hour' : 'flat rate'}
+                {quest.payType === 'hourly' ? 'budget per hour' : 'budget, flat'}
               </div>
             </>
           )}
         </div>
 
-        <button
-          onClick={handleClaim}
-          disabled={claimed}
-          title={isAuthenticated ? 'Claim this quest' : 'Sign in or create an account to apply'}
+        {/* The card itself navigates; this is the explicit, keyboard-reachable
+            affordance so the next step is never a guess. */}
+        <span
+          aria-hidden="true"
           className={clsx(
-            'font-mono text-[11px] font-semibold tracking-widest px-4 py-2 rounded border transition-all duration-200 min-w-[108px] text-center',
-            claimed
-              ? 'text-green-400 border-green-400/40 bg-green-400/[0.08] cursor-default'
-              : claiming
-                ? 'text-amber-400 border-amber-400/40 bg-amber-400/[0.15] cursor-default'
-                : 'text-amber-400 border-amber-500/50 hover:bg-amber-400/10 cursor-pointer',
+            'font-mono text-[11px] font-semibold tracking-widest px-4 py-2 rounded border text-center min-w-[112px] transition-all duration-200',
+            hovered
+              ? 'text-zinc-950 bg-amber-400 border-amber-400'
+              : 'text-amber-400 border-amber-500/50',
           )}
         >
-          {claimed
-            ? '✓ CLAIMED'
-            : claiming
-              ? 'CLAIMING…'
-              : isAuthenticated ? 'CLAIM QUEST' : 'SIGN IN TO APPLY'}
-        </button>
+          {isOpen ? (isAuthenticated ? 'VIEW & BID' : 'VIEW JOB') : 'VIEW JOB'}
+        </span>
       </div>
     </div>
   );
@@ -363,15 +358,6 @@ function QuestRowSkeleton() {
         <div className="h-2.5 w-1/3 bg-white/[0.04] rounded" />
       </div>
       <div className="h-7 w-24 bg-white/[0.05] rounded hidden sm:block" />
-    </div>
-  );
-}
-
-function StatPill({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex flex-col items-center px-5 py-2.5 border-r border-white/[0.06] last:border-r-0">
-      <span className="font-bold text-xl text-amber-400 leading-none">{value}</span>
-      <span className="font-mono text-[10px] text-stone-600 mt-0.5 tracking-widest uppercase">{label}</span>
     </div>
   );
 }
@@ -397,7 +383,6 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
   const [minPay, setMinPay]                 = useState('');
   const [maxPay, setMaxPay]                 = useState('');
   const [recurringOnly, setRecurringOnly]   = useState(false);
-  const [claimedIds, setClaimedIds]         = useState<string[]>([]);
   const [newIds]                            = useState<string[]>([]);
   const [quests, setQuests]                 = useState<Quest[]>([]);
   const [loading, setLoading]               = useState(true);
@@ -454,48 +439,49 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
       });
   }, [quests, activeCategory, activeSort, search, minPay, maxPay, recurringOnly]);
 
-  function handleClaim(quest: Quest) {
-    setClaimedIds((ids) => [...ids, quest.id]);
-  }
-
   return (
     <div className="min-h-screen bg-zinc-950 text-stone-400">
 
       <div className="border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8">
-          <div className="flex items-center justify-between gap-3 py-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <span className="font-bold text-xl text-stone-100 tracking-tight">TryHardly</span>
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-7">
+          <div className="flex items-start justify-between gap-6 flex-wrap">
+            <div className="max-w-xl">
               <span className="font-mono text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-sm px-2 py-0.5 tracking-widest">
                 QUEST BOARD
               </span>
+              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-stone-100 tracking-tight leading-tight">
+                Browse local paid jobs
+              </h1>
+              <p className="mt-2 text-[14px] text-stone-400 leading-relaxed">
+                Real hands-on work posted by neighbors — yard work, hauling, moving help, handyman
+                jobs, cleaning, and errands. Open a job to see the details and send the poster a
+                bid with your price.
+              </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="font-mono text-[11px] text-stone-500">
-                <span className="text-stone-100 font-semibold">{quests.length.toLocaleString()}</span>{' '}
-                {quests.length === 1 ? 'open job' : 'open jobs'}
-              </span>
+            <div className="flex flex-col items-start gap-2.5">
+              <a
+                href="/post-quest"
+                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+              >
+                POST A JOB FREE
+              </a>
+              <a
+                href="/work-alerts"
+                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+              >
+                GET WORKER ALERTS
+              </a>
             </div>
-
-            <a
-              href="/post-quest"
-              className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
-            >
-              POST A QUEST
-            </a>
           </div>
 
-          <div className="flex flex-wrap items-center border-t border-white/[0.04]">
-            <StatPill value={quests.length.toLocaleString()} label="Open quests" />
-            <StatPill value="Beta"  label="Launch stage" />
-            <StatPill value="2"  label="Guilds" />
-            <StatPill value="Local" label="Focus" />
-            <div className="flex-1" />
-            <div className="hidden sm:flex items-center font-mono text-[10px] text-stone-700 tracking-widest py-2">
-              THE WORK AI CANNOT DO
-            </div>
+          <div className="mt-5 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="font-mono text-[11px] text-stone-500">
+              <span className="text-stone-100 font-semibold">{quests.length.toLocaleString()}</span>{' '}
+              {quests.length === 1 ? 'job open for bids' : 'jobs open for bids'} · new in Redding, CA
+              and growing outward
+            </span>
           </div>
         </div>
       </div>
@@ -508,7 +494,8 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search quests or city..."
+              placeholder="Search by job title, neighborhood, or city..."
+              aria-label="Search jobs by title, neighborhood, or city"
               className="w-full font-mono text-[12px] pl-8 pr-3 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
             />
           </div>
@@ -527,12 +514,21 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           </div>
 
           <span className="font-mono text-[11px] text-stone-600 whitespace-nowrap">
-            {visible.length} result{visible.length !== 1 ? 's' : ''}
+            {visible.length} job{visible.length !== 1 ? 's' : ''} shown
           </span>
         </div>
 
+        {/* The board lists the neighborhood and city each poster entered — it does
+            not filter by exact ZIP, so the copy promises only what search does. */}
+        <p className="font-mono text-[11px] text-stone-600 mb-4 leading-relaxed">
+          Jobs list the neighborhood and city the poster entered. Search matches the job title,
+          neighborhood, and city — there is no exact ZIP-radius filter yet.
+        </p>
+
         <div className="flex items-center gap-2.5 mb-5 flex-wrap">
-          <span className="font-mono text-[10px] text-stone-600 tracking-widest uppercase">Budget</span>
+          <span className="font-mono text-[10px] text-stone-600 tracking-widest uppercase">
+            Poster budget
+          </span>
           <input
             type="number"
             inputMode="numeric"
@@ -569,6 +565,10 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             🔁 Recurring only
           </button>
 
+          <span className="font-mono text-[10px] text-stone-700">
+            Budget is what the poster listed — you can still bid your own price.
+          </span>
+
           {(minPay || maxPay || recurringOnly || search) && (
             <button
               type="button"
@@ -580,6 +580,9 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           )}
         </div>
 
+        <div className="font-mono text-[10px] text-stone-600 tracking-widest uppercase mb-2">
+          Type of work
+        </div>
         <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
@@ -624,17 +627,26 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             <div className="text-center py-14 px-6 border border-dashed border-white/[0.08] rounded-lg bg-white/[0.015]">
               {quests.length === 0 ? (
                 <>
-                  <p className="text-stone-200 font-semibold text-[15px]">No open jobs right now</p>
-                  <p className="font-mono text-[12px] text-stone-500 mt-2 max-w-sm mx-auto leading-relaxed">
-                    The board is quiet at the moment. Post the first job, request help with a task, or
-                    get notified when new local work goes live.
+                  <p className="text-stone-200 font-semibold text-[15px]">
+                    No open jobs in this area yet
+                  </p>
+                  <p className="text-[13px] text-stone-400 mt-2 max-w-md mx-auto leading-relaxed">
+                    TryHardly is just getting started in Redding, CA, so the board is still filling
+                    up. Post the first local job — it&apos;s free to post — or join worker alerts and
+                    we&apos;ll email you when new local work goes live.
                   </p>
                   <div className="mt-5 flex flex-col sm:flex-row gap-2.5 justify-center">
                     <a
                       href="/post-quest"
                       className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
                     >
-                      POST A JOB
+                      POST A JOB FREE
+                    </a>
+                    <a
+                      href="/work-alerts"
+                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                    >
+                      GET WORKER ALERTS
                     </a>
                     <a
                       href="/request-help"
@@ -642,33 +654,46 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                     >
                       REQUEST HELP
                     </a>
-                    <a
-                      href="/work-alerts"
-                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
-                    >
-                      WORKER ALERTS
-                    </a>
                   </div>
                 </>
               ) : (
                 <>
-                  <p className="text-stone-200 font-semibold text-[15px]">No jobs match your filters</p>
-                  <p className="font-mono text-[12px] text-stone-500 mt-2 max-w-sm mx-auto leading-relaxed">
-                    Try a broader category, a wider budget range, or a different search term.
+                  <p className="text-stone-200 font-semibold text-[15px]">
+                    No jobs match these filters
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMinPay('');
-                      setMaxPay('');
-                      setRecurringOnly(false);
-                      setSearch('');
-                      setActiveCategory('all');
-                    }}
-                    className="mt-5 font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
-                  >
-                    CLEAR FILTERS
-                  </button>
+                  <p className="text-[13px] text-stone-400 mt-2 max-w-md mx-auto leading-relaxed">
+                    {quests.length === 1
+                      ? 'There is 1 other open job on the board.'
+                      : `There are ${quests.length} other open jobs on the board.`}{' '}
+                    Try a broader type of work, a wider budget range, or a different search term.
+                  </p>
+                  <div className="mt-5 flex flex-col sm:flex-row gap-2.5 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMinPay('');
+                        setMaxPay('');
+                        setRecurringOnly(false);
+                        setSearch('');
+                        setActiveCategory('all');
+                      }}
+                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+                    >
+                      SHOW ALL JOBS
+                    </button>
+                    <a
+                      href="/post-quest"
+                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                    >
+                      POST A JOB FREE
+                    </a>
+                    <a
+                      href="/work-alerts"
+                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                    >
+                      GET WORKER ALERTS
+                    </a>
+                  </div>
                 </>
               )}
             </div>
@@ -677,7 +702,6 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
               <QuestCard
                 key={quest.id}
                 quest={quest}
-                onClaim={handleClaim}
                 isNew={newIds.includes(quest.id)}
                 isAuthenticated={isAuthenticated}
               />
@@ -686,22 +710,40 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
         </div>
 
         {!loading && !error && visible.length > 0 && (
-          <div className="text-center mt-7">
-            <button className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 border border-white/10 rounded-md text-stone-600 hover:border-amber-500/40 hover:text-amber-400 transition-all duration-200">
-              LOAD MORE QUESTS
-            </button>
+          <div className="mt-6 rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3.5">
+            <div className="flex items-start gap-2.5">
+              <ShieldCheck size={15} className="text-green-400/80 shrink-0 mt-0.5" />
+              <p className="text-[12px] text-stone-400 leading-relaxed">
+                Payments are processed through Stripe — the poster confirms the completed work
+                before the charge is captured, and worker payouts run through Stripe Connect.
+                Reviews are only written by people who finished a job together. Never accept a
+                request to pay or be paid off the platform.{' '}
+                <a href="/faq" className="text-amber-400 hover:text-amber-300">
+                  How TryHardly works
+                </a>
+              </p>
+            </div>
           </div>
         )}
 
-        <div className="mt-12 pt-5 border-t border-white/[0.05] flex justify-between items-center">
+        <div className="mt-12 pt-5 border-t border-white/[0.05] flex flex-wrap gap-3 justify-between items-center">
           <span className="font-mono text-[10px] text-stone-800 tracking-wider">
             © TRYHARDLY.COM · LOCAL WORK · REAL PEOPLE
           </span>
-          <div className="flex gap-5">
-            {['Post a Quest', 'Find Work', 'How it Works', 'Pricing'].map((link) => (
-              <span key={link} className="font-mono text-[10px] text-stone-700 cursor-pointer hover:text-stone-500 tracking-wide transition-colors">
-                {link}
-              </span>
+          <div className="flex flex-wrap gap-5">
+            {[
+              { label: 'Post a job', href: '/post-quest' },
+              { label: 'Worker alerts', href: '/work-alerts' },
+              { label: 'How it works', href: '/faq' },
+              { label: 'Pricing', href: '/pricing' },
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="font-mono text-[10px] text-stone-600 hover:text-amber-400 tracking-wide transition-colors"
+              >
+                {link.label}
+              </a>
             ))}
           </div>
         </div>
