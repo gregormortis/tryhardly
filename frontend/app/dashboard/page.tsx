@@ -20,6 +20,25 @@ function formatStatus(status?: string): string {
     .join(' ');
 }
 
+// A quest stops being "active work" for the worker only once it is finished or
+// called off. Everything else (IN_PROGRESS, IN_REVIEW, and any status a newer
+// backend may add) still needs a way in, so we exclude rather than allow-list.
+const FINISHED_QUEST_STATUSES = ['COMPLETED', 'CANCELLED'];
+
+function isActiveAssignment(app: Application): boolean {
+  return (
+    app.status === 'ACCEPTED' &&
+    !!app.quest?.id &&
+    !FINISHED_QUEST_STATUSES.includes(app.quest.status ?? '')
+  );
+}
+
+// What the worker should do next on an assignment they've already won.
+function assignmentCta(questStatus?: string): string {
+  if (questStatus === 'IN_REVIEW') return 'View submission';
+  return 'Submit completion';
+}
+
 interface DashboardData {
   postedQuests: Quest[];
   applications: Application[];
@@ -77,7 +96,7 @@ export default function DashboardPage() {
 
   const xpProgress = user.xp % XP_PER_LEVEL;
   const xpPercent = (xpProgress / XP_PER_LEVEL) * 100;
-  const activeApps = data?.applications?.filter(a => a.status === 'ACCEPTED') || [];
+  const activeApps = data?.applications?.filter(isActiveAssignment) || [];
   // Quests the user posted that a worker submitted for completion review.
   const pendingReview = data?.postedQuests?.filter(q => q.status === 'IN_REVIEW') || [];
 
@@ -156,6 +175,37 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Active quests — work the user won and still has to finish. These quests
+          have left the public board (they're no longer OPEN), so this section is
+          the worker's way back into the job. */}
+      {!dataLoading && activeApps.length > 0 && (
+        <div className="rounded-xl bg-green-500/5 border border-green-500/30 p-4 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-green-300">⚔️ Active quests</h2>
+            <span className="text-xs text-green-400/70">{activeApps.length} assigned to you</span>
+          </div>
+          <div className="space-y-2">
+            {activeApps.map(app => (
+              <Link
+                key={app.id}
+                href={`/questboard/${app.quest!.id}`}
+                className="group flex justify-between items-center gap-3 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-zinc-100 truncate">{app.quest?.title || 'Quest'}</p>
+                  <p className="text-xs text-zinc-500">
+                    ${app.quest?.reward?.toLocaleString()} • {formatStatus(app.quest?.status)}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs px-2 py-1 rounded bg-green-500/20 text-green-300 group-hover:bg-green-500/30">
+                  {assignmentCta(app.quest?.status)} →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* My Applications */}
       <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-4 mb-6">
         <div className="flex justify-between items-center mb-4">
@@ -170,15 +220,32 @@ export default function DashboardPage() {
           </div>
         ) : data?.applications?.length ? (
           <div className="space-y-2">
-            {data.applications.slice(0, 5).map(app => (
-              <div key={app.id} className="flex justify-between items-center p-3 rounded-lg bg-zinc-800">
-                <div>
-                  <p className="text-sm font-medium text-zinc-100">{app.quest?.title || 'Quest'}</p>
-                  <p className="text-xs text-zinc-500">${app.quest?.reward?.toLocaleString()} • {app.quest?.difficulty}</p>
+            {data.applications.slice(0, 5).map(app => {
+              const body = (
+                <>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-zinc-100 truncate">{app.quest?.title || 'Quest'}</p>
+                    <p className="text-xs text-zinc-500">${app.quest?.reward?.toLocaleString()} • {app.quest?.difficulty}</p>
+                  </div>
+                  <span className="shrink-0 text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-300">{formatStatus(app.status)}</span>
+                </>
+              );
+              // A bid on a quest that has since left the public board still needs
+              // to be reachable, so link on the quest id whenever we have one.
+              return app.quest?.id ? (
+                <Link
+                  key={app.id}
+                  href={`/questboard/${app.quest.id}`}
+                  className="flex justify-between items-center gap-3 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60 transition-colors"
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div key={app.id} className="flex justify-between items-center gap-3 p-3 rounded-lg bg-zinc-800">
+                  {body}
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-300">{app.status}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-6">
