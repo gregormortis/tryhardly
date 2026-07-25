@@ -26,8 +26,8 @@ function LoginForm() {
         }
       : redirect && redirect.startsWith('/questboard')
       ? {
-          heading: 'Sign in to continue',
-          sub: 'Sign in or create an account to bid on this job.',
+          heading: 'Sign in to bid on this job',
+          sub: 'A free account lets you send the poster a detailed bid. Before your first bid you’ll connect a Stripe Connect payout account — that’s how you get paid once the poster confirms the completed work.',
         }
       : {
           heading: 'Welcome back',

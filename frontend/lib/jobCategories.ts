@@ -5,6 +5,9 @@
 export interface JobCategory {
   slug: string;
   label: string;
+  // Compact form of `label` for space-constrained UI like the questboard filter
+  // chips, where the full landing-page label wraps awkwardly.
+  shortLabel: string;
   // Plain-language description of the work, used in landing-page copy + metadata.
   blurb: string;
   examples: string[];
@@ -14,60 +17,70 @@ export const JOB_CATEGORIES: JobCategory[] = [
   {
     slug: 'yard',
     label: 'Lawn & Yard Work',
+    shortLabel: 'Yard Work',
     blurb: 'Mowing, weeding, leaf cleanup, hedge trimming, and seasonal yard care.',
     examples: ['Weekly lawn mowing', 'Leaf and yard cleanup', 'Hedge & bush trimming'],
   },
   {
     slug: 'hauling',
     label: 'Hauling & Junk Removal',
+    shortLabel: 'Hauling',
     blurb: 'Furniture removal, garage cleanouts, debris hauling, and dump runs.',
     examples: ['Garage cleanout', 'Old furniture removal', 'Construction debris haul-off'],
   },
   {
     slug: 'moving',
     label: 'Moving Help',
+    shortLabel: 'Moving Help',
     blurb: 'Loading, unloading, and moving help for apartments, homes, and storage units.',
     examples: ['Apartment move help', 'Load a moving truck', 'Move heavy furniture'],
   },
   {
     slug: 'handyman',
     label: 'Handyman Jobs',
+    shortLabel: 'Handyman',
     blurb: 'Small repairs, furniture assembly, mounting, and general fix-it tasks.',
     examples: ['TV mounting', 'Furniture assembly', 'Fix a leaky faucet'],
   },
   {
     slug: 'cleaning',
     label: 'Cleaning',
+    shortLabel: 'Cleaning',
     blurb: 'Home cleaning, move-out cleans, and one-off deep cleaning jobs.',
     examples: ['Move-out deep clean', 'Weekly house cleaning', 'Post-renovation cleanup'],
   },
   {
     slug: 'painting',
     label: 'Painting',
+    shortLabel: 'Painting',
     blurb: 'Interior and exterior painting, touch-ups, and small paint jobs.',
     examples: ['Paint a bedroom', 'Touch-up exterior trim', 'Fence staining'],
   },
   {
     slug: 'pressure',
     label: 'Pressure Washing',
+    shortLabel: 'Pressure Washing',
     blurb: 'Driveways, decks, siding, and patio pressure washing.',
     examples: ['Driveway wash', 'Deck cleaning', 'House siding wash'],
   },
   {
     slug: 'fencing',
     label: 'Fencing',
+    shortLabel: 'Fencing',
     blurb: 'Fence repair, panel replacement, gate fixes, and staining.',
     examples: ['Replace fence panels', 'Repair a sagging gate', 'Stain a wood fence'],
   },
   {
     slug: 'labor',
     label: 'Labor Only',
+    shortLabel: 'Labor Only',
     blurb: 'General labor for simple tasks — an extra pair of hands, no specialist tools or trade skills needed.',
     examples: ['Help load a truck', 'Move boxes to the garage', 'Extra hands for a few hours'],
   },
   {
     slug: 'other',
-    label: 'Odd Jobs',
+    label: 'Errands & Odd Jobs',
+    shortLabel: 'Errands & Odd Jobs',
     blurb: 'Errands, assembly, organizing, and any local task that needs a hand.',
     examples: ['Help organizing a garage', 'Run local errands', 'Assemble flat-pack furniture'],
   },
@@ -75,6 +88,17 @@ export const JOB_CATEGORIES: JobCategory[] = [
 
 export function getJobCategory(slug: string): JobCategory | undefined {
   return JOB_CATEGORIES.find((c) => c.slug === slug.toLowerCase());
+}
+
+const CATEGORY_SLUGS = new Set(JOB_CATEGORIES.map((c) => c.slug));
+
+// The backend Quest.category enum still holds legacy digital-work values, so the
+// physical-service category a poster actually chose is carried in Quest.tags[]
+// as one of the slugs above. Falls back to the catch-all category so a job whose
+// tags predate the picker still reads as a real type of work.
+export function jobCategoryFromTags(tags?: string[] | null): JobCategory {
+  const hit = tags?.find((t) => CATEGORY_SLUGS.has(t));
+  return getJobCategory(hit ?? 'other') as JobCategory;
 }
 
 export interface ResolvedJobCategory extends JobCategory {
@@ -96,6 +120,7 @@ export function resolveJobCategory(slug: string): ResolvedJobCategory {
   return {
     slug: slug.toLowerCase(),
     label: term || 'Local Work',
+    shortLabel: term || 'Local Work',
     blurb: 'Browse live local quests and post your own — real work from real neighbors.',
     examples: [],
     known: false,

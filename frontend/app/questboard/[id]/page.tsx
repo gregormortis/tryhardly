@@ -17,6 +17,8 @@ import BidComparison from '@/components/BidComparison';
 import AcceptedBidPanel from '@/components/AcceptedBidPanel';
 import AssignedWorkerPanel from '@/components/AssignedWorkerPanel';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
+import { jobCategoryFromTags } from '@/lib/jobCategories';
+import { timingLabel, bidCountLabel } from '@/lib/questCardCopy';
 import { recurrenceSummary } from '@/lib/recurrence';
 
 // Dollar floor above which a fixed-price job reads as contractor-scale, matching
@@ -211,7 +213,12 @@ export default function QuestDetailPage() {
     .map((t) => t.slice('photo:'.length))
     .filter(Boolean);
   const skillTags = allTags.filter((t) => !t.startsWith('photo:'));
-  const tradeStandard = resolveTradeStandard(quest.category, skillTags);
+  // The physical-service category the poster picked lives in tags[]; Quest.category
+  // is still the legacy backend enum and reads as jargon to a worker.
+  const jobCategory = jobCategoryFromTags(skillTags);
+  // Tags first: every physical job is stored under the legacy `OTHER` enum, which
+  // otherwise matches the catch-all standard before the real trade is considered.
+  const tradeStandard = resolveTradeStandard(null, [...skillTags, quest.category]);
 
   // Quote-needed jobs are flagged with the `quote-needed` tag at posting time;
   // the poster's `reward` is then just a placeholder for workers to refine via a
@@ -250,7 +257,7 @@ export default function QuestDetailPage() {
                   {quest.difficulty}
                 </span>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">{quest.category}</span>
+                  <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">{jobCategory.label}</span>
                   {!isOwner && <ReportButton targetType="QUEST" targetId={quest.id} />}
                 </div>
               </div>
@@ -267,15 +274,11 @@ export default function QuestDetailPage() {
                   <span>Posted by <span className="text-amber-400">{poster.username}</span></span>
                 )}
                 <span>•</span>
-                <span>{quest._count?.applications || 0} bids</span>
-                {daysLeft !== null && (
-                  <>
-                    <span>•</span>
-                    <span className={daysLeft <= 2 ? 'text-red-400' : 'text-gray-400'}>
-                      {daysLeft > 0 ? `${daysLeft}d remaining` : 'Expired'}
-                    </span>
-                  </>
-                )}
+                <span>{bidCountLabel(quest._count?.applications ?? 0)}</span>
+                <span>•</span>
+                <span className={daysLeft !== null && daysLeft <= 2 ? 'text-red-400' : 'text-gray-400'}>
+                  {timingLabel(quest.deadline)}
+                </span>
               </div>
             </div>
 
@@ -293,7 +296,7 @@ export default function QuestDetailPage() {
 
             {/* Description */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Quest Details</h2>
+              <h2 className="text-lg font-semibold text-white mb-4">What the job involves</h2>
               <div className="text-gray-300 leading-relaxed whitespace-pre-line">{quest.description}</div>
             </div>
 
@@ -430,12 +433,22 @@ export default function QuestDetailPage() {
                   ✓ Bid submitted! The client will review it.
                 </div>
               ) : !user ? (
-                <button
-                  onClick={() => router.push('/auth/login')}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-3 rounded-lg transition-colors text-lg"
-                >
-                  Sign in to bid
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={() =>
+                      router.push(`/auth/login?redirect=${encodeURIComponent(`/questboard/${quest.id}`)}`)
+                    }
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-3 rounded-lg transition-colors text-lg"
+                  >
+                    Sign in to bid
+                  </button>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Creating an account is free. Before you submit a bid you&apos;ll connect a Stripe
+                    Connect payout account — that&apos;s how TryHardly sends your money after the
+                    poster confirms the completed work. It takes a few minutes and you only do it
+                    once.
+                  </p>
+                </div>
               ) : isAssignedWorker ? (
                 <div className="text-center p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-400 text-sm">
                   This job is yours — you&apos;re the assigned worker.
@@ -445,14 +458,29 @@ export default function QuestDetailPage() {
                   This job is no longer open for bids.
                 </div>
               ) : (
-                <BidForm
-                  contractorScale={isContractorScale}
-                  submitting={applying}
-                  onSubmit={handleApply}
-                  payoutReady={payoutReady}
-                  payoutStatusLoading={payoutStatusLoading}
-                  payoutSetupHref="/dashboard"
-                />
+                <>
+                  {/* Set expectations before the form: a bid is a proposal, the
+                      poster chooses, and nothing is charged at this step. */}
+                  <div className="mb-4 rounded-lg border border-gray-800 bg-gray-800/40 p-3">
+                    <p className="text-xs font-semibold text-gray-300">How bidding works</p>
+                    <ol className="mt-1.5 space-y-1 text-xs text-gray-400 leading-relaxed list-decimal list-inside">
+                      <li>Send a detailed bid — your price, materials, hours, and timeline.</li>
+                      <li>The poster compares the bids they receive and picks the one they want.</li>
+                      <li>
+                        If yours is chosen, the poster authorizes payment and your payout is
+                        processed after they confirm the completed work.
+                      </li>
+                    </ol>
+                  </div>
+                  <BidForm
+                    contractorScale={isContractorScale}
+                    submitting={applying}
+                    onSubmit={handleApply}
+                    payoutReady={payoutReady}
+                    payoutStatusLoading={payoutStatusLoading}
+                    payoutSetupHref="/dashboard"
+                  />
+                </>
               )}
 
               <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
@@ -473,6 +501,25 @@ export default function QuestDetailPage() {
                   <span className="text-gray-300">{new Date(quest.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Trust cues — same promise a worker sees on the board, restated at
+                the point they decide whether to bid. */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                How you get paid safely
+              </h3>
+              <ul className="space-y-2.5 text-xs text-gray-400 leading-relaxed">
+                <li>Payments are processed through Stripe — never cash off the platform.</li>
+                <li>
+                  The poster confirms the completed work, then the charge is captured and your
+                  payout is processed through Stripe Connect.
+                </li>
+                <li>Reviews are only written by people who finished a job together.</li>
+                <li>
+                  Report anyone who asks you to pay or be paid outside TryHardly.
+                </li>
+              </ul>
             </div>
 
             {/* Recurring booking management (owner only) */}
