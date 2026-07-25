@@ -1,13 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, CheckCircle, Wand2, Sparkles, AlertTriangle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle, Wand2, Sparkles, AlertTriangle, Share2 } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
 import { CADENCE_OPTIONS } from '../lib/recurrence';
 import { inferQuestFromText, summarizeInference } from '../lib/questInference';
 import { recommendBudget, type Difficulty, type Urgency } from '../lib/budgetInference';
 import { normalizeDateInput } from '../lib/dateInput';
+import { JOB_CATEGORIES, getJobCategory } from '../lib/jobCategories';
+import {
+  validatePostJobStep,
+  isValidPhotoUrl,
+  type PostJobField,
+  type PostJobIssue,
+} from '../lib/postJobValidation';
 import type { RecurrenceCadence } from '../lib/types';
 import ImageUploader from './ImageUploader';
 
@@ -20,6 +27,9 @@ type PayType = 'flat' | 'hourly';
 // shouldn't anchor a single unrealistic number. Both are paid in-app via Stripe.
 type BudgetMode = 'fixed' | 'quote';
 type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
+// Who buys the materials. Only meaningful for jobs that need any; '' means the
+// poster hasn't decided and wants to sort it out with the worker.
+type MaterialsBy = '' | 'poster' | 'worker';
 
 // Tag that flags a quest as quote-needed without any backend schema change. The
 // detail/board UI and applications can key off this string.
@@ -44,6 +54,7 @@ interface FormData {
   // Optional poster signals that refine the budget suggestion.
   difficulty: Difficulty | '';
   urgency: Urgency | '';
+  materialsBy: MaterialsBy;
   photoUrl: string;
   // Recurring booking (scheduling/visibility only — no money is charged or held).
   isRecurring: boolean;
@@ -59,33 +70,21 @@ export interface PostQuestFormProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  { id: 'yard',     label: 'Lawn & Yard'       },
-  { id: 'hauling',  label: 'Hauling & Junk'    },
-  { id: 'moving',   label: 'Moving Help'       },
-  { id: 'handyman', label: 'Handyman'          },
-  { id: 'cleaning', label: 'Cleaning'         },
-  { id: 'painting', label: 'Painting'         },
-  { id: 'pressure', label: 'Pressure Washing' },
-  { id: 'fencing',  label: 'Fencing'          },
-  { id: 'labor',    label: 'Labor Only'       },
-  { id: 'other',    label: 'Odd Jobs'         },
-];
+// The picker is driven by the same shared config the questboard filters and the
+// /jobs landing pages use, so a poster picks the exact label they'll later see
+// on the board. `shortLabel` matches the board's filter chips.
+const CATEGORY_OPTIONS = JOB_CATEGORIES.map((c) => ({ id: c.slug, label: c.shortLabel }));
 
-// Map UI category ids -> Prisma QuestCategory enum (schema is currently
-// developer-oriented; physical-labor categories fall back to OTHER).
-const CATEGORY_ENUM_MAP: Record<string, string> = {
-  yard:     'OTHER',
-  hauling:  'OTHER',
-  moving:   'OTHER',
-  handyman: 'OTHER',
-  cleaning: 'OTHER',
-  painting: 'OTHER',
-  pressure: 'OTHER',
-  fencing:  'OTHER',
-  labor:    'OTHER',
-  other:    'OTHER',
-};
+// The Prisma QuestCategory enum is still developer-oriented (WEB_DEVELOPMENT,
+// DESIGN, …), so every physical-service category maps to OTHER. The real
+// category travels in Quest.tags[] as the slug above — see jobCategoryFromTags.
+const BACKEND_CATEGORY = 'OTHER';
+
+const MATERIALS_OPTIONS: { value: MaterialsBy; label: string; summary: string }[] = [
+  { value: '',        label: "Not sure yet — I'll work it out with the worker", summary: 'To be discussed' },
+  { value: 'poster',  label: 'I supply the materials — labor only',            summary: 'Poster supplies materials (labor only)' },
+  { value: 'worker',  label: 'Worker supplies materials — include in the bid', summary: 'Worker supplies materials' },
+];
 
 const TIER_TO_DIFFICULTY: Record<TierKey, string> = {
   novice:     'NOVICE',
@@ -105,8 +104,13 @@ const TIER_MAP: { min: number; max: number; tier: TierKey; classes: string }[] =
   { min: 1000, max: Infinity, tier: 'legendary',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20'       },
 ];
 
-const STEP_LABELS = ['Details', 'Quest Info', 'Review'];
+const STEP_LABELS = ['Job details', 'Scope & budget', 'Review'];
+// Two days out so workers have time to see the job and send a bid.
 const MIN_DATE = new Date(Date.now() + 86_400_000 * 2).toISOString().split('T')[0];
+
+// Repeated verbatim on the form and the review step: the one thing a first-time
+// poster needs to know before they type anything.
+const TRUST_LINE = 'Free to post. Workers bid. You authorize payment only after choosing a worker.';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -193,41 +197,8 @@ function formatDate(iso: string): string {
   });
 }
 
-function validate(step: number, data: FormData): string[] {
-  const errs: string[] = [];
-  if (step === 1) {
-    if (data.title.trim().length < 10)  errs.push('Title must be at least 10 characters.');
-    if (!data.category)                 errs.push('Please select a category.');
-    if (!data.areaZip.trim())           errs.push('Area code or ZIP is required.');
-    if (!data.state.trim())             errs.push('State is required.');
-  }
-  if (step === 2) {
-    if (data.description.trim().length < 30) errs.push('Full details must be at least 30 characters.');
-    // A fixed budget must be a real number; in quote mode the poster doesn't
-    // name a price, so we skip that check (workers quote in-app instead).
-    if (data.budgetMode === 'fixed') {
-      const r = parseFloat(data.reward);
-      if (!data.reward || isNaN(r) || r < 10) errs.push('Your budget must be at least $10.');
-    }
-    if (!data.deadline)                      errs.push('Deadline is required.');
-    if (data.photoUrl.trim() && !isValidPhotoUrl(data.photoUrl.trim())) {
-      errs.push('Photo URL must be a valid http(s) link.');
-    }
-  }
-  return errs;
-}
-
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : 'Something went wrong';
-}
-
-function isValidPhotoUrl(url: string): boolean {
-  try {
-    const u = new URL(url);
-    return u.protocol === 'http:' || u.protocol === 'https:';
-  } catch {
-    return false;
-  }
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -280,6 +251,13 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
   );
 }
 
+// Inline, per-field error. The aggregate list at the bottom stays as a summary,
+// but the message a poster needs is rendered right under the field that failed.
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="font-mono text-[10px] text-rose-400 mt-1.5 leading-relaxed">{message}</p>;
+}
+
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-start py-3 border-b border-white/[0.05] last:border-b-0">
@@ -293,9 +271,13 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 
 export default function PostQuestForm({ currentUserId = null, onSuccess, onCancel }: PostQuestFormProps) {
   const [step,       setStep]       = useState(1);
-  const [errors,     setErrors]     = useState<string[]>([]);
+  // Field-level issues from validation, plus a separate slot for a failed POST
+  // so an API error never masquerades as a field problem.
+  const [issues,     setIssues]     = useState<PostJobIssue[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted,  setSubmitted]  = useState(false);
+  const [postedId,   setPostedId]   = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // Text-first entry: poster describes the job, we infer fields they can edit.
   const [needText,   setNeedText]   = useState('');
@@ -311,7 +293,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   const [data, setData] = useState<FormData>({
     title: '', category: '', areaZip: '', state: '',
     description: '', reward: '', budgetMode: 'fixed', payType: 'flat', deadline: '', xpReward: 0,
-    difficulty: '', urgency: '',
+    difficulty: '', urgency: '', materialsBy: '',
     photoUrl: '',
     isRecurring: false, recurrenceCadence: 'WEEKLY', recurrenceEndDate: '',
   });
@@ -324,6 +306,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     urgency: data.urgency || null,
     payType: data.payType,
   });
+
+  // Curated config for the chosen category — its examples double as the concrete
+  // "jobs like yours" prompts a first-time poster needs.
+  const selectedCategory = data.category ? getJobCategory(data.category) : undefined;
 
   // Apply a specific suggested amount to the budget field. Nothing is applied
   // automatically — the poster clicks one of the suggestions explicitly, so a
@@ -351,9 +337,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.reward, data.budgetMode, budgetRec.measured?.laborMin]);
 
+  // Clear only the issue for the field being edited, so fixing one problem
+  // doesn't hide the others the poster still has to deal with.
   function update<K extends keyof FormData>(field: K, value: FormData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
-    setErrors([]);
+    setIssues((prev) => prev.filter((i) => i.field !== field));
+    setSubmitError(null);
+  }
+
+  function issueFor(field: PostJobField): string | undefined {
+    return issues.find((i) => i.field === field)?.message;
   }
 
   // Pre-fill the form from the inferred summary. Every field stays editable
@@ -370,7 +363,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
       deadline: prev.deadline || (inference.timing?.date ?? prev.deadline),
     }));
     setApplied(true);
-    setErrors([]);
+    setIssues([]);
   }
 
   // A native date input ignores a pasted `08/01/2026`, so intercept the paste
@@ -383,20 +376,49 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   }
 
   function handleNext() {
-    const errs = validate(step, data);
-    if (errs.length) { setErrors(errs); return; }
-    setErrors([]);
+    const found = validatePostJobStep(step, data, MIN_DATE);
+    setIssues(found);
+    if (found.length) return;
     setStep((s) => s + 1);
   }
 
   function handleBack() {
-    setErrors([]);
+    setIssues([]);
+    setSubmitError(null);
     setStep((s) => s - 1);
   }
 
+  // Jump straight back to the step that owns a field the poster wants to change
+  // from the review summary.
+  function editStep(target: number) {
+    setIssues([]);
+    setSubmitError(null);
+    setStep(target);
+  }
+
+  async function copyJobLink() {
+    if (!postedId) return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/questboard/${postedId}`);
+      setShareCopied(true);
+    } catch {
+      // Clipboard can be blocked (insecure context, denied permission). Send the
+      // poster to the job page so they can copy the URL from the address bar.
+      window.location.href = `/questboard/${postedId}`;
+    }
+  }
+
   async function handleSubmit() {
-    const errs = [...validate(1, data), ...validate(2, data)];
-    if (errs.length) { setErrors(errs); return; }
+    const detailIssues = validatePostJobStep(1, data, MIN_DATE);
+    const scopeIssues = validatePostJobStep(2, data, MIN_DATE);
+    setIssues([...detailIssues, ...scopeIssues]);
+    setSubmitError(null);
+    // Send the poster back to the step that owns the first problem — the review
+    // step can't show them the field they need to fix.
+    if (detailIssues.length || scopeIssues.length) {
+      setStep(detailIssues.length ? 1 : 2);
+      return;
+    }
     setSubmitting(true);
     try {
       const areaZip = data.areaZip.trim();
@@ -418,15 +440,21 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
       const quoteNote = isQuote
         ? 'Time & Materials / Quote Needed — qualified workers can apply with an estimate through TryHardly.\n\n'
         : '';
+      // Who buys materials is a real question for bidding, so state it plainly in
+      // the description body (a separate line — the board only parses the first
+      // `Location:` line) and tag it so the detail page can surface it later.
+      const materialsSummary = MATERIALS_OPTIONS.find((m) => m.value === data.materialsBy)?.summary;
+      const materialsNote = data.materialsBy && materialsSummary ? `Materials: ${materialsSummary}\n\n` : '';
       // Photo support is URL-only (no cloud storage): the link is encoded as a
       // `photo:<url>` tag so the detail page can render it without a schema change.
       const tags = [areaZip, state, payType, data.category].filter(Boolean);
       if (isQuote) tags.push(QUOTE_TAG);
+      if (data.materialsBy) tags.push(`materials:${data.materialsBy}`);
       if (photoUrl) tags.push(`photo:${photoUrl}`);
       const payload = {
         title:       data.title.trim(),
-        description: `${locationLine}\n\n${quoteNote}${data.description.trim()}`,
-        category:    CATEGORY_ENUM_MAP[data.category] ?? 'OTHER',
+        description: `${locationLine}\n\n${quoteNote}${materialsNote}${data.description.trim()}`,
+        category:    BACKEND_CATEGORY,
         difficulty:  TIER_TO_DIFFICULTY[tierInfo.tier],
         reward:      effectiveReward,
         xpReward:    data.xpReward,
@@ -445,10 +473,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
           : {}),
       };
       const quest = await api.post<{ id: string }>('/quests', payload);
-      setSubmitted(true);
+      setPostedId(quest.id);
       onSuccess?.(quest.id);
     } catch (e: unknown) {
-      setErrors([errorMessage(e)]);
+      setSubmitError(errorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -467,21 +495,48 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     reward: rewardNum,
   });
 
-  if (submitted) {
+  if (postedId) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center px-8">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center py-10 px-6">
+        <div className="w-full max-w-sm text-center">
           <CheckCircle size={48} className="text-green-400 mx-auto mb-4" />
-          <h2 className="font-bold text-2xl text-stone-100 mb-2">Quest Posted</h2>
-          <p className="font-mono text-[12px] text-stone-600 leading-relaxed mb-7">
-            Your quest is live on the board.<br />Adventurers can start applying now.
+          <h2 className="font-bold text-2xl text-stone-100 mb-2">Job posted</h2>
+          <p className="font-mono text-[12px] text-stone-500 leading-relaxed mb-2">
+            Your job is live on the local job board. Workers nearby can start sending bids now.
           </p>
-          <button
-            onClick={() => { window.location.href = '/questboard'; }}
-            className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
-          >
-            VIEW QUEST BOARD
-          </button>
+          <p className="font-mono text-[10px] text-stone-700 leading-relaxed mb-7">
+            You&apos;ll review the bids and pick a worker. Nothing is charged until then — you
+            authorize payment after you accept a bid.
+          </p>
+
+          <div className="space-y-2.5 text-left">
+            <button
+              onClick={() => { window.location.href = `/questboard/${postedId}`; }}
+              className="w-full font-mono text-[11px] font-semibold tracking-widest px-6 py-3 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+            >
+              VIEW YOUR JOB
+            </button>
+            <button
+              onClick={copyJobLink}
+              className="w-full font-mono text-[11px] font-semibold tracking-widest px-6 py-3 border border-white/10 rounded text-stone-400 hover:text-stone-200 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+            >
+              <Share2 size={12} /> {shareCopied ? 'LINK COPIED ✓' : 'SHARE JOB'}
+            </button>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => { window.location.href = '/dashboard'; }}
+                className="flex-1 font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-white/[0.08] rounded text-stone-600 hover:text-stone-400 transition-colors"
+              >
+                MY DASHBOARD
+              </button>
+              <button
+                onClick={() => { window.location.href = '/questboard'; }}
+                className="flex-1 font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-white/[0.08] rounded text-stone-600 hover:text-stone-400 transition-colors"
+              >
+                BROWSE JOBS
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -494,9 +549,9 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="font-bold text-2xl text-stone-100 tracking-tight">Post a Quest</h1>
+            <h1 className="font-bold text-2xl text-stone-100 tracking-tight">Post a local job</h1>
             <p className="font-mono text-[11px] text-stone-700 mt-1">
-              Describe what you need done. Adventurers in your area will apply.
+              Tell us what needs to get done. Workers near you will send bids.
             </p>
           </div>
           {onCancel && (
@@ -505,6 +560,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             </button>
           )}
         </div>
+
+        <p className="font-mono text-[10px] text-stone-500 leading-relaxed mb-8 rounded-md border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5">
+          {TRUST_LINE}
+        </p>
 
         <StepIndicator current={step} />
 
@@ -548,13 +607,19 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 type="text"
                 value={data.title}
                 onChange={(e) => update('title', e.target.value)}
-                placeholder="e.g. Weekly lawn mowing — front & back yard"
+                placeholder={
+                  selectedCategory?.examples[0]
+                    ? `e.g. ${selectedCategory.examples[0]}`
+                    : 'e.g. Mow front and back lawn, trim hedges'
+                }
                 maxLength={100}
-                className={inputCls}
+                className={clsx(inputCls, issueFor('title') && 'border-rose-400/50')}
               />
+              <FieldError message={issueFor('title')} />
               <div className="flex items-start justify-between gap-3 mt-1.5">
                 <p className="font-mono text-[9px] text-stone-700 leading-relaxed">
-                  Give your job a clear title so workers can quickly understand what you need.
+                  Name the job the way you&apos;d say it out loud — mowing, dump run, moving help,
+                  fence repair, cleaning, errands.
                 </p>
                 <p className="font-mono text-[9px] text-stone-800 whitespace-nowrap">{data.title.length}/100</p>
               </div>
@@ -565,41 +630,51 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <select
                 value={data.category}
                 onChange={(e) => update('category', e.target.value)}
-                className={clsx(inputCls, 'cursor-pointer')}
+                className={clsx(inputCls, 'cursor-pointer', issueFor('category') && 'border-rose-400/50')}
               >
                 <option value="">Select a category…</option>
-                {CATEGORIES.map((c) => (
+                {CATEGORY_OPTIONS.map((c) => (
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
+              <FieldError message={issueFor('category')} />
+              <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                {selectedCategory
+                  ? `Jobs like this: ${selectedCategory.examples.join(' · ')}`
+                  : 'This is how workers filter the job board, so pick the closest match.'}
+              </p>
             </div>
 
-            <p className="font-mono text-[9px] text-stone-700 leading-relaxed -mb-2">
-              Job location — area code or ZIP and state only. No street address needed to post.
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <FieldLabel required>Area code or ZIP</FieldLabel>
-                <input
-                  type="text"
-                  value={data.areaZip}
-                  onChange={(e) => update('areaZip', e.target.value)}
-                  placeholder="e.g. 95677 or 916"
-                  maxLength={10}
-                  className={inputCls}
-                />
+            <div>
+              <FieldLabel required>Job location / area</FieldLabel>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <input
+                    type="text"
+                    value={data.areaZip}
+                    onChange={(e) => update('areaZip', e.target.value)}
+                    placeholder="Area code or ZIP — 916 or 95677"
+                    maxLength={10}
+                    className={clsx(inputCls, issueFor('areaZip') && 'border-rose-400/50')}
+                  />
+                  <FieldError message={issueFor('areaZip')} />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={data.state}
+                    onChange={(e) => update('state', e.target.value)}
+                    placeholder="State — CA"
+                    maxLength={2}
+                    className={clsx(inputCls, issueFor('state') && 'border-rose-400/50')}
+                  />
+                  <FieldError message={issueFor('state')} />
+                </div>
               </div>
-              <div>
-                <FieldLabel required>State</FieldLabel>
-                <input
-                  type="text"
-                  value={data.state}
-                  onChange={(e) => update('state', e.target.value)}
-                  placeholder="e.g. CA"
-                  maxLength={20}
-                  className={inputCls}
-                />
-              </div>
+              <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                Area code or ZIP and state only. Never post your street address here — share the
+                exact address privately with the worker after you accept their bid.
+              </p>
             </div>
           </div>
         )}
@@ -608,19 +683,25 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <FieldLabel required>Full details</FieldLabel>
+              <FieldLabel required>Full details — what needs to get done</FieldLabel>
               <textarea
                 value={data.description}
                 onChange={(e) => update('description', e.target.value)}
-                placeholder="Describe the task, what's included, and anything the worker should bring or know…"
+                placeholder="e.g. About 100 ft of wood fence along the side yard. Two panels are leaning and one gate won't latch. Gravel driveway access, dogs will be inside."
                 rows={5}
                 maxLength={1000}
-                className={clsx(inputCls, 'resize-y min-h-[120px] leading-relaxed')}
+                className={clsx(
+                  inputCls,
+                  'resize-y min-h-[120px] leading-relaxed',
+                  issueFor('description') && 'border-rose-400/50',
+                )}
               />
+              <FieldError message={issueFor('description')} />
               <div className="flex items-start justify-between gap-3 mt-1.5">
                 <p className="font-mono text-[9px] text-stone-700 leading-relaxed">
-                  This is what workers read on the quest. Describe the task, what&apos;s included,
-                  and anything the worker should bring or know.
+                  This is what workers read before they bid. Size and access matter most — square
+                  footage, linear feet, room or load counts, parking, pets, stairs, and anything the
+                  worker should bring.
                 </p>
                 <p className="font-mono text-[9px] text-stone-800 whitespace-nowrap">{data.description.length}/1000</p>
               </div>
@@ -639,10 +720,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 value={data.photoUrl}
                 onChange={(e) => update('photoUrl', e.target.value)}
                 placeholder="https://example.com/photo.jpg"
-                className={inputCls}
+                className={clsx(inputCls, issueFor('photoUrl') && 'border-rose-400/50')}
               />
+              <FieldError message={issueFor('photoUrl')} />
               <p className="font-mono text-[9px] text-stone-800 mt-1.5">
-                Upload a photo of the job, or paste a link to one hosted elsewhere.
+                Upload a photo of the job, or paste a link to one hosted elsewhere. A photo gets you
+                far more accurate bids.
               </p>
               {data.photoUrl.trim() && isValidPhotoUrl(data.photoUrl.trim()) && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -660,8 +743,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <FieldLabel>How do you want to price this?</FieldLabel>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {([
-                  { mode: 'fixed' as BudgetMode, title: 'Fixed budget', sub: 'You set the amount you plan to pay.' },
-                  { mode: 'quote' as BudgetMode, title: 'Time & Materials / Quote Needed', sub: 'Let qualified workers quote this job.' },
+                  { mode: 'fixed' as BudgetMode, title: 'Fixed budget', sub: 'You name a budget and workers bid against it.' },
+                  { mode: 'quote' as BudgetMode, title: 'Time & materials / quote needed', sub: 'Skip the number and let workers bid their own price.' },
                 ]).map((opt) => (
                   <button
                     key={opt.mode}
@@ -684,8 +767,9 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               </div>
               {data.budgetMode === 'quote' && (
                 <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
-                  Good for complex or contractor-type work. Qualified workers apply with an
-                  estimate through TryHardly — you pick one and pay in-app when the job is done.
+                  Good for complex or contractor-type work. Qualified workers bid with their own
+                  estimate through TryHardly — you pick one, authorize the agreed amount, and it&apos;s
+                  charged after you confirm the work is done.
                 </p>
               )}
             </div>
@@ -717,7 +801,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             <div className="grid grid-cols-2 gap-4">
               {data.budgetMode === 'fixed' ? (
                 <div>
-                  <FieldLabel required>Your Budget ($)</FieldLabel>
+                  <FieldLabel required>Your budget ($)</FieldLabel>
                   <div className="relative">
                     <span className={clsx(
                       'absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-base',
@@ -730,36 +814,42 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                       placeholder="0"
                       min="10"
                       step="5"
-                      className={clsx(inputCls, 'pl-7')}
+                      className={clsx(inputCls, 'pl-7', issueFor('reward') && 'border-rose-400/50')}
                     />
                   </div>
+                  <FieldError message={issueFor('reward')} />
                   <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
-                    Enter the total amount you plan to pay for this job.
+                    What you&apos;re hoping to spend. This is a starting point, not the final charge —
+                    workers bid with their own price, and you authorize payment for the amount you
+                    agree to after you accept a bid.
                   </p>
                 </div>
               ) : (
                 <div>
-                  <FieldLabel>Budget</FieldLabel>
+                  <FieldLabel>Your budget</FieldLabel>
                   <div className={clsx(inputCls, 'flex items-center text-stone-500')}>
-                    Workers will quote this job
+                    Workers will bid on this job
                   </div>
                   <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
-                    No need to guess a number — qualified workers send an estimate through TryHardly.
+                    No need to guess a number — qualified workers send a detailed bid through
+                    TryHardly, and you authorize payment for the one you accept.
                   </p>
                 </div>
               )}
               <div>
-                <FieldLabel required>Deadline</FieldLabel>
+                <FieldLabel required>When do you need it?</FieldLabel>
                 <input
                   type="date"
                   value={data.deadline}
                   min={MIN_DATE}
                   onChange={(e) => update('deadline', e.target.value)}
                   onPaste={handleDeadlinePaste}
-                  className={clsx(inputCls, '[color-scheme:dark]')}
+                  className={clsx(inputCls, '[color-scheme:dark]', issueFor('deadline') && 'border-rose-400/50')}
                 />
+                <FieldError message={issueFor('deadline')} />
                 <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
-                  When do you need this done? Required. You can paste a date like 08/01/2026.
+                  The date the work should be done by — at least 2 days out so workers have time to
+                  bid. You can paste a date like 08/01/2026.
                 </p>
               </div>
             </div>
@@ -768,7 +858,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 only on an explicit click so a typed budget is never overwritten. */}
             <div className="rounded-lg border border-amber-500/25 bg-amber-400/[0.04] p-4">
               <p className="font-mono text-[10px] font-semibold tracking-widest text-amber-400/90 uppercase mb-1.5 flex items-center gap-1.5">
-                <Sparkles size={11} /> Recommended budget
+                <Sparkles size={11} /> Budget starting point
+              </p>
+              <p className="font-mono text-[9px] text-stone-600 mb-2.5 leading-relaxed">
+                A rough range from what you&apos;ve described — not a quote, and not a price any worker
+                has agreed to. Real bids can land above or below it.
               </p>
 
               {budgetRec.measured ? (
@@ -778,7 +872,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <div>
                         <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
-                          Labor only (you supply materials)
+                          Labor only — you supply materials
                         </p>
                         <span className="font-bold text-lg text-amber-300">
                           ${budgetRec.measured.laborMin}–${budgetRec.measured.laborMax}
@@ -802,7 +896,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                       <div className="flex items-center justify-between gap-3 flex-wrap border-t border-white/[0.06] pt-2.5">
                         <div>
                           <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
-                            Materials + labor (rough total)
+                            Materials + labor — rough total
                           </p>
                           <span className="font-bold text-base text-stone-300">
                             ~${budgetRec.measured.totalMin}–${budgetRec.measured.totalMax}
@@ -861,8 +955,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
               <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
                 {data.budgetMode === 'quote'
-                  ? 'A rough sizing from the job details — workers refine it with an in-app quote.'
-                  : 'Just a suggestion from the job details — you set the final number.'}
+                  ? 'Rough sizing only — workers set the real number in their bids.'
+                  : 'A starting point you can change. Bids you receive decide the final amount.'}
               </p>
 
               {/* When the job looks contractor-scale, nudge toward letting workers
@@ -873,7 +967,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   onClick={() => { update('budgetMode', 'quote'); setBudgetApplied(false); }}
                   className="mt-3 w-full font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors"
                 >
-                  This looks like a bigger job — let qualified workers quote it instead
+                  This looks like a bigger job — let qualified workers bid it instead
                 </button>
               )}
 
@@ -901,6 +995,24 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Who buys the materials — the most common reason bids come back
+                wildly different on physical work. */}
+            <div>
+              <FieldLabel>Materials (optional)</FieldLabel>
+              <select
+                value={data.materialsBy}
+                onChange={(e) => update('materialsBy', e.target.value as MaterialsBy)}
+                className={clsx(inputCls, 'cursor-pointer')}
+              >
+                {MATERIALS_OPTIONS.map((m) => (
+                  <option key={m.value || 'unset'} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+              <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                Saying who buys the lumber, paint, or dump fees keeps bids comparable.
+              </p>
             </div>
 
             {/* Optional refinements */}
@@ -999,8 +1111,20 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* ── Step 3: Review ── */}
         {step === 3 && (
           <div>
-            <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-6 mb-6">
-              <h3 className="font-bold text-base text-stone-100 mb-1.5">{data.title}</h3>
+            <p className="font-mono text-[11px] text-stone-500 leading-relaxed mb-4">
+              Here&apos;s what workers will see. Check it over — you can edit anything before posting.
+            </p>
+            <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-6 mb-4">
+              <div className="flex items-start justify-between gap-3 mb-1.5">
+                <h3 className="font-bold text-base text-stone-100">{data.title}</h3>
+                <button
+                  type="button"
+                  onClick={() => editStep(1)}
+                  className="font-mono text-[10px] text-stone-600 hover:text-amber-400 transition-colors flex-shrink-0 underline"
+                >
+                  Edit details
+                </button>
+              </div>
               <div className="flex gap-2 flex-wrap mb-4">
                 {posterBadge && (
                   <span className={clsx(
@@ -1009,19 +1133,25 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   )}>{posterBadge.label}</span>
                 )}
                 <span className="font-mono text-[9px] text-stone-500 bg-white/[0.05] border border-white/[0.08] rounded-sm px-2 py-0.5">
-                  {CATEGORIES.find((c) => c.id === data.category)?.label}
+                  {selectedCategory?.shortLabel}
                 </span>
               </div>
               <ReviewRow label="Location" value={`${data.areaZip}, ${data.state.toUpperCase()}`} />
+              <ReviewRow label="Needed by" value={formatDate(data.deadline)} />
               <ReviewRow
                 label="Budget"
                 value={
                   data.budgetMode === 'quote'
-                    ? 'Quote needed — workers apply with an estimate'
-                    : `$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`
+                    ? 'Workers bid their own price'
+                    : `$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'} · starting point`
                 }
               />
-              <ReviewRow label="Deadline" value={formatDate(data.deadline)} />
+              {data.materialsBy && (
+                <ReviewRow
+                  label="Materials"
+                  value={MATERIALS_OPTIONS.find((m) => m.value === data.materialsBy)?.summary ?? ''}
+                />
+              )}
               {data.isRecurring && (
                 <ReviewRow
                   label="Repeats"
@@ -1031,22 +1161,40 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 />
               )}
               <div className="pt-3">
-                <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-2">Description</p>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase">Full details</p>
+                  <button
+                    type="button"
+                    onClick={() => editStep(2)}
+                    className="font-mono text-[10px] text-stone-600 hover:text-amber-400 transition-colors flex-shrink-0 underline"
+                  >
+                    Edit scope &amp; budget
+                  </button>
+                </div>
                 <p className="font-mono text-[12px] text-stone-500 leading-relaxed line-clamp-4">{data.description}</p>
               </div>
             </div>
+            <p className="font-mono text-[10px] text-stone-500 leading-relaxed mb-3 rounded-md border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5">
+              {TRUST_LINE} Your job goes on the local job board, workers send bids, and you
+              authorize the amount you agree to once you accept one.
+            </p>
             <p className="font-mono text-[10px] text-stone-800 leading-relaxed mb-5">
               By posting, you agree to TryHardly&apos;s terms and{' '}
-              <a href="/prohibited-services" className="underline hover:text-stone-600">prohibited services policy</a>. Marketplace payments are processed by Stripe, with payout to the worker when you confirm the quest is complete.
+              <a href="/prohibited-services" className="underline hover:text-stone-600">prohibited services policy</a>. Payments are processed by Stripe, and the agreed amount is captured with payout to the worker once you confirm the job is complete.
             </p>
           </div>
         )}
 
-        {/* Errors */}
-        {errors.length > 0 && (
-          <div className="mt-5 p-3.5 bg-rose-400/[0.07] border border-rose-400/25 rounded-lg space-y-1">
-            {errors.map((e) => (
-              <p key={e} className="font-mono text-[11px] text-rose-400">· {e}</p>
+        {/* Error summary. Individual messages also render inline under their
+            field; this repeats them so nothing is missed off-screen. */}
+        {(issues.length > 0 || submitError) && (
+          <div role="alert" className="mt-5 p-3.5 bg-rose-400/[0.07] border border-rose-400/25 rounded-lg space-y-1">
+            <p className="font-mono text-[10px] font-semibold tracking-widest text-rose-400 uppercase mb-1.5">
+              {submitError ? 'Could not post this job' : 'Fix these before you continue'}
+            </p>
+            {submitError && <p className="font-mono text-[11px] text-rose-400">· {submitError}</p>}
+            {issues.map((i) => (
+              <p key={`${i.field}-${i.message}`} className="font-mono text-[11px] text-rose-400">· {i.message}</p>
             ))}
           </div>
         )}
@@ -1083,7 +1231,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   : 'bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer',
               )}
             >
-              {submitting ? 'POSTING…' : 'POST QUEST ⚔'}
+              {submitting ? 'POSTING…' : 'POST JOB — FREE'}
             </button>
           )}
         </div>
