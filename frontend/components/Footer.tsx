@@ -54,6 +54,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/service-packages"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Services
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/request-help"
                   className="transition-colors hover:text-zinc-100"
                 >
