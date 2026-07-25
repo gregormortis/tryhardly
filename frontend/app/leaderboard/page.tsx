@@ -173,7 +173,7 @@ export default function LeaderboardPage() {
               href="/leaderboards"
               className="inline-block border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold px-8 py-3 rounded-lg transition-colors"
             >
-              Quality leaderboards
+              Top rated workers
             </Link>
           </div>
         </div>

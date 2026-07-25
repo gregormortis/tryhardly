@@ -32,7 +32,7 @@ interface SkillMasterEntry {
   worker: { id: string; username: string; displayName: string; avatarUrl: string | null };
 }
 
-interface GuildEntry {
+interface TeamEntry {
   rank: number;
   id: string;
   name: string;
@@ -46,16 +46,16 @@ interface LeaderboardsPayload {
   topWorkers: WorkerEntry[];
   risingWorkers: WorkerEntry[];
   skillMasters: SkillMasterEntry[];
-  topGuilds: GuildEntry[];
+  topGuilds: TeamEntry[];
 }
 
-type TabKey = 'top' | 'rising' | 'skills' | 'guilds';
+type TabKey = 'top' | 'rising' | 'skills' | 'teams';
 
 const TABS: { key: TabKey; label: string; blurb: string }[] = [
-  { key: 'top', label: 'Top Workers', blurb: 'Ranked by trust and rating quality across completed work.' },
-  { key: 'rising', label: 'Rising Workers', blurb: 'Newer members building a strong early track record.' },
-  { key: 'skills', label: 'Skill Masters', blurb: 'Workers with top-tier, client-rated skill badges.' },
-  { key: 'guilds', label: 'Top Guilds', blurb: 'Guilds with the strongest shared reputation.' },
+  { key: 'top', label: 'Top workers', blurb: 'Ranked by rating quality and reliability across completed jobs.' },
+  { key: 'rising', label: 'Rising workers', blurb: 'Newer workers building a strong early track record.' },
+  { key: 'skills', label: 'Skilled workers', blurb: 'Workers with top-rated skills, based on client ratings per skill.' },
+  { key: 'teams', label: 'Worker teams', blurb: 'Groups of workers who take jobs on together, ranked by their shared rating history.' },
 ];
 
 function rankBadge(rank: number): string {
@@ -77,7 +77,7 @@ function EmptyState({ children }: { children: React.ReactNode }) {
       <div className="text-4xl mb-3">🌱</div>
       <p className="text-gray-400 max-w-md mx-auto">{children}</p>
       <Link href="/progression" className="text-amber-400 hover:underline mt-3 inline-block text-sm">
-        How ranks &amp; badges work →
+        How ratings &amp; badges work →
       </Link>
     </div>
   );
@@ -113,9 +113,7 @@ function WorkerRow({ entry, showRating }: { entry: WorkerEntry; showRating?: boo
             </span>
           )}
           {entry.guild && (
-            <span className="text-[10px] font-mono uppercase tracking-wider text-violet-300 bg-violet-400/10 border border-violet-400/25 rounded px-1.5 py-0.5">
-              {entry.guild.tag}
-            </span>
+            <span className="text-[10px] text-gray-500">Team {entry.guild.name}</span>
           )}
         </div>
         <div className="text-xs text-gray-500 mt-0.5">
@@ -144,6 +142,11 @@ const SKILL_TIER_STYLE: Record<'GOLD' | 'PLATINUM', string> = {
   PLATINUM: 'text-cyan-300 bg-cyan-300/10 border-cyan-300/25',
 };
 
+const SKILL_TIER_LABEL: Record<'GOLD' | 'PLATINUM', string> = {
+  GOLD: 'Highly rated',
+  PLATINUM: 'Top rated',
+};
+
 function SkillMasterRow({ entry }: { entry: SkillMasterEntry }) {
   return (
     <Link
@@ -156,7 +159,7 @@ function SkillMasterRow({ entry }: { entry: SkillMasterEntry }) {
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-white truncate">{entry.skillName}</span>
           <span className={`text-[10px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 border ${SKILL_TIER_STYLE[entry.tier]}`}>
-            {entry.tier}
+            {SKILL_TIER_LABEL[entry.tier]}
           </span>
         </div>
         <div className="text-xs text-gray-500 mt-0.5">
@@ -167,25 +170,24 @@ function SkillMasterRow({ entry }: { entry: SkillMasterEntry }) {
   );
 }
 
-function GuildRow({ entry }: { entry: GuildEntry }) {
+function TeamRow({ entry }: { entry: TeamEntry }) {
   return (
     <Link
       href={`/guilds/${entry.id}`}
-      className="bg-gray-900 border border-gray-800 hover:border-violet-500/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
+      className="bg-gray-900 border border-gray-800 hover:border-amber-500/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
     >
       <RankCell rank={entry.rank} />
-      <div className="w-10 h-10 rounded-md bg-violet-400/10 border border-violet-400/25 flex items-center justify-center text-violet-300 shrink-0">⚜</div>
+      <div className="w-10 h-10 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center text-sm font-bold text-gray-300 shrink-0">
+        {initials(entry.name)}
+      </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-white truncate">{entry.name}</span>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-violet-300 bg-violet-400/10 border border-violet-400/25 rounded px-1.5 py-0.5">
-            {entry.tag}
-          </span>
+        <div className="font-semibold text-white truncate">{entry.name}</div>
+        <div className="text-xs text-gray-500 mt-0.5">
+          {entry.memberCount} worker{entry.memberCount === 1 ? '' : 's'}
         </div>
-        <div className="text-xs text-gray-500 mt-0.5">{entry.memberCount} member{entry.memberCount === 1 ? '' : 's'}</div>
       </div>
       <div className="text-right hidden sm:block shrink-0">
-        <div className="text-lg font-bold text-violet-300">{entry.reputationScore.toLocaleString()}</div>
+        <div className="text-lg font-bold text-amber-400">{entry.reputationScore.toLocaleString()}</div>
         <div className="text-[10px] text-gray-500 uppercase tracking-wider">Reputation</div>
       </div>
     </Link>
@@ -216,10 +218,10 @@ export default function LeaderboardsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">Leaderboards</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">Top rated workers</h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Recognition for the most trusted and skilled members of the community. Standings reflect reputation,
-            rating quality, completed work, verified credentials, and skill mastery — never earnings.
+            Workers listed here are ranked on their record of paid work on TryHardly: client ratings and reviews,
+            completed jobs, and verified credentials. Rankings are never based on earnings or on paying for placement.
           </p>
         </div>
 
@@ -249,7 +251,7 @@ export default function LeaderboardsPage() {
             ))}
           </div>
         ) : !data ? (
-          <EmptyState>Leaderboards are warming up. Check back soon.</EmptyState>
+          <EmptyState>Rankings are still being built. Check back soon.</EmptyState>
         ) : (
           <div className="space-y-3">
             {tab === 'top' && (
@@ -257,8 +259,8 @@ export default function LeaderboardsPage() {
                 data.topWorkers.map((e) => <WorkerRow key={e.id} entry={e} />)
               ) : (
                 <EmptyState>
-                  The Top Workers board is in early access. As members complete jobs and earn reviews, the most
-                  trusted workers will appear here.
+                  No workers ranked yet. As workers complete jobs and collect client reviews, the highest rated
+                  will appear here.
                 </EmptyState>
               )
             )}
@@ -268,7 +270,7 @@ export default function LeaderboardsPage() {
                 data.risingWorkers.map((e) => <WorkerRow key={e.id} entry={e} showRating />)
               ) : (
                 <EmptyState>
-                  No rising workers yet. Newer members who complete jobs and earn strong early ratings will be
+                  No rising workers yet. Newer workers who complete jobs and earn strong early ratings will be
                   highlighted here.
                 </EmptyState>
               )
@@ -279,18 +281,18 @@ export default function LeaderboardsPage() {
                 data.skillMasters.map((e) => <SkillMasterRow key={`${e.worker.id}-${e.skillSlug}`} entry={e} />)
               ) : (
                 <EmptyState>
-                  No skill masters yet. Once workers earn enough top-tier (Gold or Platinum) client-rated skill
-                  badges, they will be recognized here.
+                  No skill rankings yet. Once workers collect enough client ratings on a specific skill, their
+                  best-rated skills will be listed here.
                 </EmptyState>
               )
             )}
 
-            {tab === 'guilds' && (
+            {tab === 'teams' && (
               data.topGuilds.length > 0 ? (
-                data.topGuilds.map((e) => <GuildRow key={e.id} entry={e} />)
+                data.topGuilds.map((e) => <TeamRow key={e.id} entry={e} />)
               ) : (
                 <EmptyState>
-                  No guilds ranked yet. As guilds grow their shared reputation, the strongest will appear here.
+                  No worker teams ranked yet. Teams appear here once their members build a shared rating history.
                 </EmptyState>
               )
             )}
@@ -299,8 +301,8 @@ export default function LeaderboardsPage() {
 
         {/* Footer note */}
         <p className="text-center text-xs text-gray-600 mt-10 max-w-xl mx-auto">
-          Leaderboards recognize trust, reliability, and skill. They are not a contest for money and confer no cash,
-          discounts, or fee changes — the marketplace fee stays a flat 12% for everyone.
+          Rankings recognize reliability and quality of work. They carry no cash, discounts, or fee changes — the
+          marketplace fee stays a flat 12% for everyone.
         </p>
       </div>
     </div>
