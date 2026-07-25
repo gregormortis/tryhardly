@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -15,6 +17,12 @@ const REASONS: { value: string; label: string }[] = [
   { value: 'OTHER', label: 'Something else' },
 ];
 
+const TARGET_NOUN: Record<TargetType, string> = {
+  QUEST: 'job',
+  USER: 'profile',
+  MESSAGE: 'message',
+};
+
 interface ReportButtonProps {
   targetType: TargetType;
   targetId: string;
@@ -23,14 +31,31 @@ interface ReportButtonProps {
 }
 
 export default function ReportButton({ targetType, targetId, label = 'Report', className }: ReportButtonProps) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('SPAM');
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Reporting requires an account so admins can follow up.
-  if (!user) return null;
+  const noun = TARGET_NOUN[targetType];
+  const linkClassName = className || 'text-xs text-gray-500 hover:text-red-400 transition-colors';
+
+  if (loading) return null;
+
+  // Submitting a report requires an account so the moderation team can follow
+  // up with the reporter, so signed-out visitors get a sign-in link instead of
+  // a dead-end button.
+  if (!user) {
+    return (
+      <Link
+        href={`/auth/login?redirect=${encodeURIComponent(pathname || '/')}`}
+        className={linkClassName}
+      >
+        ⚑ Sign in to report this {noun}
+      </Link>
+    );
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +78,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report', c
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={className || 'text-xs text-gray-500 hover:text-red-400 transition-colors'}
+        className={linkClassName}
       >
         ⚑ {label}
       </button>
@@ -67,7 +92,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report', c
             className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-white mb-1">Report this {targetType.toLowerCase()}</h3>
+            <h3 className="text-lg font-semibold text-white mb-1">Report this {noun}</h3>
             <p className="text-sm text-gray-500 mb-4">Tell us what&apos;s wrong. Reports are confidential.</p>
             <form onSubmit={submit} className="space-y-4">
               <div>

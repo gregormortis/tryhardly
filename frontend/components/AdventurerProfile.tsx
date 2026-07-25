@@ -606,11 +606,11 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     Member since {formatMonthYear(adventurer.memberSince)}
                   </p>
 
-                  {/* Report entry point — only when viewing someone else's
-                      profile. ReportButton hides itself for signed-out users. */}
-                  {user && user.id !== adventurer.id && (
+                  {/* Report entry point — hidden only on your own profile.
+                      ReportButton offers signed-out visitors a sign-in link. */}
+                  {user?.id !== adventurer.id && (
                     <div className="mt-2">
-                      <ReportButton targetType="USER" targetId={adventurer.id} label="Report this user" />
+                      <ReportButton targetType="USER" targetId={adventurer.id} label="Report this profile" />
                     </div>
                   )}
                 </div>
@@ -803,7 +803,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       href="/leaderboards"
                       className="mt-2.5 inline-block font-mono text-[10px] text-amber-400 hover:underline"
                     >
-                      See the community leaderboards →
+                      See top rated workers →
                     </Link>
                   </div>
                 )}

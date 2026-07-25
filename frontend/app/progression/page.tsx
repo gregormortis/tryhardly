@@ -258,8 +258,8 @@ export default function ProgressionPage() {
           </div>
           <p className="text-gray-500 text-sm mt-5">
             Achievements are recognition only. They confer no cash, discounts, or fee changes — see the{' '}
-            <a href="/leaderboards" className="text-amber-400 hover:underline">community leaderboards</a> for how
-            trust and skill are celebrated across the platform.
+            <a href="/leaderboards" className="text-amber-400 hover:underline">top rated workers</a> for how
+            ratings and completed work are recognized across the platform.
           </p>
         </section>
 
