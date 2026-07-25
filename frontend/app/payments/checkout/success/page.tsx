@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { AUTHORIZATION_NOT_A_CHARGE } from '@/lib/paymentCopy';
 
 function CheckoutSuccess() {
   const searchParams = useSearchParams();
@@ -18,13 +19,12 @@ function CheckoutSuccess() {
             <p>
               Your payment method has been authorized for this quest&mdash;
               <span className="text-white font-semibold"> you have not been charged yet</span>. An
-              authorization is a temporary hold, not a completed payment, and may appear as a
-              pending transaction on your statement.
+              authorization is not a final charge, and may appear as a pending transaction on your
+              statement.
             </p>
             <p>
-              The final charge is captured only when the work is completed and confirmed. Once
-              captured, the worker payout is processed through Stripe Connect, with TryHardly&rsquo;s
-              flat 12% platform service fee applied.
+              {AUTHORIZATION_NOT_A_CHARGE} Once captured, the worker payout is processed through
+              Stripe Connect, with TryHardly&rsquo;s flat 12% platform service fee applied.
             </p>
             <p>
               If the quest is canceled before the work is confirmed, the authorization is voided and

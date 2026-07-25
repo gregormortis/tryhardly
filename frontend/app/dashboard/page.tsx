@@ -7,27 +7,33 @@ import { api } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import type { Quest, Application } from '../../lib/types';
 import StripeConnectButton from '../../components/StripeConnectButton';
-import { applicationStatusView, workStatusView } from '../../lib/workStatus';
+import {
+  applicationStatusView,
+  countActiveQuests,
+  isActiveAssignment,
+  isActivePostedQuest,
+  workStatusView,
+} from '../../lib/workStatus';
+import type { WorkRole } from '../../lib/workStatus';
 
 const XP_PER_LEVEL = 1000;
 
-// A quest stops being "active work" for the worker only once it is finished or
-// called off. Everything else (IN_PROGRESS, IN_REVIEW, and any status a newer
-// backend may add) still needs a way in, so we exclude rather than allow-list.
-const FINISHED_QUEST_STATUSES = ['COMPLETED', 'CANCELLED'];
-
-function isActiveAssignment(app: Application): boolean {
-  return (
-    app.status === 'ACCEPTED' &&
-    !!app.quest?.id &&
-    !FINISHED_QUEST_STATUSES.includes(app.quest.status ?? '')
-  );
+// What the viewer should do next on a job that is already under way.
+function activeCta(questStatus: string | undefined, role: WorkRole): string {
+  if (role === 'poster') {
+    return questStatus === 'IN_REVIEW' ? 'Confirm completion' : 'View job';
+  }
+  return questStatus === 'IN_REVIEW' ? 'View submission' : 'Submit completion';
 }
 
-// What the worker should do next on an assignment they've already won.
-function assignmentCta(questStatus?: string): string {
-  if (questStatus === 'IN_REVIEW') return 'View submission';
-  return 'Submit completion';
+// One row in the "Active quests" list, from either side of the marketplace.
+interface ActiveWorkItem {
+  key: string;
+  questId: string;
+  title: string;
+  reward?: number;
+  status?: string;
+  role: WorkRole;
 }
 
 // A job the viewer finished and still owes a review on. Reviews are one per
@@ -95,7 +101,30 @@ export default function DashboardPage() {
 
   const xpProgress = user.xp % XP_PER_LEVEL;
   const xpPercent = (xpProgress / XP_PER_LEVEL) * 100;
-  const activeApps = data?.applications?.filter(isActiveAssignment) || [];
+  // Both sides of the marketplace count toward the headline metric, and the
+  // list below has to show the same jobs the metric counts.
+  const activeQuestCount = countActiveQuests(
+    data?.postedQuests || [],
+    data?.applications || []
+  );
+  const activeWork: ActiveWorkItem[] = [
+    ...(data?.postedQuests || []).filter(isActivePostedQuest).map(q => ({
+      key: `posted-${q.id}`,
+      questId: q.id,
+      title: q.title,
+      reward: q.reward,
+      status: q.status,
+      role: 'poster' as const,
+    })),
+    ...(data?.applications || []).filter(isActiveAssignment).map(app => ({
+      key: `bid-${app.id}`,
+      questId: app.quest!.id,
+      title: app.quest!.title,
+      reward: app.quest!.reward,
+      status: app.quest!.status,
+      role: 'worker' as const,
+    })),
+  ];
   // Quests the user posted that a worker submitted for completion review.
   const pendingReview = data?.postedQuests?.filter(q => q.status === 'IN_REVIEW') || [];
 
@@ -141,8 +170,8 @@ export default function DashboardPage() {
         {[
           { label: 'Level', value: user.level, icon: '⚔️', color: 'text-amber-400' },
           { label: 'Total XP', value: user.xp.toLocaleString(), icon: '⭐', color: 'text-yellow-400' },
-          { label: 'Active Quests', value: activeApps.length, icon: '📜', color: 'text-green-400' },
-          { label: 'Applications', value: data?.applications?.length ?? 0, icon: '📤', color: 'text-blue-400' },
+          { label: 'Active Quests', value: activeQuestCount, icon: '📜', color: 'text-green-400' },
+          { label: 'Bids Sent', value: data?.applications?.length ?? 0, icon: '📤', color: 'text-blue-400' },
         ].map(stat => (
           <div key={stat.label} className="rounded-xl bg-zinc-900 border border-zinc-800 p-4">
             <div className="text-2xl mb-1">{stat.icon}</div>
@@ -228,31 +257,31 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Active quests — work the user won and still has to finish. These quests
-          have left the public board (they're no longer OPEN), so this section is
-          the worker's way back into the job. */}
-      {!dataLoading && activeApps.length > 0 && (
+      {/* Active quests — jobs under way on either side: work the user won, and
+          jobs they posted that a worker is on. These quests have left the public
+          board (they're no longer OPEN), so this section is the way back in. */}
+      {!dataLoading && activeWork.length > 0 && (
         <div className="rounded-xl bg-green-500/5 border border-green-500/30 p-4 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-green-300">⚔️ Active quests</h2>
-            <span className="text-xs text-green-400/70">{activeApps.length} assigned to you</span>
+            <span className="text-xs text-green-400/70">{activeWork.length} under way</span>
           </div>
           <div className="space-y-2">
-            {activeApps.map(app => (
+            {activeWork.map(item => (
               <Link
-                key={app.id}
-                href={`/questboard/${app.quest!.id}`}
+                key={item.key}
+                href={`/questboard/${item.questId}`}
                 className="group flex justify-between items-center gap-3 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500/60 transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-100 truncate">{app.quest?.title || 'Quest'}</p>
+                  <p className="text-sm font-medium text-zinc-100 truncate">{item.title}</p>
                   <p className="text-xs text-zinc-500">
-                    ${app.quest?.reward?.toLocaleString()} •{' '}
-                    {workStatusView(app.quest?.status, 'worker').label}
+                    {item.role === 'poster' ? 'You posted' : 'You were hired'} • $
+                    {item.reward?.toLocaleString()} • {workStatusView(item.status, item.role).label}
                   </p>
                 </div>
                 <span className="shrink-0 text-xs px-2 py-1 rounded bg-green-500/20 text-green-300 group-hover:bg-green-500/30">
-                  {assignmentCta(app.quest?.status)} →
+                  {activeCta(item.status, item.role)} →
                 </span>
               </Link>
             ))}
@@ -263,7 +292,12 @@ export default function DashboardPage() {
       {/* My Applications */}
       <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-4 mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-zinc-100">📜 My Applications</h2>
+          <div>
+            <h2 className="text-lg font-bold text-zinc-100">📜 My Bids</h2>
+            <p className="text-xs text-zinc-500">
+              Every bid you&apos;ve sent. Won bids also appear under Active quests.
+            </p>
+          </div>
           <Link href="/questboard" className="text-xs text-amber-400 hover:underline">Browse quests</Link>
         </div>
         {dataLoading ? (
@@ -310,8 +344,8 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="text-center py-6">
-            <p className="text-zinc-500 text-sm mb-2">No applications yet.</p>
-            <Link href="/questboard" className="text-amber-400 text-sm hover:underline">Find a quest to apply</Link>
+            <p className="text-zinc-500 text-sm mb-2">No bids yet.</p>
+            <Link href="/questboard" className="text-amber-400 text-sm hover:underline">Find a quest to bid on</Link>
           </div>
         )}
       </div>

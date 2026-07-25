@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 import type { Quest } from '@/lib/types';
 import { workStatusView } from '@/lib/workStatus';
+import { AUTHORIZE_CAPTURE_PAYOUT_WORKER } from '@/lib/paymentCopy';
 
 // Worker-facing counterpart to AcceptedBidPanel, shown on the quest detail page
 // once the worker's bid has been accepted and they are the assigned worker.
@@ -60,11 +61,7 @@ export default function AssignedWorkerPanel({ quest }: AssignedWorkerPanelProps)
         </div>
       </div>
 
-      <p className="text-xs text-gray-500">
-        The client authorizes their payment method for this amount. The charge is captured for
-        completed work once they confirm it, and your payout is routed to your Stripe account
-        after capture.
-      </p>
+      <p className="text-xs text-gray-500">{AUTHORIZE_CAPTURE_PAYOUT_WORKER}</p>
 
       <div className="flex flex-wrap gap-3">
         {!completed && (

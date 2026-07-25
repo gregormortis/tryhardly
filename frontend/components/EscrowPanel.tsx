@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api, ApiRequestError } from '../lib/api';
+import {
+  AUTHORIZATION_NOT_A_CHARGE,
+  AUTHORIZE_CAPTURE_PAYOUT,
+  AUTHORIZE_CAPTURE_PAYOUT_WORKER,
+  authorizeButtonLabel,
+  formatUsdFromCents,
+  type PaymentStatusValue,
+} from '../lib/paymentCopy';
 
 // Mirrors the backend GET /api/payments/quest/:id/payment-status response.
 // This is the non-escrow marketplace flow: the customer's card is AUTHORIZED at
@@ -9,7 +17,7 @@ import { api, ApiRequestError } from '../lib/api';
 // holds funds; worker payouts are routed through Stripe Connect on capture.
 interface PaymentStatus {
   questId: string;
-  paymentStatus: 'NONE' | 'AUTHORIZED' | 'CAPTURED' | 'CANCELED' | 'CAPTURE_FAILED';
+  paymentStatus: PaymentStatusValue;
   paymentAuthorizedAt: string | null;
   paymentCapturedAt: string | null;
   paymentCanceledAt: string | null;
@@ -29,6 +37,9 @@ interface PaymentPanelProps {
   questId: string;
   isQuestGiver: boolean;
   questStatus: string;
+  // Lets an enclosing card describe the same authorization state instead of
+  // guessing from the quest status alone.
+  onStatusChange?: (status: PaymentStatusValue) => void;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -48,10 +59,6 @@ const STATUS_LABELS: Record<string, string> = {
   NONE: 'NOT STARTED',
 };
 
-function dollars(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
 /**
  * Marketplace payment panel for the non-escrow manual-capture flow.
  *
@@ -61,7 +68,11 @@ function dollars(cents: number): string {
  * authorization can be voided via POST /cancel-authorization. This component
  * never calls the retired escrow routes (/escrow, /complete, /cancel).
  */
-export default function PaymentPanel({ questId, isQuestGiver }: PaymentPanelProps) {
+export default function PaymentPanel({
+  questId,
+  isQuestGiver,
+  onStatusChange,
+}: PaymentPanelProps) {
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -82,6 +93,10 @@ export default function PaymentPanel({ questId, isQuestGiver }: PaymentPanelProp
   useEffect(() => {
     fetchPaymentStatus();
   }, [fetchPaymentStatus]);
+
+  useEffect(() => {
+    onStatusChange?.(payment?.paymentStatus ?? 'NONE');
+  }, [payment?.paymentStatus, onStatusChange]);
 
   // Start hosted Stripe Checkout to authorize the payment method (manual
   // capture). On success the browser is redirected to Stripe's hosted page.
@@ -137,26 +152,21 @@ export default function PaymentPanel({ questId, isQuestGiver }: PaymentPanelProp
         <h3 className="text-base font-semibold text-zinc-100 mb-2">Marketplace Payment</h3>
         {isQuestGiver ? (
           <div>
-            <p className="text-sm text-zinc-400 mb-3">
-              Authorize a payment method before work begins. Your payment method is authorized
-              at booking — not charged. The final charge is captured for completed work, and the
-              worker payout is processed after capture through Stripe Connect.
-            </p>
+            <p className="text-sm text-zinc-400 mb-3">{AUTHORIZE_CAPTURE_PAYOUT}</p>
             {error && <p className="text-xs text-rose-400 mb-2">{error}</p>}
             <button
               onClick={handleAuthorize}
               disabled={loading}
               className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
             >
-              {loading ? 'Starting checkout…' : 'Authorize payment method'}
+              {loading ? 'Starting checkout…' : authorizeButtonLabel(payment?.totalBudget)}
             </button>
+            <p className="mt-2 text-xs text-zinc-500">{AUTHORIZATION_NOT_A_CHARGE}</p>
           </div>
         ) : (
           <p className="text-sm text-zinc-400">
-            Waiting for the quest giver to authorize a payment method. The payment method is
-            authorized at booking; the final charge is captured for completed work, with the
-            worker payout processed after capture through Stripe Connect. Canceled or uncompleted
-            jobs are never charged.
+            Waiting for the poster to authorize a payment method.{' '}
+            {AUTHORIZE_CAPTURE_PAYOUT_WORKER}
           </p>
         )}
       </div>
@@ -183,17 +193,17 @@ export default function PaymentPanel({ questId, isQuestGiver }: PaymentPanelProp
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="bg-zinc-800 rounded p-2">
           <p className="text-zinc-500 text-xs">Total Budget</p>
-          <p className="text-zinc-100 font-semibold">{dollars(payment.totalBudget)}</p>
+          <p className="text-zinc-100 font-semibold">{formatUsdFromCents(payment.totalBudget)}</p>
         </div>
         <div className="bg-zinc-800 rounded p-2">
           <p className="text-zinc-500 text-xs">Platform Fee</p>
-          <p className="text-zinc-100 font-semibold">{dollars(payment.platformFee)}</p>
+          <p className="text-zinc-100 font-semibold">{formatUsdFromCents(payment.platformFee)}</p>
         </div>
       </div>
 
       <p className="text-xs text-zinc-500">
         {status === 'AUTHORIZED' &&
-          'Payment method authorized at booking. The final charge is captured automatically when the task is confirmed complete.'}
+          `Payment method authorized at booking. ${AUTHORIZATION_NOT_A_CHARGE}`}
         {status === 'CAPTURED' &&
           'Charge captured for completed work. The worker payout is processed through Stripe Connect.'}
         {status === 'CANCELED' && 'Authorization canceled. The customer was not charged.'}

@@ -7,6 +7,7 @@ import { api } from '../lib/api';
 import { CADENCE_OPTIONS } from '../lib/recurrence';
 import { inferQuestFromText, summarizeInference } from '../lib/questInference';
 import { recommendBudget, type Difficulty, type Urgency } from '../lib/budgetInference';
+import { normalizeDateInput } from '../lib/dateInput';
 import type { RecurrenceCadence } from '../lib/types';
 import ImageUploader from './ImageUploader';
 
@@ -67,6 +68,7 @@ const CATEGORIES = [
   { id: 'painting', label: 'Painting'         },
   { id: 'pressure', label: 'Pressure Washing' },
   { id: 'fencing',  label: 'Fencing'          },
+  { id: 'labor',    label: 'Labor Only'       },
   { id: 'other',    label: 'Odd Jobs'         },
 ];
 
@@ -81,6 +83,7 @@ const CATEGORY_ENUM_MAP: Record<string, string> = {
   painting: 'OTHER',
   pressure: 'OTHER',
   fencing:  'OTHER',
+  labor:    'OTHER',
   other:    'OTHER',
 };
 
@@ -199,7 +202,7 @@ function validate(step: number, data: FormData): string[] {
     if (!data.state.trim())             errs.push('State is required.');
   }
   if (step === 2) {
-    if (data.description.trim().length < 30) errs.push('Description must be at least 30 characters.');
+    if (data.description.trim().length < 30) errs.push('Full details must be at least 30 characters.');
     // A fixed budget must be a real number; in quote mode the poster doesn't
     // name a price, so we skip that check (workers quote in-app instead).
     if (data.budgetMode === 'fixed') {
@@ -370,6 +373,15 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     setErrors([]);
   }
 
+  // A native date input ignores a pasted `08/01/2026`, so intercept the paste
+  // and write the normalized value ourselves.
+  function handleDeadlinePaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const normalized = normalizeDateInput(e.clipboardData.getData('text'));
+    if (!normalized) return;
+    e.preventDefault();
+    update('deadline', normalized);
+  }
+
   function handleNext() {
     const errs = validate(step, data);
     if (errs.length) { setErrors(errs); return; }
@@ -501,7 +513,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
           <div className="space-y-5">
             {/* Text-first entry: describe the job in plain language. */}
             <div className="rounded-lg border border-amber-500/25 bg-amber-400/[0.04] p-4">
-              <FieldLabel>What do you need done?</FieldLabel>
+              <FieldLabel>Short summary — what do you need done?</FieldLabel>
               <textarea
                 value={needText}
                 onChange={(e) => { setNeedText(e.target.value); setApplied(false); }}
@@ -525,7 +537,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 </div>
               )}
               <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
-                We&apos;ll guess the details below — you can edit anything before posting.
+                We&apos;ll guess the details below — you can edit anything before posting. The
+                full details workers read are written on the next step.
               </p>
             </div>
 
@@ -595,7 +608,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <FieldLabel required>Description</FieldLabel>
+              <FieldLabel required>Full details</FieldLabel>
               <textarea
                 value={data.description}
                 onChange={(e) => update('description', e.target.value)}
@@ -606,7 +619,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               />
               <div className="flex items-start justify-between gap-3 mt-1.5">
                 <p className="font-mono text-[9px] text-stone-700 leading-relaxed">
-                  Describe the task, what&apos;s included, and anything the worker should bring or know.
+                  This is what workers read on the quest. Describe the task, what&apos;s included,
+                  and anything the worker should bring or know.
                 </p>
                 <p className="font-mono text-[9px] text-stone-800 whitespace-nowrap">{data.description.length}/1000</p>
               </div>
@@ -735,16 +749,17 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 </div>
               )}
               <div>
-                <FieldLabel>Timing</FieldLabel>
+                <FieldLabel required>Deadline</FieldLabel>
                 <input
                   type="date"
                   value={data.deadline}
                   min={MIN_DATE}
                   onChange={(e) => update('deadline', e.target.value)}
+                  onPaste={handleDeadlinePaste}
                   className={clsx(inputCls, '[color-scheme:dark]')}
                 />
                 <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
-                  When do you need this done?
+                  When do you need this done? Required. You can paste a date like 08/01/2026.
                 </p>
               </div>
             </div>
@@ -1006,7 +1021,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     : `$${data.reward} ${data.payType === 'hourly' ? '/ hour' : 'flat'}`
                 }
               />
-              <ReviewRow label="Timing"   value={formatDate(data.deadline)} />
+              <ReviewRow label="Deadline" value={formatDate(data.deadline)} />
               {data.isRecurring && (
                 <ReviewRow
                   label="Repeats"

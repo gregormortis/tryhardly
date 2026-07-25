@@ -54,6 +54,18 @@ export const JOB_CATEGORIES: JobCategory[] = [
     examples: ['Driveway wash', 'Deck cleaning', 'House siding wash'],
   },
   {
+    slug: 'fencing',
+    label: 'Fencing',
+    blurb: 'Fence repair, panel replacement, gate fixes, and staining.',
+    examples: ['Replace fence panels', 'Repair a sagging gate', 'Stain a wood fence'],
+  },
+  {
+    slug: 'labor',
+    label: 'Labor Only',
+    blurb: 'General labor for simple tasks — an extra pair of hands, no specialist tools or trade skills needed.',
+    examples: ['Help load a truck', 'Move boxes to the garage', 'Extra hands for a few hours'],
+  },
+  {
     slug: 'other',
     label: 'Odd Jobs',
     blurb: 'Errands, assembly, organizing, and any local task that needs a hand.',

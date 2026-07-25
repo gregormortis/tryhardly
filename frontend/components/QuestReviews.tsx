@@ -46,6 +46,9 @@ interface QuestReviewsProps {
   canRateSkills?: boolean;
   // Skill name suggestions (e.g. from the quest's tags) to pre-fill the form.
   suggestedSkills?: string[];
+  // Lets the parent refresh the quest so other cards can drop their own
+  // "leave a review" prompts once this viewer's review is in.
+  onReviewSubmitted?: () => void | Promise<void>;
 }
 
 export default function QuestReviews({
@@ -54,6 +57,7 @@ export default function QuestReviews({
   currentUserId = null,
   canRateSkills = false,
   suggestedSkills = [],
+  onReviewSubmitted,
 }: QuestReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +126,7 @@ export default function QuestReviews({
       setComment('');
       setRating(5);
       await load();
+      await onReviewSubmitted?.();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit review');
     } finally {

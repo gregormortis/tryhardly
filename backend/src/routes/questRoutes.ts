@@ -8,7 +8,7 @@ import { submitCompletion, confirmCompletion, requestChanges } from '../controll
 const router = Router();
 
 router.get('/', optionalAuth, getQuests);
-router.get('/:id', getQuestById);
+router.get('/:id', optionalAuth, getQuestById);
 router.post('/', authenticate, createQuest);
 router.put('/:id', authenticate, updateQuest);
 router.delete('/:id', authenticate, deleteQuest);

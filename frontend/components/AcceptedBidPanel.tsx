@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { CheckCircle2, MapPin, Phone } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Application, Quest } from '@/lib/types';
+import { posterPaymentNextStep, type PaymentStatusValue } from '@/lib/paymentCopy';
 import EscrowPanel from './EscrowPanel';
 
 // Owner-facing "what happens next" panel shown immediately after a bid is
-// accepted, right on the quest detail page. It makes the next step obvious in
-// place — authorize a payment method to start the job — so the poster never has
-// to guess they should go elsewhere.
+// accepted, right on the quest detail page. The headline tracks the live
+// authorization state reported by the embedded payment panel, so it stops asking
+// for a payment method the poster has already authorized.
 //
 // It surfaces the selected worker and the exact accepted bid amount (the amount
 // that will be authorized — never silently changed), explains the
@@ -49,6 +50,14 @@ export default function AcceptedBidPanel({
   const [notes, setNotes] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  // Mirrored from the embedded payment panel so the headline can't keep asking
+  // for an authorization that already exists.
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatusValue>('NONE');
+  const handlePaymentStatusChange = useCallback(
+    (status: PaymentStatusValue) => setPaymentStatus(status),
+    []
+  );
+  const nextStep = posterPaymentNextStep(paymentStatus);
 
   const workerId =
     acceptedApplication?.adventurerId ?? quest.assignedAdventurerId ?? null;
@@ -92,15 +101,11 @@ export default function AcceptedBidPanel({
       <div className="flex items-start gap-3">
         <CheckCircle2 className="text-violet-400 shrink-0 mt-0.5" size={22} />
         <div>
-          <h2 className="text-lg font-semibold text-white">
-            Next step: authorize payment to start the job
-          </h2>
+          <h2 className="text-lg font-semibold text-white">{nextStep.heading}</h2>
           <p className="text-sm text-gray-400 mt-1">
             You accepted a bid from{' '}
-            <span className="text-violet-300 font-medium">{workerName}</span>. Authorize a
-            payment method to get started. Your payment method is authorized now — not
-            charged. The final charge is captured for completed work, and the worker payout
-            is processed after capture through Stripe Connect.
+            <span className="text-violet-300 font-medium">{workerName}</span>.{' '}
+            {nextStep.detail}
           </p>
         </div>
       </div>
@@ -196,7 +201,12 @@ export default function AcceptedBidPanel({
       </div>
 
       {/* Payment authorization CTA + live status (manual-capture Checkout flow). */}
-      <EscrowPanel questId={quest.id} isQuestGiver questStatus={quest.status} />
+      <EscrowPanel
+        questId={quest.id}
+        isQuestGiver
+        questStatus={quest.status}
+        onStatusChange={handlePaymentStatusChange}
+      />
     </div>
   );
 }

@@ -24,6 +24,8 @@ const UI_CATEGORY_TO_ENUM: Record<string, QuestCategory> = {
   cleaning: QuestCategory.OTHER,
   painting: QuestCategory.OTHER,
   pressure: QuestCategory.OTHER,
+  fencing:  QuestCategory.OTHER,
+  labor:    QuestCategory.OTHER,
   odd_jobs: QuestCategory.OTHER,
   other:    QuestCategory.OTHER,
 };
@@ -151,6 +153,14 @@ export async function getQuestById(req: Request, res: Response) {
       },
     });
     if (!quest) return res.status(404).json({ error: "Quest not found" });
+
+    // Same signal the list endpoints send: lets the detail page stop offering a
+    // review the caller has already left (one review per reviewer per quest).
+    const userId = (req as any).user?.id as string | undefined;
+    if (userId) {
+      const reviewedQuestIds = await findQuestIdsReviewedBy(userId, [quest.id]);
+      return res.json({ ...quest, viewerHasReviewed: reviewedQuestIds.has(quest.id) });
+    }
     res.json(quest);
   } catch (error) {
     console.error("getQuestById error:", error);
