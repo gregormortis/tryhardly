@@ -110,7 +110,10 @@ export default function CompletionPanel({
   const statusBadge = completed
     ? { label: 'Completed', cls: 'bg-green-500/20 text-green-400 border-green-500/40' }
     : inReview
-      ? { label: 'Awaiting review', cls: 'bg-amber-500/20 text-amber-400 border-amber-500/40' }
+      ? {
+          label: isQuestGiver ? 'Your confirmation needed' : 'Awaiting poster confirmation',
+          cls: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+        }
       : { label: 'In progress', cls: 'bg-blue-500/20 text-blue-400 border-blue-500/40' };
 
   return (
@@ -239,9 +242,17 @@ export default function CompletionPanel({
       )}
 
       {completed && (
-        <p className="pt-2 text-sm text-green-400">
-          This task is complete{quest.completedAt ? ` (${new Date(quest.completedAt).toLocaleDateString()})` : ''}.
-        </p>
+        <div className="pt-2 space-y-2">
+          <p className="text-sm text-green-400">
+            This task is complete{quest.completedAt ? ` (${new Date(quest.completedAt).toLocaleDateString()})` : ''}.
+          </p>
+          <a
+            href="#reviews"
+            className="inline-block px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900"
+          >
+            Leave a review
+          </a>
+        </div>
       )}
     </div>
   );

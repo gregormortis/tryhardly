@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 import type { Quest } from '@/lib/types';
+import { workStatusView } from '@/lib/workStatus';
 
 // Worker-facing counterpart to AcceptedBidPanel, shown on the quest detail page
 // once the worker's bid has been accepted and they are the assigned worker.
@@ -54,7 +55,7 @@ export default function AssignedWorkerPanel({ quest }: AssignedWorkerPanelProps)
         <div className="bg-gray-800/60 rounded-lg px-4 py-3">
           <div className="text-[11px] uppercase tracking-wide text-gray-500">Job status</div>
           <div className="text-sm font-medium text-gray-100 mt-0.5">
-            {quest.status?.replace('_', ' ')}
+            {workStatusView(quest.status, 'worker').label}
           </div>
         </div>
       </div>
@@ -72,6 +73,14 @@ export default function AssignedWorkerPanel({ quest }: AssignedWorkerPanelProps)
             className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900 transition-colors"
           >
             {inReview ? 'View your submission' : 'Submit completion'}
+          </a>
+        )}
+        {completed && (
+          <a
+            href="#reviews"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900 transition-colors"
+          >
+            Leave a review
           </a>
         )}
         {posterId && (

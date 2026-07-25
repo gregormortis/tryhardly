@@ -37,6 +37,10 @@ interface QuestReviewsProps {
   questId: string;
   // When the viewer is a participant on a COMPLETED quest, they may leave a review.
   canReview: boolean;
+  // The signed-in viewer. Reviews are one per person per quest, so this lets the
+  // form give way to a "review submitted" confirmation instead of leading the
+  // user into a duplicate-review error.
+  currentUserId?: string | null;
   // When the viewer is the quest giver, they may additionally rate the worker's
   // individual skills (mowing, fencing, hauling, …) to build skill badges.
   canRateSkills?: boolean;
@@ -44,7 +48,13 @@ interface QuestReviewsProps {
   suggestedSkills?: string[];
 }
 
-export default function QuestReviews({ questId, canReview, canRateSkills = false, suggestedSkills = [] }: QuestReviewsProps) {
+export default function QuestReviews({
+  questId,
+  canReview,
+  currentUserId = null,
+  canRateSkills = false,
+  suggestedSkills = [],
+}: QuestReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(5);
@@ -90,7 +100,6 @@ export default function QuestReviews({ questId, canReview, canRateSkills = false
     load();
   }, [load]);
 
-  // Hide the review form once the viewer already has a review on this quest.
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) {
@@ -120,11 +129,22 @@ export default function QuestReviews({ questId, canReview, canRateSkills = false
     }
   };
 
+  // One review per person per quest — once the viewer's own review is in the
+  // list, the prompt becomes a confirmation.
+  const alreadyReviewed =
+    !!currentUserId && reviews.some((rev) => rev.reviewer?.id === currentUserId);
+
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div id="reviews" className="bg-gray-900 border border-gray-800 rounded-xl p-6 scroll-mt-24">
       <h2 className="text-lg font-semibold text-white mb-4">Reviews</h2>
 
-      {canReview && (
+      {canReview && alreadyReviewed && (
+        <p className="mb-6 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm text-green-300">
+          Review submitted. Thanks for helping others know who to work with.
+        </p>
+      )}
+
+      {canReview && !alreadyReviewed && (
         <form onSubmit={submit} className="mb-6 p-4 bg-gray-800/50 border border-gray-800 rounded-lg space-y-3">
           <p className="text-sm text-gray-300">Leave a review for your counterparty</p>
           <div className="flex items-center gap-1">

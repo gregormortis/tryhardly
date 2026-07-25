@@ -9,6 +9,7 @@ import {
   advance,
   RecurrenceValidationError,
 } from "../services/recurrenceService";
+import { findQuestIdsReviewedBy } from "../services/reviewStatusService";
 
 const VALID_CATEGORIES = new Set(Object.values(QuestCategory));
 const VALID_STATUSES = new Set(Object.values(QuestStatus));
@@ -120,9 +121,18 @@ export async function getQuests(req: Request, res: Response) {
       prisma.quest.count({ where }),
     ]);
 
+    // Tell an authenticated caller which of these quests they have already
+    // reviewed, so their dashboard can show "review submitted" instead of
+    // prompting again on a completed job.
+    let payload = quests as any[];
+    if (userId) {
+      const reviewedQuestIds = await findQuestIdsReviewedBy(userId, quests.map((q) => q.id));
+      payload = quests.map((q) => ({ ...q, viewerHasReviewed: reviewedQuestIds.has(q.id) }));
+    }
+
     res.json({
-      data: quests,
-      quests, // legacy shape for older clients
+      data: payload,
+      quests: payload, // legacy shape for older clients
       meta: { total, page: parseInt(page) || 1, limit: take, totalPages: Math.ceil(total / take) },
     });
   } catch (error) {

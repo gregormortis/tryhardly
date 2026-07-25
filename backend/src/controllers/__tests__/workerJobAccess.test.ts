@@ -11,6 +11,9 @@ const mockPrisma = {
   application: {
     findMany: jest.fn(),
   },
+  review: {
+    findMany: jest.fn(),
+  },
 };
 
 jest.mock('../../app', () => ({ prisma: mockPrisma }));
@@ -27,7 +30,10 @@ function mockRes() {
 }
 
 describe('getMyApplications — worker dashboard link data', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPrisma.review.findMany.mockResolvedValue([]);
+  });
 
   it('selects the quest id and status the dashboard needs to build a job link', async () => {
     mockPrisma.application.findMany.mockResolvedValue([]);
@@ -42,6 +48,7 @@ describe('getMyApplications — worker dashboard link data', () => {
   it('returns accepted assignments on quests that have left the public board', async () => {
     const accepted = {
       id: 'a1',
+      questId: 'q1',
       status: 'ACCEPTED',
       quest: { id: 'q1', title: 'Fencing 100 ft', status: 'IN_PROGRESS', reward: '1200' },
     };
@@ -50,7 +57,9 @@ describe('getMyApplications — worker dashboard link data', () => {
     const res = mockRes();
     await getMyApplications({ user: { id: 'worker1' } } as any, res);
 
-    expect(res.json).toHaveBeenCalledWith([accepted]);
+    expect(res.json).toHaveBeenCalledWith([
+      { ...accepted, quest: { ...accepted.quest, viewerHasReviewed: false } },
+    ]);
   });
 });
 

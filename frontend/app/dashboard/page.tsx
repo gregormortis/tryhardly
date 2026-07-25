@@ -7,18 +7,9 @@ import { api } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import type { Quest, Application } from '../../lib/types';
 import StripeConnectButton from '../../components/StripeConnectButton';
+import { applicationStatusView, workStatusView } from '../../lib/workStatus';
 
 const XP_PER_LEVEL = 1000;
-
-// Turn a raw quest status (e.g. "IN_PROGRESS") into a readable label ("In progress").
-function formatStatus(status?: string): string {
-  if (!status) return 'Unknown';
-  return status
-    .toLowerCase()
-    .split('_')
-    .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
-    .join(' ');
-}
 
 // A quest stops being "active work" for the worker only once it is finished or
 // called off. Everything else (IN_PROGRESS, IN_REVIEW, and any status a newer
@@ -37,6 +28,14 @@ function isActiveAssignment(app: Application): boolean {
 function assignmentCta(questStatus?: string): string {
   if (questStatus === 'IN_REVIEW') return 'View submission';
   return 'Submit completion';
+}
+
+// A job the viewer finished and still owes a review on. Reviews are one per
+// person per job, so `viewerHasReviewed` drops the row once theirs is in.
+interface ReviewPrompt {
+  questId: string;
+  title: string;
+  counterparty: 'the worker' | 'your client';
 }
 
 interface DashboardData {
@@ -100,6 +99,26 @@ export default function DashboardPage() {
   // Quests the user posted that a worker submitted for completion review.
   const pendingReview = data?.postedQuests?.filter(q => q.status === 'IN_REVIEW') || [];
 
+  // Completed jobs still owed a review, from both sides of the marketplace.
+  const reviewPrompts: ReviewPrompt[] = [
+    ...(data?.postedQuests || [])
+      .filter(q => q.status === 'COMPLETED' && !q.viewerHasReviewed && !!q.assignedAdventurerId)
+      .map(q => ({ questId: q.id, title: q.title, counterparty: 'the worker' as const })),
+    ...(data?.applications || [])
+      .filter(
+        app =>
+          app.status === 'ACCEPTED' &&
+          !!app.quest?.id &&
+          app.quest.status === 'COMPLETED' &&
+          !app.quest.viewerHasReviewed
+      )
+      .map(app => ({
+        questId: app.quest!.id,
+        title: app.quest!.title,
+        counterparty: 'your client' as const,
+      })),
+  ];
+
   return (
     <div className="min-h-screen bg-zinc-950 px-4 py-8 max-w-4xl mx-auto">
 
@@ -154,7 +173,7 @@ export default function DashboardPage() {
       {!dataLoading && pendingReview.length > 0 && (
         <div className="rounded-xl bg-amber-500/5 border border-amber-500/30 p-4 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-amber-300">✅ Pending your review</h2>
+            <h2 className="text-lg font-bold text-amber-300">✅ Completions to confirm</h2>
             <span className="text-xs text-amber-400/70">{pendingReview.length} awaiting</span>
           </div>
           <div className="space-y-2">
@@ -166,9 +185,43 @@ export default function DashboardPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-zinc-100">{q.title}</p>
-                  <p className="text-xs text-zinc-500">A worker submitted this for completion review</p>
+                  <p className="text-xs text-zinc-500">
+                    The worker marked this done — confirm it to finish and pay
+                  </p>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-300">Review</span>
+                <span className="text-xs px-2 py-1 rounded bg-amber-500/20 text-amber-300">
+                  Confirm completion
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Reviews you still owe — the trust loop only closes when both sides
+          rate each other, so surface it on both dashboards. */}
+      {!dataLoading && reviewPrompts.length > 0 && (
+        <div className="rounded-xl bg-purple-500/5 border border-purple-500/30 p-4 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-purple-300">⭐ Reviews to leave</h2>
+            <span className="text-xs text-purple-400/70">{reviewPrompts.length} pending</span>
+          </div>
+          <div className="space-y-2">
+            {reviewPrompts.map(prompt => (
+              <Link
+                key={prompt.questId}
+                href={`/questboard/${prompt.questId}#reviews`}
+                className="flex justify-between items-center gap-3 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-zinc-100 truncate">{prompt.title}</p>
+                  <p className="text-xs text-zinc-500">
+                    Completed — rate {prompt.counterparty} to build their reputation
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs px-2 py-1 rounded bg-purple-500/20 text-purple-300">
+                  Leave a review →
+                </span>
               </Link>
             ))}
           </div>
@@ -194,7 +247,8 @@ export default function DashboardPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-zinc-100 truncate">{app.quest?.title || 'Quest'}</p>
                   <p className="text-xs text-zinc-500">
-                    ${app.quest?.reward?.toLocaleString()} • {formatStatus(app.quest?.status)}
+                    ${app.quest?.reward?.toLocaleString()} •{' '}
+                    {workStatusView(app.quest?.status, 'worker').label}
                   </p>
                 </div>
                 <span className="shrink-0 text-xs px-2 py-1 rounded bg-green-500/20 text-green-300 group-hover:bg-green-500/30">
@@ -221,13 +275,20 @@ export default function DashboardPage() {
         ) : data?.applications?.length ? (
           <div className="space-y-2">
             {data.applications.slice(0, 5).map(app => {
+              // Once a bid is won its own status never changes again, so the
+              // job's work status is what this row has to report.
+              const view = applicationStatusView(
+                app.status,
+                app.quest?.status,
+                app.quest?.viewerHasReviewed
+              );
               const body = (
                 <>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-zinc-100 truncate">{app.quest?.title || 'Quest'}</p>
                     <p className="text-xs text-zinc-500">${app.quest?.reward?.toLocaleString()} • {app.quest?.difficulty}</p>
                   </div>
-                  <span className="shrink-0 text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-300">{formatStatus(app.status)}</span>
+                  <span className={`shrink-0 text-xs px-2 py-1 rounded ${view.tone}`}>{view.label}</span>
                 </>
               );
               // A bid on a quest that has since left the public board still needs
@@ -269,22 +330,25 @@ export default function DashboardPage() {
           </div>
         ) : data?.postedQuests?.length ? (
           <div className="space-y-2">
-            {data.postedQuests.slice(0, 5).map(q => (
-              <Link
-                key={q.id}
-                href={`/questboard/${q.id}`}
-                className="group flex justify-between items-center p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60 cursor-pointer transition-colors"
-              >
-                <div>
-                  <p className="text-sm font-medium text-zinc-100">{q.title}</p>
-                  <p className="text-xs text-zinc-500">{q._count?.applications || 0} applicant{(q._count?.applications || 0) !== 1 ? 's' : ''}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-300">{formatStatus(q.status)}</span>
-                  <span className="text-xs text-amber-400 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">Manage →</span>
-                </div>
-              </Link>
-            ))}
+            {data.postedQuests.slice(0, 5).map(q => {
+              const view = workStatusView(q.status, 'poster', q.viewerHasReviewed);
+              return (
+                <Link
+                  key={q.id}
+                  href={`/questboard/${q.id}`}
+                  className="group flex justify-between items-center p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60 cursor-pointer transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-zinc-100">{q.title}</p>
+                    <p className="text-xs text-zinc-500">{q._count?.applications || 0} applicant{(q._count?.applications || 0) !== 1 ? 's' : ''}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-1 rounded ${view.tone}`}>{view.label}</span>
+                    <span className="text-xs text-amber-400 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">Manage →</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-6">

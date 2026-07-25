@@ -65,6 +65,9 @@ export interface Quest {
   };
   questGiverId?: string;
   assignedAdventurerId?: string | null;
+  // Set on list endpoints for an authenticated caller: whether they have already
+  // left their review on this quest.
+  viewerHasReviewed?: boolean;
   applications?: Application[];
   milestones?: Milestone[];
   _count?: { applications: number };
@@ -106,6 +109,8 @@ export interface Application {
   proposedWalkthroughTimes?: string | null;
   bidNotes?: string | null;
   legalQualificationAck?: boolean;
+  // An application freezes at ACCEPTED once the bid is won, so the quest's own
+  // work status is what drives the label the worker sees from then on.
   quest?: {
     id: string;
     title: string;
@@ -113,6 +118,11 @@ export interface Application {
     difficulty: string;
     reward: number;
     status: string;
+    questGiverId?: string;
+    assignedAdventurerId?: string | null;
+    completionRequestedAt?: string | null;
+    completedAt?: string | null;
+    viewerHasReviewed?: boolean;
   };
   adventurer?: {
     id: string;

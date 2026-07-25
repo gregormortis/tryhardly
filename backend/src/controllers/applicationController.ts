@@ -8,6 +8,7 @@ import {
   findContactInfoInFields,
   CONTACT_INFO_VALIDATION_MESSAGE,
 } from '../utils/contactDetection';
+import { findQuestIdsReviewedBy } from '../services/reviewStatusService';
 
 // Shown when a worker tries to submit a bid before their Stripe Connect payout
 // account is onboarded/ready. Workers may view jobs and draft a bid, but a bid
@@ -339,14 +340,48 @@ export const rejectApplication = async (req: AuthRequest, res: Response): Promis
 };
 
 // GET /api/users/me/applications - My applications as adventurer
+//
+// An application stays ACCEPTED for the rest of the job's life, so the worker
+// dashboard cannot label the row from application.status alone — a won bid would
+// read "Accepted" long after the work was submitted and confirmed. The quest's
+// work status (IN_PROGRESS → IN_REVIEW → COMPLETED) plus the completion
+// timestamps are therefore part of this payload, alongside `viewerHasReviewed`
+// so the dashboard knows whether to still prompt the worker for a review.
 export const getMyApplications = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const me = req.user!.id;
     const applications = await prisma.application.findMany({
-      where: { adventurerId: req.user!.id },
-      include: { quest: { select: { id: true, title: true, category: true, difficulty: true, reward: true, status: true } } },
+      where: { adventurerId: me },
+      include: {
+        quest: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            difficulty: true,
+            reward: true,
+            status: true,
+            questGiverId: true,
+            assignedAdventurerId: true,
+            completionRequestedAt: true,
+            completedAt: true,
+          },
+        },
+      },
       orderBy: { appliedAt: 'desc' },
     });
-    res.json(applications);
+
+    const reviewedQuestIds = await findQuestIdsReviewedBy(
+      me,
+      applications.map((a) => a.questId),
+    );
+
+    res.json(
+      applications.map((a) => ({
+        ...a,
+        quest: a.quest ? { ...a.quest, viewerHasReviewed: reviewedQuestIds.has(a.quest.id) } : a.quest,
+      })),
+    );
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch applications' });
   }
