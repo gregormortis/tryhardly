@@ -88,7 +88,7 @@ export default function StandardsOverviewPage() {
                 </Link>{' '}
                 and your{' '}
                 <Link href="/progression" className="text-amber-400 hover:underline">
-                  ranks &amp; progression
+                  ratings &amp; badges
                 </Link>
                 .
               </span>

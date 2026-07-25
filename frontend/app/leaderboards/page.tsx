@@ -171,6 +171,8 @@ function SkillMasterRow({ entry }: { entry: SkillMasterEntry }) {
 }
 
 function TeamRow({ entry }: { entry: TeamEntry }) {
+  // Visible copy says "worker team", but the detail route is still /guilds/<id>: renaming it
+  // means moving the route and its API paths, so the slug rename is deferred to its own change.
   return (
     <Link
       href={`/guilds/${entry.id}`}

@@ -95,8 +95,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Ranks & Progression and Leaderboards are intentionally not linked
-              here. They are worker-progression pages, and on the site-wide footer
+          {/* The ratings & badges page and Leaderboards are intentionally not linked
+              here. They are worker-reputation pages, and on the site-wide footer
               they read as the main thing TryHardly is about. Both routes still
               exist and stay linked from pricing, trade standards, and the code of
               craft, where a worker is already reading about how ranking works. */}

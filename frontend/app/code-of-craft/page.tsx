@@ -123,7 +123,7 @@ export default function CodeOfCraftPage() {
               <span className="text-green-400 mt-0.5">✓</span>
               <span>
                 <Link href="/progression" className="text-amber-400 hover:underline">
-                  Ranks &amp; progression
+                  Ratings &amp; badges
                 </Link>{' '}
                 reward consistent, high-quality work — never a lower fee.
               </span>

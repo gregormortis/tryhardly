@@ -47,7 +47,7 @@ export default function PricingPage() {
         {/* Single flat-fee worker card */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-amber-400 mb-2">For workers</h2>
-          <p className="text-gray-400">One flat fee. No tiers, no surprises — you keep the same share at every rank.</p>
+          <p className="text-gray-400">One flat fee. No tiers, no surprises — you keep the same share however long you&apos;ve been working.</p>
         </div>
 
         <div className="max-w-md mx-auto mb-16">
@@ -67,7 +67,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start">
                 <span className="text-green-400 mr-2">✓</span>
-                <span className="text-gray-300">Same 12% whether you&apos;re Novice or Legendary</span>
+                <span className="text-gray-300">Same 12% on your first job and your five hundredth</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-400 mr-2">✓</span>
@@ -80,25 +80,26 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Ranks earn trust, not discounts */}
+        {/* Reputation earns trust, not discounts */}
         <div className="max-w-4xl mx-auto mb-16 bg-gray-900/50 border border-gray-800 rounded-xl p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">🛡️</span>
-            <h2 className="text-2xl font-bold text-amber-400">What do ranks get you?</h2>
+            <h2 className="text-2xl font-bold text-amber-400">What does a strong rating get you?</h2>
           </div>
           <p className="text-gray-300 mb-4">
-            Ranks aren&apos;t a discount on the fee — they&apos;re a trust signal. As you complete jobs well, earn good
-            ratings, and contribute to your guild, you climb from <span className="text-white font-semibold">Novice</span> to{' '}
-            <span className="text-white font-semibold">Legendary</span>, unlocking visibility and access — not a lower cut.
+            Ratings and badges aren&apos;t a discount on the fee — they&apos;re a trust signal. As you complete jobs
+            well, earn good reviews, and add verified credentials, you move up the
+            <span className="text-white font-semibold"> experience levels</span>, unlocking visibility and access
+            — not a lower cut.
           </p>
           <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-300">
-            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Higher ranks rank better in search and worker matching</span></li>
-            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Skill badges (Bronze → Platinum) show proven, rated expertise</span></li>
-            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Expert &amp; Legendary unlock guild leadership perks and invites</span></li>
-            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Trusted ranks build client confidence and repeat hires</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Well-rated workers rank better in search and worker matching</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Skill badges show proven, rated expertise, skill by skill</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Verified credentials and a clean record open more skilled work</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>A strong review history builds client confidence and repeat hires</span></li>
           </ul>
           <a href="/progression" className="inline-block mt-5 text-amber-400 hover:text-amber-300 font-semibold text-sm">
-            See how ranks &amp; skill badges work →
+            How ratings &amp; badges work →
           </a>
         </div>
 
@@ -141,8 +142,8 @@ export default function PricingPage() {
               <p className="text-gray-300">We take a flat 12% only when you complete a paid job. No advance fees, no monthly subscriptions. You only pay when you earn.</p>
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
-              <h3 className="text-xl font-bold text-white mb-2">Do higher ranks pay a lower fee?</h3>
-              <p className="text-gray-300">No. The fee is a flat 12% at every rank. Ranks reward trust, visibility, and access — like skill badges and guild leadership — not a cheaper cut.</p>
+              <h3 className="text-xl font-bold text-white mb-2">Do highly rated workers pay a lower fee?</h3>
+              <p className="text-gray-300">No. The fee is a flat 12% for everyone. A strong rating history earns trust, visibility, and access — skill badges, verified credentials, more skilled work — not a cheaper cut.</p>
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <h3 className="text-xl font-bold text-white mb-2">Are there any hidden fees?</h3>
