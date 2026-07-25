@@ -193,7 +193,7 @@ export default function RequestHelpForm() {
               href="/questboard"
               className="inline-flex items-center justify-center gap-2 border border-gray-700 text-gray-200 hover:border-amber-500 px-6 py-3 rounded-lg transition-colors"
             >
-              Browse the questboard
+              Browse local jobs
             </Link>
           </div>
         </div>
@@ -207,7 +207,17 @@ export default function RequestHelpForm() {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Request help</h1>
           <p className="text-gray-400">
-            Tell us what you need done. Takes about a minute — no account required.
+            Tell us what you need done and we&apos;ll line up local help. Takes about a minute — no
+            account required.
+          </p>
+          <p className="mt-3 text-sm text-gray-500 leading-relaxed">
+            This is a quick request, not the full job post. We review it and get back to you by
+            email.{' '}
+            <Link href="/post-quest" className="text-amber-400 hover:text-amber-300">
+              Post the job yourself
+            </Link>{' '}
+            instead if you want it on the local job board so workers can bid — that&apos;s also free,
+            and it needs an account at the last step.
           </p>
         </div>
 
@@ -275,23 +285,30 @@ export default function RequestHelpForm() {
               onChange={(e) => update('description', e.target.value.slice(0, 5000))}
               rows={4}
               className={inputClass}
-              placeholder="Anything that helps a worker understand the job — size, access, what to bring, etc."
+              placeholder="e.g. About 100 ft of wood fence along the side yard. Two panels are leaning and one gate won't latch."
             />
           </div>
 
+          {/* These three stay free text — the lead endpoint takes strings and an
+              admin reads them. Labels and helper copy match the post-a-job wizard
+              so the two paths ask for the same things in the same words. */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label>Location</Label>
+              <Label>Job location / area</Label>
               <input
                 type="text"
                 value={data.location}
                 onChange={(e) => update('location', e.target.value.slice(0, 200))}
                 className={inputClass}
-                placeholder="City, ZIP, or neighborhood"
+                placeholder="City, ZIP, or area code — e.g. Redding, 96001"
               />
+              <p className="mt-1.5 text-xs text-gray-500">
+                City, ZIP, or area code and state. Never send your street address here — share the
+                exact address privately with the worker once you agree on the job.
+              </p>
             </div>
             <div>
-              <Label>Budget</Label>
+              <Label>Budget estimate</Label>
               <input
                 type="text"
                 value={data.budget}
@@ -299,11 +316,15 @@ export default function RequestHelpForm() {
                 className={inputClass}
                 placeholder="e.g. $50, or $40–60"
               />
+              <p className="mt-1.5 text-xs text-gray-500">
+                What you&apos;re hoping to spend — a starting point, not the final charge. Leave it
+                blank if you&apos;d rather workers quote it.
+              </p>
             </div>
           </div>
 
           <div>
-            <Label>Timeline / deadline</Label>
+            <Label>When do you need it done?</Label>
             <input
               type="text"
               value={data.timeline}
@@ -311,6 +332,9 @@ export default function RequestHelpForm() {
               className={inputClass}
               placeholder="e.g. This weekend, or by next Friday"
             />
+            <p className="mt-1.5 text-xs text-gray-500">
+              A timeline or deadline. &ldquo;Flexible&rdquo; is a fine answer.
+            </p>
           </div>
 
           <div className="rounded-lg border border-gray-800 p-4 space-y-3">
@@ -478,9 +502,9 @@ export default function RequestHelpForm() {
           </button>
 
           <p className="text-center text-xs text-gray-600">
-            Prefer to manage everything yourself?{' '}
+            Prefer to manage bids yourself?{' '}
             <Link href="/post-quest" className="text-amber-400 hover:text-amber-300">
-              Post a quest with an account
+              Post the job on the local job board
             </Link>
             .
           </p>

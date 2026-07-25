@@ -26,15 +26,6 @@ import { recurrenceSummary } from '@/lib/recurrence';
 // qualification acknowledgement on the worker's bid form.
 const CONTRACTOR_SCALE_REWARD = 500;
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  NOVICE: 'text-green-400 border-green-400',
-  APPRENTICE: 'text-blue-400 border-blue-400',
-  JOURNEYMAN: 'text-yellow-400 border-yellow-400',
-  EXPERT: 'text-orange-400 border-orange-400',
-  MASTER: 'text-red-400 border-red-400',
-  LEGENDARY: 'text-purple-400 border-purple-400',
-};
-
 export default function QuestDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -178,7 +169,7 @@ export default function QuestDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading quest details...</p>
+          <p className="text-gray-500">Loading job details…</p>
         </div>
       </div>
     );
@@ -188,11 +179,10 @@ export default function QuestDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">📜</div>
-          <h2 className="text-2xl font-bold text-gray-100 mb-2">Quest Not Found</h2>
-          <p className="text-gray-400 mb-6">This quest has vanished into the aether.</p>
+          <h2 className="text-2xl font-bold text-gray-100 mb-2">Job not found</h2>
+          <p className="text-gray-400 mb-6">This job is no longer listed.</p>
           <Link href="/questboard" className="text-amber-400 hover:text-amber-300 font-medium">
-            ← Return to Questboard
+            ← Back to all jobs
           </Link>
         </div>
       </div>
@@ -203,8 +193,6 @@ export default function QuestDetailPage() {
   const daysLeft = quest.deadline
     ? Math.ceil((new Date(quest.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
-  const difficultyColor = DIFFICULTY_COLORS[quest.difficulty] || 'text-gray-400 border-gray-400';
-
   // Photo URLs are encoded as `photo:<url>` tags (no cloud storage). Split them
   // out so they render as images while the rest stay as skill/location tags.
   const allTags = quest.tags || [];
@@ -244,7 +232,7 @@ export default function QuestDetailPage() {
       <div className="max-w-4xl mx-auto">
         {/* Back link */}
         <Link href="/questboard" className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-8">
-          <span>←</span> Back to Questboard
+          <span>←</span> Back to all jobs
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -252,14 +240,12 @@ export default function QuestDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <div className="flex items-start justify-between mb-4">
-                <span className={`text-xs font-medium px-2 py-1 rounded border ${difficultyColor}`}>
-                  {quest.difficulty}
-                </span>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">{jobCategory.label}</span>
-                  {!isOwner && <ReportButton targetType="QUEST" targetId={quest.id} />}
-                </div>
+              {/* The gamified worker rank (NOVICE…LEGENDARY) used to headline this
+                  card. It is derived from the budget, not from the poster or the
+                  work, so it told a visitor nothing true about the job. */}
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">{jobCategory.label}</span>
+                {!isOwner && <ReportButton targetType="QUEST" targetId={quest.id} />}
               </div>
               <h1 className="text-3xl font-bold text-white mb-4">{quest.title}</h1>
               {quest.isRecurring && (
@@ -313,7 +299,7 @@ export default function QuestDetailPage() {
                     <img
                       key={url}
                       src={url}
-                      alt="Quest photo"
+                      alt="Job photo"
                       className="w-full max-h-64 object-cover rounded-lg border border-gray-800"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
@@ -323,7 +309,7 @@ export default function QuestDetailPage() {
                 <div className="rounded-lg border border-dashed border-gray-700 bg-gray-800/30 px-4 py-8 text-center">
                   <div className="text-3xl mb-2">🖼️</div>
                   <p className="text-sm text-gray-400">No photos yet.</p>
-                  <p className="text-xs text-gray-500 mt-1">Photos can be added by URL when posting a quest.</p>
+                  <p className="text-xs text-gray-500 mt-1">Photos can be added when posting a job.</p>
                 </div>
               )}
             </div>
@@ -331,7 +317,7 @@ export default function QuestDetailPage() {
             {/* Tags */}
             {skillTags.length > 0 && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Details &amp; Skills</h2>
+                <h2 className="text-lg font-semibold text-white mb-4">Job details</h2>
                 <div className="flex flex-wrap gap-2">
                   {skillTags.map((tag: string) => (
                     <span key={tag} className="px-3 py-1 bg-gray-800 text-amber-400 text-sm rounded-full border border-gray-700">
@@ -552,10 +538,12 @@ export default function QuestDetailPage() {
               </div>
             )}
 
-            {/* Quest giver */}
+            {/* Job poster. Deliberately username + link only: the account level
+                shown here was a gamification number that reads as a credential on
+                a public job page. Real reputation lives on the linked profile. */}
             {poster && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quest Giver</h3>
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Posted by</h3>
                 <Link href={`/profile/${poster.username}`} className="flex items-center gap-3 group">
                   <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold">
                     {poster.avatarUrl ? (
@@ -567,7 +555,7 @@ export default function QuestDetailPage() {
                   </div>
                   <div>
                     <div className="text-white font-medium group-hover:text-amber-400">{poster.username}</div>
-                    {poster.level && <div className="text-amber-400 text-xs">Level {poster.level}</div>}
+                    <div className="text-gray-500 text-xs">View profile</div>
                   </div>
                 </Link>
 
@@ -577,7 +565,7 @@ export default function QuestDetailPage() {
                     href={`/messages/${quest.id}/${poster.id}`}
                     className="mt-4 block text-center px-3 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
                   >
-                    Message quest giver
+                    Message the job poster
                   </Link>
                 )}
               </div>
