@@ -6,8 +6,8 @@ import { ArrowRight, Briefcase, MapPin, Shield, Star, Users, Wrench, Hammer, Che
 const stats = [
   { value: 'Free', label: 'To post a job' },
   { value: '12%', label: 'Flat worker fee' },
-  { value: 'Stripe', label: 'Secure payouts' },
-  { value: 'Local', label: 'Built for neighborhood work' },
+  { value: 'Stripe', label: 'Payments & payouts' },
+  { value: 'Redding', label: 'First launch city' },
 ];
 
 const categories = [
@@ -20,18 +20,18 @@ const categories = [
 ];
 
 const howItWorks = [
-  { title: 'Post a quest', desc: 'Describe the job, set your budget, and post it live in minutes.' },
-  { title: 'Get matched', desc: 'Local workers apply. Review profiles, ratings, and past work.' },
-  { title: 'Pay securely', desc: 'Marketplace payments are handled by Stripe; eligible earnings are paid out after charge capture.' },
+  { title: 'Post the job — free', desc: 'Describe the task, set your budget, and post it in minutes. Yard work, moving help, handyman jobs, cleaning, errands.' },
+  { title: 'Pick a local worker', desc: 'Nearby workers apply. Compare their bids, ratings, and completed jobs before you choose.' },
+  { title: 'Pay through Stripe', desc: 'The payment method is authorized when you book, and the agreed amount is captured once the job is done.' },
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments run on Stripe; worker payouts use Stripe Connect, initiated after payment capture for completed tasks.' },
-  { icon: Star, title: 'Structured Reviews', desc: 'Reviews and work history are part of the marketplace flow.' },
-  { icon: Users, title: 'Profile Verification', desc: 'Profiles and reviews designed for trust from day one.' },
-  { icon: Banknote, title: 'Clear Rewards', desc: 'Every quest shows the reward before anyone applies.' },
-  { icon: Check, title: 'Simple Job Flow', desc: 'Post the work, review interest, and manage it in one place.' },
-  { icon: MapPin, title: 'Local First', desc: 'Built for neighborhood work, errands, services, and hands-on help.' },
+  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments are processed by Stripe. Worker payouts run through Stripe Connect after the charge for a completed job is captured.' },
+  { icon: Star, title: 'Reviews From Real Jobs', desc: 'Ratings and reviews come from jobs completed on TryHardly — not imported from anywhere else.' },
+  { icon: Users, title: 'Profiles That Earn Their History', desc: 'A worker profile grows as they complete jobs, so their track record is built here in the open.' },
+  { icon: Banknote, title: 'Clear Pay Up Front', desc: 'Every job lists its pay before anyone applies, so there is nothing to haggle over later.' },
+  { icon: Check, title: 'One Place To Manage It', desc: 'Post the work, review applicants, message, and close it out in the same place.' },
+  { icon: MapPin, title: 'Neighborhood Jobs Only', desc: 'Built for hands-on local work — errands, hauling, repairs, and help around the house.' },
 ];
 
 export default function HomePage() {
@@ -50,16 +50,17 @@ export default function HomePage() {
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-6 py-14 sm:py-20 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-400 mb-5">
-          <MapPin className="h-3 w-3" /> Local gigs. Real people. Real pay.
+          <MapPin className="h-3 w-3" /> Local jobs. Real neighbors. Real pay.
         </div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-5">
-          The gig marketplace<br />AI can&apos;t replace
+          Hire local help,<br />or get paid to do the work
         </h1>
         <p className="mx-auto max-w-2xl text-base sm:text-lg text-zinc-300 mb-3">
-          Hire verified local workers for real paid jobs — payment methods are authorized at booking and charges are captured for completed tasks under platform rules.
+          TryHardly connects neighbors who need a hand with people nearby who want paid work — yard work,
+          moving help, handyman tasks, cleaning, and errands.
         </p>
         <p className="mx-auto max-w-xl text-sm text-zinc-500 mb-8">
-          Post a job in minutes, or browse starter quests as new local listings come online.
+          Free to post. 12% flat worker fee. Stripe-powered payments.
         </p>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-6">
@@ -67,31 +68,37 @@ export default function HomePage() {
             href="/post-quest"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
-            Post a job — free <ArrowRight className="h-4 w-4" />
+            Post a job free <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href="/questboard"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-bold text-zinc-100 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
           >
-            Find work near me
+            Find local work
           </Link>
         </div>
 
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-md mx-auto">
-          <input
-            type="text"
-            value={zip}
-            onChange={(e) => setZip(e.target.value)}
-            placeholder="Enter your ZIP code"
-            maxLength={5}
-            className="flex-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-5 py-2.5 text-sm font-semibold text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
-          >
-            Browse jobs <ArrowRight className="h-4 w-4" />
-          </button>
+        <form onSubmit={handleSearch} className="max-w-md mx-auto">
+          <label htmlFor="zip" className="block text-xs text-zinc-400 mb-2">
+            Enter your ZIP to open the local job board — every job lists its neighborhood and city.
+          </label>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <input
+              id="zip"
+              type="text"
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
+              placeholder="ZIP code"
+              maxLength={5}
+              className="flex-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-5 py-2.5 text-sm font-semibold text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
+            >
+              Browse local jobs <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </form>
       </section>
 
@@ -102,6 +109,22 @@ export default function HomePage() {
             <div key={label}>
               <p className="text-3xl font-bold text-amber-400">{value}</p>
               <p className="mt-1 text-sm text-zinc-400">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="mx-auto max-w-4xl px-6 py-20">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-12 text-center">How it works</h2>
+        <div className="grid sm:grid-cols-3 gap-8">
+          {howItWorks.map(({ title, desc }, i) => (
+            <div key={title} className="text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 text-lg font-bold">
+                {i + 1}
+              </div>
+              <h3 className="font-semibold text-zinc-100 mb-2">{title}</h3>
+              <p className="text-sm text-zinc-400">{desc}</p>
             </div>
           ))}
         </div>
@@ -131,26 +154,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-zinc-900/50 border-y border-zinc-800 py-20">
-        <div className="mx-auto max-w-4xl px-6">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-12 text-center">How it works</h2>
-          <div className="grid sm:grid-cols-3 gap-8">
-            {howItWorks.map(({ title, desc }, i) => (
-              <div key={title} className="text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 text-lg font-bold">
-                  {i + 1}
-                </div>
-                <h3 className="font-semibold text-zinc-100 mb-2">{title}</h3>
-                <p className="text-sm text-zinc-400">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* How payments work */}
-      <section className="mx-auto max-w-4xl px-6 py-16">
+      <section className="border-t border-zinc-800 bg-zinc-900/50 py-16">
+        <div className="mx-auto max-w-4xl px-6">
         <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-6 sm:p-10">
           <div className="flex items-center gap-2 mb-4">
             <Banknote className="h-5 w-5 text-amber-400" />
@@ -183,11 +189,16 @@ export default function HomePage() {
             See full pricing &amp; fees <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
+        </div>
       </section>
 
       {/* Trust signals */}
       <section className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-10 text-center">Built on trust</h2>
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">Built on trust</h2>
+        <p className="mx-auto max-w-2xl text-sm text-zinc-400 mb-10 text-center">
+          TryHardly is early. We are focused on local neighborhood jobs and growing one city at a time, starting in{' '}
+          <Link href="/redding" className="font-semibold text-amber-400 hover:text-amber-300 transition-colors">Redding</Link>.
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {trustSignals.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-6 text-center sm:text-left">
@@ -205,20 +216,20 @@ export default function HomePage() {
       <section className="mx-auto max-w-3xl px-6 py-20 text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Ready to get something done?</h2>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400 mb-10">
-          Join the early TryHardly launch and help shape a marketplace for real local work in your city.
+          Post the job you have been putting off, or start picking up paid work near you.
         </p>
         <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
           <Link
-            href="/auth/register"
+            href="/post-quest"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-8 py-3.5 font-semibold text-zinc-950 transition hover:bg-amber-400"
           >
-            Post a job &mdash; it&apos;s free <ArrowRight className="h-5 w-5" />
+            Post a job free <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
-            href="/auth/register"
+            href="/questboard"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-8 py-3.5 font-semibold transition hover:border-amber-500/50 hover:bg-zinc-900"
           >
-            Start earning today
+            Browse local work
           </Link>
         </div>
       </section>
