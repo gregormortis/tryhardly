@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Zap, Shield, Sword, Award, MapPin, BadgeCheck } from 'lucide-react';
+import { Zap, Shield, Briefcase, Award, BadgeCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -27,22 +27,15 @@ type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'l
 // it can never read as an earned Legendary rank.
 type StaffBadge = 'FOUNDER' | 'ADMIN';
 
-interface CompletedQuest {
+interface CompletedJob {
   id: string;
   title: string;
-  category: string;
-  city: string;
   reward: number;
-  xpEarned: number;
-  completedAt: string;
-  rating: number; // 1–5
 }
 
 interface Guild {
   id: string;
   name: string;
-  rank: string;
-  memberCount: number;
 }
 
 interface Adventurer {
@@ -58,13 +51,12 @@ interface Adventurer {
   bio: string;
   skills: string[];
   favoriteSkills: string[];
-  questsCompleted: number;
-  totalGoldEarned: number;
+  jobsCompleted: number;
   guild: Guild | null;
   memberSince: string;
   verified: boolean;
   codeOfCraftPledgedAt: string | null;
-  recentQuests: CompletedQuest[];
+  recentJobs: CompletedJob[];
 }
 
 export interface AdventurerProfileProps {
@@ -108,38 +100,6 @@ interface SkillBadgesResponse {
   badges: SkillBadge[];
 }
 
-// ─── Progression (mirrors backend progressionService ProgressionSummary) ────────
-
-type WorkerRank = 'NOVICE' | 'APPRENTICE' | 'JOURNEYMAN' | 'EXPERT' | 'MASTER' | 'LEGENDARY';
-
-interface ProgressionRankRow {
-  rank: WorkerRank;
-  label: string;
-  blurb: string;
-  requirements: string[];
-  achieved: boolean;
-  current: boolean;
-}
-
-interface ProgressionSummary {
-  currentRank: WorkerRank;
-  currentRankLabel: string;
-  candidate?: {
-    isCandidate: boolean;
-    candidateForRank: WorkerRank | null;
-    candidateLabel: string | null;
-  };
-  signals: {
-    level: number;
-    xp: number;
-    completedJobs: number;
-    averageRating: number | null;
-    ratingCount: number;
-  };
-  ranks: ProgressionRankRow[];
-  probationStage?: string;
-}
-
 // ─── Earned achievements (mirrors backend EarnedAchievement) ────────────────────
 // Public, recognition-only: only achievements the user has actually earned
 // (including admin-awarded), with money/earnings achievements excluded server-side.
@@ -169,23 +129,16 @@ const SKILL_TIER_STYLE: Record<SkillTier, { label: string; classes: string }> = 
   MYTHIC:   { label: 'Mythic',      classes: 'text-fuchsia-400 bg-fuchsia-400/10 border-fuchsia-400/25' },
 };
 
-// Worker-rank visual accent for the progression panel.
-const RANK_ACCENT: Record<WorkerRank, string> = {
-  NOVICE:     'text-green-400 border-green-400/25 bg-green-400/[0.06]',
-  APPRENTICE: 'text-blue-400 border-blue-400/25 bg-blue-400/[0.06]',
-  JOURNEYMAN: 'text-amber-400 border-amber-400/25 bg-amber-400/[0.06]',
-  EXPERT:     'text-orange-400 border-orange-400/25 bg-orange-400/[0.06]',
-  MASTER:     'text-violet-400 border-violet-400/25 bg-violet-400/[0.06]',
-  LEGENDARY:  'text-rose-400 border-rose-400/25 bg-rose-400/[0.06]',
-};
-
-const TIERS: Record<TierKey, { label: string; classes: string; avatarClasses: string; ringColor: string }> = {
-  novice:     { label: 'NOVICE',     classes: 'text-green-400 bg-green-400/10 border-green-400/20',    avatarClasses: 'bg-green-400/10 border-green-400/25 text-green-400',    ringColor: '#4ade80' },
-  apprentice: { label: 'APPRENTICE', classes: 'text-blue-400 bg-blue-400/10 border-blue-400/20',       avatarClasses: 'bg-blue-400/10 border-blue-400/25 text-blue-400',       ringColor: '#60a5fa' },
-  journeyman: { label: 'JOURNEYMAN', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/20',    avatarClasses: 'bg-amber-400/10 border-amber-400/25 text-amber-400',    ringColor: '#f59e0b' },
-  expert:     { label: 'EXPERT',     classes: 'text-orange-400 bg-orange-400/10 border-orange-400/20', avatarClasses: 'bg-orange-400/10 border-orange-400/25 text-orange-400', ringColor: '#f97316' },
-  master:     { label: 'MASTER',     classes: 'text-violet-400 bg-violet-400/10 border-violet-400/20', avatarClasses: 'bg-violet-400/10 border-violet-400/25 text-violet-400', ringColor: '#a78bfa' },
-  legendary:  { label: 'LEGENDARY',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20',       avatarClasses: 'bg-rose-400/10 border-rose-400/25 text-rose-400',       ringColor: '#f43f5e' },
+// Avatar/progress accent per experience band. Purely visual: the band names are
+// never shown publicly, so a worker's standing reads from real signals (jobs
+// completed, ratings, credentials) rather than an RPG rank word.
+const TIERS: Record<TierKey, { avatarClasses: string; ringColor: string }> = {
+  novice:     { avatarClasses: 'bg-green-400/10 border-green-400/25 text-green-400',    ringColor: '#4ade80' },
+  apprentice: { avatarClasses: 'bg-blue-400/10 border-blue-400/25 text-blue-400',       ringColor: '#60a5fa' },
+  journeyman: { avatarClasses: 'bg-amber-400/10 border-amber-400/25 text-amber-400',    ringColor: '#f59e0b' },
+  expert:     { avatarClasses: 'bg-orange-400/10 border-orange-400/25 text-orange-400', ringColor: '#f97316' },
+  master:     { avatarClasses: 'bg-violet-400/10 border-violet-400/25 text-violet-400', ringColor: '#a78bfa' },
+  legendary:  { avatarClasses: 'bg-rose-400/10 border-rose-400/25 text-rose-400',       ringColor: '#f43f5e' },
 };
 
 // Visual treatment for official staff status. Amber/crown styling reads as an
@@ -202,10 +155,6 @@ function starsDisplay(score: number): string {
   return '★'.repeat(filled) + '☆'.repeat(5 - filled);
 }
 
-function formatGold(n: number): string {
-  return n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`;
-}
-
 function formatMonthYear(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
@@ -215,7 +164,7 @@ function formatFullDate(iso: string): string {
 }
 
 function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : 'Adventurer not found';
+  return e instanceof Error ? e.message : 'Profile not found';
 }
 
 const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
@@ -248,8 +197,7 @@ function staffBadgeFromRole(role: string | undefined): StaffBadge | null {
   }
 }
 
-// Derive a display tier from the user's level. Mirrors the QuestDifficulty
-// ladder so the badge feels consistent across the app.
+// Pick the avatar/progress accent band for a level. Visual only — see TIERS.
 function tierFromLevel(level: number): TierKey {
   if (level >= 50) return 'legendary';
   if (level >= 30) return 'master';
@@ -280,9 +228,10 @@ interface ApiUserProfile {
   questsCompleted?: Array<{ id: string; title: string; difficulty?: string; reward?: number }>;
 }
 
-// Map the backend profile payload to the component's view model. Fields the
-// schema does not track (per-quest city/rating, gold earned) degrade to honest
-// defaults rather than inventing data.
+// Map the backend profile payload to the component's view model. Only fields the
+// schema actually tracks are carried over: the endpoint returns just the five
+// most recent completed jobs, so no lifetime earnings total is derived from them,
+// and per-job ratings/dates aren't available at all.
 function mapProfile(u: ApiUserProfile): Adventurer {
   const level = u.level ?? 1;
   return {
@@ -298,36 +247,28 @@ function mapProfile(u: ApiUserProfile): Adventurer {
     bio: u.bio || '',
     skills: u.adventurerClass ? [guildPathLabel(u.adventurerClass)] : [],
     favoriteSkills: Array.isArray(u.favoriteSkills) ? u.favoriteSkills : [],
-    questsCompleted: u.totalQuestsCompleted ?? 0,
-    totalGoldEarned: (u.questsCompleted ?? []).reduce((sum, q) => sum + (q.reward ?? 0), 0),
-    guild: u.guild
-      ? { id: u.guild.id, name: u.guild.name, rank: 'Member', memberCount: 0 }
-      : null,
+    jobsCompleted: u.totalQuestsCompleted ?? 0,
+    guild: u.guild ? { id: u.guild.id, name: u.guild.name } : null,
     memberSince: u.createdAt || new Date().toISOString(),
     verified: !!u.verified,
     codeOfCraftPledgedAt: u.codeOfCraftPledgedAt ?? null,
-    recentQuests: (u.questsCompleted ?? []).map((q) => ({
+    recentJobs: (u.questsCompleted ?? []).map((q) => ({
       id: q.id,
       title: q.title,
-      category: '',
-      city: '',
       reward: q.reward ?? 0,
-      xpEarned: 0,
-      completedAt: u.createdAt || new Date().toISOString(),
-      rating: Math.min(5, Math.max(1, Math.round((u.reputationScore ?? 0) / 20) || 1)),
     })),
   };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function XPBar({ xp, xpToNext, ringColor }: { xp: number; xpToNext: number; ringColor: string }) {
+function LevelProgress({ level, xp, xpToNext, ringColor }: { level: number; xp: number; xpToNext: number; ringColor: string }) {
   const pct = Math.min(100, Math.round((xp / xpToNext) * 100));
   return (
     <div>
       <div className="flex justify-between font-mono text-[9px] text-stone-700 mb-1.5 tracking-wide">
-        <span>{xp.toLocaleString()} XP</span>
-        <span>{xpToNext.toLocaleString()} XP to next level</span>
+        <span>Experience level {level}</span>
+        <span>{pct}% toward level {level + 1}</span>
       </div>
       <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
         {/* dynamic width + glow — inline style required for runtime value */}
@@ -358,28 +299,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function QuestHistoryCard({ quest }: { quest: CompletedQuest }) {
-  const stars = Math.min(5, Math.max(1, quest.rating));
+function JobHistoryCard({ job }: { job: CompletedJob }) {
   return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-3.5">
-      <p className="font-semibold text-[13px] text-stone-300 leading-snug mb-2.5">{quest.title}</p>
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-[15px] text-amber-400">${quest.reward}</span>
-          <span className="font-mono text-[10px] text-green-400">
-            <Zap size={9} className="inline mr-0.5" />+{quest.xpEarned} XP
-          </span>
-          <span className="font-mono text-[10px] text-stone-600 flex items-center gap-0.5">
-            <MapPin size={9} />{quest.city}
-          </span>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <span className="font-mono text-[10px] text-amber-400">
-            {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
-          </span>
-          <span className="font-mono text-[10px] text-stone-700">{formatFullDate(quest.completedAt)}</span>
-        </div>
-      </div>
+    <div className="flex items-center justify-between gap-3 bg-white/[0.02] border border-white/[0.06] rounded-lg p-3.5">
+      <p className="font-semibold text-[13px] text-stone-300 leading-snug">{job.title}</p>
+      <span className="font-bold text-[15px] text-amber-400 flex-shrink-0">${job.reward}</span>
     </div>
   );
 }
@@ -425,7 +349,6 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   const [reviewData, setReviewData] = useState<UserReviewsResponse | null>(null);
   const [credentials, setCredentials] = useState<PublicCredential[]>([]);
   const [skillBadges, setSkillBadges] = useState<SkillBadge[]>([]);
-  const [progression, setProgression] = useState<ProgressionSummary | null>(null);
   const [achievements, setAchievements] = useState<EarnedAchievement[]>([]);
   const [proof, setProof] = useState<ProofOfWorkItem[]>([]);
   const [verifiedPro, setVerifiedPro] = useState<VerifiedProStatus | null>(null);
@@ -448,7 +371,6 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
     setReviewData(null);
     setCredentials([]);
     setSkillBadges([]);
-    setProgression(null);
     setAchievements([]);
     setProof([]);
     setVerifiedPro(null);
@@ -489,17 +411,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
           .get<UserReviewsResponse>(`/users/${encodeURIComponent(u.id)}/reviews`)
           .then((r) => { if (active) setReviewData(r); })
           .catch(() => { if (active) setReviewData({ reviews: [], averageRating: null, reviewCount: 0 }); });
-        // Skill badges and progression are derived server-side from real
-        // ratings; fetch separately so the profile still renders if either
-        // endpoint is empty or fails.
+        // Skill badges are derived server-side from real per-skill ratings;
+        // fetch separately so the profile still renders if the endpoint is
+        // empty or fails.
         api
           .get<SkillBadgesResponse>(`/users/${encodeURIComponent(u.id)}/skill-badges`)
           .then((b) => { if (active) setSkillBadges(Array.isArray(b?.badges) ? b.badges : []); })
           .catch(() => { if (active) setSkillBadges([]); });
-        api
-          .get<ProgressionSummary>(`/progression/${encodeURIComponent(u.id)}`)
-          .then((p) => { if (active) setProgression(p); })
-          .catch(() => { if (active) setProgression(null); });
         // Verified Pro is keyed by user id and derived server-side from real
         // signals. Fetch separately; only render the badge when eligible.
         api
@@ -578,9 +496,9 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
 
         {/* Profile */}
         {adventurer && !loading && (() => {
-          // Earned-tier styling drives the tier badge color. For staff accounts
-          // we use a neutral amber accent for the avatar/XP visuals so the seeded
-          // legendary-level glow doesn't imply an earned Legendary rank.
+          // Accent styling for the avatar and level bar. Staff accounts get a
+          // neutral amber accent so their seeded high level can't read as earned
+          // standing.
           const tier = adventurer.staffBadge
             ? { ...TIERS.novice, avatarClasses: 'bg-amber-300/10 border-amber-300/30 text-amber-300', ringColor: '#fcd34d' }
             : (TIERS[adventurer.tier] ?? TIERS.novice);
@@ -603,23 +521,17 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     <h1 className="font-bold text-[26px] text-stone-100 tracking-tight leading-none">
                       {adventurer.username}
                     </h1>
-                    {/* Staff accounts show an official appointed status instead of an
-                        earned tier badge, so seeded admin level/rep can't read as an
-                        earned Legendary rank. The earned ladder lives in the
-                        "Rank & progression" panel below, derived from real signals. */}
+                    {/* Staff accounts show their appointed platform status; everyone
+                        else shows a neutral experience level, so no worker is
+                        headlined by a rank name. */}
                     {adventurer.staffBadge ? (
                       <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5', STAFF_BADGE_STYLE[adventurer.staffBadge].classes)}>
                         {STAFF_BADGE_STYLE[adventurer.staffBadge].label}
                       </span>
                     ) : (
-                      <>
-                        <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5', tier.classes)}>
-                          {tier.label}
-                        </span>
-                        <span className="font-mono text-[9px] text-stone-700 bg-white/[0.04] border border-white/[0.07] rounded-sm px-2 py-0.5">
-                          LVL {adventurer.level}
-                        </span>
-                      </>
+                      <span className="font-mono text-[9px] text-stone-500 bg-white/[0.04] border border-white/[0.07] rounded-sm px-2 py-0.5 tracking-widest">
+                        LEVEL {adventurer.level}
+                      </span>
                     )}
                     {/* Account verification. For staff/admin this is an official
                         platform-account marker (amber, "OFFICIAL ACCOUNT"), styled
@@ -669,25 +581,29 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   </div>
 
                   {/* Staff accounts have an appointed status, not an earned
-                      reputation/XP standing. Their seeded rep/level/XP would read
-                      as fake 5-star ratings and inflated progress, so we suppress
-                      the earned-signal visuals here. Real earned progression (when
-                      any) still surfaces in the "Rank & progression" panel below. */}
+                      reputation standing. Their seeded rep/level/XP would read as
+                      fake 5-star ratings and inflated progress, so we suppress the
+                      earned-signal visuals here. */}
                   {!adventurer.staffBadge && (
                     <>
                       <div className="font-mono text-sm text-amber-400 tracking-wide mb-2">
                         {starsDisplay(adventurer.reputationScore)}
-                        <span className="text-[11px] text-stone-600 ml-2">{adventurer.reputationScore}/100 rep</span>
+                        <span className="text-[11px] text-stone-600 ml-2">{adventurer.reputationScore}/100 reputation</span>
                       </div>
 
                       <div className="mb-2.5">
-                        <XPBar xp={adventurer.xp} xpToNext={adventurer.xpToNextLevel} ringColor={tier.ringColor} />
+                        <LevelProgress
+                          level={adventurer.level}
+                          xp={adventurer.xp}
+                          xpToNext={adventurer.xpToNextLevel}
+                          ringColor={tier.ringColor}
+                        />
                       </div>
                     </>
                   )}
 
                   <p className="font-mono text-[10px] text-stone-800">
-                    Adventurer since {formatMonthYear(adventurer.memberSince)}
+                    Member since {formatMonthYear(adventurer.memberSince)}
                   </p>
 
                   {/* Report entry point — only when viewing someone else's
@@ -700,19 +616,21 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                 </div>
               </div>
 
-              {/* Stats grid. Quests done and gold earned are honest tallies, so
-                  they show for everyone. Level and rep score are seeded earned
-                  signals for staff accounts (inflated, not earned), so we omit
-                  them for staff rather than display fake standing. */}
-              <div className={clsx('grid gap-2.5', adventurer.staffBadge ? 'grid-cols-2' : 'grid-cols-4')}>
-                <StatCard value={String(adventurer.questsCompleted)} label="Quests done"  icon={<Sword size={13} />}  />
-                <StatCard value={formatGold(adventurer.totalGoldEarned)} label="Gold earned" icon={<Award size={13} />} />
-                {!adventurer.staffBadge && (
-                  <>
-                    <StatCard value={String(adventurer.level)}           label="Level"       icon={<Zap size={13} />}   />
-                    <StatCard value={String(adventurer.reputationScore)} label="Rep score"   icon={<Shield size={13} />}/>
-                  </>
-                )}
+              {/* Worker reputation — completed jobs is an honest tally, so it shows
+                  for everyone. Level and reputation score are seeded for staff
+                  accounts (inflated, not earned), so we omit them there rather
+                  than display standing that wasn't earned. */}
+              <div>
+                <SectionLabel>Worker reputation</SectionLabel>
+                <div className="grid grid-cols-3 gap-2.5">
+                  <StatCard value={String(adventurer.jobsCompleted)} label="Jobs completed" icon={<Briefcase size={13} />} />
+                  {!adventurer.staffBadge && (
+                    <>
+                      <StatCard value={String(adventurer.level)}           label="Experience level" icon={<Zap size={13} />} />
+                      <StatCard value={String(adventurer.reputationScore)} label="Reputation"       icon={<Shield size={13} />} />
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Worker Passport — a real-data proof-of-work / reliability
@@ -745,80 +663,6 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                         Member since {formatFullDate(passport.memberSince)}
                       </p>
                     </div>
-                  </div>
-                );
-              })()}
-
-              {/* Rank & progression — current rank plus per-rank achieved/locked
-                  requirements, derived server-side from real signals. */}
-              {progression && (() => {
-                const accent = RANK_ACCENT[progression.currentRank] ?? RANK_ACCENT.NOVICE;
-                return (
-                  <div>
-                    <SectionLabel>Rank &amp; progression</SectionLabel>
-                    <div className={clsx('rounded-lg border p-4 mb-3', accent)}>
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="font-bold text-[15px] tracking-tight">
-                          {progression.currentRankLabel}
-                          {progression.candidate?.isCandidate && progression.candidate.candidateLabel && (
-                            <span className="ml-2 font-mono text-[9px] font-semibold tracking-widest uppercase text-stone-400 align-middle">
-                              {progression.candidate.candidateLabel}
-                            </span>
-                          )}
-                        </span>
-                        <span className="font-mono text-[10px] text-stone-500">
-                          {progression.signals.completedJobs} jobs ·{' '}
-                          {progression.signals.averageRating != null
-                            ? `${progression.signals.averageRating.toFixed(1)}★`
-                            : 'no ratings yet'}
-                          {' '}· {progression.signals.ratingCount} rating
-                          {progression.signals.ratingCount === 1 ? '' : 's'}
-                        </span>
-                      </div>
-                      {progression.candidate?.isCandidate && (
-                        <p className="font-mono text-[10px] text-stone-500 mt-2 leading-relaxed">
-                          You have the level for {progression.candidate.candidateLabel?.replace(' Candidate', '')} —
-                          finish the remaining requirements below to rank up.
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      {progression.ranks.map((r) => (
-                        <div
-                          key={r.rank}
-                          className={clsx(
-                            'rounded-lg border p-3.5',
-                            r.current
-                              ? RANK_ACCENT[r.rank]
-                              : r.achieved
-                                ? 'border-white/[0.08] bg-white/[0.02]'
-                                : 'border-white/[0.05] bg-transparent opacity-70',
-                          )}
-                        >
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="font-mono text-[11px]">
-                              {r.achieved ? '✓' : '○'}
-                            </span>
-                            <span className="font-semibold text-[13px] text-stone-200">{r.label}</span>
-                            {r.current && (
-                              <span className="font-mono text-[9px] font-semibold tracking-widest uppercase text-stone-400">
-                                current
-                              </span>
-                            )}
-                          </div>
-                          <ul className="space-y-0.5 pl-5">
-                            {r.requirements.map((req) => (
-                              <li key={req} className="font-mono text-[10px] text-stone-600 leading-relaxed">
-                                {req}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
-                      Ranks reward trust and craft — not a lower fee. The marketplace fee is a flat 12% at every rank.
-                    </p>
                   </div>
                 );
               })()}
@@ -1019,7 +863,8 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                 </div>
               )}
 
-              {/* Guild */}
+              {/* Guild — the endpoint returns the guild identity only, so the panel
+                  shows the name rather than a member count it can't know. */}
               {adventurer.guild && (
                 <div>
                   <SectionLabel>Guild</SectionLabel>
@@ -1028,28 +873,26 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       ⚜
                     </div>
                     <div>
-                      <p className="font-bold text-[14px] text-violet-300 mb-0.5">{adventurer.guild.name}</p>
-                      <p className="font-mono text-[10px] text-violet-600">
-                        {adventurer.guild.rank} · {adventurer.guild.memberCount} members
-                      </p>
+                      <p className="font-bold text-[14px] text-violet-300">{adventurer.guild.name}</p>
+                      <p className="font-mono text-[10px] text-violet-600 mt-0.5">Member</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Recent quests */}
-              {adventurer.recentQuests.length > 0 && (
+              {/* Recent completed jobs */}
+              {adventurer.recentJobs.length > 0 && (
                 <div>
-                  <SectionLabel>Recent completed quests</SectionLabel>
+                  <SectionLabel>Recent completed jobs</SectionLabel>
                   <div className="space-y-2">
-                    {adventurer.recentQuests.map((q) => (
-                      <QuestHistoryCard key={q.id} quest={q} />
+                    {adventurer.recentJobs.map((j) => (
+                      <JobHistoryCard key={j.id} job={j} />
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Reviews received from real completed-quest counterparties */}
+              {/* Reviews received from real completed-job counterparties */}
               {reviewData && reviewData.reviewCount > 0 && (
                 <div>
                   <SectionLabel>
