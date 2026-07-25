@@ -37,7 +37,7 @@ const faqs = [
       },
       {
         q: 'What are guilds?',
-        a: 'Guilds are groups of adventurers who work together. Join an existing guild or create your own. Guild members can collaborate on large quests, share knowledge, and build their reputation together.'
+        a: 'Guilds are worker-led teams on TryHardly. They help reliable workers build skills, share standards, mentor newer members, and earn trust through completed local jobs. Join an existing guild or start your own, then take on larger jobs together.'
       },
       {
         q: 'How do I get paid?',
