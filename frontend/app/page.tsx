@@ -20,28 +20,27 @@ const categories = [
 ];
 
 const howItWorks = [
-  { title: 'Post a quest', desc: 'Describe the job, set your budget, and post it live in minutes.' },
-  { title: 'Get matched', desc: 'Local workers apply. Review profiles, ratings, and past work.' },
-  { title: 'Pay securely', desc: 'Marketplace payments are handled by Stripe; eligible earnings are paid out after charge capture.' },
+  { title: 'Post the job free', desc: 'Describe the work — yard cleanup, a move, a repair — set your budget, and post it live in minutes.' },
+  { title: 'Local workers apply', desc: 'Compare who is interested, read their reviews and past jobs, and pick the one you want.' },
+  { title: 'Pay when it is done', desc: 'Your card is authorized when you book. The charge is captured once the work is confirmed complete, and the worker is paid through Stripe.' },
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments run on Stripe; worker payouts use Stripe Connect, initiated after payment capture for completed tasks.' },
-  { icon: Star, title: 'Structured Reviews', desc: 'Reviews and work history are part of the marketplace flow.' },
-  { icon: Users, title: 'Profile Verification', desc: 'Profiles and reviews designed for trust from day one.' },
-  { icon: Banknote, title: 'Clear Rewards', desc: 'Every quest shows the reward before anyone applies.' },
-  { icon: Check, title: 'Simple Job Flow', desc: 'Post the work, review interest, and manage it in one place.' },
-  { icon: MapPin, title: 'Local First', desc: 'Built for neighborhood work, errands, services, and hands-on help.' },
+  { icon: Shield, title: 'Payments run on Stripe', desc: 'Cards are processed by Stripe and worker payouts go through Stripe Connect after the charge is captured.' },
+  { icon: Star, title: 'Reviews tied to real jobs', desc: 'A review can only be left on a job that was actually completed through TryHardly.' },
+  { icon: Users, title: 'Profiles grow with work', desc: 'Worker profiles build up from completed marketplace activity, so history is earned rather than claimed.' },
+  { icon: Banknote, title: 'Price shown up front', desc: 'Every job lists its pay before anyone applies. Posting is free, and the flat 12% fee comes out of the worker payout.' },
+  { icon: Check, title: 'One place to manage it', desc: 'Messages, applicants, and completion all live on the job itself.' },
+  { icon: MapPin, title: 'Neighborhood scale', desc: 'Built for errands, yard work, moving help, and hands-on tasks close to home.' },
 ];
 
 export default function HomePage() {
-  const [zip, setZip] = useState('');
+  const [location, setLocation] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (zip.trim()) {
-      window.location.href = `/questboard?zip=${zip.trim()}`;
-    }
+    const q = location.trim();
+    window.location.href = q ? `/questboard?search=${encodeURIComponent(q)}` : '/questboard';
   };
 
   return (
@@ -50,48 +49,58 @@ export default function HomePage() {
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-6 py-14 sm:py-20 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-400 mb-5">
-          <MapPin className="h-3 w-3" /> Local gigs. Real people. Real pay.
+          <MapPin className="h-3 w-3" /> Real work. Real money. Real local.
         </div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-5">
-          The gig marketplace<br />AI can&apos;t replace
+          Hire local help,<br />or get paid to do the work
         </h1>
         <p className="mx-auto max-w-2xl text-base sm:text-lg text-zinc-300 mb-3">
-          Hire verified local workers for real paid jobs — payment methods are authorized at booking and charges are captured for completed tasks under platform rules.
+          TryHardly connects neighbors who need a hand with local workers who want the job — yard work,
+          moving help, handyman tasks, cleaning, errands, and other hands-on work.
         </p>
         <p className="mx-auto max-w-xl text-sm text-zinc-500 mb-8">
-          Post a job in minutes, or browse starter quests as new local listings come online.
+          Post what you need in a few minutes, or browse paid jobs near you and apply today.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-4">
           <Link
             href="/post-quest"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
-            Post a job — free <ArrowRight className="h-4 w-4" />
+            Post a job free <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href="/questboard"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-bold text-zinc-100 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
           >
-            Find work near me
+            Find local work
           </Link>
         </div>
 
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-md mx-auto">
-          <input
-            type="text"
-            value={zip}
-            onChange={(e) => setZip(e.target.value)}
-            placeholder="Enter your ZIP code"
-            maxLength={5}
-            className="flex-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-5 py-2.5 text-sm font-semibold text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
-          >
-            Browse jobs <ArrowRight className="h-4 w-4" />
-          </button>
+        <p className="text-xs sm:text-sm text-zinc-400 mb-8">
+          Free to post. 12% flat worker fee. Stripe-powered payments.
+        </p>
+
+        <form onSubmit={handleSearch} className="mx-auto max-w-md">
+          <label htmlFor="home-location" className="block text-sm text-zinc-400 mb-2">
+            Enter your city or ZIP to search the local job board
+          </label>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <input
+              id="home-location"
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="City or ZIP"
+              className="flex-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-5 py-2.5 text-sm font-semibold text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
+            >
+              Browse local jobs <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </form>
       </section>
 
@@ -107,11 +116,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* How it works */}
+      <section id="how-it-works" className="bg-zinc-900/50 border-b border-zinc-800 py-20">
+        <div className="mx-auto max-w-4xl px-6">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-12 text-center">How it works</h2>
+          <div className="grid sm:grid-cols-3 gap-8">
+            {howItWorks.map(({ title, desc }, i) => (
+              <div key={title} className="text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 text-lg font-bold">
+                  {i + 1}
+                </div>
+                <h3 className="font-semibold text-zinc-100 mb-2">{title}</h3>
+                <p className="text-sm text-zinc-400">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Categories */}
       <section className="mx-auto max-w-5xl px-6 py-20">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">Browse by category</h2>
         <p className="mx-auto max-w-xl text-sm text-zinc-400 mb-10 text-center">
-          Post a request in any category today — local workers get alerts the moment your job goes live. More categories added weekly.
+          Pick what you need done and post it — your job goes live on the local board right away.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {categories.map(({ name, icon: Icon, jobs }) => (
@@ -128,24 +155,6 @@ export default function HomePage() {
               <p className="mt-2 text-sm text-zinc-400 text-center group-hover:text-zinc-200 transition-colors">Request this service →</p>
             </Link>
           ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="bg-zinc-900/50 border-y border-zinc-800 py-20">
-        <div className="mx-auto max-w-4xl px-6">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-12 text-center">How it works</h2>
-          <div className="grid sm:grid-cols-3 gap-8">
-            {howItWorks.map(({ title, desc }, i) => (
-              <div key={title} className="text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 text-lg font-bold">
-                  {i + 1}
-                </div>
-                <h3 className="font-semibold text-zinc-100 mb-2">{title}</h3>
-                <p className="text-sm text-zinc-400">{desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -187,7 +196,11 @@ export default function HomePage() {
 
       {/* Trust signals */}
       <section className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-10 text-center">Built on trust</h2>
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">What you can count on</h2>
+        <p className="mx-auto max-w-2xl text-sm text-zinc-400 mb-10 text-center">
+          TryHardly is early and focused on local neighborhood jobs while we grow city by city, so the board
+          is intentionally small right now. Here is exactly what is live today.
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {trustSignals.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-6 text-center sm:text-left">
@@ -205,20 +218,20 @@ export default function HomePage() {
       <section className="mx-auto max-w-3xl px-6 py-20 text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Ready to get something done?</h2>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400 mb-10">
-          Join the early TryHardly launch and help shape a marketplace for real local work in your city.
+          Post the job you have been putting off, or pick up paid work a few streets away.
         </p>
         <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
           <Link
-            href="/auth/register"
+            href="/post-quest"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-8 py-3.5 font-semibold text-zinc-950 transition hover:bg-amber-400"
           >
-            Post a job &mdash; it&apos;s free <ArrowRight className="h-5 w-5" />
+            Post a job free <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
-            href="/auth/register"
+            href="/questboard"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-8 py-3.5 font-semibold transition hover:border-amber-500/50 hover:bg-zinc-900"
           >
-            Start earning today
+            Browse local work
           </Link>
         </div>
       </section>

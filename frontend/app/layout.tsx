@@ -19,9 +19,9 @@ const syne = Syne({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
-const title = 'TryHardly — Local gigs, real people, real pay';
+const title = 'TryHardly — Hire local help or find paid local work';
 const description =
-  'Post local jobs or find paid work near you. Verified local workers, with secure payments and payouts powered by Stripe.';
+  'Post a job free — yard work, moving help, handyman tasks, cleaning, errands — or browse paid work near you. Payments and payouts run on Stripe.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
