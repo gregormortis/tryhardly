@@ -350,6 +350,7 @@ export default function QuestDetailPage() {
             {/* Reviews — anyone can read; participants on a completed quest can write. */}
             <QuestReviews
               questId={quest.id}
+              currentUserId={user?.id ?? null}
               canReview={
                 !!user &&
                 quest.status === 'COMPLETED' &&
