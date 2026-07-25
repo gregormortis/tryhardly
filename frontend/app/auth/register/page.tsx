@@ -18,6 +18,19 @@ function RegisterForm() {
   const redirect = redirectParam && redirectParam.startsWith('/') ? redirectParam : null;
   const loginHref = redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login';
 
+  // Someone arriving from the last step of the post-a-job wizard already filled
+  // the form out, so say what the account is for and that their draft is waiting.
+  const context =
+    redirect === '/post-quest'
+      ? {
+          heading: 'Create a free account to post your job',
+          sub: 'Posting is free. The account is what lets you receive bids, message workers, and choose who does the work. Your job details are saved — you’ll come straight back to them.',
+        }
+      : {
+          heading: 'Create your account',
+          sub: 'Join TryHardly to post jobs or earn from local gigs',
+        };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,8 +49,8 @@ function RegisterForm() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-amber-400 mb-2">Create your account</h1>
-          <p className="text-gray-400">Join TryHardly to post jobs or earn from local gigs</p>
+          <h1 className="text-3xl font-bold text-amber-400 mb-2">{context.heading}</h1>
+          <p className="text-gray-400">{context.sub}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
           {error && (

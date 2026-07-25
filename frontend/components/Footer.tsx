@@ -95,25 +95,14 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Ranks & Progression and Leaderboards are intentionally not linked
+              here. They are worker-progression pages, and on the site-wide footer
+              they read as the main thing TryHardly is about. Both routes still
+              exist and stay linked from pricing, trade standards, and the code of
+              craft, where a worker is already reading about how ranking works. */}
           <div>
             <h3 className="mb-4 font-semibold text-zinc-100">Resources</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="/progression"
-                  className="transition-colors hover:text-zinc-100"
-                >
-                  Ranks &amp; Progression
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/leaderboards"
-                  className="transition-colors hover:text-zinc-100"
-                >
-                  Leaderboards
-                </Link>
-              </li>
               <li>
                 <Link
                   href="/code-of-craft"

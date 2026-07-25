@@ -15,52 +15,33 @@ import {
   type PostJobField,
   type PostJobIssue,
 } from '../lib/postJobValidation';
+import {
+  EMPTY_POST_JOB_VALUES,
+  clearPostJobDraft,
+  readPostJobDraft,
+  savePostJobDraft,
+  type BudgetMode,
+  type MaterialsBy,
+  type PayType,
+  type PostJobFormValues,
+} from '../lib/postJobDraft';
 import type { RecurrenceCadence } from '../lib/types';
 import ImageUploader from './ImageUploader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type PayType = 'flat' | 'hourly';
-// How the poster wants to price the job. `fixed` is the classic flow (poster
-// names a budget). `quote` lets qualified workers apply with their own estimate
-// through TryHardly — used for complex/contractor-type work where a poster
-// shouldn't anchor a single unrealistic number. Both are paid in-app via Stripe.
-type BudgetMode = 'fixed' | 'quote';
+// The poster-entered values (and their pricing/materials unions) live in
+// lib/postJobDraft so the logged-out draft round trip shares one shape with the
+// form. `fixed` pricing means the poster names a budget; `quote` lets qualified
+// workers apply with their own estimate through TryHardly. Both are paid in-app
+// via Stripe.
+type FormData = PostJobFormValues;
+
 type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
-// Who buys the materials. Only meaningful for jobs that need any; '' means the
-// poster hasn't decided and wants to sort it out with the worker.
-type MaterialsBy = '' | 'poster' | 'worker';
 
 // Tag that flags a quest as quote-needed without any backend schema change. The
 // detail/board UI and applications can key off this string.
 const QUOTE_TAG = 'quote-needed';
-
-interface FormData {
-  title: string;
-  category: string;
-  // Job location is collected as area code / ZIP + state only — no full street
-  // address during posting. These map onto the existing backend location fields.
-  areaZip: string;
-  state: string;
-  description: string;
-  // `reward` is kept as the backend/API field name; it is the poster's budget.
-  reward: string;
-  // Fixed budget vs. let workers quote. Drives validation and what we send.
-  budgetMode: BudgetMode;
-  payType: PayType;
-  deadline: string;
-  // System-calculated from budget; never configured by the poster.
-  xpReward: number;
-  // Optional poster signals that refine the budget suggestion.
-  difficulty: Difficulty | '';
-  urgency: Urgency | '';
-  materialsBy: MaterialsBy;
-  photoUrl: string;
-  // Recurring booking (scheduling/visibility only — no money is charged or held).
-  isRecurring: boolean;
-  recurrenceCadence: RecurrenceCadence;
-  recurrenceEndDate: string;
-}
 
 export interface PostQuestFormProps {
   currentUserId?: string | null;
@@ -290,13 +271,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   // entered amount is never overwritten. `budgetApplied` just toggles the label.
   const [budgetApplied, setBudgetApplied] = useState(false);
 
-  const [data, setData] = useState<FormData>({
-    title: '', category: '', areaZip: '', state: '',
-    description: '', reward: '', budgetMode: 'fixed', payType: 'flat', deadline: '', xpReward: 0,
-    difficulty: '', urgency: '', materialsBy: '',
-    photoUrl: '',
-    isRecurring: false, recurrenceCadence: 'WEEKLY', recurrenceEndDate: '',
-  });
+  const [data, setData] = useState<FormData>(EMPTY_POST_JOB_VALUES);
+  // Set when a poster comes back from creating an account and we restore what
+  // they had already typed, so the jump straight to Review is explained.
+  const [draftRestored, setDraftRestored] = useState(false);
 
   // Deterministic local budget suggestion from the details entered so far.
   const budgetRec = recommendBudget({
@@ -319,12 +297,18 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     setBudgetApplied(true);
   }
 
-  // Auth gate
+  // Restore a draft saved when a logged-out poster hit the account step. It is
+  // read back once and cleared immediately, and they land on Review — the step
+  // they were on when they were sent to create an account.
   useEffect(() => {
-    if (!currentUserId) {
-      window.location.href = '/auth/login?redirect=/post-quest';
-    }
-  }, [currentUserId]);
+    const draft = readPostJobDraft();
+    if (!draft) return;
+    clearPostJobDraft();
+    setData(draft.values);
+    setNeedText(draft.needText);
+    setStep(3);
+    setDraftRestored(true);
+  }, []);
 
   // Auto-calc XP (log-scaled + capped; see calcXpReward). In quote mode the
   // poster hasn't named a price, so XP is based on the conservative placeholder
@@ -417,6 +401,14 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     // step can't show them the field they need to fix.
     if (detailIssues.length || scopeIssues.length) {
       setStep(detailIssues.length ? 1 : 2);
+      return;
+    }
+    // Posting is free, but publishing needs an account so the poster can receive
+    // bids, message workers, and pick someone. Only this last step is gated:
+    // stash the finished draft and send them to create the free account.
+    if (!currentUserId) {
+      savePostJobDraft({ needText, values: data });
+      window.location.href = '/auth/register?redirect=/post-quest';
       return;
     }
     setSubmitting(true);
@@ -561,9 +553,33 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
           )}
         </div>
 
-        <p className="font-mono text-[10px] text-stone-500 leading-relaxed mb-8 rounded-md border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5">
+        <p
+          className={clsx(
+            'font-mono text-[10px] text-stone-500 leading-relaxed rounded-md border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5',
+            !currentUserId || draftRestored ? 'mb-3' : 'mb-8',
+          )}
+        >
           {TRUST_LINE}
         </p>
+
+        {/* Logged-out visitors fill the whole form first; the account only comes
+            up at the final step, so say so before they start typing. */}
+        {!currentUserId && (
+          <p className="font-mono text-[10px] text-stone-500 leading-relaxed mb-8 rounded-md border border-amber-500/25 bg-amber-400/[0.04] px-3.5 py-2.5">
+            No account needed to fill this out. Posting is free — you&apos;ll create a free account
+            on the last step to publish your job, get bids, message workers, and choose one.{' '}
+            <a href="/request-help" className="text-amber-400/90 underline hover:text-amber-300">
+              Or send a quick request instead
+            </a>{' '}
+            and we&apos;ll line up local help without an account.
+          </p>
+        )}
+
+        {draftRestored && (
+          <p className="font-mono text-[10px] text-green-300/90 leading-relaxed mb-8 rounded-md border border-green-400/25 bg-green-400/[0.05] px-3.5 py-2.5">
+            Your job details were saved. Check them over and post when you&apos;re ready.
+          </p>
+        )}
 
         <StepIndicator current={step} />
 
@@ -1178,6 +1194,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               {TRUST_LINE} Your job goes on the local job board, workers send bids, and you
               authorize the amount you agree to once you accept one.
             </p>
+            {!currentUserId && (
+              <p className="font-mono text-[10px] text-amber-300/80 leading-relaxed mb-3 rounded-md border border-amber-500/25 bg-amber-400/[0.04] px-3.5 py-2.5">
+                Last step: create a free account to publish this job. Posting stays free — the
+                account is what lets you receive bids, message workers, and pick who does the work.
+                We&apos;ll keep these details and bring you right back here.
+              </p>
+            )}
             <p className="font-mono text-[10px] text-stone-800 leading-relaxed mb-5">
               By posting, you agree to TryHardly&apos;s terms and{' '}
               <a href="/prohibited-services" className="underline hover:text-stone-600">prohibited services policy</a>. Payments are processed by Stripe, and the agreed amount is captured with payout to the worker once you confirm the job is complete.
@@ -1231,7 +1254,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   : 'bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer',
               )}
             >
-              {submitting ? 'POSTING…' : 'POST JOB — FREE'}
+              {submitting
+                ? 'POSTING…'
+                : currentUserId
+                ? 'POST JOB — FREE'
+                : 'CREATE FREE ACCOUNT & POST'}
             </button>
           )}
         </div>

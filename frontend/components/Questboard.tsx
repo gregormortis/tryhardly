@@ -12,14 +12,12 @@ import { timingLabel, bidCountLabel } from '@/lib/questCardCopy';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PayType = 'flat' | 'hourly';
-type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
 type SortKey = 'newest' | 'pay_high' | 'pay_low';
 
 interface Quest {
   id: string;
   category: string;
   categoryLabel: string;
-  tier: TierKey;
   title: string;
   neighborhood: string;
   city: string;
@@ -45,7 +43,6 @@ interface BackendQuest {
   title: string;
   description?: string;
   category: string;
-  difficulty: string;
   reward: number | string;
   status: string;
   tags?: string[];
@@ -56,23 +53,14 @@ interface BackendQuest {
   _count?: { applications?: number } | null;
 }
 
-interface TierConfig {
-  label: string;
-  classes: string;
-  accentColor: string;
-  iconBg: string;
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TIERS: Record<TierKey, TierConfig> = {
-  novice:     { label: 'NOVICE',     classes: 'text-green-400 bg-green-400/10 border-green-400/20',   accentColor: '#4ade80', iconBg: 'rgba(74,222,128,0.1)'  },
-  apprentice: { label: 'APPRENTICE', classes: 'text-blue-400 bg-blue-400/10 border-blue-400/20',      accentColor: '#60a5fa', iconBg: 'rgba(96,165,250,0.1)'  },
-  journeyman: { label: 'JOURNEYMAN', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/20',   accentColor: '#f59e0b', iconBg: 'rgba(245,158,11,0.1)'  },
-  expert:     { label: 'EXPERT',     classes: 'text-orange-400 bg-orange-400/10 border-orange-400/20',accentColor: '#f97316', iconBg: 'rgba(249,115,22,0.1)'  },
-  master:     { label: 'MASTER',     classes: 'text-violet-400 bg-violet-400/10 border-violet-400/20',accentColor: '#a78bfa', iconBg: 'rgba(167,139,250,0.1)' },
-  legendary:  { label: 'LEGENDARY',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20',      accentColor: '#f43f5e', iconBg: 'rgba(244,63,94,0.1)'   },
-};
+// One neutral card accent for every job. Cards used to be colour-coded by a
+// gamified worker rank (NOVICE…LEGENDARY), which reads as a difficulty promise
+// the board can't back up and is meaningless to a first-time visitor. Rank still
+// lives on worker profiles and dashboards.
+const CARD_ACCENT = '#f59e0b';
+const CARD_ACCENT_BG = 'rgba(245,158,11,0.1)';
 
 // Derived from the shared job-category config so the filter chips, the SEO
 // landing pages, and the ids PostQuestForm writes into tags[] can't drift apart.
@@ -86,15 +74,6 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: 'pay_high', label: 'Highest budget'  },
   { id: 'pay_low',  label: 'Lowest budget'   },
 ];
-
-const DIFFICULTY_TO_TIER: Record<string, TierKey> = {
-  NOVICE: 'novice',
-  APPRENTICE: 'apprentice',
-  JOURNEYMAN: 'journeyman',
-  EXPERT: 'expert',
-  MASTER: 'master',
-  LEGENDARY: 'legendary',
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -151,13 +130,11 @@ function mapBackendQuest(q: BackendQuest): Quest {
   const tagPayType = extractPayTypeFromTags(q.tags);
   const payType: PayType = tagPayType ?? parsed.payType;
   const rewardNum = typeof q.reward === 'string' ? parseFloat(q.reward) : Number(q.reward);
-  const tier: TierKey = DIFFICULTY_TO_TIER[q.difficulty] ?? 'novice';
   const jobCategory = jobCategoryFromTags(q.tags);
   return {
     id: q.id,
     category: jobCategory.slug,
     categoryLabel: jobCategory.shortLabel,
-    tier,
     title: q.title,
     neighborhood: parsed.neighborhood,
     city: parsed.city,
@@ -167,7 +144,7 @@ function mapBackendQuest(q: BackendQuest): Quest {
     urgent: false,
     quoteNeeded: !!q.tags?.includes('quote-needed'),
     tools: [],
-    postedBy: q.questGiver?.username ?? 'Quest Giver',
+    postedBy: q.questGiver?.username ?? 'Job poster',
     jobsPosted: 0,
     isRecurring: !!q.isRecurring,
     bidCount: q._count?.applications ?? 0,
@@ -177,15 +154,6 @@ function mapBackendQuest(q: BackendQuest): Quest {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function TierBadge({ tier }: { tier: TierKey }) {
-  const t = TIERS[tier];
-  return (
-    <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-1.5 py-0.5 whitespace-nowrap', t.classes)}>
-      {t.label}
-    </span>
-  );
-}
 
 function UrgentBadge() {
   return (
@@ -204,7 +172,6 @@ interface QuestCardProps {
 function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
   const router = useRouter();
   const [hovered, setHovered] = useState(false);
-  const tier = TIERS[quest.tier];
   const isOpen = quest.status === 'OPEN';
 
   const locationLabel = quest.neighborhood && quest.city
@@ -239,7 +206,7 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
         className="absolute left-0 rounded-sm transition-opacity duration-200"
         style={{
           top: '20%', bottom: '20%', width: '2px',
-          background: tier.accentColor,
+          background: CARD_ACCENT,
           opacity: hovered ? 1 : 0.4,
         }}
       />
@@ -247,7 +214,7 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
       <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
         <div
           className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-md text-lg"
-          style={{ background: tier.iconBg, border: `1px solid ${tier.accentColor}28`, color: tier.accentColor }}
+          style={{ background: CARD_ACCENT_BG, border: `1px solid ${CARD_ACCENT}28`, color: CARD_ACCENT }}
         >
           <span className="flex items-center justify-center w-full h-full">◈</span>
         </div>
@@ -296,7 +263,6 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
             >
               {isOpen ? 'Open for bids' : quest.status.replace(/_/g, ' ').toLowerCase()}
             </span>
-            <TierBadge tier={quest.tier} />
             <span className="font-mono text-[10px] text-stone-600 flex items-center gap-1">
               <Clock size={10} className="inline shrink-0" />
               posted {timeAgo(quest.posted)}
@@ -447,7 +413,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div className="max-w-xl">
               <span className="font-mono text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-sm px-2 py-0.5 tracking-widest">
-                QUEST BOARD
+                LOCAL JOB BOARD
               </span>
               <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-stone-100 tracking-tight leading-tight">
                 Browse local paid jobs

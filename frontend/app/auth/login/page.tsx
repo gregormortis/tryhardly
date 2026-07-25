@@ -21,8 +21,8 @@ function LoginForm() {
   const context =
     redirect === '/post-quest'
       ? {
-          heading: 'Sign in to post a job',
-          sub: 'Sign in or create a free account to post a job and start receiving bids.',
+          heading: 'Sign in to post your job',
+          sub: 'Posting is free. An account is what lets you receive bids, message workers, and choose who does the work. Any job details you already filled in are saved.',
         }
       : redirect && redirect.startsWith('/questboard')
       ? {
