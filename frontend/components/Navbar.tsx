@@ -8,11 +8,10 @@ import NotificationBell from "./NotificationBell";
 
 const navLinks = [
   { href: "/questboard", label: "Browse jobs" },
-  { href: "/service-packages", label: "Services" },
   { href: "/post-quest", label: "Post a job" },
-  { href: "/leaderboards", label: "Leaderboards" },
-  { href: "/about", label: "About" },
+  { href: "/#how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/redding", label: "Redding launch" },
 ];
 
 export default function Navbar() {

@@ -1,7 +1,9 @@
-'use client';
-
 import Questboard from '@/components/Questboard';
 
-export default function QuestboardPage() {
-  return <Questboard />;
+interface PageProps {
+  searchParams: { search?: string };
+}
+
+export default function QuestboardPage({ searchParams }: PageProps) {
+  return <Questboard initialSearch={searchParams.search} />;
 }

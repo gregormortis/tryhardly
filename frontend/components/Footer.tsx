@@ -12,8 +12,8 @@ export default function Footer() {
               Try<span className="text-amber-400">hardly</span>
             </Link>
             <p className="text-sm">
-              The marketplace AI can&apos;t touch. Real work. Real money. Real
-              local.
+              The local marketplace for hands-on work — hire nearby help, or get
+              paid to do the job.
             </p>
           </div>
 
@@ -66,6 +66,14 @@ export default function Footer() {
                   className="transition-colors hover:text-zinc-100"
                 >
                   Get work alerts
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/service-packages"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Services
                 </Link>
               </li>
               <li>
