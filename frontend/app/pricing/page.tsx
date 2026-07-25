@@ -59,7 +59,7 @@ export default function PricingPage() {
             <ul className="space-y-3 mb-8 text-left">
               <li className="flex items-start">
                 <span className="text-green-400 mr-2">✓</span>
-                <span className="text-gray-300">Free to join and free to apply to quests</span>
+                <span className="text-gray-300">Free to join and free to apply to jobs</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-400 mr-2">✓</span>

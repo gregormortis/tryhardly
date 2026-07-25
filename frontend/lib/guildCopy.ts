@@ -8,6 +8,12 @@ export const GUILD_DEFINITION =
 export const GUILD_TAGLINE =
   'Worker-led teams for standards, mentoring, and shared reputation.';
 
+// Guilds launched with a small number of seeded starter teams whose stored
+// descriptions still read as demo copy. Until real teams replace them, the
+// public list says so plainly rather than letting them imply existing traction.
+export const GUILD_EARLY_NOTE =
+  'Guilds are new. The teams below include starter teams from our early launch, so member counts and reputation are still building. Start your own to get a team listed here.';
+
 // Job difficulty is stored as a rank name (NOVICE…LEGENDARY). Those names read as
 // a status claim about the worker rather than a description of the work, so the
 // public team page shows how much experience the job calls for instead.

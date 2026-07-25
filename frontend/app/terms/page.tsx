@@ -40,10 +40,11 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">2. What TryHardly Is</h2>
             <p>
-              TryHardly is a marketplace that connects people who need local help (clients, or
-              &quot;quest posters&quot;) with people who can do the work (adventurers). We provide the
-              platform that helps you find each other and coordinate work. We do not employ
-              adventurers, and we are not a party to the agreements made between users.
+              TryHardly is a marketplace that connects people who need local help
+              (&quot;job posters&quot; or clients) with people who can do the work
+              (&quot;workers&quot; or providers). We provide the platform that helps you find each
+              other and coordinate work. We do not employ workers, and we are not a party to the
+              agreements made between users.
             </p>
           </section>
 
@@ -61,21 +62,22 @@ export default function TermsPage() {
             <p className="mb-2">
               Payments on TryHardly are processed by{' '}
               <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
-              <span className="text-white font-semibold">Stripe Connect</span> after completed-task payment capture.
+              <span className="text-white font-semibold">Stripe Connect</span> after completed-job payment capture.
               TryHardly is a marketplace facilitator: we facilitate booking and payment
-              processing through Stripe between clients and adventurers but we are not the
+              processing through Stripe between job posters and workers but we are not the
               service provider. TryHardly is not a bank or
               money transmitter and does not provide regulated financial services. All payments
               are processed directly by Stripe.
             </p>
             <p className="mb-2">
-              At booking, TryHardly may obtain a payment authorization for the quoted amount. A
-              payment authorization is not a completed charge and may appear as a temporary
-              pending transaction on your statement. TryHardly captures payment when a task is
-              completed or deemed completed under the platform&rsquo;s confirmation rules. If a
-              booking is canceled or does not proceed, TryHardly may void or cancel the
-              authorization, and you are not charged. Worker payouts are initiated after
-              payment capture for completed tasks through Stripe Connect.
+              When a job poster selects a worker, TryHardly may obtain a payment authorization
+              for the quoted amount. A payment authorization is not a completed charge and may
+              appear as a temporary pending transaction on your statement. TryHardly captures
+              payment when the job is confirmed completed, or is deemed completed under the
+              platform&rsquo;s confirmation rules. If a job is canceled or does not proceed,
+              TryHardly may void or cancel the authorization, and you are not charged. Worker
+              payouts are initiated after payment capture for completed jobs through Stripe
+              Connect.
             </p>
             <p>
               Posting a job is free for clients. TryHardly charges workers a flat 12% platform
@@ -89,8 +91,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Your Responsibilities</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Quest posters must describe work accurately and pay for work delivered as agreed.</li>
-              <li>Adventurers must deliver work that matches what was agreed.</li>
+              <li>Job posters must describe the work accurately and pay for work delivered as agreed.</li>
+              <li>Workers must deliver work that matches what was agreed.</li>
               <li>Both parties must follow our <Link href="/community-guidelines" className="text-amber-400 hover:text-amber-300">Community Guidelines</Link> and all applicable laws, licenses, and local regulations.</li>
               <li>You are responsible for your own taxes and any required insurance or permits.</li>
             </ul>
@@ -100,7 +102,7 @@ export default function TermsPage() {
             <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Prohibited Conduct</h2>
             <p className="mb-2">You agree not to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Post fraudulent, misleading, or illegal quests.</li>
+              <li>Post fraudulent, misleading, or illegal job listings.</li>
               <li>Offer or request prohibited services, including anything illegal, unlicensed work that requires a license, weapons, regulated substances, adult services, or work that endangers safety. See our <Link href="/prohibited-services" className="text-amber-400 hover:text-amber-300">Prohibited Services Policy</Link> for details.</li>
               <li>Harass, threaten, or discriminate against other users.</li>
               <li>Circumvent platform payments or fees, or arrange payment off-platform to avoid the service fee, after connecting through TryHardly.</li>
@@ -111,8 +113,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Intellectual Property</h2>
             <p>
-              Unless a quest agreement says otherwise, work products created through TryHardly
-              belong to the quest poster upon full payment for that work. The TryHardly name,
+              Unless the job agreement between the parties says otherwise, work products created
+              through TryHardly belong to the job poster upon full payment for that work. The TryHardly name,
               brand, and platform remain our property.
             </p>
           </section>

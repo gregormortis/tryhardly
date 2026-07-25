@@ -7,7 +7,7 @@ const SUPPORT_EMAIL = 'support@tryhardly.com';
 export const metadata: Metadata = {
   title: 'Support',
   description:
-    'Get help with TryHardly. Email support@tryhardly.com for account, quest, payment, or safety questions. Early access support for our local services marketplace.',
+    'Get help with TryHardly. Email support@tryhardly.com for account, job, payment, or safety questions. Early access support for our local services marketplace.',
   alternates: { canonical: '/support' },
 };
 
@@ -15,7 +15,7 @@ const helpTopics = [
   {
     icon: HelpCircle,
     title: 'Getting started',
-    body: 'New here? Browse open work on the quest board, or post what you need done in about a minute — no account required.',
+    body: 'New here? Browse open work on the job board, or post what you need done in about a minute — no account required.',
     href: '/request-help',
     cta: 'Request help',
   },
@@ -29,7 +29,7 @@ const helpTopics = [
   {
     icon: ShieldCheck,
     title: 'Safety & conduct',
-    body: 'Our community guidelines keep things fair and safe for clients and adventurers alike.',
+    body: 'Our community guidelines keep things fair and safe for job posters and workers alike.',
     href: '/community-guidelines',
     cta: 'Community guidelines',
   },
@@ -66,7 +66,7 @@ export default function SupportPage() {
           </a>
           <p className="text-sm text-gray-400 mt-3">
             We typically reply within one business day. To help us move faster, include your
-            account email and, if it&apos;s about a quest, the quest title or link.
+            account email and, if it&apos;s about a job, the job title or link.
           </p>
         </div>
 
@@ -102,7 +102,7 @@ export default function SupportPage() {
               <span className="text-amber-400 mt-1">•</span>
               <span>
                 We&apos;re launching locally in <strong>Redding, CA</strong> first, with
-                starter quests seeded so the board isn&apos;t empty on day one.
+                starter jobs seeded so the board isn&apos;t empty on day one.
               </span>
             </li>
             <li className="flex gap-3">
@@ -115,16 +115,16 @@ export default function SupportPage() {
             <li className="flex gap-3">
               <span className="text-amber-400 mt-1">•</span>
               <span>
-                Marketplace payments run on Stripe: a payment method is authorized at booking, the
-                charge is captured for completed tasks under platform rules, and worker payouts are
-                made through Stripe Connect after completed-task payment capture. We&apos;ll tell you
+                Marketplace payments run on Stripe: a payment method is authorized when a worker is
+                chosen, the charge is captured for completed jobs under platform rules, and worker
+                payouts are made through Stripe Connect after completed-job payment capture. We&apos;ll tell you
                 clearly when your account can use them.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-amber-400 mt-1">•</span>
               <span>
-                Accounts and quests are reviewed by our team to keep early access safe. Email
+                Accounts and job posts are reviewed by our team to keep early access safe. Email
                 verification and admin moderation are in place.
               </span>
             </li>
