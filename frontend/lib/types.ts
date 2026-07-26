@@ -34,6 +34,10 @@ export interface Quest {
   currency: string;
   xpReward: number;
   status: string;
+  // Payment lifecycle for this job: the poster's method is authorized at booking
+  // and the charge is captured once the completed work is confirmed. Read-only on
+  // the client — every transition happens on the backend.
+  paymentStatus?: QuestPaymentStatus;
   tags: string[];
   deadline?: string | null;
   maxApplications?: number;
@@ -72,6 +76,13 @@ export interface Quest {
   milestones?: Milestone[];
   _count?: { applications: number };
 }
+
+export type QuestPaymentStatus =
+  | 'NONE'
+  | 'AUTHORIZED'
+  | 'CAPTURED'
+  | 'CANCELED'
+  | 'CAPTURE_FAILED';
 
 export type WalkthroughType = 'NONE' | 'REMOTE' | 'IN_PERSON';
 
@@ -118,6 +129,9 @@ export interface Application {
     difficulty: string;
     reward: number;
     status: string;
+    paymentStatus?: QuestPaymentStatus;
+    tags?: string[];
+    updatedAt?: string;
     questGiverId?: string;
     assignedAdventurerId?: string | null;
     completionRequestedAt?: string | null;

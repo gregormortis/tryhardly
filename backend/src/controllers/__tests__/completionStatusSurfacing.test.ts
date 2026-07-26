@@ -122,6 +122,15 @@ describe('getMyApplications — status payload for the worker dashboard', () => 
     });
   });
 
+  it('carries the payment state so a worker row can say whether payment is authorized', async () => {
+    mockPrisma.application.findMany.mockResolvedValue([]);
+
+    await getMyApplications({ user: { id: 'worker' } } as any, mockRes());
+
+    const select = mockPrisma.application.findMany.mock.calls[0][0].include.quest.select;
+    expect(select).toMatchObject({ paymentStatus: true, tags: true, updatedAt: true });
+  });
+
   it('flags a completed job the worker has not reviewed yet', async () => {
     mockPrisma.application.findMany.mockResolvedValue([
       { id: 'a1', questId: 'q1', status: 'ACCEPTED', quest: { id: 'q1', status: 'COMPLETED' } },

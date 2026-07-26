@@ -5,9 +5,13 @@ import { api } from '../lib/api';
 
 interface StripeConnectButtonProps {
   stripeAccountId?: string | null;
+  // Lifts the fetched payout status to a parent that needs the same answer (the
+  // dashboard asks whether payout setup is still outstanding), so the status
+  // endpoint is still only hit once per mount.
+  onStatusChange?: (status: ConnectStatus | null) => void;
 }
 
-interface ConnectStatus {
+export interface ConnectStatus {
   hasAccount: boolean;
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
@@ -16,7 +20,10 @@ interface ConnectStatus {
   onboarded: boolean;
 }
 
-export default function StripeConnectButton({ stripeAccountId }: StripeConnectButtonProps) {
+export default function StripeConnectButton({
+  stripeAccountId,
+  onStatusChange,
+}: StripeConnectButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<ConnectStatus | null>(null);
@@ -31,10 +38,13 @@ export default function StripeConnectButton({ stripeAccountId }: StripeConnectBu
     api
       .get<ConnectStatus>('/payments/connect/status')
       .then(s => {
-        if (!cancelled) setStatus(s);
+        if (cancelled) return;
+        setStatus(s);
+        onStatusChange?.(s);
       })
       .catch(() => {
         // Non-fatal: fall back to the id-only heuristic below.
+        if (!cancelled) onStatusChange?.(null);
       })
       .finally(() => {
         if (!cancelled) setStatusLoading(false);
@@ -42,7 +52,7 @@ export default function StripeConnectButton({ stripeAccountId }: StripeConnectBu
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [onStatusChange]);
 
   const handleConnect = async () => {
     setLoading(true);
@@ -79,7 +89,9 @@ export default function StripeConnectButton({ stripeAccountId }: StripeConnectBu
         <span className="text-emerald-400 text-lg">✓</span>
         <div>
           <p className="text-sm font-semibold text-emerald-400">Payout account connected</p>
-          <p className="text-xs text-zinc-400">You can receive payments for completed quests</p>
+          <p className="text-xs text-zinc-400">
+            You can be paid for the local jobs you complete
+          </p>
         </div>
       </div>
     );
@@ -98,7 +110,7 @@ export default function StripeConnectButton({ stripeAccountId }: StripeConnectBu
         <p className="text-xs text-zinc-400 mt-1">
           {needsMoreInfo
             ? 'Stripe still needs a few more details before you can receive payouts.'
-            : 'Connect your bank account to receive payments when quests are completed.'}
+            : 'Connect your bank account so you can be paid for completed jobs.'}
         </p>
       </div>
       {error && <p className="text-xs text-rose-400">{error}</p>}

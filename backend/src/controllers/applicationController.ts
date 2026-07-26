@@ -365,6 +365,12 @@ export const getMyApplications = async (req: AuthRequest, res: Response): Promis
             assignedAdventurerId: true,
             completionRequestedAt: true,
             completedAt: true,
+            // Read-only fields the worker dashboard labels rows with: whether the
+            // poster has authorized a payment method yet, the type of work, and
+            // when the job last moved. No payment behavior depends on these.
+            paymentStatus: true,
+            tags: true,
+            updatedAt: true,
           },
         },
       },
