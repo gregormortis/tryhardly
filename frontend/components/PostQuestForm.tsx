@@ -7,7 +7,8 @@ import { api } from '../lib/api';
 import { CADENCE_OPTIONS } from '../lib/recurrence';
 import { inferQuestFromText, summarizeInference } from '../lib/questInference';
 import { recommendBudget, type Difficulty, type Urgency } from '../lib/budgetInference';
-import { normalizeDateInput } from '../lib/dateInput';
+import { MIN_DEADLINE_DAYS, minDeadlineIso, normalizeDateInput } from '../lib/dateInput';
+import { bandMidpoint, budgetAfterUnitChange, materialsHelperText } from '../lib/postJobPricing';
 import { JOB_CATEGORIES, getJobCategory } from '../lib/jobCategories';
 import {
   validatePostJobStep,
@@ -86,8 +87,18 @@ const TIER_MAP: { min: number; max: number; tier: TierKey; classes: string }[] =
 ];
 
 const STEP_LABELS = ['Job details', 'Scope & budget', 'Review'];
-// Two days out so workers have time to see the job and send a bid.
-const MIN_DATE = new Date(Date.now() + 86_400_000 * 2).toISOString().split('T')[0];
+
+const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  easy: 'Easy',
+  moderate: 'Moderate',
+  hard: 'Hard',
+};
+
+const URGENCY_LABELS: Record<Urgency, string> = {
+  flexible: 'Flexible',
+  soon: 'Soon',
+  urgent: 'Urgent',
+};
 
 // Repeated verbatim on the form and the review step: the one thing a first-time
 // poster needs to know before they type anything.
@@ -272,9 +283,19 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   const [budgetApplied, setBudgetApplied] = useState(false);
 
   const [data, setData] = useState<FormData>(EMPTY_POST_JOB_VALUES);
+  // Fields the inference filled in and the poster hasn't touched since. Re-running
+  // the suggestion refreshes those, but anything typed by hand is left alone —
+  // otherwise a title inferred from the first draft of the summary sticks around
+  // and contradicts the details on the review step.
+  const [inferredFields, setInferredFields] = useState<Set<keyof FormData>>(new Set());
   // Set when a poster comes back from creating an account and we restore what
   // they had already typed, so the jump straight to Review is explained.
   const [draftRestored, setDraftRestored] = useState(false);
+
+  // Recomputed every render rather than pinned at module load: the floor is
+  // derived from the poster's own calendar day, and a form left open past
+  // midnight would otherwise keep validating against yesterday's date.
+  const minDate = minDeadlineIso();
 
   // Deterministic local budget suggestion from the details entered so far.
   const budgetRec = recommendBudget({
@@ -282,8 +303,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     text: `${data.title} ${data.description} ${needText}`.trim() || null,
     difficulty: data.difficulty || null,
     urgency: data.urgency || null,
+    materialsBy: data.materialsBy,
     payType: data.payType,
   });
+
+  // Which measured line the poster should budget against. Driven by who buys
+  // the materials, so "worker supplies materials" points at the total.
+  const laborIsPrimary = budgetRec.measured?.primary !== 'total';
 
   // Curated config for the chosen category — its examples double as the concrete
   // "jobs like yours" prompts a first-time poster needs.
@@ -295,6 +321,24 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   function applyBudgetAmount(amount: number) {
     update('reward', String(amount));
     setBudgetApplied(true);
+  }
+
+  // Switching pricing mode or pay type changes what the budget number *means*,
+  // so an amount entered under the old unit is dropped rather than carried over
+  // as a nonsensical price (an hourly $25 is not a $25 flat fence job).
+  function changePricing(next: Partial<Pick<FormData, 'budgetMode' | 'payType'>>) {
+    setData((prev) => ({
+      ...prev,
+      ...next,
+      reward: budgetAfterUnitChange(
+        prev.reward,
+        `${prev.budgetMode}:${prev.payType}`,
+        `${next.budgetMode ?? prev.budgetMode}:${next.payType ?? prev.payType}`,
+      ),
+    }));
+    setIssues((prev) => prev.filter((i) => i.field !== 'reward'));
+    setSubmitError(null);
+    setBudgetApplied(false);
   }
 
   // Restore a draft saved when a logged-out poster hit the account step. It is
@@ -327,6 +371,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     setData((prev) => ({ ...prev, [field]: value }));
     setIssues((prev) => prev.filter((i) => i.field !== field));
     setSubmitError(null);
+    // Once the poster edits a field by hand, the suggestion no longer owns it.
+    setInferredFields((prev) => {
+      if (!prev.has(field)) return prev;
+      const next = new Set(prev);
+      next.delete(field);
+      return next;
+    });
   }
 
   function issueFor(field: PostJobField): string | undefined {
@@ -334,18 +385,36 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   }
 
   // Pre-fill the form from the inferred summary. Every field stays editable
-  // below; we only fill blanks so we never clobber something the poster typed.
+  // below. A field is filled when it's blank, and refreshed when the last value
+  // in it also came from the suggestion — so re-running it after rewording the
+  // summary updates the title instead of leaving a stale one that contradicts
+  // the details, while anything typed by hand is never clobbered.
   function applyInference() {
     if (!inference) return;
-    setData((prev) => ({
-      ...prev,
-      title: prev.title.trim() ? prev.title : (inference.title ?? prev.title),
-      category: prev.category || (inference.category ?? prev.category),
-      description: prev.description.trim() ? prev.description : needText.trim(),
-      isRecurring: prev.isRecurring || inference.isRecurring,
-      recurrenceCadence: inference.cadence ?? prev.recurrenceCadence,
-      deadline: prev.deadline || (inference.timing?.date ?? prev.deadline),
-    }));
+    const owned = (field: keyof FormData) =>
+      !String(data[field]).trim() || inferredFields.has(field);
+
+    const next = { ...data };
+    const filled = new Set(inferredFields);
+    const take = (field: 'title' | 'description' | 'category' | 'deadline', value: string) => {
+      next[field] = value;
+      filled.add(field);
+    };
+
+    if (owned('title') && inference.title) take('title', inference.title);
+    if (owned('description') && needText.trim()) take('description', needText.trim());
+    if (owned('category') && inference.category) take('category', inference.category);
+    next.isRecurring = data.isRecurring || inference.isRecurring;
+    next.recurrenceCadence = inference.cadence ?? data.recurrenceCadence;
+    // Only accept an inferred date the deadline rule would also accept —
+    // "tomorrow" is a real reading of the text but not a postable deadline.
+    const inferredDate = inference.timing?.date;
+    if (owned('deadline') && inferredDate && inferredDate >= minDate) {
+      take('deadline', inferredDate);
+    }
+
+    setData(next);
+    setInferredFields(filled);
     setApplied(true);
     setIssues([]);
   }
@@ -360,7 +429,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   }
 
   function handleNext() {
-    const found = validatePostJobStep(step, data, MIN_DATE);
+    const found = validatePostJobStep(step, data, minDate);
     setIssues(found);
     if (found.length) return;
     setStep((s) => s + 1);
@@ -393,8 +462,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   }
 
   async function handleSubmit() {
-    const detailIssues = validatePostJobStep(1, data, MIN_DATE);
-    const scopeIssues = validatePostJobStep(2, data, MIN_DATE);
+    const detailIssues = validatePostJobStep(1, data, minDate);
+    const scopeIssues = validatePostJobStep(2, data, minDate);
     setIssues([...detailIssues, ...scopeIssues]);
     setSubmitError(null);
     // Send the poster back to the step that owns the first problem — the review
@@ -437,6 +506,14 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
       // `Location:` line) and tag it so the detail page can surface it later.
       const materialsSummary = MATERIALS_OPTIONS.find((m) => m.value === data.materialsBy)?.summary;
       const materialsNote = data.materialsBy && materialsSummary ? `Materials: ${materialsSummary}\n\n` : '';
+      // Effort and timing are worth stating to a bidder, and the poster is shown
+      // both on the review step — so they travel in the description rather than
+      // being collected and then dropped.
+      const scopeNotes = [
+        data.difficulty ? `Effort: ${DIFFICULTY_LABELS[data.difficulty]}` : '',
+        data.urgency ? `Timing: ${URGENCY_LABELS[data.urgency]}` : '',
+      ].filter(Boolean);
+      const scopeNote = scopeNotes.length ? `${scopeNotes.join(' · ')}\n\n` : '';
       // Photo support is URL-only (no cloud storage): the link is encoded as a
       // `photo:<url>` tag so the detail page can render it without a schema change.
       const tags = [areaZip, state, payType, data.category].filter(Boolean);
@@ -445,7 +522,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
       if (photoUrl) tags.push(`photo:${photoUrl}`);
       const payload = {
         title:       data.title.trim(),
-        description: `${locationLine}\n\n${quoteNote}${materialsNote}${data.description.trim()}`,
+        description: `${locationLine}\n\n${quoteNote}${materialsNote}${scopeNote}${data.description.trim()}`,
         category:    BACKEND_CATEGORY,
         difficulty:  TIER_TO_DIFFICULTY[tierInfo.tier],
         reward:      effectiveReward,
@@ -765,7 +842,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <button
                     key={opt.mode}
                     type="button"
-                    onClick={() => { update('budgetMode', opt.mode); setBudgetApplied(false); }}
+                    onClick={() => changePricing({ budgetMode: opt.mode })}
                     className={clsx(
                       'text-left rounded-md border px-3.5 py-2.5 transition-all duration-150',
                       data.budgetMode === opt.mode
@@ -799,7 +876,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     <button
                       key={pt}
                       type="button"
-                      onClick={() => update('payType', pt)}
+                      onClick={() => changePricing({ payType: pt })}
                       className={clsx(
                         'font-mono text-[11px] font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
                         data.payType === pt
@@ -857,15 +934,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 <input
                   type="date"
                   value={data.deadline}
-                  min={MIN_DATE}
+                  min={minDate}
                   onChange={(e) => update('deadline', e.target.value)}
                   onPaste={handleDeadlinePaste}
                   className={clsx(inputCls, '[color-scheme:dark]', issueFor('deadline') && 'border-rose-400/50')}
                 />
                 <FieldError message={issueFor('deadline')} />
                 <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
-                  The date the work should be done by — at least 2 days out so workers have time to
-                  bid. You can paste a date like 08/01/2026.
+                  The date the work should be done by — at least {MIN_DEADLINE_DAYS} days out
+                  ({formatDate(minDate)} or later) so workers have time to bid. You can paste a
+                  date like 08/01/2026.
                 </p>
               </div>
             </div>
@@ -883,14 +961,21 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
               {budgetRec.measured ? (
                 <>
-                  {/* Sized estimate: separate labor-only and materials+labor lines. */}
+                  {/* Sized estimate: separate labor-only and materials+labor
+                      lines. Both "use" buttons apply the midpoint of their own
+                      band, so the two buttons mean the same kind of number, and
+                      the line that matches who buys the materials is the one
+                      styled as the primary choice. */}
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <div>
                         <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
                           Labor only — you supply materials
                         </p>
-                        <span className="font-bold text-lg text-amber-300">
+                        <span className={clsx(
+                          'font-bold',
+                          laborIsPrimary ? 'text-lg text-amber-300' : 'text-base text-stone-300',
+                        )}>
                           ${budgetRec.measured.laborMin}–${budgetRec.measured.laborMax}
                         </span>
                         <span className="font-mono text-[10px] text-stone-600 ml-2">
@@ -901,28 +986,44 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                         <button
                           type="button"
                           onClick={() => applyBudgetAmount(budgetRec.measured!.laborSuggested)}
-                          className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                          className={clsx(
+                            'font-mono text-[9px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
+                            laborIsPrimary
+                              ? 'bg-amber-400 text-zinc-950 hover:bg-amber-300'
+                              : 'border border-amber-500/50 text-amber-400 hover:bg-amber-400/10',
+                          )}
                         >
                           <Wand2 size={11} /> USE LABOR
                         </button>
                       )}
                     </div>
 
-                    {budgetRec.measured.totalMin != null && (
+                    {budgetRec.measured.totalSuggested != null && (
                       <div className="flex items-center justify-between gap-3 flex-wrap border-t border-white/[0.06] pt-2.5">
                         <div>
                           <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
                             Materials + labor — rough total
                           </p>
-                          <span className="font-bold text-base text-stone-300">
+                          <span className={clsx(
+                            'font-bold',
+                            laborIsPrimary ? 'text-base text-stone-300' : 'text-lg text-amber-300',
+                          )}>
                             ~${budgetRec.measured.totalMin}–${budgetRec.measured.totalMax}
+                          </span>
+                          <span className="font-mono text-[10px] text-stone-600 ml-2">
+                            suggest ~${budgetRec.measured.totalSuggested}
                           </span>
                         </div>
                         {data.budgetMode === 'fixed' && (
                           <button
                             type="button"
-                            onClick={() => applyBudgetAmount(budgetRec.measured!.totalMin!)}
-                            className="font-mono text-[9px] font-semibold tracking-widest px-3 py-2 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors flex items-center gap-1.5"
+                            onClick={() => applyBudgetAmount(budgetRec.measured!.totalSuggested!)}
+                            className={clsx(
+                              'font-mono text-[9px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
+                              laborIsPrimary
+                                ? 'border border-amber-500/50 text-amber-400 hover:bg-amber-400/10'
+                                : 'bg-amber-400 text-zinc-950 hover:bg-amber-300',
+                            )}
                           >
                             <Wand2 size={11} /> USE TOTAL
                           </button>
@@ -959,7 +1060,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     {data.budgetMode === 'fixed' && (
                       <button
                         type="button"
-                        onClick={() => applyBudgetAmount(budgetRec.min)}
+                        onClick={() => applyBudgetAmount(bandMidpoint(budgetRec.min, budgetRec.max))}
                         className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
                       >
                         <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
@@ -980,7 +1081,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               {budgetRec.contractor.required && data.budgetMode === 'fixed' && (
                 <button
                   type="button"
-                  onClick={() => { update('budgetMode', 'quote'); setBudgetApplied(false); }}
+                  onClick={() => changePricing({ budgetMode: 'quote' })}
                   className="mt-3 w-full font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors"
                 >
                   This looks like a bigger job — let qualified workers bid it instead
@@ -1027,7 +1128,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 ))}
               </select>
               <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
-                Saying who buys the lumber, paint, or dump fees keeps bids comparable.
+                {materialsHelperText(data.materialsBy)}
               </p>
             </div>
 
@@ -1106,7 +1207,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     <input
                       type="date"
                       value={data.recurrenceEndDate}
-                      min={data.deadline || MIN_DATE}
+                      min={data.deadline || minDate}
                       onChange={(e) => update('recurrenceEndDate', e.target.value)}
                       className={clsx(inputCls, '[color-scheme:dark]')}
                     />
@@ -1168,6 +1269,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   value={MATERIALS_OPTIONS.find((m) => m.value === data.materialsBy)?.summary ?? ''}
                 />
               )}
+              {data.difficulty && (
+                <ReviewRow label="Effort" value={DIFFICULTY_LABELS[data.difficulty]} />
+              )}
+              {data.urgency && (
+                <ReviewRow label="Timing" value={URGENCY_LABELS[data.urgency]} />
+              )}
               {data.isRecurring && (
                 <ReviewRow
                   label="Repeats"
@@ -1188,6 +1295,17 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   </button>
                 </div>
                 <p className="font-mono text-[12px] text-stone-500 leading-relaxed line-clamp-4">{data.description}</p>
+                {/* The photo goes out with the job, so the poster sees exactly
+                    the one they attached before publishing — or none at all. */}
+                {data.photoUrl.trim() && isValidPhotoUrl(data.photoUrl.trim()) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={data.photoUrl.trim()}
+                    alt="Job photo"
+                    className="mt-3 w-full max-h-48 object-cover rounded-lg border border-white/[0.08]"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
               </div>
             </div>
             <p className="font-mono text-[10px] text-stone-500 leading-relaxed mb-3 rounded-md border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5">

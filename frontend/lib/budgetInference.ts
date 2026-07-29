@@ -21,6 +21,8 @@ import type { CategoryId } from './questInference';
 
 export type Difficulty = 'easy' | 'moderate' | 'hard';
 export type Urgency = 'flexible' | 'soon' | 'urgent';
+// Who buys the materials, mirroring the form's Materials picker.
+export type MaterialsBy = '' | 'poster' | 'worker';
 
 export interface BudgetInputs {
   // UI category id (matches CATEGORIES in PostQuestForm / questInference).
@@ -30,6 +32,9 @@ export interface BudgetInputs {
   // Optional explicit signals if the form collects them.
   difficulty?: Difficulty | null;
   urgency?: Urgency | null;
+  // Decides which measured line the poster should budget against: a worker who
+  // supplies the materials is bidding the materials+labor total, not labor only.
+  materialsBy?: MaterialsBy | null;
   // Hourly vs flat changes how we phrase the range, not the math.
   payType?: 'flat' | 'hourly' | null;
 }
@@ -46,13 +51,22 @@ export interface MeasuredEstimate {
   // e.g. cleaning or hauling labor).
   totalMin?: number;
   totalMax?: number;
+  // Midpoint of the total band, so "apply this estimate" means the same thing
+  // on the total line as it does on the labor line.
+  totalSuggested?: number;
   // Rough time estimate, human phrased, e.g. "1–2 days / 8–16 labor hours".
   timeEstimate: string;
   // Short assumptions / notes lines shown under the estimate.
   assumptions: string[];
   // Which heuristic produced this (for debugging / labels).
   basis: string;
+  // The line the poster should budget against, given who supplies materials.
+  primary: 'labor' | 'total';
 }
+
+// What a heuristic produces. Difficulty/urgency scaling, the total midpoint and
+// the primary line are applied once, centrally, in `measure`.
+type MeasuredCore = Omit<MeasuredEstimate, 'totalSuggested' | 'primary'>;
 
 export interface ContractorNotice {
   // True when the rough labor+materials total reaches the CA threshold.
@@ -211,7 +225,7 @@ function extractCount(text: string, unitPattern: string): number | null {
 
 // Fencing: the calibration anchor. Labor scales per linear foot; materials add
 // a per-foot band on top. Terrain / gates / bracing widen both labor and time.
-function fencingEstimate(text: string): MeasuredEstimate | null {
+function fencingEstimate(text: string): MeasuredCore | null {
   const isFence = hasKeyword(text, [
     'fence', 'fencing', 't-post', 't post', 'tpost', 'woven wire', 'woven',
     'goat', 'field fence', 'no climb', 'no-climb', 'hog wire', 'welded wire',
@@ -309,7 +323,7 @@ function fencingEstimate(text: string): MeasuredEstimate | null {
 // These are the jobs most likely to be anchored at an unrealistic fixed budget,
 // so we surface both labor-only and materials+labor and let the contractor
 // notice fire — a 20x20 slab is firmly above the CSLB $1,000 threshold.
-function flatworkEstimate(text: string): MeasuredEstimate | null {
+function flatworkEstimate(text: string): MeasuredCore | null {
   const isConcrete = hasKeyword(text, [
     'concrete', 'slab', 'cement', 'foundation', 'footing', 'pad',
   ]);
@@ -395,7 +409,7 @@ function flatworkEstimate(text: string): MeasuredEstimate | null {
 
 // Hauling / junk removal: priced by load volume (cubic yards or truckloads) and
 // heavy items. Materials are negligible (it's labor + disposal), so no total.
-function haulingEstimate(text: string): MeasuredEstimate | null {
+function haulingEstimate(text: string): MeasuredCore | null {
   const isHaul = hasKeyword(text, [
     'haul', 'hauling', 'junk', 'debris', 'dump run', 'dump', 'trash removal',
     'remove junk', 'cleanout', 'clean out', 'load',
@@ -447,7 +461,7 @@ function haulingEstimate(text: string): MeasuredEstimate | null {
 }
 
 // Moving help: priced by hours × movers, scaled by rooms / bedrooms. Labor only.
-function movingEstimate(text: string): MeasuredEstimate | null {
+function movingEstimate(text: string): MeasuredCore | null {
   const isMove = hasKeyword(text, [
     'move', 'moving', 'movers', 'relocate', 'relocation', 'load truck',
     'unload', 'pack', 'packing',
@@ -482,7 +496,7 @@ function movingEstimate(text: string): MeasuredEstimate | null {
 }
 
 // Cleaning: priced by rooms / square footage. Labor only (supplies minor).
-function cleaningEstimate(text: string): MeasuredEstimate | null {
+function cleaningEstimate(text: string): MeasuredCore | null {
   const isClean = hasKeyword(text, ['clean', 'cleaning', 'maid', 'housekeeping', 'tidy', 'scrub']);
   if (!isClean) return null;
 
@@ -524,7 +538,7 @@ function cleaningEstimate(text: string): MeasuredEstimate | null {
 }
 
 // Generic handyman / fix-it with an explicit hour count in the text.
-function handymanEstimate(text: string): MeasuredEstimate | null {
+function handymanEstimate(text: string): MeasuredCore | null {
   const hours = extractQuantityNear(text, 'hours?|hrs?');
   if (hours == null) return null;
   // Only treat as a measured job when it reads like labor, not "2 hours away".
@@ -547,17 +561,75 @@ function handymanEstimate(text: string): MeasuredEstimate | null {
   };
 }
 
+// Difficulty and urgency scale the labor a job takes, not what its materials
+// cost, so they are applied to the labor band and the materials band is carried
+// across untouched. Without this a "hard" 220 ft fence read exactly like an easy
+// one, and the two selectors the form collects changed nothing on a sized job.
+function scaleLabor(
+  core: MeasuredCore,
+  difficulty: Difficulty | null,
+  urgency: Urgency | null,
+): MeasuredCore {
+  const factor =
+    (difficulty ? DIFFICULTY_FACTOR[difficulty] : 1) * (urgency ? URGENCY_FACTOR[urgency] : 1);
+  if (factor === 1) return core;
+
+  // Materials sit in the gap between the labor and total bands; hold them fixed
+  // so scaling labor doesn't silently re-price lumber.
+  const matMin = core.totalMin != null ? core.totalMin - core.laborMin : null;
+  const matMax = core.totalMax != null ? core.totalMax - core.laborMax : null;
+
+  const laborMin = round25(core.laborMin * factor);
+  const laborMax = round25(core.laborMax * factor);
+  const notes: string[] = [];
+  if (difficulty && DIFFICULTY_FACTOR[difficulty] !== 1) {
+    notes.push(`Marked ${difficulty} — labor adjusted from a standard job.`);
+  }
+  if (urgency && URGENCY_FACTOR[urgency] !== 1) {
+    notes.push(`Marked ${urgency} — a shorter timeline costs a little more.`);
+  }
+
+  return {
+    ...core,
+    laborMin,
+    laborMax,
+    laborSuggested: round25(core.laborSuggested * factor),
+    totalMin: matMin != null ? round25(laborMin + matMin) : undefined,
+    totalMax: matMax != null ? round25(laborMax + matMax) : undefined,
+    assumptions: [...core.assumptions, ...notes],
+  };
+}
+
 // Try each heuristic in priority order. Fence keywords are most specific, so
 // they win even if the category is set to something generic.
-function measure(text: string): MeasuredEstimate | null {
-  return (
+function measure(
+  text: string,
+  difficulty: Difficulty | null,
+  urgency: Urgency | null,
+  materialsBy: MaterialsBy,
+): MeasuredEstimate | null {
+  const core =
     fencingEstimate(text) ??
     flatworkEstimate(text) ??
     haulingEstimate(text) ??
     movingEstimate(text) ??
     cleaningEstimate(text) ??
-    handymanEstimate(text)
-  );
+    handymanEstimate(text);
+  if (!core) return null;
+
+  const scaled = scaleLabor(core, difficulty, urgency);
+  const hasTotal = scaled.totalMin != null && scaled.totalMax != null;
+  return {
+    ...scaled,
+    // Midpoint of the total band, matching how laborSuggested sits inside the
+    // labor band, so both "use this" buttons mean the same kind of number.
+    totalSuggested: hasTotal
+      ? round25((scaled.totalMin! + scaled.totalMax!) / 2)
+      : undefined,
+    // When the worker buys the materials their bid has to cover them, so the
+    // total is the number the poster should be budgeting against.
+    primary: hasTotal && materialsBy === 'worker' ? 'total' : 'labor',
+  };
 }
 
 // ── Contractor-license guidance ──────────────────────────────────────────────
@@ -643,16 +715,24 @@ export function recommendBudget(inputs: BudgetInputs): BudgetRecommendation {
   }
 
   // Job-specific measurement heuristics. When one fires it drives the headline
-  // range (labor-only) so large jobs are no longer quoted like a single visit.
-  const measured = payType !== 'hourly' && text ? measure(text) : null;
+  // range so large jobs are no longer quoted like a single visit. Difficulty and
+  // urgency are applied inside the measured labor band rather than the category
+  // multipliers above, which the measured path replaces.
+  const measured =
+    payType !== 'hourly' && text
+      ? measure(text, difficulty, urgency, inputs.materialsBy ?? '')
+      : null;
 
   let minR: number;
   let maxR: number;
   let explanation: string;
 
   if (measured) {
-    minR = measured.laborMin;
-    maxR = measured.laborMax;
+    // The headline range follows the primary line so a poster whose worker buys
+    // the materials isn't anchored on a labor-only number.
+    const onTotal = measured.primary === 'total';
+    minR = onTotal ? measured.totalMin! : measured.laborMin;
+    maxR = onTotal ? measured.totalMax! : measured.laborMax;
     factors.push('sized to the job');
     explanation =
       `Labor only (you supply materials): $${measured.laborMin}–$${measured.laborMax}` +

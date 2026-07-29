@@ -27,6 +27,27 @@ function toIsoDate(year: string, month: string, day: string): string | null {
   return `${year}-${pad(month)}-${pad(day)}`;
 }
 
+// Days a deadline must be out from today so workers have time to see the job
+// and send a bid. The helper copy on the form quotes this number, so the rule
+// and the promise stay in one place.
+export const MIN_DEADLINE_DAYS = 2;
+
+/**
+ * `YYYY-MM-DD` for a day offset from today, read in the poster's own timezone.
+ *
+ * `new Date().toISOString()` reports UTC, which is already tomorrow for most of
+ * the US after late afternoon — deriving the deadline floor that way rejects a
+ * date the poster was told is allowed.
+ */
+export function isoDateDaysFromNow(days: number, now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
+  return `${d.getFullYear()}-${pad(String(d.getMonth() + 1))}-${pad(String(d.getDate()))}`;
+}
+
+export function minDeadlineIso(now?: Date): string {
+  return isoDateDaysFromNow(MIN_DEADLINE_DAYS, now);
+}
+
 /**
  * Convert a written date into `YYYY-MM-DD`, or null if it isn't a date.
  *
