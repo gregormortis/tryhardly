@@ -55,7 +55,7 @@ export default function LeaderboardPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-white mb-2">🏆 Leaderboard</h1>
-          <p className="text-gray-400">Top adventurers recognized for trust, skill, and consistent work</p>
+          <p className="text-gray-400">Top workers recognized for trust, skill, and consistent work</p>
         </div>
 
         {/* Leaderboard */}
@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
         ) : users.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <div className="text-4xl mb-3">🏆</div>
-            <p className="text-gray-400">No adventurers ranked yet. Be the first!</p>
+            <p className="text-gray-400">No workers ranked yet. Be the first!</p>
             <Link href="/auth/register" className="text-amber-400 hover:underline mt-2 inline-block">
               Create an account →
             </Link>
@@ -93,7 +93,7 @@ export default function LeaderboardPage() {
                   <div className="font-bold text-white text-lg">{users[1].displayName}</div>
                   <div className="text-gray-500 text-sm">@{users[1].username}</div>
                   <div className="text-amber-400 font-bold mt-2">Level {users[1].level}</div>
-                  <div className="text-green-400 text-sm">{users[1].xp.toLocaleString()} XP</div>
+                  <div className="text-green-400 text-sm">{users[1].xp.toLocaleString()} pts</div>
                 </div>
                 {/* 1st place */}
                 <div className="bg-gray-900 border border-amber-500/40 rounded-xl p-6 text-center shadow-lg shadow-amber-900/20">
@@ -102,7 +102,7 @@ export default function LeaderboardPage() {
                   <div className="font-bold text-white text-lg">{users[0].displayName}</div>
                   <div className="text-gray-500 text-sm">@{users[0].username}</div>
                   <div className="text-amber-400 font-bold mt-2">Level {users[0].level}</div>
-                  <div className="text-green-400 text-sm">{users[0].xp.toLocaleString()} XP</div>
+                  <div className="text-green-400 text-sm">{users[0].xp.toLocaleString()} pts</div>
                 </div>
                 {/* 3rd place */}
                 <div className="bg-gray-900 border border-amber-700/30 rounded-xl p-6 text-center mt-6">
@@ -111,7 +111,7 @@ export default function LeaderboardPage() {
                   <div className="font-bold text-white text-lg">{users[2].displayName}</div>
                   <div className="text-gray-500 text-sm">@{users[2].username}</div>
                   <div className="text-amber-400 font-bold mt-2">Level {users[2].level}</div>
-                  <div className="text-green-400 text-sm">{users[2].xp.toLocaleString()} XP</div>
+                  <div className="text-green-400 text-sm">{users[2].xp.toLocaleString()} pts</div>
                 </div>
               </div>
             )}
@@ -146,10 +146,10 @@ export default function LeaderboardPage() {
                       </div>
                     </div>
 
-                    {/* XP */}
+                    {/* Points */}
                     <div className="text-right hidden sm:block">
                       <div className="text-xl font-bold text-green-400">{user.xp.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">XP</div>
+                      <div className="text-xs text-gray-500">pts</div>
                     </div>
                   </div>
                 );
@@ -161,7 +161,7 @@ export default function LeaderboardPage() {
         {/* CTA */}
         <div className="mt-12 text-center bg-gray-900 border border-gray-800 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-white mb-2">Think you can climb higher?</h2>
-          <p className="text-gray-400 mb-6">Complete more quests, level up, and build your standing.</p>
+          <p className="text-gray-400 mb-6">Complete more jobs, build your reputation, and climb the ranks.</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
               href="/questboard"

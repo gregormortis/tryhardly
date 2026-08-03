@@ -176,7 +176,7 @@ export default function ProgressionPage() {
             run a team with a real roster, a strong shared record, and no serious disputes.
           </p>
           <p className="text-gray-400 text-sm">
-            Working solo is always fine — every level up to Experienced is reachable on your own record alone.
+            Working solo is always fine — every step up to Experienced is reachable on your own record alone.
           </p>
         </section>
 

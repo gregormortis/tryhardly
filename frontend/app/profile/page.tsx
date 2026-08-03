@@ -93,7 +93,7 @@ export default function ProfilePage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading adventurer profile...</p>
+          <p className="text-gray-500">Loading profile...</p>
         </div>
       </div>
     );
@@ -262,7 +262,7 @@ export default function ProfilePage() {
           <div className="mt-6 grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-amber-400">{displayProfile.xp?.toLocaleString() || 0}</div>
-              <div className="text-gray-500 text-xs mt-1">Total XP</div>
+              <div className="text-gray-500 text-xs mt-1">Total points</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-white">{(displayProfile as any).totalQuestsCompleted || 0}</div>
