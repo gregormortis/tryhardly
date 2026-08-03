@@ -58,7 +58,7 @@ function mapBackendQuest(q: BackendQuest): Quest {
     tools: q.tags ?? [],
     postedBy: {
       id: q.questGiver?.id ?? q.questGiverId ?? '',
-      username: q.questGiver?.username ?? 'Quest Giver',
+      username: q.questGiver?.username ?? 'Customer',
       reputationScore: q.questGiver?.reputationScore ?? 0,
       questsPosted: 0,
       avatarInitials: (q.questGiver?.username ?? 'Q').slice(0, 2).toUpperCase(),
@@ -351,7 +351,7 @@ export default function QuestDetailModal({
                   </div>
                 )}
 
-                {/* Quest giver */}
+                {/* Job poster / customer */}
                 <div className="flex items-center gap-3.5 p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl mb-7">
                   <div className="w-11 h-11 rounded-full bg-amber-400/10 border border-amber-400/25 flex items-center justify-content-center flex-shrink-0">
                     <span className="flex items-center justify-center w-full h-full font-bold text-sm text-amber-400">
@@ -365,7 +365,7 @@ export default function QuestDetailModal({
                       {quest.postedBy.reputationScore}/100 rep · {quest.postedBy.questsPosted} quests posted
                     </p>
                   </div>
-                  <span className="font-mono text-[10px] text-stone-700">Quest Giver</span>
+                  <span className="font-mono text-[10px] text-stone-700">Customer</span>
                 </div>
 
                 {/* CTA */}

@@ -8,36 +8,36 @@ const faqs = [
     questions: [
       {
         q: 'What is Tryhardly?',
-        a: 'Tryhardly is a gamified freelance marketplace where every project is a quest, freelancers are adventurers, and clients are quest givers. We combine RPG mechanics with professional work to make freelancing more engaging and rewarding.'
+        a: 'Tryhardly is a local freelance marketplace where every project is a job, freelancers are workers, and clients are customers. We keep it simple and professional while still making good work feel rewarding.'
       },
       {
         q: 'How do I create an account?',
-        a: 'Click "Sign Up" in the navigation, choose whether you want to be an adventurer (freelancer) or quest giver (client), and fill in your details. You can start browsing quests immediately!'
+        a: 'Click "Sign Up" in the navigation, choose whether you want to work (freelancer) or hire (customer), and fill in your details. You can start browsing jobs immediately!'
       },
       {
         q: 'Is Tryhardly free to join?',
-        a: 'Yes! Creating an account is completely free. We only charge commission when you complete quests as an adventurer.'
+        a: 'Yes! Creating an account is completely free. We only charge commission when you complete jobs as a worker.'
       }
     ]
   },
   {
-    category: 'For Adventurers (Freelancers)',
+    category: 'For Workers',
     questions: [
       {
         q: 'How does the marketplace fee work?',
-        a: 'Workers pay a flat 12% marketplace fee on completed paid jobs — the same rate at every rank. There are no tiers, no listing fees, and no subscriptions. You only pay when you get paid.'
+        a: 'Workers pay a flat 12% marketplace fee on completed paid jobs — the same rate for everyone. There are no tiers, no listing fees, and no subscriptions. You only pay when you get paid.'
       },
       {
-        q: 'Do higher ranks pay a lower fee?',
-        a: 'No. The fee is a flat 12% whether you are Novice or Legendary. Ranks reward trust, visibility, and access — like skill badges and guild leadership — not a cheaper cut.'
+        q: 'Does the 12% fee ever change?',
+        a: 'No. The fee is a flat 12% no matter how experienced you are. Building a strong reputation earns you more trust, visibility, and access — like skill badges and team leadership — not a cheaper cut.'
       },
       {
-        q: 'How do I level up and rank up?',
-        a: 'Complete quests well to earn XP. XP balances cash earned, rating quality, on-time and consistent completion, verified credentials, and guild contribution. Higher ranks (Novice → Apprentice → Journeyman → Expert → Legendary) unlock trust and visibility. See the Ranks & Progression page for the full requirements.'
+        q: 'How does my reputation grow on Tryhardly?',
+        a: 'Complete jobs well to build your reputation. It reflects cash earned, rating quality, on-time and consistent completion, verified credentials, and contribution to your crew. A stronger reputation (Novice → Apprentice → Journeyman → Expert → Legendary) unlocks more trust and visibility. See the Reputation & Progress page for the full requirements.'
       },
       {
         q: 'What are guilds?',
-        a: 'Guilds are worker-led teams on TryHardly. They help reliable workers build skills, share standards, mentor newer members, and earn trust through completed local jobs. Join an existing guild or start your own, then take on larger jobs together.'
+        a: 'Guilds are worker-led teams on TryHardly — a way for local workers to team up. They help reliable workers build skills, share standards, mentor newer members, and earn trust through completed local jobs. Join an existing team or start your own, then take on larger jobs together.'
       },
       {
         q: 'How do I get paid?',
@@ -46,23 +46,23 @@ const faqs = [
     ]
   },
   {
-    category: 'For Quest Givers (Clients)',
+    category: 'For Customers',
     questions: [
       {
-        q: 'How do I post a quest?',
-        a: 'Click "Post Quest" in the navigation, describe your project needs, set a budget and timeline, and publish. Adventurers will start applying immediately!'
+        q: 'How do I post a job?',
+        a: 'Click "Post a Job" in the navigation, describe your project needs, set a budget and timeline, and publish. Workers will start applying immediately!'
       },
       {
         q: 'How much does it cost to post?',
-        a: 'Posting quests is free! You only pay the agreed amount to the adventurer who completes your quest. No hidden fees or subscription costs.'
+        a: 'Posting jobs is free! You only pay the agreed amount to the worker who completes your job. No hidden fees or subscription costs.'
       },
       {
         q: 'What if I\'m not satisfied with the work?',
-        a: 'We have a resolution process. If the work doesn\'t meet the quest requirements, you can request revisions or open a dispute. Our team will mediate to ensure fair outcomes.'
+        a: 'We have a resolution process. If the work doesn\'t meet the job requirements, you can request revisions or open a dispute. Our team will mediate to ensure fair outcomes.'
       },
       {
-        q: 'Can I hire the same adventurer again?',
-        a: 'Absolutely! You can save favorite adventurers and send them direct quest invites for future projects. Building long-term partnerships is encouraged.'
+        q: 'Can I hire the same worker again?',
+        a: 'Absolutely! You can save favorite workers and send them direct job invites for future projects. Building long-term partnerships is encouraged.'
       }
     ]
   },
@@ -71,7 +71,7 @@ const faqs = [
     questions: [
       {
         q: 'Is my payment secure?',
-        a: 'Yes! Marketplace payments are processed through Stripe. Your payment method is authorized at booking, the charge is captured for completed work under platform rules, and worker payouts are made through Stripe Connect after completed-task payment capture. If a quest is cancelled before capture, the authorization is voided and no final charge is created.'
+        a: 'Yes! Marketplace payments are processed through Stripe. Your payment method is authorized at booking, the charge is captured for completed work under platform rules, and worker payouts are made through Stripe Connect after completed-task payment capture. If a job is cancelled before capture, the authorization is voided and no final charge is created.'
       },
       {
         q: 'What payment methods do you accept?',
@@ -79,24 +79,24 @@ const faqs = [
       },
       {
         q: 'Are there any refunds?',
-        a: 'If a quest is cancelled before work begins, full refunds are issued. For completed work, refunds are handled through our dispute resolution process based on whether requirements were met.'
+        a: 'If a job is cancelled before work begins, full refunds are issued. For completed work, refunds are handled through our dispute resolution process based on whether requirements were met.'
       }
     ]
   },
   {
-    category: 'Features & Gameplay',
+    category: 'Features',
     questions: [
       {
         q: 'What are achievements and skill badges?',
-        a: 'Achievements are milestone badges (e.g. completing your first quest or reaching level 50). Skill badges are different: clients rate each skill you performed on a job (mowing, fencing, hauling, etc.), and you earn Bronze, Silver, Gold, or Platinum tiers per skill once you have enough high ratings. Both display on your profile to show proven expertise.'
+        a: 'Achievements are milestone badges (e.g. completing your first job or reaching a major reputation milestone). Skill badges are different: clients rate each skill you performed on a job (mowing, fencing, hauling, etc.), and you earn Bronze, Silver, Gold, or Platinum tiers per skill once you have enough high ratings. Both display on your profile to show proven expertise.'
       },
       {
-        q: 'Can I see quest history?',
-        a: 'Yes! Your profile includes a complete quest log showing all completed, active, and failed quests. This serves as your portfolio and proof of experience.'
+        q: 'Can I see my job history?',
+        a: 'Yes! Your profile includes a complete job history showing all completed, active, and cancelled jobs. This serves as your portfolio and proof of experience.'
       },
       {
         q: 'What\'s the leaderboard?',
-        a: 'The leaderboard ranks adventurers by XP, quests completed, and earnings. Top performers get featured placement and bonus opportunities.'
+        a: 'The leaderboard ranks workers by completed jobs and earnings. Top performers get featured placement and bonus opportunities.'
       }
     ]
   }
@@ -113,7 +113,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </h1>
           <p className="text-xl text-gray-300">
-            Everything you need to know about your Tryhardly adventure
+            Everything you need to know about using Tryhardly
           </p>
         </div>
 

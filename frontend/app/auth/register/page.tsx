@@ -94,8 +94,8 @@ function RegisterForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Guild Path</label>
-              <p className="text-xs text-gray-500 mb-2">Choose the path that best describes how you like to help.</p>
+              <label className="block text-sm font-medium text-gray-300 mb-1">What kind of work do you do?</label>
+              <p className="text-xs text-gray-500 mb-2">Optional — helps us match you to the right jobs. Skip this if you&apos;re here to hire someone.</p>
               <div className="grid grid-cols-2 gap-2">
                 {GUILD_PATHS.map(cls => (
                   <button

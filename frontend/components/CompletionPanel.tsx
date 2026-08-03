@@ -76,7 +76,7 @@ export default function CompletionPanel({
         note: note.trim() || undefined,
         proofUrls: parseUrls(proofText),
       });
-      toast.success('Submitted for review. The quest giver will confirm or request changes.');
+      toast.success('Submitted for review. The customer will confirm or request changes.');
       setNote('');
       setProofText('');
       await onChange();

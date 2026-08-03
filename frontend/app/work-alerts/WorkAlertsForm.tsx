@@ -115,14 +115,14 @@ export default function WorkAlertsForm() {
             <span className="text-gray-200">{data.email}</span> when local jobs that match come up.
           </p>
           <p className="text-sm text-gray-500 mb-8">
-            Want to start now? Live jobs are on the questboard — applying takes an account.
+            Want to start now? Live jobs are on the job board — applying takes an account.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/questboard"
               className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-6 py-3 rounded-lg transition-colors"
             >
-              Browse the questboard <ArrowRight size={16} />
+              Browse the job board <ArrowRight size={16} />
             </Link>
             <Link
               href="/auth/register"
@@ -348,7 +348,7 @@ export default function WorkAlertsForm() {
           <p className="text-center text-xs text-gray-600">
             Want to apply to jobs right now?{' '}
             <Link href="/questboard" className="text-amber-400 hover:text-amber-300">
-              Browse the live questboard
+              Browse the live job board
             </Link>
             .
           </p>

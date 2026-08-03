@@ -1220,7 +1220,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 XP are handled by us after the job is posted. No XP to configure. */}
             <p className="font-mono text-[9px] text-stone-700 leading-relaxed flex items-start gap-1.5">
               <Sparkles size={11} className="mt-0.5 flex-shrink-0 text-amber-400/60" />
-              We&apos;ll automatically assign the right quest tier and worker XP after posting.
+              We&apos;ll size the job automatically after you post.
             </p>
           </div>
         )}

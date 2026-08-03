@@ -31,7 +31,7 @@ export default function ContactPage() {
             Contact Us
           </h1>
           <p className="text-xl text-gray-300">
-            Have questions? We&apos;re here to help adventurers succeed.
+            Have questions? We&apos;re here to help local workers and customers succeed.
           </p>
         </div>
 
@@ -112,17 +112,10 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
-              <div className="text-3xl mb-4">💬</div>
-              <h3 className="text-xl font-bold text-amber-400 mb-2">Community</h3>
-              <p className="text-gray-300">Join our Discord server</p>
-              <p className="text-sm text-gray-400 mt-2">Connect with other adventurers</p>
-            </div>
-
-            <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
               <div className="text-3xl mb-4">📍</div>
               <h3 className="text-xl font-bold text-amber-400 mb-2">Location</h3>
-              <p className="text-gray-300">Remote-first company</p>
-              <p className="text-sm text-gray-400 mt-2">Serving adventurers worldwide</p>
+              <p className="text-gray-300">Based in Redding, California</p>
+              <p className="text-sm text-gray-400 mt-2">Serving Shasta County</p>
             </div>
 
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">

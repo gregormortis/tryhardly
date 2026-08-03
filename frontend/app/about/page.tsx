@@ -45,9 +45,9 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">
-              <h3 className="text-xl font-bold mb-3 text-amber-400">Guilds</h3>
+              <h3 className="text-xl font-bold mb-3 text-amber-400">Crews</h3>
               <p className="text-gray-300">
-                Worker-led teams. Join or start a guild to share standards, mentor newer workers, take on bigger jobs, and build a shared reputation.
+                Worker-led teams. Team up with other local workers to take on bigger jobs, share standards, mentor newer workers, and build a shared reputation.
               </p>
             </div>
             <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-800">

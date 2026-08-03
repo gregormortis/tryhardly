@@ -584,7 +584,7 @@ export default function DashboardPage() {
         <div className="mb-2 flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-semibold text-zinc-300">Reputation &amp; level</h2>
           <span className="text-xs text-zinc-500">
-            Level {user.level} • {user.xp.toLocaleString()} XP total
+            Level {user.level} • {user.xp.toLocaleString()} points total
           </span>
         </div>
         <div className="h-1.5 rounded-full bg-zinc-800">
@@ -594,7 +594,7 @@ export default function DashboardPage() {
           />
         </div>
         <p className="mt-1 text-xs text-zinc-600">
-          {XP_PER_LEVEL - xpProgress} XP to level {user.level + 1} — earned by completing jobs and
+          {XP_PER_LEVEL - xpProgress} points to level {user.level + 1} — earned by completing jobs and
           collecting reviews.
         </p>
       </section>

@@ -93,7 +93,7 @@ export default function QuestList() {
               )}
               <div className="flex items-center justify-between">
                 <span className="text-amber-400 font-bold text-lg">${Number(quest.reward).toLocaleString()}</span>
-                <span className="text-xs text-purple-400">+{quest.xpReward} XP</span>
+                <span className="text-xs text-purple-400">+{quest.xpReward} pts</span>
               </div>
             </div>
           </Link>
