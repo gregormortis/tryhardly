@@ -45,6 +45,23 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Thin horizontal scrollbar for inline chip/filter rows (e.g. the questboard
+   category filters), so a scrollable row is visibly scrollable instead of
+   looking cut off on touch devices where the default scrollbar is hidden. */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply bg-amber-500/40 rounded-full;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
