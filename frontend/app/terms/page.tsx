@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const LAST_UPDATED = 'June 9, 2026';
+const LAST_UPDATED = 'August 4, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
 
 export const metadata: Metadata = {
@@ -58,7 +58,20 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Payments, Fees &amp; Payouts</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. SMS / Text Messaging</h2>
+            <p className="mb-2">
+              By providing your mobile number and opting in, you consent to receive SMS messages
+              from TryHardly, including one-time verification passcodes, account and gig status
+              notifications, appointment and job reminders, and service updates. Message frequency
+              varies. Message and data rates may apply. Reply STOP to unsubscribe at any time, or
+              HELP for help. See our{' '}
+              <Link href="/privacy" className="text-amber-400 hover:text-amber-300">Privacy Policy</Link>{' '}
+              for details on how we handle mobile opt-in information.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Payments, Fees &amp; Payouts</h2>
             <p className="mb-2">
               Payments on TryHardly are processed by{' '}
               <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
@@ -89,7 +102,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Your Responsibilities</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Your Responsibilities</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Job posters must describe the work accurately and pay for work delivered as agreed.</li>
               <li>Workers must deliver work that matches what was agreed.</li>
@@ -99,7 +112,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Prohibited Conduct</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Prohibited Conduct</h2>
             <p className="mb-2">You agree not to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Post fraudulent, misleading, or illegal job listings.</li>
@@ -111,7 +124,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Intellectual Property</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Intellectual Property</h2>
             <p>
               Unless the job agreement between the parties says otherwise, work products created
               through TryHardly belong to the job poster upon full payment for that work. The TryHardly name,
@@ -120,7 +133,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Disclaimers</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. Disclaimers</h2>
             <p>
               TryHardly is provided &quot;as is&quot; during early access. We do not guarantee that work
               posted or performed will meet your expectations, and we do not vet every user.
@@ -129,7 +142,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. Limitation of Liability</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. Limitation of Liability</h2>
             <p>
               To the fullest extent permitted by law, TryHardly is not liable for any indirect,
               incidental, special, or consequential damages arising from your use of the
@@ -138,7 +151,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. Termination</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Termination</h2>
             <p>
               We may suspend or terminate accounts that violate these Terms or our Community
               Guidelines. You may stop using the service at any time.
@@ -146,7 +159,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Governing Law</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">12. Governing Law</h2>
             <p>
               These Terms are governed by the laws of the State of California, United States,
               without regard to conflict-of-law rules. Disputes will be handled in the state
@@ -156,7 +169,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">12. Changes to These Terms</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">13. Changes to These Terms</h2>
             <p>
               We may update these Terms as the product evolves. We will update the date above
               when we do. Continued use after changes means you accept the updated Terms.
@@ -164,7 +177,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">13. Contact</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">14. Contact</h2>
             <p>
               Questions about these Terms? Email{' '}
               <a href={`mailto:${SUPPORT_EMAIL}`} className="text-amber-400 hover:text-amber-300">

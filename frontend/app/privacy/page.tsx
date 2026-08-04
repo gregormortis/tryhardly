@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const LAST_UPDATED = 'June 21, 2026';
+const LAST_UPDATED = 'August 4, 2026';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -40,7 +40,25 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">2. How We Use Your Information</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">2. SMS / Text Messaging</h2>
+            <p className="mb-2">
+              By providing your mobile number and opting in, you consent to receive SMS messages
+              from TryHardly, including one-time verification passcodes, account and gig status
+              notifications, appointment and job reminders, and service updates.
+            </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li>Message frequency varies.</li>
+              <li>Message and data rates may apply.</li>
+              <li>Reply STOP to unsubscribe at any time, or HELP for help.</li>
+            </ul>
+            <p className="mt-4">
+              We do not share or sell mobile opt-in information or phone numbers with third
+              parties or affiliates for marketing purposes.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">3. How We Use Your Information</h2>
             <p className="mb-2">We use the information we collect to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Provide, maintain, and improve our services</li>
@@ -53,7 +71,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">3. Information Sharing</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Information Sharing</h2>
             <p className="mb-2">
               We share your information only in these circumstances:
             </p>
@@ -69,14 +87,14 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Data Security</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Data Security</h2>
             <p>
               We implement appropriate technical and organizational measures to protect your personal information. However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Your Rights</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Your Rights</h2>
             <p className="mb-2">You have the right to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Access and update your personal information</li>
@@ -94,7 +112,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Deleting Your Account &amp; Data</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Deleting Your Account &amp; Data</h2>
             <p className="mb-2">
               You can request deletion of your account and personal data at any time. The most
               reliable way is from within the app or on the web: sign in, then use the option in your
@@ -125,35 +143,35 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Cookies and Tracking</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Cookies and Tracking</h2>
             <p>
               We use cookies and similar tracking technologies to track activity on our service and hold certain information. You can instruct your browser to refuse cookies or alert you when cookies are being sent.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Children&apos;s Privacy</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. Children&apos;s Privacy</h2>
             <p>
               Our service is not intended for users under the age of 18. We do not knowingly collect information from children under 18. If you believe we have collected information from a child, please contact us.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. International Users &amp; Governing Law</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. International Users &amp; Governing Law</h2>
             <p>
               Your information may be transferred to and maintained on servers located outside of your country. By using Tryhardly, you consent to this transfer. This policy is governed by the laws of [STATE/COUNTRY OF INCORPORATION], and local privacy laws in your location may grant you additional rights.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. Changes to This Policy</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Changes to This Policy</h2>
             <p>
               We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Contact Us</h2>
+            <h2 className="text-2xl font-bold text-amber-400 mb-4">12. Contact Us</h2>
             <p>
               If you have questions about this Privacy Policy, please contact us at:
             </p>
