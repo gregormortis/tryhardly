@@ -524,6 +524,44 @@ describe('createQuestCheckout — precondition guards', () => {
     requirements: { currently_due: [], past_due: [] },
   };
 
+  it('returns 409 when the quest already has an AUTHORIZED payment (blocks repeated checkout)', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      paymentStatus: 'AUTHORIZED',
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toBe('Conflict');
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 when the quest already has a CAPTURED payment (blocks repeated checkout)', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      paymentStatus: 'CAPTURED',
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+    });
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
   it('returns 400 with actionable message when the worker has no connected account', async () => {
     mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
       id: 'q1',

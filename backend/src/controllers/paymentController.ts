@@ -253,6 +253,21 @@ export const createQuestCheckout = async (
       return;
     }
 
+    // Fraud/abuse guard: block re-checkout once a payment has already been
+    // authorized or captured for this quest. Without this, an already-
+    // authenticated user could repeatedly call this endpoint to spin up many
+    // Stripe Checkout Sessions/PaymentIntents against the same job — the
+    // pattern observed in the 2026-08-04 card-testing incident (82 identical
+    // $10 charges against a single quest in ~25 minutes).
+    const existingPaymentStatus = (quest as any).paymentStatus;
+    if (existingPaymentStatus === 'AUTHORIZED' || existingPaymentStatus === 'CAPTURED') {
+      res.status(409).json({
+        error: 'Conflict',
+        message: 'This job already has an active or completed payment. Cancel the existing authorization before creating a new one.',
+      });
+      return;
+    }
+
     const worker = (quest as any).assignedAdventurer;
     const workerId = (quest as any).assignedAdventurerId;
     if (!workerId) {

@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
+import { rateLimit } from '../middleware/rateLimit';
 import {
   createConnectedAccount,
   getOnboardingLink,
@@ -17,6 +18,18 @@ import {
 } from '../controllers/paymentController';
 
 const router = Router();
+
+// Abuse guard for payment-initiating endpoints. Per-IP, in-memory (see
+// middleware/rateLimit.ts caveats re: multi-instance deploys). Added after the
+// 2026-08-04 card-testing incident, where an authenticated actor called the
+// checkout endpoint dozens of times in ~25 minutes with no throttling at all.
+// 10 requests / 10 minutes is generous for a real user paying for real jobs,
+// but blocks rapid scripted repetition.
+const paymentInitiationLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyPrefix: 'payment-init',
+});
 
 /**
  * Gate for the legacy escrow flow (hold-and-transfer / separate charges &
@@ -45,7 +58,7 @@ export function legacyEscrowGate(_req: Request, res: Response, next: NextFunctio
 
 // --- Stripe Connect Onboarding ---
 // Create a Stripe Connect Express account for the current user
-router.post('/connect', authenticate, createConnectedAccount);
+router.post('/connect', authenticate, paymentInitiationLimiter, createConnectedAccount);
 
 // Get an onboarding link for the current user's Stripe Connect account
 router.get('/connect/onboarding', authenticate, getOnboardingLink);
@@ -58,11 +71,11 @@ router.get('/connect/status', authenticate, getConnectStatus);
 // Create a Checkout Session for a job (authorize-only, manual capture): the
 // client's card is authorized — not charged — and the 12% fee + worker payout
 // route on capture to the worker's connected account (quest giver only).
-router.post('/quest/:questId/checkout', authenticate, createQuestCheckout);
+router.post('/quest/:questId/checkout', authenticate, paymentInitiationLimiter, createQuestCheckout);
 
 // Capture the authorized payment for a completed task (quest giver or admin).
 // The primary trigger is completion confirmation; this is an explicit fallback.
-router.post('/quest/:questId/capture', authenticate, captureQuestPayment);
+router.post('/quest/:questId/capture', authenticate, paymentInitiationLimiter, captureQuestPayment);
 
 // Cancel/void the authorization for a canceled or uncompleted job (quest giver
 // or admin). Does not "release funds" — there are none held; it voids the
