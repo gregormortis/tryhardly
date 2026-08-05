@@ -53,6 +53,19 @@ export const createConnectedAccount = async (
     const userId = req.user!.id;
     const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
+    // Fraud/abuse guard: require a confirmed email before a user can become a
+    // paid worker. Added after the 2026-08-04 card-testing incident, in which
+    // a fraudulent account was created and immediately used to receive Stripe
+    // Connect payouts with no email confirmation at all.
+    if (!(user as any).emailVerifiedAt) {
+      res.status(403).json({
+        error: 'Email verification required',
+        message: 'Please verify your email address before setting up payouts. Check your inbox for a verification link, or request a new one.',
+        emailVerificationRequired: true,
+      });
+      return;
+    }
+
     // Check if user already has a connected account
     const existingAccountId = (user as any).stripeAccountId;
     if (existingAccountId) {

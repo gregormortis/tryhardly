@@ -304,6 +304,25 @@ describe('createConnectedAccount — Stripe Connect onboarding', () => {
     return { user, body: {} } as any;
   }
 
+  it('rejects with 403 when the user has not verified their email', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      email: 'legendarygm@gmail.com',
+      role: 'ADMIN',
+      displayName: 'guildmaster',
+      stripeAccountId: null,
+      emailVerifiedAt: null,
+    });
+
+    const res = mockRes();
+    await createConnectedAccount(authReq({ id: 'u1', role: 'ADMIN' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    const body = res.json.mock.calls[0][0];
+    expect(body.emailVerificationRequired).toBe(true);
+    expect(mockStripe.createConnectedAccount).not.toHaveBeenCalled();
+  });
+
   it('creates a connected account and stores its id for any authenticated user (including ADMIN)', async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       id: 'u1',
@@ -311,6 +330,7 @@ describe('createConnectedAccount — Stripe Connect onboarding', () => {
       role: 'ADMIN',
       displayName: 'guildmaster',
       stripeAccountId: null,
+      emailVerifiedAt: new Date('2026-01-01'),
     });
     mockStripe.createConnectedAccount.mockResolvedValue({
       id: 'acct_new',
@@ -343,6 +363,7 @@ describe('createConnectedAccount — Stripe Connect onboarding', () => {
       role: 'ADMIN',
       displayName: 'guildmaster',
       stripeAccountId: null,
+      emailVerifiedAt: new Date('2026-01-01'),
     });
     const stripeErr: any = new Error(
       'Please review the responsibilities of managing losses for connected accounts'
@@ -368,6 +389,7 @@ describe('createConnectedAccount — Stripe Connect onboarding', () => {
       email: 'legendarygm@gmail.com',
       role: 'ADMIN',
       stripeAccountId: 'acct_existing',
+      emailVerifiedAt: new Date('2026-01-01'),
     });
     mockStripe.getAccount.mockResolvedValue({
       id: 'acct_existing',

@@ -30,6 +30,14 @@ model User {
   verified        Boolean @default(false)
   role            String  @default("USER")
 
+  // Email verification. Added after the 2026-08-04 card-testing incident, in
+  // which a fraudulent worker account was created and immediately used to
+  // receive Stripe Connect payouts with no email confirmation step at all.
+  // Nullable/defaulted so existing rows are unaffected; a null emailVerifiedAt
+  // means "not verified" and gates Stripe Connect account creation (see
+  // paymentController.createConnectedAccount).
+  emailVerifiedAt DateTime?
+
   // Professionalism layer. Additive and nullable: a worker may pledge to the
   // public Code of Craft. Null means "not pledged" — we never imply a pledge
   // that didn't happen. The pledged-at timestamp doubles as the proof.
@@ -84,6 +92,7 @@ model User {
   notifications      Notification[]
   ledGuilds          Guild[]           @relation("GuildLeader")
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   reportsFiled       Report[]          @relation("ReportsFiled")
   reportsResolved    Report[]          @relation("ReportsResolved")
   credentials        ProfessionalCredential[] @relation("CredentialOwner")
@@ -608,6 +617,26 @@ enum NotificationType {
 // database leak cannot be used to reset accounts. Tokens are single-use and
 // short-lived (expiry enforced at the application layer).
 model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Email Verification ──────────────────────────────────────────────────────
+
+// Stores only a SHA-256 hash of the verification token, mirroring
+// PasswordResetToken, so a database leak can't be used to verify arbitrary
+// accounts. Tokens are single-use and short-lived.
+model EmailVerificationToken {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])

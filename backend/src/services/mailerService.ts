@@ -134,6 +134,14 @@ export const emailTemplates = {
     return { to, subject: 'Reset your TryHardly password', text, html };
   },
 
+  verifyEmail(to: string, verifyUrl: string): EmailMessage {
+    const { text, html } = wrap(
+      'Confirm your email',
+      `Welcome to TryHardly! Please confirm your email address to unlock posting jobs, applying to work, and getting paid. This link expires in 24 hours.\n\n${verifyUrl}\n\nIf you didn't create a TryHardly account, you can safely ignore this email.`,
+    );
+    return { to, subject: 'Confirm your TryHardly email', text, html };
+  },
+
   newApplication(to: string, applicantName: string, questTitle: string): EmailMessage {
     const { text, html } = wrap(
       'New application',

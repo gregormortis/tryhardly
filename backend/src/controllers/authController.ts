@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { issueVerificationEmail } from './emailVerificationController';
 
 // POST /api/auth/register
 export const register = async (req: Request, res: Response): Promise<void> => {
@@ -36,6 +37,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       process.env.JWT_SECRET!,
       { expiresIn: expiresIn as any },
     );
+
+    // Fire off the verification email without blocking/failing registration if
+    // it errors (e.g. mail provider hiccup) — the user can always resend via
+    // POST /api/auth/resend-verification. Email verification gates Stripe
+    // Connect account creation, not registration/login itself.
+    issueVerificationEmail(user.id, user.email).catch((err) => {
+      console.error('Failed to send verification email on register:', err);
+    });
 
     res.status(201).json({
       user: {
