@@ -421,6 +421,46 @@ export function evaluateAccountReadiness(account: Stripe.Account): {
 }
 
 /**
+ * Create a Stripe Identity VerificationSession for a worker: government ID +
+ * selfie verification, hosted entirely by Stripe (we never see or store the
+ * document/selfie ourselves). Added as the second layer of the post-
+ * 2026-08-04 fraud remediation — email verification alone confirms a working
+ * inbox, not a real identity. `type: 'document'` requests an ID document plus
+ * a live selfie match, which is the strongest verification Identity offers.
+ *
+ * `returnUrl` is where Stripe redirects the user after they finish (or
+ * abandon) the hosted verification flow; the actual verified/failed result
+ * arrives asynchronously via webhook (`identity.verification_session.*`), not
+ * synchronously on redirect, so the frontend should poll
+ * GET /api/payments/identity/status rather than trust the redirect alone.
+ */
+export async function createIdentityVerificationSession(
+  userId: string,
+  returnUrl: string
+): Promise<Stripe.Identity.VerificationSession> {
+  return getStripe().identity.verificationSessions.create({
+    type: 'document',
+    options: {
+      document: {
+        require_matching_selfie: true,
+      },
+    },
+    return_url: returnUrl,
+    metadata: { tryhardly_user_id: userId },
+  });
+}
+
+/**
+ * Retrieve a Stripe Identity VerificationSession (e.g. to re-check status
+ * without waiting on a webhook, or to recover from a missed webhook).
+ */
+export async function getIdentityVerificationSession(
+  sessionId: string
+): Promise<Stripe.Identity.VerificationSession> {
+  return getStripe().identity.verificationSessions.retrieve(sessionId);
+}
+
+/**
  * Construct a webhook event from the raw body and signature.
  */
 export function constructWebhookEvent(

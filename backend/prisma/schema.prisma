@@ -38,6 +38,19 @@ model User {
   // paymentController.createConnectedAccount).
   emailVerifiedAt DateTime?
 
+  // Stripe Identity (government ID + selfie) verification. Second layer of
+  // the post-incident fraud remediation: closes the gap that email
+  // verification alone doesn't — a real person's actual government-issued
+  // identity, checked before they can be paid as a worker, not just a
+  // deliverable inbox. "NONE" until a verification session is created;
+  // "PENDING" while Stripe processes the submitted document/selfie;
+  // "VERIFIED" only after Stripe confirms a match; "FAILED" if Stripe's
+  // check does not pass (worker can retry). Gates the WORKER side of
+  // checkout (see paymentController.createQuestCheckout), not registration.
+  identityVerificationStatus String    @default("NONE")
+  identityVerifiedAt         DateTime?
+  stripeIdentitySessionId    String?
+
   // Professionalism layer. Additive and nullable: a worker may pledge to the
   // public Code of Craft. Null means "not pledged" — we never imply a pledge
   // that didn't happen. The pledged-at timestamp doubles as the proof.

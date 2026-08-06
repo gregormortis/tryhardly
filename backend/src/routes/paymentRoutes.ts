@@ -5,6 +5,8 @@ import {
   createConnectedAccount,
   getOnboardingLink,
   getConnectStatus,
+  createIdentityVerification,
+  getIdentityStatus,
   createQuestCheckout,
   captureQuestPayment,
   cancelQuestAuthorization,
@@ -29,6 +31,20 @@ const paymentInitiationLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 10,
   keyPrefix: 'payment-init',
+});
+
+// Second, per-USER (not per-IP) limiter on checkout specifically. The per-IP
+// limiter above stops a single machine hammering the endpoint, but doesn't
+// stop one authenticated account from spraying checkout attempts across MANY
+// different quests from residential/mobile IPs that legitimately rotate. This
+// closes that gap: same 10-per-10-minutes threshold, but keyed to the user's
+// id regardless of which IP the request came from. Must run after
+// `authenticate` since it reads req.user.id.
+const perUserCheckoutLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyPrefix: 'checkout-per-user',
+  keyBy: 'user',
 });
 
 /**
@@ -67,11 +83,20 @@ router.get('/connect/onboarding', authenticate, getOnboardingLink);
 // details + requirements due). Used by the UI to render connect/resume/complete.
 router.get('/connect/status', authenticate, getConnectStatus);
 
+// --- Stripe Identity (government ID + selfie verification) ---
+// Second layer of the post-2026-08-04 fraud remediation, alongside email
+// verification. Create/resume a hosted verification session for the current
+// user.
+router.post('/identity/verify', authenticate, paymentInitiationLimiter, createIdentityVerification);
+
+// Read the current user's identity verification status.
+router.get('/identity/status', authenticate, getIdentityStatus);
+
 // --- Marketplace Payment (destination charge via Checkout Session) ---
 // Create a Checkout Session for a job (authorize-only, manual capture): the
 // client's card is authorized — not charged — and the 12% fee + worker payout
 // route on capture to the worker's connected account (quest giver only).
-router.post('/quest/:questId/checkout', authenticate, paymentInitiationLimiter, createQuestCheckout);
+router.post('/quest/:questId/checkout', authenticate, paymentInitiationLimiter, perUserCheckoutLimiter, createQuestCheckout);
 
 // Capture the authorized payment for a completed task (quest giver or admin).
 // The primary trigger is completion confirmation; this is an explicit fallback.

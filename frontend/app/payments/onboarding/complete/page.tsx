@@ -13,16 +13,28 @@ interface ConnectStatus {
   onboarded: boolean;
 }
 
+interface IdentityStatus {
+  status: 'NONE' | 'PENDING' | 'VERIFIED' | 'FAILED';
+  hasSession: boolean;
+}
+
 function OnboardingComplete() {
   const [status, setStatus] = useState<ConnectStatus | null>(null);
+  const [identity, setIdentity] = useState<IdentityStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resuming, setResuming] = useState(false);
+  const [startingIdentity, setStartingIdentity] = useState(false);
 
   useEffect(() => {
-    api
-      .get<ConnectStatus>('/payments/connect/status')
-      .then(setStatus)
+    Promise.all([
+      api.get<ConnectStatus>('/payments/connect/status'),
+      api.get<IdentityStatus>('/payments/identity/status'),
+    ])
+      .then(([connectStatus, identityStatus]) => {
+        setStatus(connectStatus);
+        setIdentity(identityStatus);
+      })
       .catch((err: unknown) => {
         const e = err as { message?: string };
         setError(e?.message || 'Could not check your payout account status');
@@ -43,7 +55,22 @@ function OnboardingComplete() {
     }
   };
 
+  const handleStartIdentity = async () => {
+    setStartingIdentity(true);
+    setError(null);
+    try {
+      const res = await api.post<{ url: string }>('/payments/identity/verify', {});
+      window.location.href = res.url;
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setError(e?.message || 'Failed to start identity verification');
+      setStartingIdentity(false);
+    }
+  };
+
   const complete = status?.onboarded === true;
+  const identityVerified = identity?.status === 'VERIFIED';
+  const identityFailed = identity?.status === 'FAILED';
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gray-950">
@@ -55,19 +82,46 @@ function OnboardingComplete() {
               <p className="text-gray-400 text-sm">Checking your payout account...</p>
             </>
           ) : complete ? (
-            <>
-              <div className="text-5xl">✅</div>
-              <h1 className="text-2xl font-bold text-emerald-400">Payout account connected</h1>
-              <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
-                <p>
-                  Your Stripe Connect setup is complete. You can now receive payouts for completed
-                  quests, with TryHardly&rsquo;s flat 12% platform service fee applied at capture.
-                </p>
-              </div>
-            </>
+            identityVerified ? (
+              <>
+                <div className="text-5xl">&#9989;</div>
+                <h1 className="text-2xl font-bold text-emerald-400">You&apos;re all set to get paid</h1>
+                <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
+                  <p>
+                    Your Stripe Connect setup and identity verification are both complete. You can now
+                    receive payouts for completed quests, with TryHardly&apos;s flat 12% platform
+                    service fee applied at capture.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-5xl">&#128274;</div>
+                <h1 className="text-2xl font-bold text-amber-400">One more step: verify your identity</h1>
+                <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
+                  <p>
+                    Your payout account is connected, but TryHardly now requires a quick identity
+                    check (government ID + selfie, handled entirely by Stripe) before your first
+                    payout. This protects every worker and job poster on the platform from fraud.
+                  </p>
+                  {identityFailed && (
+                    <p className="text-rose-400">
+                      Your last verification attempt did not go through. Please try again.
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleStartIdentity}
+                  disabled={startingIdentity}
+                  className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
+                >
+                  {startingIdentity ? 'Opening Stripe Identity...' : 'Verify my identity'}
+                </button>
+              </>
+            )
           ) : (
             <>
-              <div className="text-5xl">📝</div>
+              <div className="text-5xl">&#128221;</div>
               <h1 className="text-2xl font-bold text-amber-400">A few more details needed</h1>
               <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
                 <p>

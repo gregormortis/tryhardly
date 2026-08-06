@@ -14,8 +14,20 @@ interface Bucket {
   resetAt: number;
 }
 
-export function rateLimit(opts: { windowMs: number; max: number; keyPrefix?: string }) {
-  const { windowMs, max, keyPrefix = '' } = opts;
+export function rateLimit(opts: {
+  windowMs: number;
+  max: number;
+  keyPrefix?: string;
+  /**
+   * How to derive the bucket key for a request. Defaults to the client IP
+   * (the original behavior, used for pre-auth endpoints like
+   * /register and /login). Pass 'user' for limits that should apply
+   * per-authenticated-user regardless of IP — this middleware must run
+   * after `authenticate` in that case, since it reads `req.user.id`.
+   */
+  keyBy?: 'ip' | 'user';
+}) {
+  const { windowMs, max, keyPrefix = '', keyBy = 'ip' } = opts;
   const buckets = new Map<string, Bucket>();
 
   // Periodically evict expired buckets so the map can't grow unbounded.
@@ -29,12 +41,24 @@ export function rateLimit(opts: { windowMs: number; max: number; keyPrefix?: str
   if (typeof sweep.unref === 'function') sweep.unref();
 
   return (req: Request, res: Response, next: NextFunction): void => {
-    const ip =
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      'unknown';
-    const key = `${keyPrefix}:${ip}`;
+    let identity: string;
+    if (keyBy === 'user') {
+      // Falls back to IP if somehow called without auth having run first,
+      // rather than throwing — but callers should always chain this after
+      // `authenticate` for per-user limits.
+      identity = (req as any).user?.id ||
+        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+        req.ip ||
+        req.socket.remoteAddress ||
+        'unknown';
+    } else {
+      identity =
+        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+        req.ip ||
+        req.socket.remoteAddress ||
+        'unknown';
+    }
+    const key = `${keyPrefix}:${identity}`;
     const now = Date.now();
 
     const bucket = buckets.get(key);

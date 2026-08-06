@@ -236,6 +236,121 @@ export const getConnectStatus = async (
 };
 
 /**
+ * POST /api/payments/identity/verify
+ * Create (or resume) a Stripe Identity verification session for the current
+ * user and return the hosted verification URL for the frontend to redirect
+ * to. Second layer of the post-2026-08-04 fraud remediation, alongside email
+ * verification — this confirms a real government-issued identity, which is
+ * what actually gates receiving a payout (see createQuestCheckout).
+ */
+export const createIdentityVerification = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    if ((user as any).identityVerificationStatus === 'VERIFIED') {
+      res.json({ message: 'Identity already verified', status: 'VERIFIED' });
+      return;
+    }
+
+    const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:3000')
+      .split(',')[0]
+      .trim();
+    const returnUrl = `${baseUrl}/payments/identity/complete`;
+
+    const session = await stripeService.createIdentityVerificationSession(userId, returnUrl);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        stripeIdentitySessionId: session.id,
+        // Only bump NONE -> PENDING; never downgrade an existing VERIFIED/FAILED
+        // state just because a new session object was created.
+        identityVerificationStatus:
+          (user as any).identityVerificationStatus === 'NONE'
+            ? 'PENDING'
+            : (user as any).identityVerificationStatus,
+      } as any,
+    });
+
+    res.status(201).json({
+      sessionId: session.id,
+      url: (session as any).url,
+      clientSecret: session.client_secret,
+      status: 'PENDING',
+    });
+  } catch (error: any) {
+    console.error('Error creating identity verification session:', {
+      type: error?.type,
+      code: error?.code,
+      message: error?.message,
+    });
+    res.status(500).json({
+      error: 'Failed to start identity verification',
+      message: stripeErrorMessage(error),
+    });
+  }
+};
+
+/**
+ * GET /api/payments/identity/status
+ * Report the current user's Stripe Identity verification status. Prefers the
+ * locally-stored status (kept current by the webhook handler) but falls back
+ * to a live Stripe lookup if a session exists and the stored status is still
+ * PENDING, in case a webhook was missed.
+ */
+export const getIdentityStatus = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    let status = (user as any).identityVerificationStatus as string;
+    const sessionId = (user as any).stripeIdentitySessionId as string | null;
+
+    if (status === 'PENDING' && sessionId) {
+      try {
+        const session = await stripeService.getIdentityVerificationSession(sessionId);
+        if (session.status === 'verified') {
+          status = 'VERIFIED';
+          await prisma.user.update({
+            where: { id: userId },
+            data: { identityVerificationStatus: 'VERIFIED', identityVerifiedAt: new Date() } as any,
+          });
+        } else if (session.status === 'requires_input') {
+          status = 'FAILED';
+          await prisma.user.update({
+            where: { id: userId },
+            data: { identityVerificationStatus: 'FAILED' } as any,
+          });
+        }
+      } catch (lookupError: any) {
+        // Non-fatal: report the last known local status rather than failing
+        // the whole request if Stripe is briefly unreachable.
+        console.error('Error refreshing identity verification status:', {
+          type: lookupError?.type,
+          message: lookupError?.message,
+        });
+      }
+    }
+
+    res.json({
+      status,
+      verifiedAt: (user as any).identityVerifiedAt,
+      hasSession: !!sessionId,
+    });
+  } catch (error: any) {
+    console.error('Error fetching identity verification status:', error?.message);
+    res.status(500).json({ error: 'Failed to fetch identity verification status' });
+  }
+};
+
+/**
  * POST /api/payments/quest/:questId/checkout
  * Create a marketplace Checkout Session for a job (destination charge).
  *
@@ -343,6 +458,22 @@ export const createQuestCheckout = async (
           detailsSubmitted: readiness.detailsSubmitted,
           requirementsDue: readiness.requirementsDue,
         },
+      });
+      return;
+    }
+
+    // Fraud/abuse guard, layer 2: the worker must have passed Stripe Identity
+    // (government ID + selfie) verification before they can receive a payout.
+    // Email verification alone confirms a working inbox, not a real person —
+    // this closes that gap by checking identity right at the point money is
+    // about to move toward the worker, regardless of when/whether they
+    // started identity verification.
+    if ((workerUser as any).identityVerificationStatus !== 'VERIFIED') {
+      res.status(400).json({
+        error: 'Worker identity verification incomplete',
+        message:
+          'Selected worker must complete identity verification before payment can be authorized.',
+        workerIdentityNotVerified: true,
       });
       return;
     }
@@ -971,6 +1102,44 @@ export const handleWebhook = async (
             data: { escrowStatus: 'FUNDED' } as any,
           });
           console.log(`✅ Escrow funded for quest ${questId}`);
+        }
+        break;
+      }
+
+      case 'identity.verification_session.verified': {
+        // Stripe confirmed the submitted ID document + selfie match. This is
+        // the authoritative signal — update immediately rather than waiting
+        // for the next status poll.
+        const session = event.data.object as any;
+        const userId = session.metadata?.tryhardly_user_id;
+        if (userId) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: {
+              identityVerificationStatus: 'VERIFIED',
+              identityVerifiedAt: new Date(),
+            } as any,
+          });
+          console.log(`✅ Identity verified for user ${userId} (session ${session.id})`);
+        }
+        break;
+      }
+
+      case 'identity.verification_session.requires_input': {
+        // The document/selfie check failed or Stripe needs the user to retry
+        // (e.g. blurry photo, mismatch). Mark FAILED so the worker sees a
+        // clear "verification failed, try again" state rather than being
+        // stuck on PENDING forever.
+        const session = event.data.object as any;
+        const userId = session.metadata?.tryhardly_user_id;
+        if (userId) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: { identityVerificationStatus: 'FAILED' } as any,
+          });
+          console.log(
+            `⚠️ Identity verification requires input for user ${userId} (session ${session.id}): ${session.last_error?.reason || 'unknown reason'}`
+          );
         }
         break;
       }

@@ -22,6 +22,8 @@ const mockStripe = {
   createAccountLink: jest.fn(),
   getAccount: jest.fn(),
   createCheckoutSession: jest.fn(),
+  createIdentityVerificationSession: jest.fn(),
+  getIdentityVerificationSession: jest.fn(),
   MIN_CHARGE_CENTS: 50,
   calculatePlatformFee: (cents: number) => Math.round(cents * 0.12),
   // Mirror the real readiness logic so the checkout guard can be exercised.
@@ -54,6 +56,8 @@ import {
   getOnboardingLink,
   getConnectStatus,
   createQuestCheckout,
+  createIdentityVerification,
+  getIdentityStatus,
 } from '../paymentController';
 
 function mockRes() {
@@ -654,6 +658,45 @@ describe('createQuestCheckout — precondition guards', () => {
     expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
   });
 
+  it('returns 400 when the worker has not passed identity verification', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w', identityVerificationStatus: 'NONE' },
+    });
+    mockStripe.getAccount.mockResolvedValue(readyAccount);
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.workerIdentityNotVerified).toBe(true);
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the worker identity verification is PENDING (not yet VERIFIED)', async () => {
+    mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
+      id: 'q1',
+      questGiverId: 'giver',
+      title: 'Tree removal',
+      reward: 200,
+      assignedAdventurerId: 'w1',
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w', identityVerificationStatus: 'PENDING' },
+    });
+    mockStripe.getAccount.mockResolvedValue(readyAccount);
+
+    const res = mockRes();
+    await createQuestCheckout(checkoutReq('q1'), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].workerIdentityNotVerified).toBe(true);
+    expect(mockStripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when the job amount is below the Stripe minimum', async () => {
     mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
       id: 'q1',
@@ -661,7 +704,7 @@ describe('createQuestCheckout — precondition guards', () => {
       title: 'Tiny job',
       reward: 0.25, // 25 cents, below the 50-cent floor
       assignedAdventurerId: 'w1',
-      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w', identityVerificationStatus: 'VERIFIED' },
     });
     mockStripe.getAccount.mockResolvedValue(readyAccount);
 
@@ -682,7 +725,7 @@ describe('createQuestCheckout — precondition guards', () => {
       title: 'Bad amount',
       reward: null,
       assignedAdventurerId: 'w1',
-      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w', identityVerificationStatus: 'VERIFIED' },
     });
     mockStripe.getAccount.mockResolvedValue(readyAccount);
 
@@ -710,7 +753,7 @@ describe('createQuestCheckout — precondition guards', () => {
     expect(mockStripe.getAccount).not.toHaveBeenCalled();
   });
 
-  it('creates the Checkout Session when the worker is fully onboarded and the amount is valid', async () => {
+  it('creates the Checkout Session when the worker is fully onboarded, identity-verified, and the amount is valid', async () => {
     mockPrisma.quest.findUniqueOrThrow.mockResolvedValue({
       id: 'q1',
       questGiverId: 'giver',
@@ -718,7 +761,7 @@ describe('createQuestCheckout — precondition guards', () => {
       reward: 200,
       currency: 'usd',
       assignedAdventurerId: 'w1',
-      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w' },
+      assignedAdventurer: { id: 'w1', stripeAccountId: 'acct_w', identityVerificationStatus: 'VERIFIED' },
     });
     mockStripe.getAccount.mockResolvedValue(readyAccount);
     mockStripe.createCheckoutSession.mockResolvedValue({
@@ -735,5 +778,176 @@ describe('createQuestCheckout — precondition guards', () => {
     expect(args.workerAccountId).toBe('acct_w');
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json.mock.calls[0][0].url).toBe('https://checkout.stripe.com/c/pay/cs_1');
+  });
+});
+
+describe('createIdentityVerification', () => {
+  function idReq(userId = 'u1') {
+    return { user: { id: userId }, body: {} } as any;
+  }
+
+  it('short-circuits with the current status when already verified', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      identityVerificationStatus: 'VERIFIED',
+    });
+
+    const res = mockRes();
+    await createIdentityVerification(idReq(), res);
+
+    expect(mockStripe.createIdentityVerificationSession).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'VERIFIED' }),
+    );
+  });
+
+  it('creates a new session and moves NONE to PENDING', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      identityVerificationStatus: 'NONE',
+    });
+    mockStripe.createIdentityVerificationSession.mockResolvedValue({
+      id: 'vs_1',
+      url: 'https://verify.stripe.com/vs_1',
+      client_secret: 'secret_abc',
+    });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await createIdentityVerification(idReq(), res);
+
+    expect(mockStripe.createIdentityVerificationSession).toHaveBeenCalledTimes(1);
+    const updateArg = mockPrisma.user.update.mock.calls[0][0];
+    expect(updateArg.data.stripeIdentitySessionId).toBe('vs_1');
+    expect(updateArg.data.identityVerificationStatus).toBe('PENDING');
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'vs_1', url: 'https://verify.stripe.com/vs_1' }),
+    );
+  });
+
+  it('does not downgrade an existing FAILED status when creating a retry session', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      identityVerificationStatus: 'FAILED',
+    });
+    mockStripe.createIdentityVerificationSession.mockResolvedValue({
+      id: 'vs_2',
+      url: 'https://verify.stripe.com/vs_2',
+      client_secret: 'secret_def',
+    });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await createIdentityVerification(idReq(), res);
+
+    const updateArg = mockPrisma.user.update.mock.calls[0][0];
+    // FAILED is preserved (not silently reset to PENDING) until Stripe
+    // actually reports a new outcome via webhook/status poll.
+    expect(updateArg.data.identityVerificationStatus).toBe('FAILED');
+  });
+});
+
+describe('getIdentityStatus', () => {
+  function idReq(userId = 'u1') {
+    return { user: { id: userId } } as any;
+  }
+
+  it('returns the stored status without a Stripe lookup when not PENDING', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      identityVerificationStatus: 'VERIFIED',
+      identityVerifiedAt: new Date('2026-08-06'),
+      stripeIdentitySessionId: 'vs_1',
+    });
+
+    const res = mockRes();
+    await getIdentityStatus(idReq(), res);
+
+    expect(mockStripe.getIdentityVerificationSession).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'VERIFIED', hasSession: true }),
+    );
+  });
+
+  it('refreshes PENDING status from Stripe and upgrades to VERIFIED', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      identityVerificationStatus: 'PENDING',
+      identityVerifiedAt: null,
+      stripeIdentitySessionId: 'vs_1',
+    });
+    mockStripe.getIdentityVerificationSession.mockResolvedValue({ status: 'verified' });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await getIdentityStatus(idReq(), res);
+
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: expect.objectContaining({ identityVerificationStatus: 'VERIFIED' }),
+    });
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ status: 'VERIFIED' }));
+  });
+
+  it('refreshes PENDING status from Stripe and downgrades to FAILED on requires_input', async () => {
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'u1',
+      identityVerificationStatus: 'PENDING',
+      identityVerifiedAt: null,
+      stripeIdentitySessionId: 'vs_1',
+    });
+    mockStripe.getIdentityVerificationSession.mockResolvedValue({ status: 'requires_input' });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await getIdentityStatus(idReq(), res);
+
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { identityVerificationStatus: 'FAILED' },
+    });
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ status: 'FAILED' }));
+  });
+});
+
+describe('handleWebhook — identity verification events', () => {
+  it('identity.verification_session.verified marks the user VERIFIED', async () => {
+    mockStripe.constructWebhookEventFromSecrets.mockReturnValue({
+      type: 'identity.verification_session.verified',
+      data: { object: { id: 'vs_1', metadata: { tryhardly_user_id: 'u1' } } },
+    });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await handleWebhook(webhookReq({}), res);
+
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: expect.objectContaining({ identityVerificationStatus: 'VERIFIED' }),
+    });
+    expect(res.json).toHaveBeenCalledWith({ received: true });
+  });
+
+  it('identity.verification_session.requires_input marks the user FAILED', async () => {
+    mockStripe.constructWebhookEventFromSecrets.mockReturnValue({
+      type: 'identity.verification_session.requires_input',
+      data: {
+        object: {
+          id: 'vs_1',
+          metadata: { tryhardly_user_id: 'u1' },
+          last_error: { reason: 'document_unverified_other' },
+        },
+      },
+    });
+    mockPrisma.user.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await handleWebhook(webhookReq({}), res);
+
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { identityVerificationStatus: 'FAILED' },
+    });
   });
 });
