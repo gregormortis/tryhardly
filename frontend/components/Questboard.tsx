@@ -332,6 +332,19 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
   const [loading, setLoading]               = useState(true);
   const [error, setError]                   = useState<string | null>(null);
 
+  // The full descriptive placeholder clips on narrow phones (e.g. "Search by
+  // job title, n..."). Below Tailwind's `sm` breakpoint (640px) swap it for a
+  // short one that always fits; matches the value shown at `sm:` and above.
+  const [searchPlaceholder, setSearchPlaceholder] = useState('Search by job title, neighborhood, or city...');
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const applyPlaceholder = () =>
+      setSearchPlaceholder(mq.matches ? 'Search jobs' : 'Search by job title, neighborhood, or city...');
+    applyPlaceholder();
+    mq.addEventListener('change', applyPlaceholder);
+    return () => mq.removeEventListener('change', applyPlaceholder);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -438,7 +451,10 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by job title, neighborhood, or city..."
+              // Long descriptive placeholder clips on narrow phone screens (e.g.
+              // "Search by job title, n..."). Below `sm` it's swapped for a
+              // short one that always fits; see the `searchPlaceholder` state.
+              placeholder={searchPlaceholder}
               aria-label="Search jobs by title, neighborhood, or city"
               className="w-full font-mono text-[12px] pl-8 pr-3 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
             />
@@ -527,24 +543,34 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
         <div className="font-mono text-[10px] text-stone-600 tracking-widest uppercase mb-2">
           Type of work
         </div>
-        <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={clsx(
-                  'font-mono text-[11px] tracking-wide px-3.5 py-1.5 rounded-full border whitespace-nowrap transition-all duration-150',
-                  isActive
-                    ? 'font-semibold text-amber-400 border-amber-500/60 bg-amber-400/10'
-                    : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
-                )}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
+        {/* Chips overflow the viewport on mobile with plenty more categories off
+            to the right. overflow-x-auto already lets it scroll, but on touch
+            devices the scrollbar is invisible, so nothing hinted more content
+            was there. The wrapper adds a right-edge fade so the row visibly
+            trails off instead of looking cut, plus a thin persistent scrollbar
+            as a secondary affordance. Chips keep whitespace-nowrap so none of
+            them wrap or get clipped mid-label. */}
+        <div className="relative mb-6">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 pr-6 scrollbar-thin">
+            {CATEGORIES.map((cat) => {
+              const isActive = activeCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={clsx(
+                    'font-mono text-[11px] tracking-wide px-3.5 py-1.5 rounded-full border whitespace-nowrap shrink-0 transition-all duration-150',
+                    isActive
+                      ? 'font-semibold text-amber-400 border-amber-500/60 bg-amber-400/10'
+                      : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                  )}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-zinc-950 to-transparent" />
         </div>
 
         <div className="flex flex-col gap-2">

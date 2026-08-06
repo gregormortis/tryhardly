@@ -115,7 +115,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="mx-auto max-w-4xl px-6 py-20">
+      <section id="how-it-works" className="mx-auto max-w-4xl px-6 py-12 sm:py-20">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-12 text-center">How it works</h2>
         <div className="grid sm:grid-cols-3 gap-8">
           {howItWorks.map(({ title, desc }, i) => (
@@ -131,7 +131,7 @@ export default function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
+      <section className="mx-auto max-w-5xl px-6 py-12 sm:py-20">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">Browse by category</h2>
         <p className="mx-auto max-w-xl text-sm text-zinc-400 mb-10 text-center">
           Post a request in any category today — local workers get alerts the moment your job goes live. More categories added weekly.
@@ -155,7 +155,7 @@ export default function HomePage() {
       </section>
 
       {/* How payments work */}
-      <section className="border-t border-zinc-800 bg-zinc-900/50 py-16">
+      <section className="border-t border-zinc-800 bg-zinc-900/50 py-12 sm:py-16">
         <div className="mx-auto max-w-4xl px-6">
         <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-6 sm:p-10">
           <div className="flex items-center gap-2 mb-4">
@@ -193,7 +193,7 @@ export default function HomePage() {
       </section>
 
       {/* Trust signals */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
+      <section className="mx-auto max-w-5xl px-6 py-12 sm:py-20">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">Built on trust</h2>
         <p className="mx-auto max-w-2xl text-sm text-zinc-400 mb-10 text-center">
           TryHardly is early. We are focused on local neighborhood jobs and growing one city at a time, starting in{' '}
@@ -213,7 +213,7 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA */}
-      <section className="mx-auto max-w-3xl px-6 py-20 text-center">
+      <section className="mx-auto max-w-3xl px-6 py-12 sm:py-20 text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Ready to get something done?</h2>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400 mb-10">
           Post the job you have been putting off, or start picking up paid work near you.
