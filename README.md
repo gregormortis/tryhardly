@@ -1,43 +1,59 @@
-# 🗡️ Tryhardly - Guild-Inspired Quest Gig Marketplace
+# TryHardly — Local Services Marketplace
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 
-**Tryhardly** transforms freelance work into an epic adventure. Post quests, complete missions, level up, join guilds, and earn rewards in the most gamified gig marketplace ever created.
+**TryHardly** is a US local services marketplace that connects customers who need hands-on
+work done with verified independent workers nearby. Launching Redding, California first.
 
-## ✨ Features
+Typical jobs: yard work and mowing, hauling and dump runs, moving help, cleaning,
+errands, and basic handyman tasks.
 
-### 🎮 Gamification System
-- **Level 1-100+**: Progress through ranks from Novice Adventurer to Legendary Hero
-- **XP & Skill Trees**: Earn experience and specialize in your class (Warrior/Developer, Mage/Designer, Rogue/Writer)
-- **Achievements & Badges**: Unlock rare achievements and show off your accomplishments
-- **Reputation System**: Build your legend through quality work
+## How it works
 
-### 📋 Quest System
-- **Quest Types**: Side Quests, Main Quests, Epic Quests, Daily Quests, Guild Quests
-- **Difficulty Ratings**: ⭐ to ⭐⭐⭐⭐⭐ star system
-- **Quest Board**: Beautiful, filterable interface for discovering work
-- **Quest Chains**: Build long-term relationships through connected projects
+1. A customer posts a job with a description, location, budget, and timing. Posting is free.
+2. Local workers submit bids with their price.
+3. The customer accepts a bid. Their payment method is **authorized** at booking — an
+   authorization is not a charge.
+4. The worker completes the job and the customer confirms completion.
+5. The charge is **captured** for the completed work, and the worker payout is processed
+   through Stripe Connect after capture.
+6. TryHardly earns a flat **12% platform service fee** on completed paid jobs.
 
-### 🏰 Guild System
-- **Form Guilds**: Create teams/agencies with friends
-- **Guild Ranks**: Founder, Leader, Officer, Member hierarchies
-- **Collaborative Quests**: Take on large projects together
-- **Guild Reputation**: Build collective credibility
+TryHardly is a marketplace facilitator. It is not the service provider, does not hold
+customer funds, and does not provide regulated financial services. All payment processing
+and worker payouts run through Stripe and Stripe Connect.
 
-### 💰 Marketplace Payments
-- **Secure Payments**: Stripe Connect marketplace payments, with payouts on task completion
-- **Gold Currency**: Work is rewarded in "Gold" (real money)
-- **Platform Fee**: Fair 12% commission
-- **Fast Payouts**: Receive payouts within 2-3 business days
+## Features
 
-### 💬 Communication
-- **In-App Messaging**: Direct communication between quest givers and adventurers
-- **Real-time Notifications**: Never miss an opportunity
-- **Quest Updates**: Track progress and deliverables
+### Marketplace
+- Public job board with category and location filtering
+- Multi-step job posting that requires no account until the final publish step
+- Structured bidding with material, labor, and timeline breakdowns
+- Direct messaging between customers and workers
+- Recurring jobs for repeat work such as mowing and cleaning
 
-## 🛠️ Tech Stack
+### Payments
+- Stripe Checkout with `capture_method: 'manual'` — authorize at booking, capture on completion
+- Destination charges via Stripe Connect with a 12% `application_fee_amount`
+- Stripe Connect Express onboarding for worker payouts
+- Cancelling before completion voids the authorization
+
+### Trust and safety
+- Mandatory email verification before a worker can create a connected account
+- Stripe Identity government ID and selfie verification before a worker's first payout
+- Rate limiting and duplicate-checkout blocking on all payment endpoints
+- Professional credentials, licenses, and proof-of-work galleries on worker profiles
+- Reviews written only by people who completed a job together
+- Public policy pages: terms, refunds, privacy, community guidelines, prohibited services
+
+### Reputation
+- Ratings, skill badges, and experience tiers that affect visibility and trust only — never
+  the fee, which stays a flat 12% for every worker at every level
+- Worker teams for shared standards and mentoring
+
+## Tech Stack
 
 ### Frontend
 - **Framework**: Next.js 14 (App Router)
@@ -205,33 +221,13 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 
-**Made with ⚔️ by adventurers, for adventurers**
-
-## 🎮 Core Concepts
-
-### Quest Types
-- **Side Quest**: Small, quick tasks ($50-$500, 1-3 days)
-- **Main Quest**: Medium projects ($500-$2000, 1-2 weeks)
-- **Epic Quest**: Large, complex projects ($2000+, 2+ weeks)
-- **Daily Quest**: Recurring tasks with bonuses
-- **Guild Quest**: Team-based collaborative projects
-
-### Experience & Leveling
-- Complete quests to earn XP
-- Level up to unlock higher-tier quests
-- Specialize in skill trees (Development, Design, Writing, Marketing, etc.)
-- Earn titles and badges for achievements
-
-### Guild System
-- Form or join guilds with other adventurers
-- Take on larger quests as a team
-- Share guild treasury and resources
-- Compete in guild rankings and events
+**Built in Redding, California.**
 
 ## 🔒 Security
 
 - All marketplace payments are processed securely through Stripe
-- Payouts are released on task completion, protecting both quest givers and adventurers
+- Charges are captured only after a job is confirmed complete; worker payouts are processed
+  through Stripe Connect after capture
 - Two-factor authentication available
 - Regular security audits
 
