@@ -21,7 +21,7 @@ function RegisterForm() {
   // Someone arriving from the last step of the post-a-job wizard already filled
   // the form out, so say what the account is for and that their draft is waiting.
   const context =
-    redirect === '/post-quest'
+    redirect === '/post-a-job'
       ? {
           heading: 'Create a free account to post your job',
           sub: 'Posting is free. The account is what lets you receive bids, message workers, and choose who does the work. Your job details are saved — you’ll come straight back to them.',
@@ -37,7 +37,7 @@ function RegisterForm() {
     setError('');
     try {
       await register(form.username, form.email, form.password);
-      router.push(redirect ?? '/questboard');
+      router.push(redirect ?? '/jobs');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {

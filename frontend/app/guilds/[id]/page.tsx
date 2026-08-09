@@ -133,7 +133,7 @@ export default function GuildDetailPage() {
                     const skillLevel = jobSkillLevelLabel(job.difficulty);
                     const status = jobStatusLabel(job.status);
                     return (
-                      <Link key={job._id} href={`/questboard/${job._id}`}>
+                      <Link key={job._id} href={`/job/${job._id}`}>
                         <div className="p-4 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors cursor-pointer border border-transparent hover:border-amber-500/30">
                           <div className="flex items-center justify-between gap-3">
                             <span className="text-white font-medium">{job.title}</span>

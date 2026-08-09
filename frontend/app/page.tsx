@@ -40,7 +40,7 @@ export default function HomePage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (zip.trim()) {
-      window.location.href = `/questboard?zip=${zip.trim()}`;
+      window.location.href = `/jobs?zip=${zip.trim()}`;
     }
   };
 
@@ -65,13 +65,13 @@ export default function HomePage() {
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-6">
           <Link
-            href="/post-quest"
+            href="/post-a-job"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
             Post a job free <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            href="/questboard"
+            href="/jobs"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-bold text-zinc-100 hover:border-amber-500/50 hover:bg-zinc-900 transition-colors"
           >
             Find local work
@@ -140,7 +140,7 @@ export default function HomePage() {
           {categories.map(({ name, icon: Icon, jobs }) => (
             <Link
               key={name}
-              href={`/post-quest?category=${encodeURIComponent(name)}`}
+              href={`/post-a-job?category=${encodeURIComponent(name)}`}
               className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-6 hover:border-amber-500/50 hover:bg-zinc-800 transition-all group"
             >
               <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
@@ -220,13 +220,13 @@ export default function HomePage() {
         </p>
         <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
           <Link
-            href="/post-quest"
+            href="/post-a-job"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-8 py-3.5 font-semibold text-zinc-950 transition hover:bg-amber-400"
           >
             Post a job free <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
-            href="/questboard"
+            href="/jobs"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-8 py-3.5 font-semibold transition hover:border-amber-500/50 hover:bg-zinc-900"
           >
             Browse local work

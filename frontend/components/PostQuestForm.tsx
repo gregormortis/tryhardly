@@ -452,12 +452,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   async function copyJobLink() {
     if (!postedId) return;
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/questboard/${postedId}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/job/${postedId}`);
       setShareCopied(true);
     } catch {
       // Clipboard can be blocked (insecure context, denied permission). Send the
       // poster to the job page so they can copy the URL from the address bar.
-      window.location.href = `/questboard/${postedId}`;
+      window.location.href = `/job/${postedId}`;
     }
   }
 
@@ -477,7 +477,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
     // stash the finished draft and send them to create the free account.
     if (!currentUserId) {
       savePostJobDraft({ needText, values: data });
-      window.location.href = '/auth/register?redirect=/post-quest';
+      window.location.href = '/auth/register?redirect=/post-a-job';
       return;
     }
     setSubmitting(true);
@@ -580,7 +580,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
           <div className="space-y-2.5 text-left">
             <button
-              onClick={() => { window.location.href = `/questboard/${postedId}`; }}
+              onClick={() => { window.location.href = `/job/${postedId}`; }}
               className="w-full font-mono text-[11px] font-semibold tracking-widest px-6 py-3 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
             >
               VIEW YOUR JOB
@@ -599,7 +599,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 MY DASHBOARD
               </button>
               <button
-                onClick={() => { window.location.href = '/questboard'; }}
+                onClick={() => { window.location.href = '/jobs'; }}
                 className="flex-1 font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-white/[0.08] rounded text-stone-600 hover:text-stone-400 transition-colors"
               >
                 BROWSE JOBS

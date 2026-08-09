@@ -104,7 +104,7 @@ export default function StandardsOverviewPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
-              href="/questboard"
+              href="/jobs"
               className="inline-block bg-amber-600 hover:bg-amber-700 text-black font-bold px-6 py-3 rounded-lg transition-colors"
             >
               Browse the questboard

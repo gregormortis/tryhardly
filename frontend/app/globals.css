@@ -15,6 +15,16 @@
 }
 
 @layer utilities {
+
+  /* Hide the horizontal scrollbar on chip/filter rows. The gradient fade on
+     the right edge communicates scrollability instead. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
   .font-syne {
     font-family: var(--font-syne), system-ui, sans-serif;
   }

@@ -102,7 +102,7 @@ export default function StandardCategoryPage({ params }: { params: { category: s
               The Code of Craft
             </Link>
             <Link
-              href="/questboard"
+              href="/jobs"
               className="inline-block border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold px-6 py-3 rounded-lg transition-colors"
             >
               Browse the questboard

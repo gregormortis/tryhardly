@@ -19,12 +19,12 @@ function LoginForm() {
   // Tailor the heading/subtext to where the user was headed so a login wall
   // never feels like a generic dead end. Keep copy practical (post a job).
   const context =
-    redirect === '/post-quest'
+    redirect === '/post-a-job'
       ? {
           heading: 'Sign in to post your job',
           sub: 'Posting is free. An account is what lets you receive bids, message workers, and choose who does the work. Any job details you already filled in are saved.',
         }
-      : redirect && redirect.startsWith('/questboard')
+      : redirect && redirect.startsWith('/jobs')
       ? {
           heading: 'Sign in to bid on this job',
           sub: 'A free account lets you send the poster a detailed bid. Before your first bid you’ll connect a Stripe Connect payout account — that’s how you get paid once the poster confirms the completed work.',
@@ -44,7 +44,7 @@ function LoginForm() {
     setError('');
     try {
       await login(form.email, form.password);
-      router.push(redirect ?? '/questboard');
+      router.push(redirect ?? '/jobs');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

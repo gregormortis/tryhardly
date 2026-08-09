@@ -5,6 +5,7 @@ import './globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { AuthProvider } from '../lib/auth';
+import { OrganizationSchema } from '../components/StructuredData';
 
 const dmMono = DM_Mono({
   subsets: ['latin'],
@@ -31,6 +32,12 @@ export const metadata: Metadata = {
     template: '%s · TryHardly',
   },
   description,
+  alternates: { canonical: '/' },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -81,6 +88,7 @@ export default function RootLayout({
       <head>
         {/* Plausible Analytics */}
         <script defer data-domain="tryhardly.com" src="https://plausible.io/js/script.js" />
+        <OrganizationSchema />
       </head>
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
         {/* Google Analytics */}

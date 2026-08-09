@@ -157,7 +157,7 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
     : quest.city || quest.neighborhood || 'Location not listed';
 
   function goToDetail() {
-    router.push(`/questboard/${quest.id}`);
+    router.push(`/job/${quest.id}`);
   }
 
   return (
@@ -405,7 +405,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
 
             <div className="flex flex-col items-start gap-2.5">
               <a
-                href="/post-quest"
+                href="/post-a-job"
                 className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
               >
                 POST A JOB FREE
@@ -527,7 +527,12 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
         <div className="font-mono text-[10px] text-stone-600 tracking-widest uppercase mb-2">
           Type of work
         </div>
-        <div className="flex gap-1.5 mb-6 overflow-x-auto pb-1">
+        {/* Horizontally scrolling chip row. The fade on the right edge is the
+            only cue that more categories exist off-screen — without it the row
+            just looks clipped, and on touch devices the later categories are
+            effectively invisible. */}
+        <div className="relative mb-6">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 pr-8 scrollbar-none">
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
             return (
@@ -545,6 +550,11 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
               </button>
             );
           })}
+          </div>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-zinc-950 to-transparent"
+          />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -581,7 +591,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                   </p>
                   <div className="mt-5 flex flex-col sm:flex-row gap-2.5 justify-center">
                     <a
-                      href="/post-quest"
+                      href="/post-a-job"
                       className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
                     >
                       POST A JOB FREE
@@ -626,7 +636,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                       SHOW ALL JOBS
                     </button>
                     <a
-                      href="/post-quest"
+                      href="/post-a-job"
                       className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
                     >
                       POST A JOB FREE
@@ -676,7 +686,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           </span>
           <div className="flex flex-wrap gap-5">
             {[
-              { label: 'Post a job', href: '/post-quest' },
+              { label: 'Post a job', href: '/post-a-job' },
               { label: 'Worker alerts', href: '/work-alerts' },
               { label: 'How it works', href: '/faq' },
               { label: 'Pricing', href: '/pricing' },

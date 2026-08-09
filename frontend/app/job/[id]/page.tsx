@@ -134,7 +134,7 @@ export default function QuestDetailPage() {
     try {
       const next = await api.post<Quest>(`/quests/${params.id}/next-occurrence`, {});
       toast.success('Next visit posted to your board.');
-      router.push(`/questboard/${next.id}`);
+      router.push(`/job/${next.id}`);
     } catch (err: any) {
       toast.error(err.message || 'Could not post the next occurrence');
     } finally {
@@ -181,7 +181,7 @@ export default function QuestDetailPage() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-100 mb-2">Job not found</h2>
           <p className="text-gray-400 mb-6">This job is no longer listed.</p>
-          <Link href="/questboard" className="text-amber-400 hover:text-amber-300 font-medium">
+          <Link href="/jobs" className="text-amber-400 hover:text-amber-300 font-medium">
             ← Back to all jobs
           </Link>
         </div>
@@ -231,7 +231,7 @@ export default function QuestDetailPage() {
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Back link */}
-        <Link href="/questboard" className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-8">
+        <Link href="/jobs" className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-8">
           <span>←</span> Back to all jobs
         </Link>
 
@@ -422,7 +422,7 @@ export default function QuestDetailPage() {
                 <div className="space-y-3">
                   <button
                     onClick={() =>
-                      router.push(`/auth/login?redirect=${encodeURIComponent(`/questboard/${quest.id}`)}`)
+                      router.push(`/auth/login?redirect=${encodeURIComponent(`/job/${quest.id}`)}`)
                     }
                     className="w-full bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-3 rounded-lg transition-colors text-lg"
                   >

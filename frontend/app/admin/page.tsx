@@ -345,7 +345,7 @@ export default function AdminPage() {
                 {quests.map((q) => (
                   <div key={q.id} className="flex items-center justify-between gap-4 p-4">
                     <div className="min-w-0">
-                      <Link href={`/questboard/${q.id}`} className="text-white font-medium hover:text-amber-400 truncate block">
+                      <Link href={`/job/${q.id}`} className="text-white font-medium hover:text-amber-400 truncate block">
                         {q.title}
                       </Link>
                       <p className="text-xs text-gray-500">
@@ -471,7 +471,7 @@ export default function AdminPage() {
                             </p>
                           )}
                           {l.convertedQuestId && (
-                            <Link href={`/questboard/${l.convertedQuestId}`} className="text-xs text-green-400 hover:text-green-300 mt-1 inline-block">
+                            <Link href={`/job/${l.convertedQuestId}`} className="text-xs text-green-400 hover:text-green-300 mt-1 inline-block">
                               View created quest →
                             </Link>
                           )}
@@ -737,7 +737,7 @@ export default function AdminPage() {
                 {reports.map((r) => {
                   const targetHref =
                     r.targetType === 'QUEST'
-                      ? `/questboard/${r.targetId}`
+                      ? `/job/${r.targetId}`
                       : r.targetType === 'USER'
                         ? `/profile/${r.targetId}`
                         : null;

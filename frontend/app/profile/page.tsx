@@ -308,12 +308,12 @@ export default function ProfilePage() {
           {applications.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <p>No applications yet.</p>
-              <Link href="/questboard" className="text-amber-400 hover:text-amber-300 mt-2 inline-block">Browse quests</Link>
+              <Link href="/jobs" className="text-amber-400 hover:text-amber-300 mt-2 inline-block">Browse quests</Link>
             </div>
           ) : (
             <div className="space-y-3">
               {applications.map((app: Application) => (
-                <Link key={app.id} href={`/questboard/${app.questId}`}>
+                <Link key={app.id} href={`/job/${app.questId}`}>
                   <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors">
                     <div>
                       <h3 className="text-white font-medium">{app.quest?.title}</h3>

@@ -34,7 +34,7 @@ function CheckoutSuccess() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             {questId && (
               <Link
-                href={`/questboard/${questId}`}
+                href={`/job/${questId}`}
                 className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2.5 px-5 rounded-lg transition-colors"
               >
                 Back to job
@@ -48,7 +48,7 @@ function CheckoutSuccess() {
             </Link>
           </div>
           <p className="pt-1">
-            <Link href="/questboard" className="text-amber-400 hover:text-amber-300 text-sm">
+            <Link href="/jobs" className="text-amber-400 hover:text-amber-300 text-sm">
               Browse the job board
             </Link>
           </p>

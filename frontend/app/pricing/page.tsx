@@ -35,10 +35,10 @@ export default function PricingPage() {
             <li className="flex items-start gap-2"><span className="text-green-400 mt-0.5">✓</span><span>The 12% marketplace fee applies to <span className="font-semibold text-white">workers</span>, not posters</span></li>
           </ul>
           <div className="mt-5 flex flex-wrap gap-3">
-            <a href="/post-quest" className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2.5 text-sm transition-colors">
+            <a href="/post-a-job" className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2.5 text-sm transition-colors">
               Post a job — free
             </a>
-            <a href="/questboard" className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 hover:border-amber-400 text-amber-300 px-5 py-2.5 text-sm font-semibold transition-colors">
+            <a href="/jobs" className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 hover:border-amber-400 text-amber-300 px-5 py-2.5 text-sm font-semibold transition-colors">
               Browse jobs
             </a>
           </div>

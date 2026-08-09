@@ -76,7 +76,7 @@ export default function MessageThreadPage() {
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-2xl mx-auto">
-        <Link href={`/questboard/${questId}`} className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-6">
+        <Link href={`/job/${questId}`} className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-6">
           <span>←</span> Back to quest
         </Link>
 

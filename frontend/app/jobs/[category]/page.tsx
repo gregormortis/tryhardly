@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { JOB_CATEGORIES, resolveJobCategory } from '@/lib/jobCategories';
+import { SERVICE_AREAS } from '@/lib/serviceAreas';
 import QuestBoard from '@/components/Questboard';
+import { ServiceSchema, BreadcrumbSchema } from '@/components/StructuredData';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
 
 interface PageProps {
   params: { category: string };
@@ -13,14 +17,15 @@ export function generateStaticParams() {
 
 export function generateMetadata({ params }: PageProps): Metadata {
   const cat = resolveJobCategory(params.category);
-  const title = cat.known ? `${cat.label} — Find Local Work` : `${cat.label} — Local Quests`;
+  const title = cat.known ? `${cat.label} — Find Local Help` : `${cat.label} — Local Jobs`;
+  const description = `${cat.blurb} Post a job free or find paid ${cat.label.toLowerCase()} near you on TryHardly.`;
   return {
     title,
-    description: `${cat.blurb} Browse and post ${cat.label.toLowerCase()} on TryHardly, a local gig board for real work.`,
+    description,
     alternates: { canonical: `/jobs/${cat.slug}` },
     openGraph: {
       title: `${title} · TryHardly`,
-      description: cat.blurb,
+      description,
       url: `/jobs/${cat.slug}`,
     },
   };
@@ -28,13 +33,27 @@ export function generateMetadata({ params }: PageProps): Metadata {
 
 export default function JobCategoryPage({ params }: PageProps) {
   const cat = resolveJobCategory(params.category);
+  const url = `${siteUrl}/jobs/${cat.slug}`;
 
   return (
     <div className="bg-zinc-950">
+      <ServiceSchema
+        categorySlug={cat.slug}
+        categoryLabel={cat.label}
+        description={cat.blurb}
+        url={url}
+      />
+      <BreadcrumbSchema
+        trail={[
+          { name: 'Local jobs', path: '/jobs' },
+          { name: cat.label, path: `/jobs/${cat.slug}` },
+        ]}
+      />
+
       <section className="border-b border-white/[0.06] px-4 sm:px-8 py-10">
         <div className="max-w-5xl mx-auto">
           <nav className="font-mono text-[11px] text-stone-600 mb-3">
-            <Link href="/questboard" className="hover:text-amber-400">Quest board</Link>
+            <Link href="/jobs" className="hover:text-amber-400">Local jobs</Link>
             <span className="mx-2">/</span>
             <span className="text-stone-400">{cat.label}</span>
           </nav>
@@ -53,26 +72,49 @@ export default function JobCategoryPage({ params }: PageProps) {
           </div>
 
           <p className="mt-5 font-mono text-[11px] text-stone-600">
-            TryHardly is early-stage and growing locally — listings below are live quests, not estimates.
+            TryHardly is early-stage and growing locally — everything below is a real job posted by
+            a neighbor, not an estimate.
           </p>
 
           <div className="mt-5 flex gap-3">
             <Link
-              href="/post-quest"
+              href="/post-a-job"
               className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
             >
-              POST A {cat.label.toUpperCase()} QUEST
+              POST A {cat.label.toUpperCase()} JOB
             </Link>
           </div>
         </div>
       </section>
 
       {/* Known categories deep-link into a filtered board; generic slugs search
-          the board by the slug term so the page still surfaces live quests. */}
+          the board by the slug term so the page still surfaces live jobs. */}
       <QuestBoard
         initialCategory={cat.known ? cat.slug : undefined}
         initialSearch={cat.known ? undefined : cat.label}
       />
+
+      {/* City pages for this category. These are the long-tail URLs local
+          search actually matches, so link them from the category page rather
+          than leaving them orphaned in the sitemap. */}
+      {cat.known && (
+        <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-white/[0.05]">
+          <h2 className="font-mono text-[11px] font-semibold tracking-widest text-stone-600 uppercase mb-4">
+            {cat.label} by area
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {SERVICE_AREAS.map((a) => (
+              <Link
+                key={a.slug}
+                href={`/jobs/${cat.slug}/${a.slug}`}
+                className="font-mono text-[11px] text-stone-500 border border-white/[0.08] rounded-full px-3 py-1.5 hover:text-amber-400 hover:border-amber-500/40 transition-colors"
+              >
+                {cat.shortLabel} in {a.city}, {a.state}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Internal links to other categories help discovery + SEO. */}
       <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-white/[0.05]">
