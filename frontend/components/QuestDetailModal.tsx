@@ -111,12 +111,12 @@ export interface QuestDetailModalProps {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TIERS: Record<TierKey, { label: string; classes: string }> = {
-  novice:     { label: 'NOVICE',     classes: 'text-green-400 bg-green-400/10 border-green-400/20'    },
-  apprentice: { label: 'APPRENTICE', classes: 'text-blue-400 bg-blue-400/10 border-blue-400/20'       },
-  journeyman: { label: 'JOURNEYMAN', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/20'    },
-  expert:     { label: 'EXPERT',     classes: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
-  master:     { label: 'MASTER',     classes: 'text-violet-400 bg-violet-400/10 border-violet-400/20' },
-  legendary:  { label: 'LEGENDARY',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20'       },
+  novice:     { label: 'NOVICE',     classes: 'text-success bg-success/10 border-success/20'    },
+  apprentice: { label: 'APPRENTICE', classes: 'text-info bg-info/10 border-info/20'       },
+  journeyman: { label: 'JOURNEYMAN', classes: 'text-accent-text bg-accent/10 border-accent/20'    },
+  expert:     { label: 'EXPERT',     classes: 'text-warning bg-warning/10 border-warning/20' },
+  master:     { label: 'MASTER',     classes: 'text-info bg-info/10 border-info/20' },
+  legendary:  { label: 'LEGENDARY',  classes: 'text-danger bg-danger/10 border-danger/20'       },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -145,7 +145,7 @@ function errorMessage(e: unknown): string {
 
 function Badge({ label, classes }: { label: string; classes: string }) {
   return (
-    <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5 whitespace-nowrap', classes)}>
+    <span className={clsx('font-mono text-[11px] font-semibold tracking-widest border rounded-sm px-2 py-0.5 whitespace-nowrap', classes)}>
       {label}
     </span>
   );
@@ -153,18 +153,18 @@ function Badge({ label, classes }: { label: string; classes: string }) {
 
 function StatBlock({ value, label, warn = false }: { value: string; label: string; warn?: boolean }) {
   return (
-    <div className="flex flex-col gap-1 px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-lg flex-1">
-      <span className={clsx('font-bold text-xl leading-none', warn ? 'text-rose-400' : 'text-amber-400')}>
+    <div className="flex flex-col gap-1 px-4 py-3 bg-surface border border-line rounded-lg flex-1">
+      <span className={clsx('font-bold text-xl leading-none', warn ? 'text-danger' : 'text-accent-text')}>
         {value}
       </span>
-      <span className="font-mono text-[10px] text-stone-600 tracking-widest uppercase">{label}</span>
+      <span className="font-mono text-[12px] text-subtle tracking-widest uppercase">{label}</span>
     </div>
   );
 }
 
 function SkeletonLine({ wide = false }: { wide?: boolean }) {
   return (
-    <div className={clsx('h-3.5 bg-white/[0.05] rounded animate-pulse', wide ? 'w-full' : 'w-3/5')} />
+    <div className={clsx('h-3.5 bg-surface rounded animate-pulse', wide ? 'w-full' : 'w-3/5')} />
   );
 }
 
@@ -240,7 +240,7 @@ export default function QuestDetailModal({
       <div
         onClick={onClose}
         className={clsx(
-          'fixed inset-0 z-[900] bg-black/75 backdrop-blur-sm transition-opacity duration-300',
+          'fixed inset-0 z-[900] bg-strong/60 backdrop-blur-sm transition-opacity duration-300',
           visible ? 'opacity-100' : 'opacity-0',
         )}
       />
@@ -249,17 +249,17 @@ export default function QuestDetailModal({
       <div className="fixed inset-0 z-[901] flex items-end justify-center pointer-events-none">
         <div
           className={clsx(
-            'pointer-events-auto w-full max-w-2xl max-h-[92vh] bg-zinc-950 border border-white/[0.08] border-b-0 rounded-t-2xl flex flex-col transition-all duration-300',
+            'pointer-events-auto w-full max-w-2xl max-h-[92vh] bg-canvas border border-line border-b-0 rounded-t-2xl flex flex-col transition-all duration-300',
             visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0',
           )}
         >
           {/* Handle */}
-          <div className="w-9 h-1 bg-white/10 rounded-full mx-auto mt-3 flex-shrink-0" />
+          <div className="w-9 h-1 bg-surface rounded-full mx-auto mt-3 flex-shrink-0" />
 
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center bg-white/[0.05] border border-white/10 rounded-md text-stone-500 hover:text-stone-300 transition-colors"
+            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center bg-surface border border-line rounded-md text-subtle hover:text-body transition-colors"
           >
             <X size={15} />
           </button>
@@ -270,22 +270,22 @@ export default function QuestDetailModal({
             {/* Loading */}
             {loading && (
               <div className="flex flex-col gap-3.5 pt-2">
-                <div className="h-7 w-3/5 bg-white/[0.05] rounded animate-pulse" />
+                <div className="h-7 w-3/5 bg-surface rounded animate-pulse" />
                 <div className="flex gap-2">
-                  <div className="h-5 w-20 bg-white/[0.05] rounded animate-pulse" />
-                  <div className="h-5 w-24 bg-white/[0.05] rounded animate-pulse" />
+                  <div className="h-5 w-20 bg-surface rounded animate-pulse" />
+                  <div className="h-5 w-24 bg-surface rounded animate-pulse" />
                 </div>
                 <SkeletonLine />
                 <div className="flex gap-2.5 mt-2">
-                  {[1,2,3,4].map((i) => <div key={i} className="h-14 flex-1 bg-white/[0.05] rounded-lg animate-pulse" />)}
+                  {[1,2,3,4].map((i) => <div key={i} className="h-14 flex-1 bg-surface rounded-lg animate-pulse" />)}
                 </div>
-                <div className="h-28 w-full bg-white/[0.05] rounded-lg animate-pulse mt-1" />
+                <div className="h-28 w-full bg-surface rounded-lg animate-pulse mt-1" />
               </div>
             )}
 
             {/* Error */}
             {error && !loading && (
-              <div className="text-center pt-12 font-mono text-[13px] text-rose-400">{error}</div>
+              <div className="text-center pt-12 font-mono text-[13px] text-danger">{error}</div>
             )}
 
             {/* Content */}
@@ -294,17 +294,17 @@ export default function QuestDetailModal({
 
                 {/* Title + badges */}
                 <div className="mb-4 pr-10">
-                  <h2 className="font-bold text-2xl text-stone-100 leading-snug mb-2.5">{quest.title}</h2>
+                  <h2 className="font-bold text-2xl text-strong leading-snug mb-2.5">{quest.title}</h2>
                   <div className="flex items-center gap-2 flex-wrap">
                     {tier && <Badge label={tier.label} classes={tier.classes} />}
                     <Badge
                       label={CATEGORY_LABELS[quest.category] ?? quest.category}
-                      classes="text-stone-400 bg-white/[0.06] border-white/10"
+                      classes="text-muted bg-surface border-line"
                     />
                     {quest.status === 'open' && (
-                      <Badge label="OPEN" classes="text-green-400 bg-green-400/[0.08] border-green-400/20" />
+                      <Badge label="OPEN" classes="text-success bg-success/[0.08] border-success/20" />
                     )}
-                    <span className="font-mono text-[11px] text-stone-600 flex items-center gap-1">
+                    <span className="font-mono text-[12px] text-subtle flex items-center gap-1">
                       <MapPin size={10} /> {quest.neighborhood}, {quest.city}
                     </span>
                   </div>
@@ -319,7 +319,7 @@ export default function QuestDetailModal({
                 </div>
 
                 {/* Deadline */}
-                <p className={clsx('font-mono text-[11px] mb-5', days <= 3 ? 'text-rose-400' : 'text-stone-600')}>
+                <p className={clsx('font-mono text-[12px] mb-5', days <= 3 ? 'text-danger' : 'text-subtle')}>
                   <Clock size={10} className="inline mr-1" />
                   Deadline: {formatDeadline(quest.deadline)}
                   {days <= 3 && ' — Closing soon'}
@@ -327,10 +327,10 @@ export default function QuestDetailModal({
 
                 {/* Description */}
                 <div className="mb-6">
-                  <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-2">
+                  <p className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-2">
                     Quest Description
                   </p>
-                  <p className="font-mono text-[13px] text-stone-500 leading-relaxed whitespace-pre-wrap">
+                  <p className="font-mono text-[13px] text-subtle leading-relaxed whitespace-pre-wrap">
                     {quest.description}
                   </p>
                 </div>
@@ -338,12 +338,12 @@ export default function QuestDetailModal({
                 {/* Tools */}
                 {quest.tools.length > 0 && (
                   <div className="mb-6">
-                    <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-2 flex items-center gap-1">
+                    <p className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-2 flex items-center gap-1">
                       <Wrench size={10} /> Tools / Requirements
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {quest.tools.map((t) => (
-                        <span key={t} className="font-mono text-[11px] text-stone-500 bg-white/[0.04] border border-white/[0.08] rounded px-2.5 py-1">
+                        <span key={t} className="font-mono text-[12px] text-subtle bg-surface border border-line rounded px-2.5 py-1">
                           {t}
                         </span>
                       ))}
@@ -352,26 +352,26 @@ export default function QuestDetailModal({
                 )}
 
                 {/* Job poster / customer */}
-                <div className="flex items-center gap-3.5 p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl mb-7">
-                  <div className="w-11 h-11 rounded-full bg-amber-400/10 border border-amber-400/25 flex items-center justify-content-center flex-shrink-0">
-                    <span className="flex items-center justify-center w-full h-full font-bold text-sm text-amber-400">
+                <div className="flex items-center gap-3.5 p-4 bg-surface border border-line rounded-xl mb-7">
+                  <div className="w-11 h-11 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-content-center flex-shrink-0">
+                    <span className="flex items-center justify-center w-full h-full font-bold text-sm text-accent-text">
                       {quest.postedBy.avatarInitials}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-[14px] text-stone-100 mb-0.5">{quest.postedBy.username}</p>
-                    <p className="font-mono text-[11px] text-stone-600">
+                    <p className="font-semibold text-[14px] text-strong mb-0.5">{quest.postedBy.username}</p>
+                    <p className="font-mono text-[12px] text-subtle">
                       <Star size={10} className="inline mr-0.5" />
                       {quest.postedBy.reputationScore}/100 rep · {quest.postedBy.questsPosted} quests posted
                     </p>
                   </div>
-                  <span className="font-mono text-[10px] text-stone-700">Customer</span>
+                  <span className="font-mono text-[12px] text-subtle">Customer</span>
                 </div>
 
                 {/* CTA */}
                 <button
                   onClick={handleClaim}
-                  className="w-full py-4 rounded-lg font-mono text-[13px] font-semibold tracking-widest transition-all duration-200 flex items-center justify-center gap-2 bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer"
+                  className="w-full py-4 rounded-lg font-mono text-[13px] font-semibold tracking-widest transition-all duration-200 flex items-center justify-center gap-2 bg-accent text-on-accent hover:bg-accent-hover cursor-pointer"
                 >
                   {currentUserId ? (
                     <><span>PLACE A BID</span><ChevronRight size={14} /></>
@@ -379,7 +379,7 @@ export default function QuestDetailModal({
                 </button>
 
                 {!currentUserId && (
-                  <p className="font-mono text-[10px] text-stone-700 text-center mt-2.5">
+                  <p className="font-mono text-[12px] text-subtle text-center mt-2.5">
                     You&apos;ll be redirected to log in, then returned here.
                   </p>
                 )}

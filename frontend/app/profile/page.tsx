@@ -92,8 +92,8 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading profile...</p>
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-subtle">Loading profile...</p>
         </div>
       </div>
     );
@@ -102,23 +102,23 @@ export default function ProfilePage() {
   const displayProfile = profile || user;
 
   const statusColors: Record<string, string> = {
-    OPEN: 'text-green-400',
-    COMPLETED: 'text-blue-400',
-    IN_PROGRESS: 'text-amber-400',
-    CANCELLED: 'text-red-400',
-    PENDING: 'text-yellow-400',
-    ACCEPTED: 'text-green-400',
-    REJECTED: 'text-red-400',
+    OPEN: 'text-success',
+    COMPLETED: 'text-info',
+    IN_PROGRESS: 'text-accent-text',
+    CANCELLED: 'text-danger',
+    PENDING: 'text-warning',
+    ACCEPTED: 'text-success',
+    REJECTED: 'text-danger',
   };
 
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Profile header */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
+        <div className="bg-surface border border-line rounded-xl p-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-amber-500/20 border-2 border-amber-500/50 rounded-full flex items-center justify-center text-3xl font-bold text-amber-400 overflow-hidden">
+              <div className="w-20 h-20 bg-accent/20 border-2 border-accent/50 rounded-full flex items-center justify-center text-3xl font-bold text-accent-text overflow-hidden">
                 {displayProfile.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={displayProfile.avatarUrl} alt={displayProfile.username} className="w-full h-full object-cover" />
@@ -127,26 +127,26 @@ export default function ProfilePage() {
                 )}
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">{displayProfile.username}</h1>
+                <h1 className="text-2xl font-bold text-strong">{displayProfile.username}</h1>
                 {(displayProfile as any).displayName && (displayProfile as any).displayName !== displayProfile.username && (
-                  <div className="text-gray-400 text-sm">{(displayProfile as any).displayName}</div>
+                  <div className="text-muted text-sm">{(displayProfile as any).displayName}</div>
                 )}
-                <div className="text-amber-400 font-medium">
+                <div className="text-accent-text font-medium">
                   Level {displayProfile.level} • {guildPathLabel((displayProfile as any).adventurerClass)}
                 </div>
-                <div className="text-gray-500 text-sm mt-1">{displayProfile.email}</div>
+                <div className="text-subtle text-sm mt-1">{displayProfile.email}</div>
               </div>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setEditing(!editing)}
-                className="text-gray-400 hover:text-amber-400 text-sm transition-colors border border-gray-700 hover:border-amber-500 px-4 py-2 rounded-lg"
+                className="text-muted hover:text-accent-text text-sm transition-colors border border-line-strong hover:border-accent px-4 py-2 rounded-lg"
               >
                 {editing ? 'Cancel' : '✏️ Edit'}
               </button>
               <button
                 onClick={handleLogout}
-                className="text-gray-400 hover:text-red-400 text-sm transition-colors border border-gray-700 hover:border-red-700 px-4 py-2 rounded-lg"
+                className="text-muted hover:text-danger text-sm transition-colors border border-line-strong hover:border-danger px-4 py-2 rounded-lg"
               >
                 Sign Out
               </button>
@@ -155,73 +155,73 @@ export default function ProfilePage() {
 
           {/* Edit form */}
           {editing && (
-            <div className="mt-6 pt-6 border-t border-gray-800 space-y-4">
+            <div className="mt-6 pt-6 border-t border-line space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Display Name</label>
+                <label className="block text-sm font-medium text-body mb-1">Display Name</label>
                 <input
                   type="text"
                   value={editForm.displayName}
                   onChange={e => setEditForm({ ...editForm, displayName: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
                   placeholder="Your display name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Bio</label>
+                <label className="block text-sm font-medium text-body mb-1">Bio</label>
                 <textarea
                   value={editForm.bio}
                   onChange={e => setEditForm({ ...editForm, bio: e.target.value })}
                   rows={3}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500 resize-none"
+                  className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent resize-none"
                   placeholder="Tell us about your adventures..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Avatar URL</label>
+                <label className="block text-sm font-medium text-body mb-1">Avatar URL</label>
                 <input
                   type="url"
                   value={editForm.avatarUrl}
                   onChange={e => setEditForm({ ...editForm, avatarUrl: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
                   placeholder="https://example.com/avatar.jpg"
                 />
               </div>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Business name</label>
+                  <label className="block text-sm font-medium text-body mb-1">Business name</label>
                   <input
                     type="text"
                     value={editForm.businessName}
                     onChange={e => setEditForm({ ...editForm, businessName: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
                     placeholder="Optional"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Service area</label>
+                  <label className="block text-sm font-medium text-body mb-1">Service area</label>
                   <input
                     type="text"
                     value={editForm.serviceArea}
                     onChange={e => setEditForm({ ...editForm, serviceArea: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
                     placeholder="e.g. Redding, CA"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Years experience</label>
+                  <label className="block text-sm font-medium text-body mb-1">Years experience</label>
                   <input
                     type="number"
                     min={0}
                     value={editForm.yearsExperience}
                     onChange={e => setEditForm({ ...editForm, yearsExperience: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
                     placeholder="Optional"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Guild Path</label>
-                <p className="text-xs text-gray-500 mb-2">Choose the path that best describes how you like to help.</p>
+                <label className="block text-sm font-medium text-body mb-2">Guild Path</label>
+                <p className="text-xs text-subtle mb-2">Choose the path that best describes how you like to help.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {GUILD_PATHS.map(cls => (
                     <button
@@ -230,15 +230,15 @@ export default function ProfilePage() {
                       onClick={() => setEditForm({ ...editForm, adventurerClass: cls.value })}
                       className={`flex h-full flex-col p-3 rounded-lg border text-left transition-colors ${
                         editForm.adventurerClass === cls.value
-                          ? 'border-amber-500 bg-amber-500/10'
-                          : 'border-gray-700 hover:border-gray-600'
+                          ? 'border-accent bg-accent/10'
+                          : 'border-line-strong hover:border-line-strong'
                       }`}
                     >
                       <div className="flex items-center gap-2 font-medium text-sm">
                         <span className="w-5 shrink-0 text-center">{cls.icon}</span>
                         <span>{cls.label}</span>
                       </div>
-                      <div className="text-xs text-gray-500">{cls.desc}</div>
+                      <div className="text-xs text-subtle">{cls.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -246,7 +246,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-semibold px-6 py-2.5 rounded-lg transition-colors"
+                className="bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-semibold px-6 py-2.5 rounded-lg transition-colors"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -255,29 +255,29 @@ export default function ProfilePage() {
 
           {/* Bio */}
           {!editing && displayProfile.bio && (
-            <p className="mt-6 text-gray-300 leading-relaxed">{displayProfile.bio}</p>
+            <p className="mt-6 text-body leading-relaxed">{displayProfile.bio}</p>
           )}
 
           {/* Stats */}
           <div className="mt-6 grid grid-cols-3 gap-4">
-            <div className="bg-gray-800 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-amber-400">{displayProfile.xp?.toLocaleString() || 0}</div>
-              <div className="text-gray-500 text-xs mt-1">Total points</div>
+            <div className="bg-raised rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-accent-text">{displayProfile.xp?.toLocaleString() || 0}</div>
+              <div className="text-subtle text-xs mt-1">Total points</div>
             </div>
-            <div className="bg-gray-800 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-white">{(displayProfile as any).totalQuestsCompleted || 0}</div>
-              <div className="text-gray-500 text-xs mt-1">Quests Done</div>
+            <div className="bg-raised rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-strong">{(displayProfile as any).totalQuestsCompleted || 0}</div>
+              <div className="text-subtle text-xs mt-1">Quests Done</div>
             </div>
-            <div className="bg-gray-800 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-white">{(displayProfile as any).reputationScore || 0}</div>
-              <div className="text-gray-500 text-xs mt-1">Reputation</div>
+            <div className="bg-raised rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-strong">{(displayProfile as any).reputationScore || 0}</div>
+              <div className="text-subtle text-xs mt-1">Reputation</div>
             </div>
           </div>
 
           {/* Guild */}
           {displayProfile.guild && (
             <div className="mt-4">
-              <Link href={`/guilds/${displayProfile.guild.id}`} className="inline-flex items-center gap-2 text-sm text-amber-400 hover:text-amber-300">
+              <Link href={`/guilds/${displayProfile.guild.id}`} className="inline-flex items-center gap-2 text-sm text-accent-text hover:text-accent-text-hover">
                 🛡️ {displayProfile.guild.name} [{displayProfile.guild.tag}]
               </Link>
             </div>
@@ -285,9 +285,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Payout account (Stripe Connect) */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="font-semibold text-gray-200 mb-1">Payout Account</h2>
-          <p className="text-sm text-gray-500 mb-4">
+        <div className="bg-surface border border-line rounded-xl p-6">
+          <h2 className="font-semibold text-body mb-1">Payout Account</h2>
+          <p className="text-sm text-subtle mb-4">
             Set up Stripe Connect to receive payouts for completed quests.
           </p>
           <StripeConnectButton stripeAccountId={(displayProfile as any).stripeAccountId} />
@@ -303,26 +303,26 @@ export default function ProfilePage() {
         <ProfessionalismManager userId={displayProfile.id} />
 
         {/* Applications */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="font-semibold text-gray-200 mb-4">My Applications ({applications.length})</h2>
+        <div className="bg-surface border border-line rounded-xl p-6">
+          <h2 className="font-semibold text-body mb-4">My Applications ({applications.length})</h2>
           {applications.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-subtle">
               <p>No applications yet.</p>
-              <Link href="/jobs" className="text-amber-400 hover:text-amber-300 mt-2 inline-block">Browse quests</Link>
+              <Link href="/jobs" className="text-accent-text hover:text-accent-text-hover mt-2 inline-block">Browse quests</Link>
             </div>
           ) : (
             <div className="space-y-3">
               {applications.map((app: Application) => (
                 <Link key={app.id} href={`/job/${app.questId}`}>
-                  <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors">
+                  <div className="flex items-center justify-between p-4 bg-raised rounded-lg hover:bg-raised-2 transition-colors">
                     <div>
-                      <h3 className="text-white font-medium">{app.quest?.title}</h3>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                      <h3 className="text-strong font-medium">{app.quest?.title}</h3>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-subtle">
                         <span>${app.quest?.reward?.toLocaleString()}</span>
                         <span>{app.quest?.difficulty}</span>
                       </div>
                     </div>
-                    <span className={`text-sm font-medium ${statusColors[app.status] || 'text-gray-400'}`}>
+                    <span className={`text-sm font-medium ${statusColors[app.status] || 'text-muted'}`}>
                       {app.status}
                     </span>
                   </div>
@@ -333,14 +333,14 @@ export default function ProfilePage() {
         </div>
 
         {/* Account & data */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="font-semibold text-gray-200 mb-1">Account &amp; Data</h2>
-          <p className="text-sm text-gray-500 mb-4">
+        <div className="bg-surface border border-line rounded-xl p-6">
+          <h2 className="font-semibold text-body mb-1">Account &amp; Data</h2>
+          <p className="text-sm text-subtle mb-4">
             Manage or delete your account and personal data.
           </p>
           <Link
             href="/account-deletion"
-            className="inline-block text-sm text-gray-400 hover:text-red-400 transition-colors border border-gray-700 hover:border-red-700 px-4 py-2 rounded-lg"
+            className="inline-block text-sm text-muted hover:text-danger transition-colors border border-line-strong hover:border-danger px-4 py-2 rounded-lg"
           >
             Delete account &amp; data
           </Link>

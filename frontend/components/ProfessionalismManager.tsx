@@ -49,7 +49,7 @@ function toForm(p: ProofOfWorkItem): ProofFormState {
 }
 
 const inputClass =
-  'w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500';
+  'w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent';
 
 export default function ProfessionalismManager({ userId }: Props) {
   const [pledge, setPledge] = useState<PledgeStatus | null>(null);
@@ -164,14 +164,14 @@ export default function ProfessionalismManager({ userId }: Props) {
   return (
     <div className="space-y-8">
       {/* Code of Craft pledge */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="bg-surface border border-line rounded-xl p-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h2 className="font-semibold text-gray-200">Code of Craft</h2>
-            <p className="text-sm text-gray-500 mt-1 leading-relaxed max-w-xl">
+            <h2 className="font-semibold text-body">Code of Craft</h2>
+            <p className="text-sm text-subtle mt-1 leading-relaxed max-w-xl">
               Pledge to professional standards — show up, communicate clearly, protect property, document
               work, honor scope, clean up, respect people, and resolve issues professionally.{' '}
-              <Link href="/code-of-craft" className="text-amber-400 hover:underline">
+              <Link href="/code-of-craft" className="text-accent-text hover:underline">
                 Read the Code of Craft
               </Link>
               . Your public profile shows the pledge only while it&apos;s active.
@@ -182,8 +182,8 @@ export default function ProfessionalismManager({ userId }: Props) {
             disabled={pledging || loading}
             className={`flex-shrink-0 font-semibold px-5 py-2 rounded-lg transition-colors disabled:opacity-50 ${
               pledge?.pledged
-                ? 'border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400'
-                : 'bg-amber-500 hover:bg-amber-600 text-black'
+                ? 'border border-line-strong text-body hover:border-danger hover:text-danger'
+                : 'bg-accent hover:bg-accent text-on-accent'
             }`}
           >
             {pledging
@@ -194,7 +194,7 @@ export default function ProfessionalismManager({ userId }: Props) {
           </button>
         </div>
         {pledge?.pledged && (
-          <p className="text-xs text-emerald-400 mt-3">
+          <p className="text-xs text-success mt-3">
             ✓ Pledged{pledge.pledgedAt ? ` on ${new Date(pledge.pledgedAt).toLocaleDateString()}` : ''}
           </p>
         )}
@@ -202,38 +202,38 @@ export default function ProfessionalismManager({ userId }: Props) {
 
       {/* Verified Pro progress */}
       {verifiedPro && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <div className="bg-surface border border-line rounded-xl p-6">
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-            <h2 className="font-semibold text-gray-200">
+            <h2 className="font-semibold text-body">
               Verified Pro{' '}
               {verifiedPro.eligible ? (
-                <span className="ml-2 text-xs font-mono uppercase tracking-wider text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 rounded px-2 py-0.5">
+                <span className="ml-2 text-xs font-mono uppercase tracking-wider text-success bg-success/10 border border-success/30 rounded px-2 py-0.5">
                   Eligible
                 </span>
               ) : (
-                <span className="ml-2 text-xs font-mono text-gray-500">
+                <span className="ml-2 text-xs font-mono text-subtle">
                   {verifiedPro.metCount}/{verifiedPro.totalCount} complete
                 </span>
               )}
             </h2>
-            <Link href="/verified-pro" className="text-xs text-amber-400 hover:underline">
+            <Link href="/verified-pro" className="text-xs text-accent-text hover:underline">
               What is Verified Pro?
             </Link>
           </div>
           {/* progress bar */}
-          <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden mb-4">
+          <div className="h-1.5 bg-surface rounded-full overflow-hidden mb-4">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+              className="h-full rounded-full bg-success transition-all duration-500"
               style={{ width: `${(verifiedPro.metCount / verifiedPro.totalCount) * 100}%` }}
             />
           </div>
           <ul className="space-y-2">
             {verifiedPro.checklist.map((c) => (
               <li key={c.key} className="flex items-start gap-2.5 text-sm">
-                <span className={c.met ? 'text-emerald-400' : 'text-gray-600'}>{c.met ? '✓' : '○'}</span>
+                <span className={c.met ? 'text-success' : 'text-subtle'}>{c.met ? '✓' : '○'}</span>
                 <span>
-                  <span className={c.met ? 'text-gray-300' : 'text-gray-400'}>{c.label}</span>
-                  <span className="text-gray-600"> — {c.detail}</span>
+                  <span className={c.met ? 'text-body' : 'text-muted'}>{c.label}</span>
+                  <span className="text-subtle"> — {c.detail}</span>
                 </span>
               </li>
             ))}
@@ -242,29 +242,29 @@ export default function ProfessionalismManager({ userId }: Props) {
       )}
 
       {/* Proof-of-work gallery */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="bg-surface border border-line rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-200">Proof of work ({proof.length})</h2>
+          <h2 className="font-semibold text-body">Proof of work ({proof.length})</h2>
           {!showForm && (
             <button
               onClick={openAdd}
-              className="text-sm border border-gray-700 hover:border-amber-500 hover:text-amber-400 text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="text-sm border border-line-strong hover:border-accent hover:text-accent-text text-body px-3 py-1.5 rounded-lg transition-colors"
             >
               + Add proof
             </button>
           )}
         </div>
 
-        <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+        <p className="text-xs text-subtle mb-4 leading-relaxed">
           Showcase honest photos of past work on your public profile. Share{' '}
-          <span className="text-gray-400">links to images you host</span> — we store only URLs, never files.
+          <span className="text-muted">links to images you host</span> — we store only URLs, never files.
           Only post work you actually did. Hidden items stay private to you.
         </p>
 
         {showForm && (
-          <div className="mb-6 p-4 border border-gray-800 rounded-lg space-y-4 bg-gray-950/40">
+          <div className="mb-6 p-4 border border-line rounded-lg space-y-4 bg-canvas">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Title *</label>
+              <label className="block text-sm font-medium text-body mb-1">Title *</label>
               <input
                 type="text"
                 value={form.title}
@@ -274,7 +274,7 @@ export default function ProfessionalismManager({ userId }: Props) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+              <label className="block text-sm font-medium text-body mb-1">Description</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -284,7 +284,7 @@ export default function ProfessionalismManager({ userId }: Props) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Image URLs</label>
+              <label className="block text-sm font-medium text-body mb-1">Image URLs</label>
               <textarea
                 value={form.imageUrls}
                 onChange={(e) => setForm({ ...form, imageUrls: e.target.value })}
@@ -292,10 +292,10 @@ export default function ProfessionalismManager({ userId }: Props) {
                 className={`${inputClass} resize-none`}
                 placeholder={'https://your-image-host/photo-1.jpg\nhttps://your-image-host/photo-2.jpg'}
               />
-              <p className="text-xs text-gray-600 mt-1">One URL per line (or comma-separated). Up to 8.</p>
+              <p className="text-xs text-subtle mt-1">One URL per line (or comma-separated). Up to 8.</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Skill tags</label>
+              <label className="block text-sm font-medium text-body mb-1">Skill tags</label>
               <input
                 type="text"
                 value={form.skillTags}
@@ -303,9 +303,9 @@ export default function ProfessionalismManager({ userId }: Props) {
                 className={inputClass}
                 placeholder="carpentry, fencing, hauling"
               />
-              <p className="text-xs text-gray-600 mt-1">Comma-separated.</p>
+              <p className="text-xs text-subtle mt-1">Comma-separated.</p>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-300">
+            <label className="flex items-center gap-2 text-sm text-body">
               <input
                 type="checkbox"
                 checked={form.visible}
@@ -318,13 +318,13 @@ export default function ProfessionalismManager({ userId }: Props) {
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-semibold px-5 py-2 rounded-lg transition-colors"
+                className="bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-semibold px-5 py-2 rounded-lg transition-colors"
               >
                 {saving ? 'Saving...' : editingId ? 'Save changes' : 'Add proof'}
               </button>
               <button
                 onClick={closeForm}
-                className="border border-gray-700 hover:border-gray-600 text-gray-300 px-5 py-2 rounded-lg transition-colors"
+                className="border border-line-strong hover:border-line-strong text-body px-5 py-2 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -333,38 +333,38 @@ export default function ProfessionalismManager({ userId }: Props) {
         )}
 
         {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-subtle">Loading…</p>
         ) : proof.length === 0 ? (
           !showForm && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-subtle">
               No proof of work yet. Add photos of past work to help clients trust your skill claims.
             </p>
           )
         ) : (
           <div className="space-y-3">
             {proof.map((p) => (
-              <div key={p.id} className="p-4 bg-gray-800 rounded-lg">
+              <div key={p.id} className="p-4 bg-raised rounded-lg">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-white font-medium">{p.title}</span>
+                      <span className="text-strong font-medium">{p.title}</span>
                       {p.visible === false && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-300">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-raised-2 text-body">
                           Hidden
                         </span>
                       )}
                       {p.quest?.title && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-accent/15 text-accent-text-hover">
                           {p.quest.title}
                         </span>
                       )}
                     </div>
-                    {p.description && <p className="text-sm text-gray-400 mt-1">{p.description}</p>}
+                    {p.description && <p className="text-sm text-muted mt-1">{p.description}</p>}
                     {p.skillTags.length > 0 && (
-                      <p className="text-xs text-gray-500 mt-1">{p.skillTags.join(' · ')}</p>
+                      <p className="text-xs text-subtle mt-1">{p.skillTags.join(' · ')}</p>
                     )}
                     {p.imageUrls.length > 0 && (
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-subtle mt-1">
                         {p.imageUrls.length} image{p.imageUrls.length === 1 ? '' : 's'}
                       </p>
                     )}
@@ -372,13 +372,13 @@ export default function ProfessionalismManager({ userId }: Props) {
                   <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => openEdit(p)}
-                      className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                      className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-accent hover:text-accent-text"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(p.id)}
-                      className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                      className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                     >
                       Delete
                     </button>

@@ -42,34 +42,34 @@ function IdentityComplete() {
   const status = identity?.status;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-950">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-canvas">
       <div className="w-full max-w-md text-center">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 space-y-5">
+        <div className="bg-surface border border-line rounded-xl p-8 space-y-5">
           {loading ? (
             <>
-              <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-gray-400 text-sm">Checking your verification status...</p>
+              <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-muted text-sm">Checking your verification status...</p>
             </>
           ) : status === 'VERIFIED' ? (
             <>
               <div className="text-5xl">&#9989;</div>
-              <h1 className="text-2xl font-bold text-emerald-400">Identity verified</h1>
-              <p className="text-gray-300 text-sm leading-relaxed">
+              <h1 className="text-2xl font-bold text-success">Identity verified</h1>
+              <p className="text-body text-sm leading-relaxed">
                 You&apos;re all set. You can now be paid for completed quests.
               </p>
             </>
           ) : status === 'FAILED' ? (
             <>
               <div className="text-5xl">&#9888;</div>
-              <h1 className="text-2xl font-bold text-amber-400">Verification did not go through</h1>
-              <p className="text-gray-300 text-sm leading-relaxed">
+              <h1 className="text-2xl font-bold text-accent-text">Verification did not go through</h1>
+              <p className="text-body text-sm leading-relaxed">
                 Stripe was unable to verify your identity from what was submitted. This can happen
                 with a blurry photo or a lighting issue &mdash; you can try again.
               </p>
               <button
                 onClick={handleRetry}
                 disabled={retrying}
-                className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
+                className="w-full rounded-lg bg-success hover:bg-success disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-strong transition-colors"
               >
                 {retrying ? 'Opening Stripe Identity...' : 'Try again'}
               </button>
@@ -77,26 +77,26 @@ function IdentityComplete() {
           ) : (
             <>
               <div className="text-5xl">&#8987;</div>
-              <h1 className="text-2xl font-bold text-amber-400">Verification in progress</h1>
-              <p className="text-gray-300 text-sm leading-relaxed">
+              <h1 className="text-2xl font-bold text-accent-text">Verification in progress</h1>
+              <p className="text-body text-sm leading-relaxed">
                 Stripe is reviewing what you submitted. This usually finishes within a few minutes
                 &mdash; check back shortly.
               </p>
             </>
           )}
 
-          {error && <p className="text-xs text-rose-400">{error}</p>}
+          {error && <p className="text-xs text-danger">{error}</p>}
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <Link
               href="/profile"
-              className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2.5 px-5 rounded-lg transition-colors"
+              className="inline-block bg-accent hover:bg-accent text-on-accent font-semibold py-2.5 px-5 rounded-lg transition-colors"
             >
               Back to profile
             </Link>
             <Link
               href="/dashboard"
-              className="inline-block bg-gray-800 hover:bg-gray-700 text-gray-100 font-semibold py-2.5 px-5 rounded-lg transition-colors"
+              className="inline-block bg-raised hover:bg-raised-2 text-strong font-semibold py-2.5 px-5 rounded-lg transition-colors"
             >
               Go to dashboard
             </Link>
@@ -111,8 +111,8 @@ export default function IdentityCompletePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center px-4 bg-gray-950">
-          <p className="text-gray-400">Loading...</p>
+        <div className="min-h-screen flex items-center justify-center px-4 bg-canvas">
+          <p className="text-muted">Loading...</p>
         </div>
       }
     >

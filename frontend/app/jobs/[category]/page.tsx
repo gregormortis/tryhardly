@@ -36,7 +36,7 @@ export default function JobCategoryPage({ params }: PageProps) {
   const url = `${siteUrl}/jobs/${cat.slug}`;
 
   return (
-    <div className="bg-zinc-950">
+    <div className="bg-canvas">
       <ServiceSchema
         categorySlug={cat.slug}
         categoryLabel={cat.label}
@@ -50,28 +50,28 @@ export default function JobCategoryPage({ params }: PageProps) {
         ]}
       />
 
-      <section className="border-b border-white/[0.06] px-4 sm:px-8 py-10">
+      <section className="border-b border-line px-4 sm:px-8 py-10">
         <div className="max-w-5xl mx-auto">
-          <nav className="font-mono text-[11px] text-stone-600 mb-3">
-            <Link href="/jobs" className="hover:text-amber-400">Local jobs</Link>
+          <nav className="font-mono text-[12px] text-subtle mb-3">
+            <Link href="/jobs" className="hover:text-accent-text">Local jobs</Link>
             <span className="mx-2">/</span>
-            <span className="text-stone-400">{cat.label}</span>
+            <span className="text-muted">{cat.label}</span>
           </nav>
-          <h1 className="font-bold text-3xl text-stone-100 tracking-tight mb-3">{cat.label}</h1>
-          <p className="text-stone-400 max-w-2xl leading-relaxed">{cat.blurb}</p>
+          <h1 className="font-bold text-3xl text-strong tracking-tight mb-3">{cat.label}</h1>
+          <p className="text-muted max-w-2xl leading-relaxed">{cat.blurb}</p>
 
           <div className="mt-5 flex flex-wrap gap-2">
             {cat.examples.map((ex) => (
               <span
                 key={ex}
-                className="font-mono text-[11px] text-stone-400 bg-white/[0.04] border border-white/[0.08] rounded-full px-3 py-1.5"
+                className="font-mono text-[12px] text-muted bg-surface border border-line rounded-full px-3 py-1.5"
               >
                 {ex}
               </span>
             ))}
           </div>
 
-          <p className="mt-5 font-mono text-[11px] text-stone-600">
+          <p className="mt-5 font-mono text-[12px] text-subtle">
             TryHardly is early-stage and growing locally — everything below is a real job posted by
             a neighbor, not an estimate.
           </p>
@@ -79,7 +79,7 @@ export default function JobCategoryPage({ params }: PageProps) {
           <div className="mt-5 flex gap-3">
             <Link
               href="/post-a-job"
-              className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+              className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors"
             >
               POST A {cat.label.toUpperCase()} JOB
             </Link>
@@ -98,8 +98,8 @@ export default function JobCategoryPage({ params }: PageProps) {
           search actually matches, so link them from the category page rather
           than leaving them orphaned in the sitemap. */}
       {cat.known && (
-        <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-white/[0.05]">
-          <h2 className="font-mono text-[11px] font-semibold tracking-widest text-stone-600 uppercase mb-4">
+        <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-line">
+          <h2 className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-4">
             {cat.label} by area
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -107,7 +107,7 @@ export default function JobCategoryPage({ params }: PageProps) {
               <Link
                 key={a.slug}
                 href={`/jobs/${cat.slug}/${a.slug}`}
-                className="font-mono text-[11px] text-stone-500 border border-white/[0.08] rounded-full px-3 py-1.5 hover:text-amber-400 hover:border-amber-500/40 transition-colors"
+                className="font-mono text-[12px] text-subtle border border-line rounded-full px-3 py-1.5 hover:text-accent-text hover:border-accent/40 transition-colors"
               >
                 {cat.shortLabel} in {a.city}, {a.state}
               </Link>
@@ -117,8 +117,8 @@ export default function JobCategoryPage({ params }: PageProps) {
       )}
 
       {/* Internal links to other categories help discovery + SEO. */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-white/[0.05]">
-        <h2 className="font-mono text-[11px] font-semibold tracking-widest text-stone-600 uppercase mb-4">
+      <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-line">
+        <h2 className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-4">
           Other kinds of work
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -126,7 +126,7 @@ export default function JobCategoryPage({ params }: PageProps) {
             <Link
               key={c.slug}
               href={`/jobs/${c.slug}`}
-              className="font-mono text-[11px] text-stone-500 border border-white/[0.08] rounded-full px-3 py-1.5 hover:text-amber-400 hover:border-amber-500/40 transition-colors"
+              className="font-mono text-[12px] text-subtle border border-line rounded-full px-3 py-1.5 hover:text-accent-text hover:border-accent/40 transition-colors"
             >
               {c.label}
             </Link>

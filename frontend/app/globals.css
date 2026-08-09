@@ -1,12 +1,21 @@
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-zinc-950 text-zinc-100;
-    font-family: var(--font-syne), system-ui, -apple-system, sans-serif;
+    @apply bg-canvas text-body;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
     min-height: 100vh;
+  }
+
+  /* Syne stays the brand voice for headings only. */
+  h1, h2, h3, .font-display {
+    font-family: var(--font-syne), system-ui, sans-serif;
   }
 
   code, pre, kbd, samp, .font-mono {
@@ -60,13 +69,13 @@ html {
   width: 10px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-zinc-900;
+  @apply bg-raised;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gradient-to-b from-amber-600 to-amber-800 rounded-full;
+  @apply bg-line-strong rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply from-amber-500 to-amber-700;
+  @apply bg-subtle;
 }
 
 a {

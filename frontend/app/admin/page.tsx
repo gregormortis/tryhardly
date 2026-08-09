@@ -285,7 +285,7 @@ export default function AdminPage() {
   if (authLoading || (loading && isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -295,9 +295,9 @@ export default function AdminPage() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <div className="text-5xl mb-4">🔒</div>
-          <h1 className="text-2xl font-bold text-gray-100 mb-2">Admin access required</h1>
-          <p className="text-gray-400 mb-6">You don&apos;t have permission to view this page.</p>
-          <Link href="/dashboard" className="text-amber-400 hover:text-amber-300 font-medium">
+          <h1 className="text-2xl font-bold text-strong mb-2">Admin access required</h1>
+          <p className="text-muted mb-6">You don&apos;t have permission to view this page.</p>
+          <Link href="/dashboard" className="text-accent-text hover:text-accent-text-hover font-medium">
             ← Back to dashboard
           </Link>
         </div>
@@ -308,10 +308,10 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-strong mb-8">Admin Dashboard</h1>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm">
+          <div className="mb-6 p-3 bg-danger/30 border border-danger rounded-lg text-danger text-sm">
             {error}
           </div>
         )}
@@ -326,9 +326,9 @@ export default function AdminPage() {
               { label: 'Completed', value: stats.completedQuests },
               { label: 'Applications', value: stats.applications },
             ].map((card) => (
-              <div key={card.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
-                <div className="text-3xl font-bold text-amber-400">{card.value}</div>
-                <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">{card.label}</div>
+              <div key={card.label} className="bg-surface border border-line rounded-xl p-5 text-center">
+                <div className="text-3xl font-bold text-accent-text">{card.value}</div>
+                <div className="text-xs text-subtle uppercase tracking-wider mt-1">{card.label}</div>
               </div>
             ))}
           </div>
@@ -336,34 +336,34 @@ export default function AdminPage() {
 
         {/* Quests */}
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent quests</h2>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <h2 className="text-lg font-semibold text-strong mb-4">Recent quests</h2>
+          <div className="bg-surface border border-line rounded-xl overflow-hidden">
             {quests.length === 0 ? (
-              <p className="p-6 text-sm text-gray-500">No quests found.</p>
+              <p className="p-6 text-sm text-subtle">No quests found.</p>
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-line">
                 {quests.map((q) => (
                   <div key={q.id} className="flex items-center justify-between gap-4 p-4">
                     <div className="min-w-0">
-                      <Link href={`/job/${q.id}`} className="text-white font-medium hover:text-amber-400 truncate block">
+                      <Link href={`/job/${q.id}`} className="text-strong font-medium hover:text-accent-text truncate block">
                         {q.title}
                       </Link>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-subtle">
                         {q.questGiver?.username || 'Unknown'} · {q.category} · {q._count?.applications ?? 0} applicants
                       </p>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className={`text-xs px-2 py-1 rounded-full ${
-                        q.status === 'OPEN' ? 'bg-green-500/20 text-green-400' :
-                        q.status === 'CANCELLED' ? 'bg-red-500/20 text-red-400' :
-                        'bg-gray-700 text-gray-300'
+                        q.status === 'OPEN' ? 'bg-success/20 text-success' :
+                        q.status === 'CANCELLED' ? 'bg-danger/20 text-danger' :
+                        'bg-raised-2 text-body'
                       }`}>
                         {q.status}
                       </span>
                       {q.status !== 'CANCELLED' && q.status !== 'COMPLETED' && (
                         <button
                           onClick={() => handleCancelQuest(q.id)}
-                          className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                          className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                         >
                           Cancel
                         </button>
@@ -378,51 +378,51 @@ export default function AdminPage() {
 
         {/* Leads */}
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-white mb-4">
-            Leads <span className="text-sm font-normal text-gray-500">({leads.length})</span>
+          <h2 className="text-lg font-semibold text-strong mb-4">
+            Leads <span className="text-sm font-normal text-subtle">({leads.length})</span>
           </h2>
           {leadSources.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
               {leadSources.map((s) => (
                 <span
                   key={s.source}
-                  className="text-xs px-2.5 py-1 rounded-full bg-gray-800 border border-gray-700 text-gray-300"
+                  className="text-xs px-2.5 py-1 rounded-full bg-raised border border-line-strong text-body"
                 >
-                  {s.source}: <span className="text-white font-medium">{s.count}</span>
+                  {s.source}: <span className="text-strong font-medium">{s.count}</span>
                 </span>
               ))}
             </div>
           )}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="bg-surface border border-line rounded-xl overflow-hidden">
             {leads.length === 0 ? (
-              <p className="p-6 text-sm text-gray-500">
+              <p className="p-6 text-sm text-subtle">
                 No leads yet. Submissions from /request-help and /work-alerts show up here.
               </p>
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-line">
                 {leads.map((l) => {
                   const isJob = l.type === 'JOB_REQUEST';
                   const statusColor =
-                    l.status === 'NEW' ? 'bg-yellow-500/20 text-yellow-400' :
-                    l.status === 'CONTACTED' ? 'bg-blue-500/20 text-blue-400' :
-                    l.status === 'CONVERTED' ? 'bg-green-500/20 text-green-400' :
-                    'bg-gray-700 text-gray-300';
+                    l.status === 'NEW' ? 'bg-warning/20 text-warning' :
+                    l.status === 'CONTACTED' ? 'bg-info/20 text-info' :
+                    l.status === 'CONVERTED' ? 'bg-success/20 text-success' :
+                    'bg-raised-2 text-body';
                   return (
                     <div key={l.id} className="p-4">
                       <div className="flex items-start justify-between gap-4 flex-wrap">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${isJob ? 'bg-amber-500/20 text-amber-400' : 'bg-purple-500/20 text-purple-300'}`}>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${isJob ? 'bg-accent/20 text-accent-text' : 'bg-info/20 text-info'}`}>
                               {isJob ? 'Job request' : 'Worker alert'}
                             </span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}>{l.status}</span>
                             {l.source && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-info/20 text-info">
                                 Source: {l.source}
                               </span>
                             )}
                             {isJob && l.isRecurring && l.recurrenceCadence && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-info/20 text-info">
                                 🔁 Repeat: {cadenceLabel(l.recurrenceCadence, l.recurrenceInterval)}
                                 {l.recurrenceCount ? ` · ${l.recurrenceCount}×` : ''}
                                 {l.recurrenceEndDate
@@ -432,13 +432,13 @@ export default function AdminPage() {
                             )}
                           </div>
                           {isJob && l.title && (
-                            <p className="text-white font-medium mt-2">{l.title}</p>
+                            <p className="text-strong font-medium mt-2">{l.title}</p>
                           )}
-                          <p className="text-sm text-gray-300 mt-1">
-                            {l.name} · <a href={`mailto:${l.email}`} className="text-amber-400 hover:text-amber-300">{l.email}</a>
+                          <p className="text-sm text-body mt-1">
+                            {l.name} · <a href={`mailto:${l.email}`} className="text-accent-text hover:text-accent-text-hover">{l.email}</a>
                             {l.phone ? ` · ${l.phone}` : ''}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-subtle mt-1">
                             {[
                               l.location,
                               isJob ? l.budget : null,
@@ -449,29 +449,29 @@ export default function AdminPage() {
                             {' · '}{new Date(l.createdAt).toLocaleDateString()}
                           </p>
                           {isJob && l.description && (
-                            <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">{l.description}</p>
+                            <p className="text-sm text-muted mt-1 whitespace-pre-line">{l.description}</p>
                           )}
                           {isJob && l.photoUrls && l.photoUrls.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-1">
                               {l.photoUrls.map((u, i) => (
-                                <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-amber-400 underline">
+                                <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="text-xs text-subtle hover:text-accent-text underline">
                                   photo {i + 1}
                                 </a>
                               ))}
                             </div>
                           )}
                           {l.utm && Object.keys(l.utm).length > 0 && (
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className="text-xs text-subtle mt-1">
                               {Object.entries(l.utm).map(([k, v]) => `${k}=${v}`).join(' · ')}
                             </p>
                           )}
                           {isJob && typeof l.workerAlertsNotified === 'number' && l.workerAlertsNotified > 0 && (
-                            <p className="text-xs text-purple-300 mt-1">
+                            <p className="text-xs text-info mt-1">
                               🔔 {l.workerAlertsNotified} worker alert{l.workerAlertsNotified === 1 ? '' : 's'} notified
                             </p>
                           )}
                           {l.convertedQuestId && (
-                            <Link href={`/job/${l.convertedQuestId}`} className="text-xs text-green-400 hover:text-green-300 mt-1 inline-block">
+                            <Link href={`/job/${l.convertedQuestId}`} className="text-xs text-success hover:text-success mt-1 inline-block">
                               View created quest →
                             </Link>
                           )}
@@ -480,14 +480,14 @@ export default function AdminPage() {
                           {l.status === 'NEW' && (
                             <button
                               onClick={() => handleLeadStatus(l.id, 'CONTACTED')}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-blue-500 hover:text-blue-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-info hover:text-info"
                             >
                               Mark contacted
                             </button>
                           )}
                           {isJob && l.status !== 'CONVERTED' && (
-                            <div className="flex flex-col gap-1 rounded border border-gray-700 p-2">
-                              <label className="flex items-center gap-1.5 text-xs text-gray-300">
+                            <div className="flex flex-col gap-1 rounded border border-line-strong p-2">
+                              <label className="flex items-center gap-1.5 text-xs text-body">
                                 <input
                                   type="checkbox"
                                   checked={!!recurringLeadCadence[l.id]}
@@ -499,7 +499,7 @@ export default function AdminPage() {
                                       return next;
                                     })
                                   }
-                                  className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+                                  className="h-3.5 w-3.5 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
                                 />
                                 Recurring
                               </label>
@@ -509,7 +509,7 @@ export default function AdminPage() {
                                   onChange={(e) =>
                                     setRecurringLeadCadence((prev) => ({ ...prev, [l.id]: e.target.value }))
                                   }
-                                  className="text-xs bg-gray-800 border border-gray-700 rounded px-1.5 py-1 text-gray-200"
+                                  className="text-xs bg-raised border border-line-strong rounded px-1.5 py-1 text-body"
                                 >
                                   {CADENCE_OPTIONS.map((c) => (
                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -525,7 +525,7 @@ export default function AdminPage() {
                                       : undefined,
                                   )
                                 }
-                                className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                                className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-success hover:text-success"
                               >
                                 Convert to quest
                               </button>
@@ -534,7 +534,7 @@ export default function AdminPage() {
                           {l.status !== 'IGNORED' && l.status !== 'CONVERTED' && (
                             <button
                               onClick={() => handleLeadStatus(l.id, 'IGNORED')}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                             >
                               Ignore
                             </button>
@@ -551,39 +551,39 @@ export default function AdminPage() {
 
         {/* Professional credentials review queue */}
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-white mb-4">
-            Credentials <span className="text-sm font-normal text-gray-500">({credentials.length})</span>
+          <h2 className="text-lg font-semibold text-strong mb-4">
+            Credentials <span className="text-sm font-normal text-subtle">({credentials.length})</span>
           </h2>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="bg-surface border border-line rounded-xl overflow-hidden">
             {credentials.length === 0 ? (
-              <p className="p-6 text-sm text-gray-500">
+              <p className="p-6 text-sm text-subtle">
                 No credentials submitted. Professionals add these from their profile page.
               </p>
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-line">
                 {credentials.map((c) => {
                   const statusColor =
-                    c.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
-                    c.status === 'VERIFIED' ? 'bg-green-500/20 text-green-400' :
-                    c.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                    'bg-gray-700 text-gray-300';
+                    c.status === 'PENDING' ? 'bg-warning/20 text-warning' :
+                    c.status === 'VERIFIED' ? 'bg-success/20 text-success' :
+                    c.status === 'REJECTED' ? 'bg-danger/20 text-danger' :
+                    'bg-raised-2 text-body';
                   return (
                     <div key={c.id} className="p-4">
                       <div className="flex items-start justify-between gap-4 flex-wrap">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{c.type}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-raised text-body">{c.type}</span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}>{c.status}</span>
                           </div>
-                          <p className="text-white font-medium mt-2">{c.title}</p>
-                          <p className="text-sm text-gray-300 mt-1">
+                          <p className="text-strong font-medium mt-2">{c.title}</p>
+                          <p className="text-sm text-body mt-1">
                             {c.user ? (
-                              <Link href={`/profile/${c.user.username}`} className="text-amber-400 hover:text-amber-300">
+                              <Link href={`/profile/${c.user.username}`} className="text-accent-text hover:text-accent-text-hover">
                                 {c.user.username}
                               </Link>
                             ) : 'unknown'}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-subtle mt-1">
                             {[
                               c.issuer,
                               c.jurisdiction,
@@ -592,24 +592,24 @@ export default function AdminPage() {
                             ].filter(Boolean).join(' · ')}
                             {' · '}submitted {new Date(c.createdAt).toLocaleDateString()}
                           </p>
-                          {c.notes && <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">{c.notes}</p>}
+                          {c.notes && <p className="text-sm text-muted mt-1 whitespace-pre-line">{c.notes}</p>}
                           {c.proofUrl && (
-                            <a href={c.proofUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-400 hover:text-amber-300 underline mt-1 inline-block">
+                            <a href={c.proofUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent-text hover:text-accent-text-hover underline mt-1 inline-block">
                               Proof link →
                             </a>
                           )}
                           {c.status === 'REJECTED' && c.rejectionReason && (
-                            <p className="text-xs text-red-400 mt-1">Reason: {c.rejectionReason}</p>
+                            <p className="text-xs text-danger mt-1">Reason: {c.rejectionReason}</p>
                           )}
                           {c.verifiedBy && (
-                            <p className="text-xs text-gray-600 mt-1">Verified by {c.verifiedBy.username}</p>
+                            <p className="text-xs text-subtle mt-1">Verified by {c.verifiedBy.username}</p>
                           )}
                         </div>
                         <div className="flex flex-col gap-2 flex-shrink-0">
                           {c.status !== 'VERIFIED' && (
                             <button
                               onClick={() => handleReviewCredential(c.id, 'VERIFIED')}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-success hover:text-success"
                             >
                               Verify
                             </button>
@@ -620,7 +620,7 @@ export default function AdminPage() {
                                 const reason = window.prompt('Reason for rejection (optional):') ?? undefined;
                                 handleReviewCredential(c.id, 'REJECTED', reason);
                               }}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                             >
                               Reject
                             </button>
@@ -628,7 +628,7 @@ export default function AdminPage() {
                           {c.status !== 'EXPIRED' && (
                             <button
                               onClick={() => handleReviewCredential(c.id, 'EXPIRED')}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-gray-200"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-line-strong hover:text-body"
                             >
                               Mark expired
                             </button>
@@ -646,24 +646,24 @@ export default function AdminPage() {
         {/* Account deletion requests — the source of truth for actioning
             deletions (email notifications are best-effort only). */}
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-white mb-4">
+          <h2 className="text-lg font-semibold text-strong mb-4">
             Account deletion requests{' '}
-            <span className="text-sm font-normal text-gray-500">
+            <span className="text-sm font-normal text-subtle">
               ({deletionRequests.filter((d) => d.status === 'PENDING').length} pending)
             </span>
           </h2>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="bg-surface border border-line rounded-xl overflow-hidden">
             {deletionRequests.length === 0 ? (
-              <p className="p-6 text-sm text-gray-500">
+              <p className="p-6 text-sm text-subtle">
                 No deletion requests. When a user requests account/data deletion, it appears here for review.
               </p>
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-line">
                 {deletionRequests.map((d) => {
                   const statusColor =
-                    d.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
-                    d.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400' :
-                    'bg-gray-700 text-gray-300';
+                    d.status === 'PENDING' ? 'bg-warning/20 text-warning' :
+                    d.status === 'COMPLETED' ? 'bg-success/20 text-success' :
+                    'bg-raised-2 text-body';
                   return (
                     <div key={d.id} className="p-4">
                       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -671,25 +671,25 @@ export default function AdminPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}>{d.status}</span>
                           </div>
-                          <p className="text-sm text-gray-300 mt-2">
+                          <p className="text-sm text-body mt-2">
                             {d.user ? (
-                              <Link href={`/profile/${d.user.username}`} className="text-amber-400 hover:text-amber-300">
+                              <Link href={`/profile/${d.user.username}`} className="text-accent-text hover:text-accent-text-hover">
                                 {d.user.username}
                               </Link>
                             ) : 'deleted user'}
                             {' · '}
-                            <a href={`mailto:${d.email}`} className="text-amber-400 hover:text-amber-300">{d.email}</a>
+                            <a href={`mailto:${d.email}`} className="text-accent-text hover:text-accent-text-hover">{d.email}</a>
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-subtle mt-1">
                             Requested {new Date(d.createdAt).toLocaleDateString()}
                             {d.handledAt ? ` · handled ${new Date(d.handledAt).toLocaleDateString()}` : ''}
                             {d.handledBy ? ` by ${d.handledBy.username}` : ''}
                           </p>
                           {d.reason && (
-                            <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">Reason: {d.reason}</p>
+                            <p className="text-sm text-muted mt-1 whitespace-pre-line">Reason: {d.reason}</p>
                           )}
                           {d.handlerNote && (
-                            <p className="text-xs text-gray-500 mt-1 whitespace-pre-line">Note: {d.handlerNote}</p>
+                            <p className="text-xs text-subtle mt-1 whitespace-pre-line">Note: {d.handlerNote}</p>
                           )}
                         </div>
                         {d.status === 'PENDING' && (
@@ -702,7 +702,7 @@ export default function AdminPage() {
                                 const note = window.prompt('Note (optional) — e.g. record of what was deleted:') ?? undefined;
                                 handleDeletionRequest(d.id, 'COMPLETED', note);
                               }}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-success hover:text-success"
                             >
                               Complete deletion
                             </button>
@@ -711,7 +711,7 @@ export default function AdminPage() {
                                 const note = window.prompt('Reason for cancelling (optional):') ?? undefined;
                                 handleDeletionRequest(d.id, 'CANCELLED', note);
                               }}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                             >
                               Cancel request
                             </button>
@@ -728,12 +728,12 @@ export default function AdminPage() {
 
         {/* Reports */}
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-white mb-4">Reports</h2>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <h2 className="text-lg font-semibold text-strong mb-4">Reports</h2>
+          <div className="bg-surface border border-line rounded-xl overflow-hidden">
             {reports.length === 0 ? (
-              <p className="p-6 text-sm text-gray-500">No reports filed.</p>
+              <p className="p-6 text-sm text-subtle">No reports filed.</p>
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-line">
                 {reports.map((r) => {
                   const targetHref =
                     r.targetType === 'QUEST'
@@ -746,34 +746,34 @@ export default function AdminPage() {
                       <div className="flex items-start justify-between gap-4 flex-wrap">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{r.targetType}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">{r.reason}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-raised text-body">{r.targetType}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-danger/20 text-danger">{r.reason}</span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              r.status === 'OPEN' ? 'bg-yellow-500/20 text-yellow-400' :
-                              r.status === 'REVIEWING' ? 'bg-blue-500/20 text-blue-400' :
-                              r.status === 'RESOLVED' ? 'bg-green-500/20 text-green-400' :
-                              'bg-gray-700 text-gray-300'
+                              r.status === 'OPEN' ? 'bg-warning/20 text-warning' :
+                              r.status === 'REVIEWING' ? 'bg-info/20 text-info' :
+                              r.status === 'RESOLVED' ? 'bg-success/20 text-success' :
+                              'bg-raised-2 text-body'
                             }`}>
                               {r.status}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-300 mt-2">
+                          <p className="text-sm text-body mt-2">
                             Reported by{' '}
-                            <Link href={`/profile/${r.reporter?.username}`} className="text-amber-400 hover:text-amber-300">
+                            <Link href={`/profile/${r.reporter?.username}`} className="text-accent-text hover:text-accent-text-hover">
                               {r.reporter?.username || 'unknown'}
                             </Link>{' '}
                             · {new Date(r.createdAt).toLocaleDateString()}
                           </p>
-                          {r.details && <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">{r.details}</p>}
+                          {r.details && <p className="text-sm text-muted mt-1 whitespace-pre-line">{r.details}</p>}
                           {targetHref ? (
-                            <Link href={targetHref} className="text-xs text-gray-500 hover:text-amber-400 mt-1 inline-block">
+                            <Link href={targetHref} className="text-xs text-subtle hover:text-accent-text mt-1 inline-block">
                               View {r.targetType.toLowerCase()} →
                             </Link>
                           ) : (
-                            <p className="text-xs text-gray-600 mt-1">Target: {r.targetType} {r.targetId}</p>
+                            <p className="text-xs text-subtle mt-1">Target: {r.targetType} {r.targetId}</p>
                           )}
                           {r.resolvedBy && (
-                            <p className="text-xs text-gray-600 mt-1">Resolved by {r.resolvedBy.username}</p>
+                            <p className="text-xs text-subtle mt-1">Resolved by {r.resolvedBy.username}</p>
                           )}
                         </div>
                         {r.status !== 'RESOLVED' && r.status !== 'DISMISSED' && (
@@ -781,20 +781,20 @@ export default function AdminPage() {
                             {r.status === 'OPEN' && (
                               <button
                                 onClick={() => handleResolveReport(r.id, 'REVIEWING')}
-                                className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-blue-500 hover:text-blue-400"
+                                className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-info hover:text-info"
                               >
                                 Mark reviewing
                               </button>
                             )}
                             <button
                               onClick={() => handleResolveReport(r.id, 'RESOLVED')}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-success hover:text-success"
                             >
                               Resolve
                             </button>
                             <button
                               onClick={() => handleResolveReport(r.id, 'DISMISSED')}
-                              className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                              className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                             >
                               Dismiss
                             </button>
@@ -811,29 +811,29 @@ export default function AdminPage() {
 
         {/* Users */}
         <section>
-          <h2 className="text-lg font-semibold text-white mb-4">Recent users</h2>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <h2 className="text-lg font-semibold text-strong mb-4">Recent users</h2>
+          <div className="bg-surface border border-line rounded-xl overflow-hidden">
             {users.length === 0 ? (
-              <p className="p-6 text-sm text-gray-500">No users found.</p>
+              <p className="p-6 text-sm text-subtle">No users found.</p>
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-line">
                 {users.map((u) => (
                   <div key={u.id} className="flex items-center justify-between gap-4 p-4">
                     <div className="min-w-0">
-                      <Link href={`/profile/${u.username}`} className="text-white font-medium hover:text-amber-400">
+                      <Link href={`/profile/${u.username}`} className="text-strong font-medium hover:text-accent-text">
                         {u.username}
                       </Link>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-xs text-subtle truncate">
                         {u.email} · Lv.{u.level} · {u.role}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       {u.verified && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-sky-500/20 text-sky-400">Verified</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-info/20 text-info">Verified</span>
                       )}
                       <button
                         onClick={() => handleToggleVerify(u)}
-                        className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                        className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-accent hover:text-accent-text"
                       >
                         {u.verified ? 'Unverify' : 'Verify'}
                       </button>

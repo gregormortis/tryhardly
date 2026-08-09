@@ -47,13 +47,13 @@ const initialState: FormState = {
 };
 
 const inputClass =
-  'w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-amber-500 focus:outline-none';
+  'w-full bg-raised border border-line-strong rounded-lg px-4 py-3 text-strong placeholder-subtle focus:border-accent focus:outline-none';
 
 function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="block text-gray-300 mb-1.5 text-sm font-medium">
+    <label className="block text-body mb-1.5 text-sm font-medium">
       {children}
-      {required && <span className="text-rose-500 ml-1">*</span>}
+      {required && <span className="text-danger ml-1">*</span>}
     </label>
   );
 }
@@ -170,28 +170,28 @@ export default function RequestHelpForm() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 py-16">
+      <div className="min-h-screen bg-canvas flex items-center justify-center px-4 py-16">
         <div className="max-w-md text-center">
-          <CheckCircle size={48} className="text-green-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-3">Request received</h1>
-          <p className="text-gray-400 leading-relaxed mb-6">
+          <CheckCircle size={48} className="text-success mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-strong mb-3">Request received</h1>
+          <p className="text-muted leading-relaxed mb-6">
             Thanks{data.name ? `, ${data.name.split(' ')[0]}` : ''}! We&apos;ll line up local help for
-            &ldquo;{data.title}&rdquo; and follow up at <span className="text-gray-200">{data.email}</span>.
+            &ldquo;{data.title}&rdquo; and follow up at <span className="text-body">{data.email}</span>.
           </p>
-          <p className="text-sm text-gray-500 mb-8">
+          <p className="text-sm text-subtle mb-8">
             We also emailed you a private link to check on and update your request — no account needed.
             Want to manage applicants yourself later? Creating an account is optional.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/auth/register"
-              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-6 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent text-on-accent font-semibold px-6 py-3 rounded-lg transition-colors"
             >
               Create an account <ArrowRight size={16} />
             </Link>
             <Link
               href="/jobs"
-              className="inline-flex items-center justify-center gap-2 border border-gray-700 text-gray-200 hover:border-amber-500 px-6 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 border border-line-strong text-body hover:border-accent px-6 py-3 rounded-lg transition-colors"
             >
               Browse local jobs
             </Link>
@@ -202,18 +202,18 @@ export default function RequestHelpForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 py-12 px-4">
+    <div className="min-h-screen bg-canvas py-12 px-4">
       <div className="max-w-xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Request help</h1>
-          <p className="text-gray-400">
+          <h1 className="text-3xl font-bold text-strong mb-2">Request help</h1>
+          <p className="text-muted">
             Tell us what you need done and we&apos;ll line up local help. Takes about a minute — no
             account required.
           </p>
-          <p className="mt-3 text-sm text-gray-500 leading-relaxed">
+          <p className="mt-3 text-sm text-subtle leading-relaxed">
             This is a quick request, not the full job post. We review it and get back to you by
             email.{' '}
-            <Link href="/post-a-job" className="text-amber-400 hover:text-amber-300">
+            <Link href="/post-a-job" className="text-accent-text hover:text-accent-text-hover">
               Post the job yourself
             </Link>{' '}
             instead if you want it on the local job board so workers can bid — that&apos;s also free,
@@ -222,14 +222,14 @@ export default function RequestHelpForm() {
         </div>
 
         {packageContext && (
-          <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-            <p className="text-sm text-amber-300 font-medium">
+          <div className="mb-6 rounded-lg border border-accent/30 bg-accent/5 p-4">
+            <p className="text-sm text-accent-text-hover font-medium">
               Requesting a service{packageContext.worker ? ` from ${packageContext.worker}` : ''}
             </p>
             {packageContext.title && (
-              <p className="text-sm text-gray-300 mt-1">&ldquo;{packageContext.title}&rdquo;</p>
+              <p className="text-sm text-body mt-1">&ldquo;{packageContext.title}&rdquo;</p>
             )}
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-subtle mt-2">
               We&apos;ve started your request below. No payment is taken now — you and the worker agree on
               details and price first.
             </p>
@@ -264,12 +264,12 @@ export default function RequestHelpForm() {
               ))}
             </select>
             {data.category && (
-              <p className="mt-1.5 text-xs text-gray-500">
+              <p className="mt-1.5 text-xs text-subtle">
                 Not sure what to include?{' '}
                 <Link
                   href={`/standards/${data.category}`}
                   target="_blank"
-                  className="text-amber-400 hover:underline"
+                  className="text-accent-text hover:underline"
                 >
                   See the checklist for this kind of work
                 </Link>
@@ -302,7 +302,7 @@ export default function RequestHelpForm() {
                 className={inputClass}
                 placeholder="City, ZIP, or area code — e.g. Redding, 96001"
               />
-              <p className="mt-1.5 text-xs text-gray-500">
+              <p className="mt-1.5 text-xs text-subtle">
                 City, ZIP, or area code and state. Never send your street address here — share the
                 exact address privately with the worker once you agree on the job.
               </p>
@@ -316,7 +316,7 @@ export default function RequestHelpForm() {
                 className={inputClass}
                 placeholder="e.g. $50, or $40–60"
               />
-              <p className="mt-1.5 text-xs text-gray-500">
+              <p className="mt-1.5 text-xs text-subtle">
                 What you&apos;re hoping to spend — a starting point, not the final charge. Leave it
                 blank if you&apos;d rather workers quote it.
               </p>
@@ -332,22 +332,22 @@ export default function RequestHelpForm() {
               className={inputClass}
               placeholder="e.g. This weekend, or by next Friday"
             />
-            <p className="mt-1.5 text-xs text-gray-500">
+            <p className="mt-1.5 text-xs text-subtle">
               A timeline or deadline. &ldquo;Flexible&rdquo; is a fine answer.
             </p>
           </div>
 
-          <div className="rounded-lg border border-gray-800 p-4 space-y-3">
-            <label className="flex items-start gap-3 text-sm text-gray-300">
+          <div className="rounded-lg border border-line p-4 space-y-3">
+            <label className="flex items-start gap-3 text-sm text-body">
               <input
                 type="checkbox"
                 checked={data.isRecurring}
                 onChange={(e) => update('isRecurring', e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+                className="mt-1 h-4 w-4 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
               />
               <span>
                 This is repeat work I&apos;d like on a regular schedule
-                <span className="block text-xs text-gray-500 mt-0.5">
+                <span className="block text-xs text-subtle mt-0.5">
                   e.g. weekly mowing or monthly cleaning. We&apos;ll line up the same kind of help on
                   this rhythm — you confirm and pay for each visit as it&apos;s done. Nothing is charged
                   now and no card is required to ask.
@@ -392,7 +392,7 @@ export default function RequestHelpForm() {
                     placeholder="e.g. 12"
                   />
                 </div>
-                <p className="sm:col-span-3 text-xs text-gray-500">
+                <p className="sm:col-span-3 text-xs text-subtle">
                   This just tells us the schedule you have in mind — leave the end date and visit count
                   blank for &ldquo;until I say stop.&rdquo; You can change or cancel anytime.
                 </p>
@@ -400,7 +400,7 @@ export default function RequestHelpForm() {
             )}
           </div>
 
-          <div className="border-t border-gray-800 pt-5 space-y-4">
+          <div className="border-t border-line pt-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label required>Your name</Label>
@@ -455,24 +455,24 @@ export default function RequestHelpForm() {
             </div>
           </div>
 
-          <label className="flex items-start gap-3 text-sm text-gray-400">
+          <label className="flex items-start gap-3 text-sm text-muted">
             <input
               type="checkbox"
               checked={data.consent}
               onChange={(e) => update('consent', e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+              className="mt-1 h-4 w-4 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
             />
             <span>
               I agree to the{' '}
-              <Link href="/terms" className="text-amber-400 hover:text-amber-300">
+              <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">
                 Terms
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="text-amber-400 hover:text-amber-300">
+              <Link href="/privacy" className="text-accent-text hover:text-accent-text-hover">
                 Privacy Policy
               </Link>
               , and confirm my request follows the{' '}
-              <Link href="/prohibited-services" className="text-amber-400 hover:text-amber-300">
+              <Link href="/prohibited-services" className="text-accent-text hover:text-accent-text-hover">
                 Prohibited Services Policy
               </Link>
               .
@@ -480,7 +480,7 @@ export default function RequestHelpForm() {
           </label>
 
           {error && (
-            <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-300 text-sm">
+            <div className="bg-danger/30 border border-danger rounded-lg p-3 text-danger text-sm">
               {error}
             </div>
           )}
@@ -488,7 +488,7 @@ export default function RequestHelpForm() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 font-semibold py-3 rounded-lg transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed text-on-accent font-semibold py-3 rounded-lg transition-colors"
           >
             {submitting ? (
               <>
@@ -501,9 +501,9 @@ export default function RequestHelpForm() {
             )}
           </button>
 
-          <p className="text-center text-xs text-gray-600">
+          <p className="text-center text-xs text-subtle">
             Prefer to manage bids yourself?{' '}
-            <Link href="/post-a-job" className="text-amber-400 hover:text-amber-300">
+            <Link href="/post-a-job" className="text-accent-text hover:text-accent-text-hover">
               Post the job on the local job board
             </Link>
             .

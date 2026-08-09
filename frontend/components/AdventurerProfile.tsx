@@ -121,31 +121,31 @@ interface EarnedAchievementsResponse {
 
 // Visual treatment per skill-badge tier. LOCKED renders as honest "in progress".
 const SKILL_TIER_STYLE: Record<SkillTier, { label: string; classes: string }> = {
-  LOCKED:   { label: 'In progress', classes: 'text-stone-500 bg-white/[0.03] border-white/[0.08]' },
-  BRONZE:   { label: 'Bronze',      classes: 'text-amber-600 bg-amber-600/10 border-amber-600/25' },
-  SILVER:   { label: 'Silver',      classes: 'text-stone-300 bg-stone-300/10 border-stone-300/25' },
-  GOLD:     { label: 'Gold',        classes: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/25' },
-  PLATINUM: { label: 'Platinum',    classes: 'text-cyan-300 bg-cyan-300/10 border-cyan-300/25' },
-  MYTHIC:   { label: 'Mythic',      classes: 'text-fuchsia-400 bg-fuchsia-400/10 border-fuchsia-400/25' },
+  LOCKED:   { label: 'In progress', classes: 'text-subtle bg-surface border-line' },
+  BRONZE:   { label: 'Bronze',      classes: 'text-accent-text bg-accent/10 border-accent/25' },
+  SILVER:   { label: 'Silver',      classes: 'text-body bg-raised-2/10 border-line/25' },
+  GOLD:     { label: 'Gold',        classes: 'text-warning bg-warning/10 border-warning/25' },
+  PLATINUM: { label: 'Platinum',    classes: 'text-info bg-info/10 border-info/25' },
+  MYTHIC:   { label: 'Mythic',      classes: 'text-info bg-info/10 border-info/25' },
 };
 
 // Avatar/progress accent per experience band. Purely visual: the band names are
 // never shown publicly, so a worker's standing reads from real signals (jobs
 // completed, ratings, credentials) rather than an RPG rank word.
 const TIERS: Record<TierKey, { avatarClasses: string; ringColor: string }> = {
-  novice:     { avatarClasses: 'bg-green-400/10 border-green-400/25 text-green-400',    ringColor: '#4ade80' },
-  apprentice: { avatarClasses: 'bg-blue-400/10 border-blue-400/25 text-blue-400',       ringColor: '#60a5fa' },
-  journeyman: { avatarClasses: 'bg-amber-400/10 border-amber-400/25 text-amber-400',    ringColor: '#f59e0b' },
-  expert:     { avatarClasses: 'bg-orange-400/10 border-orange-400/25 text-orange-400', ringColor: '#f97316' },
-  master:     { avatarClasses: 'bg-violet-400/10 border-violet-400/25 text-violet-400', ringColor: '#a78bfa' },
-  legendary:  { avatarClasses: 'bg-rose-400/10 border-rose-400/25 text-rose-400',       ringColor: '#f43f5e' },
+  novice:     { avatarClasses: 'bg-success/10 border-success/25 text-success',    ringColor: '#4ade80' },
+  apprentice: { avatarClasses: 'bg-info/10 border-info/25 text-info',       ringColor: '#60a5fa' },
+  journeyman: { avatarClasses: 'bg-accent/10 border-accent/25 text-accent-text',    ringColor: '#f59e0b' },
+  expert:     { avatarClasses: 'bg-warning/10 border-warning/25 text-warning', ringColor: '#f97316' },
+  master:     { avatarClasses: 'bg-info/10 border-info/25 text-info', ringColor: '#a78bfa' },
+  legendary:  { avatarClasses: 'bg-danger/10 border-danger/25 text-danger',       ringColor: '#f43f5e' },
 };
 
 // Visual treatment for official staff status. Amber/crown styling reads as an
 // appointed platform role, not a position on the earned tier ladder.
 const STAFF_BADGE_STYLE: Record<StaffBadge, { label: string; classes: string }> = {
-  FOUNDER: { label: 'FOUNDER', classes: 'text-amber-300 bg-amber-300/10 border-amber-300/30' },
-  ADMIN:   { label: 'STAFF',   classes: 'text-amber-300 bg-amber-300/10 border-amber-300/30' },
+  FOUNDER: { label: 'FOUNDER', classes: 'text-accent-text-hover bg-accent-hover/10 border-accent/30' },
+  ADMIN:   { label: 'STAFF',   classes: 'text-accent-text-hover bg-accent-hover/10 border-accent/30' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -266,11 +266,11 @@ function LevelProgress({ level, xp, xpToNext, ringColor }: { level: number; xp: 
   const pct = Math.min(100, Math.round((xp / xpToNext) * 100));
   return (
     <div>
-      <div className="flex justify-between font-mono text-[9px] text-stone-700 mb-1.5 tracking-wide">
+      <div className="flex justify-between font-mono text-[11px] text-subtle mb-1.5 tracking-wide">
         <span>Experience level {level}</span>
         <span>{pct}% toward level {level + 1}</span>
       </div>
-      <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+      <div className="h-1.5 bg-surface rounded-full overflow-hidden">
         {/* dynamic width + glow — inline style required for runtime value */}
         <div
           className="h-full rounded-full transition-all duration-700"
@@ -283,17 +283,17 @@ function LevelProgress({ level, xp, xpToNext, ringColor }: { level: number; xp: 
 
 function StatCard({ value, label, icon }: { value: string; label: string; icon?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-1 p-3.5 bg-white/[0.02] border border-white/[0.06] rounded-lg text-center">
-      {icon && <div className="text-stone-600 mb-0.5">{icon}</div>}
-      <span className="font-bold text-2xl text-amber-400 leading-none">{value}</span>
-      <span className="font-mono text-[9px] text-stone-700 tracking-widest uppercase">{label}</span>
+    <div className="flex flex-col items-center gap-1 p-3.5 bg-surface border border-line rounded-lg text-center">
+      {icon && <div className="text-subtle mb-0.5">{icon}</div>}
+      <span className="font-bold text-2xl text-accent-text leading-none">{value}</span>
+      <span className="font-mono text-[11px] text-subtle tracking-widest uppercase">{label}</span>
     </div>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase mb-3 pb-2 border-b border-white/[0.05]">
+    <p className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-3 pb-2 border-b border-line">
       {children}
     </p>
   );
@@ -301,15 +301,15 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function JobHistoryCard({ job }: { job: CompletedJob }) {
   return (
-    <div className="flex items-center justify-between gap-3 bg-white/[0.02] border border-white/[0.06] rounded-lg p-3.5">
-      <p className="font-semibold text-[13px] text-stone-300 leading-snug">{job.title}</p>
-      <span className="font-bold text-[15px] text-amber-400 flex-shrink-0">${job.reward}</span>
+    <div className="flex items-center justify-between gap-3 bg-surface border border-line rounded-lg p-3.5">
+      <p className="font-semibold text-[13px] text-body leading-snug">{job.title}</p>
+      <span className="font-bold text-[15px] text-accent-text flex-shrink-0">${job.reward}</span>
     </div>
   );
 }
 
 function SkeletonBlock({ h = 'h-4', w = 'w-full' }: { h?: string; w?: string }) {
-  return <div className={clsx('bg-white/[0.05] rounded animate-pulse', h, w)} />;
+  return <div className={clsx('bg-surface rounded animate-pulse', h, w)} />;
 }
 
 // A single skill badge. Earned tiers show the tier label + average; LOCKED
@@ -320,15 +320,15 @@ function SkillBadgeCard({ badge }: { badge: SkillBadge }) {
   return (
     <div className={clsx('rounded-lg border p-3.5', style.classes)}>
       <div className="flex items-center justify-between gap-2 mb-1">
-        <span className="font-semibold text-[13px] text-stone-200 leading-snug">{badge.skillName}</span>
-        <span className="font-mono text-[9px] font-semibold tracking-widest uppercase">{style.label}</span>
+        <span className="font-semibold text-[13px] text-body leading-snug">{badge.skillName}</span>
+        <span className="font-mono text-[11px] font-semibold tracking-widest uppercase">{style.label}</span>
       </div>
       {earned ? (
-        <p className="font-mono text-[10px] text-stone-500">
+        <p className="font-mono text-[12px] text-subtle">
           {badge.averageRating.toFixed(1)}★ over {badge.ratingCount} rating{badge.ratingCount === 1 ? '' : 's'}
         </p>
       ) : badge.next ? (
-        <p className="font-mono text-[10px] text-stone-600">
+        <p className="font-mono text-[12px] text-subtle">
           {badge.ratingCount} rating{badge.ratingCount === 1 ? '' : 's'} so far ·{' '}
           {badge.next.ratingsNeeded > 0
             ? `${badge.next.ratingsNeeded} more to ${SKILL_TIER_STYLE[badge.next.tier].label}`
@@ -438,14 +438,14 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
   }, [userId]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-stone-400 py-10 px-6">
+    <div className="min-h-screen bg-canvas text-muted py-10 px-6">
       <div className="max-w-2xl mx-auto">
 
         {/* Loading */}
         {loading && (
           <div className="space-y-4">
             <div className="flex gap-5 items-start">
-              <div className="w-20 h-20 rounded-full bg-white/[0.05] animate-pulse flex-shrink-0" />
+              <div className="w-20 h-20 rounded-full bg-surface animate-pulse flex-shrink-0" />
               <div className="flex-1 space-y-2.5 pt-2">
                 <SkeletonBlock h="h-6" w="w-2/5" />
                 <SkeletonBlock h="h-3.5" w="w-3/5" />
@@ -467,12 +467,12 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
             page never dead-ends on a stuck skeleton. */}
         {error && !loading && (
           <div className="text-center pt-20 flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-white/[0.05] flex items-center justify-center">
-              <Shield size={22} className="text-stone-500" />
+            <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
+              <Shield size={22} className="text-subtle" />
             </div>
             <div>
-              <p className="text-stone-200 font-semibold text-[15px]">Profile unavailable</p>
-              <p className="font-mono text-[12px] text-stone-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
+              <p className="text-body font-semibold text-[15px]">Profile unavailable</p>
+              <p className="font-mono text-[12px] text-subtle mt-1.5 max-w-xs mx-auto leading-relaxed">
                 {error}
               </p>
             </div>
@@ -480,13 +480,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/15 rounded-md text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 border border-line rounded-md text-body hover:border-accent/40 hover:text-accent-text transition-all"
               >
                 TRY AGAIN
               </button>
               <Link
                 href="/jobs"
-                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded-md hover:bg-amber-300 transition-colors"
+                className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 bg-accent text-on-accent rounded-md hover:bg-accent-hover transition-colors"
               >
                 BROWSE JOBS
               </Link>
@@ -500,13 +500,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
           // neutral amber accent so their seeded high level can't read as earned
           // standing.
           const tier = adventurer.staffBadge
-            ? { ...TIERS.novice, avatarClasses: 'bg-amber-300/10 border-amber-300/30 text-amber-300', ringColor: '#fcd34d' }
+            ? { ...TIERS.novice, avatarClasses: 'bg-accent-hover/10 border-accent/30 text-accent-text-hover', ringColor: '#fcd34d' }
             : (TIERS[adventurer.tier] ?? TIERS.novice);
           return (
             <div className="space-y-7 animate-[fadeIn_0.35s_ease_both]">
 
               {/* Hero row */}
-              <div className="flex gap-6 items-start pb-7 border-b border-white/[0.06]">
+              <div className="flex gap-6 items-start pb-7 border-b border-line">
 
                 {/* Avatar — border uses dynamic tier color via inline style */}
                 <div
@@ -518,18 +518,18 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
-                    <h1 className="font-bold text-[26px] text-stone-100 tracking-tight leading-none">
+                    <h1 className="font-bold text-[26px] text-strong tracking-tight leading-none">
                       {adventurer.username}
                     </h1>
                     {/* Staff accounts show their appointed platform status; everyone
                         else shows a neutral experience level, so no worker is
                         headlined by a rank name. */}
                     {adventurer.staffBadge ? (
-                      <span className={clsx('font-mono text-[9px] font-semibold tracking-widest border rounded-sm px-2 py-0.5', STAFF_BADGE_STYLE[adventurer.staffBadge].classes)}>
+                      <span className={clsx('font-mono text-[11px] font-semibold tracking-widest border rounded-sm px-2 py-0.5', STAFF_BADGE_STYLE[adventurer.staffBadge].classes)}>
                         {STAFF_BADGE_STYLE[adventurer.staffBadge].label}
                       </span>
                     ) : (
-                      <span className="font-mono text-[9px] text-stone-500 bg-white/[0.04] border border-white/[0.07] rounded-sm px-2 py-0.5 tracking-widest">
+                      <span className="font-mono text-[11px] text-subtle bg-surface border border-line rounded-sm px-2 py-0.5 tracking-widest">
                         LEVEL {adventurer.level}
                       </span>
                     )}
@@ -540,11 +540,11 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                         accounts keep the generic sky "VERIFIED" treatment. */}
                     {adventurer.verified && (
                       adventurer.staffBadge ? (
-                        <span className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-amber-300 bg-amber-300/10 border border-amber-300/30 rounded-sm px-2 py-0.5">
+                        <span className="flex items-center gap-1 font-mono text-[11px] font-semibold tracking-widest text-accent-text-hover bg-accent-hover/10 border border-accent/30 rounded-sm px-2 py-0.5">
                           <Shield size={9} /> OFFICIAL ACCOUNT
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-sky-400 bg-sky-400/10 border border-sky-400/25 rounded-sm px-2 py-0.5">
+                        <span className="flex items-center gap-1 font-mono text-[11px] font-semibold tracking-widest text-info bg-info/10 border border-info/25 rounded-sm px-2 py-0.5">
                           <Shield size={9} /> VERIFIED
                         </span>
                       )
@@ -552,7 +552,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     {credentials.map((c) => (
                       <span
                         key={`badge-${c.id}`}
-                        className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 rounded-sm px-2 py-0.5 uppercase"
+                        className="flex items-center gap-1 font-mono text-[11px] font-semibold tracking-widest text-success bg-success/10 border border-success/25 rounded-sm px-2 py-0.5 uppercase"
                       >
                         <BadgeCheck size={9} /> {credentialBadgeLabel(c)}
                       </span>
@@ -563,7 +563,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     {verifiedPro?.eligible && (
                       <Link
                         href="/verified-pro"
-                        className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-emerald-300 bg-emerald-300/10 border border-emerald-300/30 rounded-sm px-2 py-0.5 uppercase hover:border-emerald-300/60"
+                        className="flex items-center gap-1 font-mono text-[11px] font-semibold tracking-widest text-success bg-success/10 border border-success/30 rounded-sm px-2 py-0.5 uppercase hover:border-success/60"
                       >
                         <BadgeCheck size={9} /> Verified Pro
                       </Link>
@@ -573,7 +573,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     {adventurer.codeOfCraftPledgedAt && (
                       <Link
                         href="/code-of-craft"
-                        className="flex items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-amber-300 bg-amber-300/10 border border-amber-300/30 rounded-sm px-2 py-0.5 uppercase hover:border-amber-300/60"
+                        className="flex items-center gap-1 font-mono text-[11px] font-semibold tracking-widest text-accent-text-hover bg-accent-hover/10 border border-accent/30 rounded-sm px-2 py-0.5 uppercase hover:border-accent/60"
                       >
                         <Award size={9} /> Code of Craft
                       </Link>
@@ -586,9 +586,9 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       earned-signal visuals here. */}
                   {!adventurer.staffBadge && (
                     <>
-                      <div className="font-mono text-sm text-amber-400 tracking-wide mb-2">
+                      <div className="font-mono text-sm text-accent-text tracking-wide mb-2">
                         {starsDisplay(adventurer.reputationScore)}
-                        <span className="text-[11px] text-stone-600 ml-2">{adventurer.reputationScore}/100 reputation</span>
+                        <span className="text-[12px] text-subtle ml-2">{adventurer.reputationScore}/100 reputation</span>
                       </div>
 
                       <div className="mb-2.5">
@@ -602,7 +602,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     </>
                   )}
 
-                  <p className="font-mono text-[10px] text-stone-800">
+                  <p className="font-mono text-[12px] text-body">
                     Member since {formatMonthYear(adventurer.memberSince)}
                   </p>
 
@@ -644,22 +644,22 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                 return (
                   <div>
                     <SectionLabel>Worker Passport</SectionLabel>
-                    <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-4 mb-3">
+                    <div className="rounded-lg border border-line bg-surface p-4 mb-3">
                       <div className="flex items-center gap-2 mb-3">
-                        <BadgeCheck size={14} className="text-amber-400" />
-                        <span className="font-mono text-[10px] font-semibold tracking-widest text-stone-400 uppercase">
+                        <BadgeCheck size={14} className="text-accent-text" />
+                        <span className="font-mono text-[12px] font-semibold tracking-widest text-muted uppercase">
                           Proof of work &amp; reliability signals
                         </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                         {shown.map((s) => (
-                          <div key={s.key} className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-3">
-                            <p className="font-bold text-[14px] text-stone-200 leading-tight">{s.value}</p>
-                            <p className="font-mono text-[10px] text-stone-600 mt-1 uppercase tracking-wide">{s.label}</p>
+                          <div key={s.key} className="bg-surface border border-line rounded-lg p-3">
+                            <p className="font-bold text-[14px] text-body leading-tight">{s.value}</p>
+                            <p className="font-mono text-[12px] text-subtle mt-1 uppercase tracking-wide">{s.label}</p>
                           </div>
                         ))}
                       </div>
-                      <p className="font-mono text-[10px] text-stone-600 mt-3">
+                      <p className="font-mono text-[12px] text-subtle mt-3">
                         Member since {formatFullDate(passport.memberSince)}
                       </p>
                     </div>
@@ -705,7 +705,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       <ServicePackageCard key={p.id} pkg={p} showWorker={false} />
                     ))}
                   </div>
-                  <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
+                  <p className="font-mono text-[12px] text-subtle leading-relaxed mt-3">
                     Requesting a service starts a normal job — you and the worker agree on details and price
                     before any payment. Nothing is charged from a listing.
                   </p>
@@ -721,17 +721,17 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   <SectionLabel>Proof of work</SectionLabel>
                   <div className="space-y-3">
                     {proof.map((p) => (
-                      <div key={p.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3.5">
+                      <div key={p.id} className="rounded-lg border border-line bg-surface p-3.5">
                         <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                          <span className="font-semibold text-[13px] text-stone-200 leading-snug">{p.title}</span>
+                          <span className="font-semibold text-[13px] text-body leading-snug">{p.title}</span>
                           {p.quest?.title && (
-                            <span className="font-mono text-[9px] text-amber-300 bg-amber-300/10 border border-amber-300/25 rounded-sm px-2 py-0.5">
+                            <span className="font-mono text-[11px] text-accent-text-hover bg-accent-hover/10 border border-accent/25 rounded-sm px-2 py-0.5">
                               {p.quest.title}
                             </span>
                           )}
                         </div>
                         {p.description && (
-                          <p className="font-mono text-[11px] text-stone-500 leading-relaxed mb-2">{p.description}</p>
+                          <p className="font-mono text-[12px] text-subtle leading-relaxed mb-2">{p.description}</p>
                         )}
                         {p.imageUrls.length > 0 && (
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
@@ -742,7 +742,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                                 src={url}
                                 alt={`${p.title} — example ${i + 1}`}
                                 loading="lazy"
-                                className="w-full h-28 object-cover rounded-md border border-white/[0.06] bg-white/[0.02]"
+                                className="w-full h-28 object-cover rounded-md border border-line bg-surface"
                               />
                             ))}
                           </div>
@@ -752,7 +752,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                             {p.skillTags.map((tag) => (
                               <span
                                 key={`${p.id}-tag-${tag}`}
-                                className="font-mono text-[10px] text-stone-400 bg-white/[0.04] border border-white/[0.08] rounded px-2 py-0.5"
+                                className="font-mono text-[12px] text-muted bg-surface border border-line rounded px-2 py-0.5"
                               >
                                 {tag}
                               </span>
@@ -762,7 +762,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       </div>
                     ))}
                   </div>
-                  <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
+                  <p className="font-mono text-[12px] text-subtle leading-relaxed mt-3">
                     Proof examples are self-published by the worker to illustrate past work. Skill badges above stay
                     derived from real client ratings.
                   </p>
@@ -779,13 +779,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     {achievements.map((a) => (
                       <div
                         key={a.key ?? a.name}
-                        className="flex items-start gap-3 rounded-lg border border-amber-400/15 bg-amber-400/[0.05] p-3.5"
+                        className="flex items-start gap-3 rounded-lg border border-accent/15 bg-accent/[0.05] p-3.5"
                       >
                         <span className="text-xl leading-none mt-0.5" aria-hidden>{a.icon}</span>
                         <div className="min-w-0">
-                          <p className="font-semibold text-[13px] text-amber-200 leading-snug">{a.name}</p>
-                          <p className="font-mono text-[10px] text-stone-500 mt-0.5 leading-relaxed">{a.description}</p>
-                          <p className="font-mono text-[9px] text-stone-700 mt-1">
+                          <p className="font-semibold text-[13px] text-accent-text-hover leading-snug">{a.name}</p>
+                          <p className="font-mono text-[12px] text-subtle mt-0.5 leading-relaxed">{a.description}</p>
+                          <p className="font-mono text-[11px] text-subtle mt-1">
                             Earned {formatFullDate(a.unlockedAt)}
                           </p>
                         </div>
@@ -793,15 +793,15 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="font-mono text-[11px] text-stone-600 leading-relaxed">
+                  <div className="rounded-lg border border-line bg-surface p-4">
+                    <p className="font-mono text-[12px] text-subtle leading-relaxed">
                       No achievements earned yet. Achievements recognize milestones like a first completed job,
                       five-star work, on-time delivery, and skill mastery — they unlock automatically from real
                       activity.
                     </p>
                     <Link
                       href="/leaderboards"
-                      className="mt-2.5 inline-block font-mono text-[10px] text-amber-400 hover:underline"
+                      className="mt-2.5 inline-block font-mono text-[12px] text-accent-text hover:underline"
                     >
                       See top rated workers →
                     </Link>
@@ -813,7 +813,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
               {adventurer.bio && (
                 <div>
                   <SectionLabel>About</SectionLabel>
-                  <p className="font-mono text-[13px] text-stone-500 leading-relaxed">{adventurer.bio}</p>
+                  <p className="font-mono text-[13px] text-subtle leading-relaxed">{adventurer.bio}</p>
                 </div>
               )}
 
@@ -823,7 +823,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   <SectionLabel>Skills</SectionLabel>
                   <div className="flex flex-wrap gap-2">
                     {adventurer.skills.map((skill) => (
-                      <span key={skill} className="font-mono text-[11px] text-stone-400 bg-white/[0.04] border border-white/[0.08] rounded px-3 py-1.5">
+                      <span key={skill} className="font-mono text-[12px] text-muted bg-surface border border-line rounded px-3 py-1.5">
                         {skill}
                       </span>
                     ))}
@@ -839,15 +839,15 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     {credentials.map((c) => (
                       <div
                         key={c.id}
-                        className="flex items-start gap-3 p-3.5 bg-emerald-400/[0.05] border border-emerald-400/15 rounded-lg"
+                        className="flex items-start gap-3 p-3.5 bg-success/[0.05] border border-success/15 rounded-lg"
                       >
-                        <BadgeCheck size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <BadgeCheck size={18} className="text-success flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <p className="font-semibold text-[13px] text-emerald-300 leading-snug">
+                          <p className="font-semibold text-[13px] text-success leading-snug">
                             {credentialBadgeLabel(c)}
                           </p>
-                          <p className="font-mono text-[11px] text-stone-400 mt-0.5">{c.title}</p>
-                          <p className="font-mono text-[10px] text-stone-600 mt-0.5">
+                          <p className="font-mono text-[12px] text-muted mt-0.5">{c.title}</p>
+                          <p className="font-mono text-[12px] text-subtle mt-0.5">
                             {[c.issuer, c.jurisdiction, c.expirationDate ? `expires ${formatFullDate(c.expirationDate)}` : null]
                               .filter(Boolean)
                               .join(' · ')}
@@ -856,7 +856,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       </div>
                     ))}
                   </div>
-                  <p className="font-mono text-[10px] text-stone-700 leading-relaxed mt-3">
+                  <p className="font-mono text-[12px] text-subtle leading-relaxed mt-3">
                     Verification means TryHardly reviewed the submitted credential details. Users should confirm
                     licensing requirements for their project and location.
                   </p>
@@ -868,13 +868,13 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
               {adventurer.guild && (
                 <div>
                   <SectionLabel>Guild</SectionLabel>
-                  <div className="flex items-center gap-3.5 p-4 bg-violet-400/[0.05] border border-violet-400/15 rounded-lg">
-                    <div className="w-9 h-9 rounded-md bg-violet-400/10 border border-violet-400/25 flex items-center justify-center text-violet-400 flex-shrink-0">
+                  <div className="flex items-center gap-3.5 p-4 bg-info/[0.05] border border-info/15 rounded-lg">
+                    <div className="w-9 h-9 rounded-md bg-info/10 border border-info/25 flex items-center justify-center text-info flex-shrink-0">
                       ⚜
                     </div>
                     <div>
-                      <p className="font-bold text-[14px] text-violet-300">{adventurer.guild.name}</p>
-                      <p className="font-mono text-[10px] text-violet-600 mt-0.5">Member</p>
+                      <p className="font-bold text-[14px] text-info">{adventurer.guild.name}</p>
+                      <p className="font-mono text-[12px] text-info mt-0.5">Member</p>
                     </div>
                   </div>
                 </div>
@@ -898,7 +898,7 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   <SectionLabel>
                     Reviews ({reviewData.reviewCount})
                     {reviewData.averageRating != null && (
-                      <span className="text-amber-400 ml-2 normal-case tracking-normal">
+                      <span className="text-accent-text ml-2 normal-case tracking-normal">
                         {reviewData.averageRating.toFixed(1)} ★
                       </span>
                     )}
@@ -907,18 +907,18 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     {reviewData.reviews.map((rev) => {
                       const stars = Math.min(5, Math.max(1, rev.rating));
                       return (
-                        <div key={rev.id} className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-3.5">
+                        <div key={rev.id} className="bg-surface border border-line rounded-lg p-3.5">
                           <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className="font-mono text-[11px] text-stone-400">
+                            <span className="font-mono text-[12px] text-muted">
                               {rev.reviewer?.username || 'Someone'}
                             </span>
-                            <span className="font-mono text-[11px] text-amber-400">
+                            <span className="font-mono text-[12px] text-accent-text">
                               {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
                             </span>
                           </div>
-                          <p className="font-mono text-[12px] text-stone-500 leading-relaxed whitespace-pre-line">{rev.comment}</p>
+                          <p className="font-mono text-[12px] text-subtle leading-relaxed whitespace-pre-line">{rev.comment}</p>
                           {rev.quest?.title && (
-                            <p className="font-mono text-[10px] text-stone-700 mt-1.5">on “{rev.quest.title}”</p>
+                            <p className="font-mono text-[12px] text-subtle mt-1.5">on “{rev.quest.title}”</p>
                           )}
                         </div>
                       );

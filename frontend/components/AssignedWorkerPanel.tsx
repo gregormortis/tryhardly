@@ -37,37 +37,37 @@ export default function AssignedWorkerPanel({ quest }: AssignedWorkerPanelProps)
       : 'When the work is done, submit it for review with notes and any proof photos.';
 
   return (
-    <div className="bg-gray-900 border border-green-500/40 rounded-xl p-6 space-y-5">
+    <div className="bg-surface border border-success/40 rounded-xl p-6 space-y-5">
       <div className="flex items-start gap-3">
-        <CheckCircle2 className="text-green-400 shrink-0 mt-0.5" size={22} />
+        <CheckCircle2 className="text-success shrink-0 mt-0.5" size={22} />
         <div>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-strong">
             You&apos;re assigned to this job
           </h2>
-          <p className="text-sm text-gray-400 mt-1">{nextStep}</p>
+          <p className="text-sm text-muted mt-1">{nextStep}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="bg-gray-800/60 rounded-lg px-4 py-3">
-          <div className="text-[11px] uppercase tracking-wide text-gray-500">Agreed amount</div>
-          <div className="text-sm font-semibold text-amber-400 mt-0.5">{money(quest.reward)}</div>
+        <div className="bg-raised rounded-lg px-4 py-3">
+          <div className="text-[12px] uppercase tracking-wide text-subtle">Agreed amount</div>
+          <div className="text-sm font-semibold text-accent-text mt-0.5">{money(quest.reward)}</div>
         </div>
-        <div className="bg-gray-800/60 rounded-lg px-4 py-3">
-          <div className="text-[11px] uppercase tracking-wide text-gray-500">Job status</div>
-          <div className="text-sm font-medium text-gray-100 mt-0.5">
+        <div className="bg-raised rounded-lg px-4 py-3">
+          <div className="text-[12px] uppercase tracking-wide text-subtle">Job status</div>
+          <div className="text-sm font-medium text-strong mt-0.5">
             {workStatusView(quest.status, 'worker').label}
           </div>
         </div>
       </div>
 
-      <p className="text-xs text-gray-500">{AUTHORIZE_CAPTURE_PAYOUT_WORKER}</p>
+      <p className="text-xs text-subtle">{AUTHORIZE_CAPTURE_PAYOUT_WORKER}</p>
 
       <div className="flex flex-wrap gap-3">
         {!completed && (
           <a
             href="#work-completion"
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900 transition-colors"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent hover:bg-accent text-on-accent transition-colors"
           >
             {inReview ? 'View your submission' : 'Submit completion'}
           </a>
@@ -75,7 +75,7 @@ export default function AssignedWorkerPanel({ quest }: AssignedWorkerPanelProps)
         {completed && (
           <a
             href="#reviews"
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900 transition-colors"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent hover:bg-accent text-on-accent transition-colors"
           >
             Leave a review
           </a>
@@ -83,13 +83,13 @@ export default function AssignedWorkerPanel({ quest }: AssignedWorkerPanelProps)
         {posterId && (
           <Link
             href={`/messages/${quest.id}/${posterId}`}
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors"
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-line-strong text-body hover:border-accent hover:text-accent-text transition-colors"
           >
             Message the client
           </Link>
         )}
       </div>
-      <p className="text-xs text-gray-600">
+      <p className="text-xs text-subtle">
         Contact details, the job site address, and access notes are shared by the client in your
         messages for this job.
       </p>

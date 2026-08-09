@@ -63,7 +63,7 @@ export default function JobCategoryCityPage({ params }: PageProps) {
   ];
 
   return (
-    <div className="bg-zinc-950">
+    <div className="bg-canvas">
       <ServiceSchema
         categorySlug={cat.slug}
         categoryLabel={cat.label}
@@ -80,21 +80,21 @@ export default function JobCategoryCityPage({ params }: PageProps) {
       />
       <FaqSchema items={faqs} />
 
-      <section className="border-b border-white/[0.06] px-4 sm:px-8 py-10">
+      <section className="border-b border-line px-4 sm:px-8 py-10">
         <div className="max-w-5xl mx-auto">
-          <nav className="font-mono text-[11px] text-stone-600 mb-3">
-            <Link href="/jobs" className="hover:text-amber-400">Local jobs</Link>
+          <nav className="font-mono text-[12px] text-subtle mb-3">
+            <Link href="/jobs" className="hover:text-accent-text">Local jobs</Link>
             <span className="mx-2">/</span>
-            <Link href={`/jobs/${cat.slug}`} className="hover:text-amber-400">{cat.label}</Link>
+            <Link href={`/jobs/${cat.slug}`} className="hover:text-accent-text">{cat.label}</Link>
             <span className="mx-2">/</span>
-            <span className="text-stone-400">{city}</span>
+            <span className="text-muted">{city}</span>
           </nav>
-          <h1 className="font-bold text-3xl text-stone-100 tracking-tight mb-3">
+          <h1 className="font-bold text-3xl text-strong tracking-tight mb-3">
             {cat.label} in {city}
           </h1>
-          <p className="text-stone-400 max-w-2xl leading-relaxed">{cat.blurb}</p>
+          <p className="text-muted max-w-2xl leading-relaxed">{cat.blurb}</p>
 
-          <p className="mt-5 font-mono text-[11px] text-stone-600 max-w-2xl leading-relaxed">
+          <p className="mt-5 font-mono text-[12px] text-subtle max-w-2xl leading-relaxed">
             {area?.primary
               ? `${cityName} is TryHardly's launch market. Post a job and local workers get alerted.`
               : `TryHardly is newest in ${cityName}. The board below shows live jobs matching the area — if it's empty, post yours and local workers will see it first.`}
@@ -103,13 +103,13 @@ export default function JobCategoryCityPage({ params }: PageProps) {
           <div className="mt-5 flex gap-3">
             <Link
               href="/post-a-job"
-              className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+              className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors"
             >
               POST A JOB IN {cityName.toUpperCase()}
             </Link>
             <Link
               href="/work-alerts"
-              className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/[0.12] text-stone-300 rounded hover:border-amber-500/40 hover:text-amber-400 transition-colors"
+              className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 border border-line text-body rounded hover:border-accent/40 hover:text-accent-text transition-colors"
             >
               GET WORK ALERTS
             </Link>
@@ -123,24 +123,24 @@ export default function JobCategoryCityPage({ params }: PageProps) {
 
       {/* Visible FAQ. Mirrors the FaqSchema above — never emit structured data
           for content a visitor cannot actually see on the page. */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-white/[0.05]">
-        <h2 className="font-bold text-xl text-stone-100 tracking-tight mb-5">
+      <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-line">
+        <h2 className="font-bold text-xl text-strong tracking-tight mb-5">
           {cat.label} in {cityName}: common questions
         </h2>
         <div className="space-y-5 max-w-3xl">
           {faqs.map((f) => (
             <div key={f.q}>
-              <h3 className="text-sm font-semibold text-stone-200 mb-1.5">{f.q}</h3>
-              <p className="text-sm text-stone-400 leading-relaxed">{f.a}</p>
+              <h3 className="text-sm font-semibold text-body mb-1.5">{f.q}</h3>
+              <p className="text-sm text-muted leading-relaxed">{f.a}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Sibling links: same category elsewhere, and other categories here. */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-white/[0.05] space-y-8">
+      <section className="max-w-5xl mx-auto px-4 sm:px-8 py-10 border-t border-line space-y-8">
         <div>
-          <h2 className="font-mono text-[11px] font-semibold tracking-widest text-stone-600 uppercase mb-4">
+          <h2 className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-4">
             {cat.shortLabel} in other areas
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -148,7 +148,7 @@ export default function JobCategoryCityPage({ params }: PageProps) {
               <Link
                 key={a.slug}
                 href={`/jobs/${cat.slug}/${a.slug}`}
-                className="font-mono text-[11px] text-stone-500 border border-white/[0.08] rounded-full px-3 py-1.5 hover:text-amber-400 hover:border-amber-500/40 transition-colors"
+                className="font-mono text-[12px] text-subtle border border-line rounded-full px-3 py-1.5 hover:text-accent-text hover:border-accent/40 transition-colors"
               >
                 {a.city}, {a.state}
               </Link>
@@ -157,7 +157,7 @@ export default function JobCategoryCityPage({ params }: PageProps) {
         </div>
 
         <div>
-          <h2 className="font-mono text-[11px] font-semibold tracking-widest text-stone-600 uppercase mb-4">
+          <h2 className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-4">
             Other work in {cityName}
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -165,7 +165,7 @@ export default function JobCategoryCityPage({ params }: PageProps) {
               <Link
                 key={c.slug}
                 href={`/jobs/${c.slug}/${params.city}`}
-                className="font-mono text-[11px] text-stone-500 border border-white/[0.08] rounded-full px-3 py-1.5 hover:text-amber-400 hover:border-amber-500/40 transition-colors"
+                className="font-mono text-[12px] text-subtle border border-line rounded-full px-3 py-1.5 hover:text-accent-text hover:border-accent/40 transition-colors"
               >
                 {c.shortLabel}
               </Link>

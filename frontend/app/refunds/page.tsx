@@ -13,32 +13,32 @@ export const metadata: Metadata = {
 
 export default function RefundsPage() {
   return (
-    <div className="min-h-screen bg-gray-950 py-20 px-4">
+    <div className="min-h-screen bg-canvas py-20 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-strong">
           Refund &amp; Dispute Policy
         </h1>
-        <div className="text-gray-300 space-y-6 leading-relaxed">
-          <p className="text-sm text-gray-400">Last Updated: {LAST_UPDATED}</p>
+        <div className="text-body space-y-6 leading-relaxed">
+          <p className="text-sm text-muted">Last Updated: {LAST_UPDATED}</p>
 
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted">
             This is a plain-language summary of how we handle money, cancellations, and
             disagreements. It is not legal advice. Where it conflicts with our{' '}
-            <Link href="/terms" className="text-amber-400 hover:text-amber-300">
+            <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">
               Terms of Service
             </Link>
             , the Terms control.
           </p>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">1. How payments work</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">1. How payments work</h2>
             <p>
               TryHardly is a marketplace that connects people who need local help (job posters,
               or clients) with people who can do the work (workers). We are a marketplace facilitator —{' '}
-              <span className="text-white font-semibold">we are not the service provider</span>, and we are not a
+              <span className="text-strong font-semibold">we are not the service provider</span>, and we are not a
               bank or money transmitter. All payments are processed directly by{' '}
-              <span className="text-white font-semibold">Stripe</span>, and worker payouts are handled through{' '}
-              <span className="text-white font-semibold">Stripe Connect</span> after completed-job payment
+              <span className="text-strong font-semibold">Stripe</span>, and worker payouts are handled through{' '}
+              <span className="text-strong font-semibold">Stripe Connect</span> after completed-job payment
               capture. Posting a job is free; TryHardly charges workers a flat 12% platform
               service fee on completed paid jobs. TryHardly does not provide regulated financial
               services.
@@ -54,7 +54,7 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">2. Cancellations before work starts</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">2. Cancellations before work starts</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>A job poster may cancel before the worker begins work; if a payment authorization was obtained, it is voided or canceled and the job poster is not charged.</li>
               <li>A worker may withdraw before starting at no penalty.</li>
@@ -63,7 +63,7 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">3. Refunds after work has started</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">3. Refunds after work has started</h2>
             <p className="mb-2">
               Once work is underway, refunds are handled case by case based on what was
               actually delivered:
@@ -76,7 +76,7 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Platform &amp; processing fees</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">4. Platform &amp; processing fees</h2>
             <p>
               When a refund is issued, the TryHardly platform service fee associated with the
               refunded amount is returned as well. Stripe payment-processing fees, where they
@@ -85,14 +85,14 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Filing a dispute</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">5. Filing a dispute</h2>
             <p className="mb-2">
               If a job poster and worker cannot agree, either party can open a dispute:
             </p>
             <ol className="list-decimal list-inside space-y-2 ml-4">
               <li>
                 Email{' '}
-                <a href={`mailto:${SUPPORT_EMAIL}`} className="text-amber-400 hover:text-amber-300">
+                <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent-text hover:text-accent-text-hover">
                   {SUPPORT_EMAIL}
                 </a>{' '}
                 within 14 days of the disputed work, with the job details and what went wrong.
@@ -104,7 +104,7 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Chargebacks &amp; card disputes</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">6. Chargebacks &amp; card disputes</h2>
             <p>
               Card payments are processed by Stripe. If you dispute a charge with your bank or
               card issuer, that dispute is handled through Stripe&apos;s standard process, and we
@@ -117,7 +117,7 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Our role &amp; jurisdiction</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">7. Our role &amp; jurisdiction</h2>
             <p>
               TryHardly is a US-based marketplace and intermediary. We are not the service
               provider and are not a party to the work agreement between job posters and
@@ -129,10 +129,10 @@ export default function RefundsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Contact</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">8. Contact</h2>
             <p>
               Questions about refunds or a dispute? Email{' '}
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-amber-400 hover:text-amber-300">
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent-text hover:text-accent-text-hover">
                 {SUPPORT_EMAIL}
               </a>
               .

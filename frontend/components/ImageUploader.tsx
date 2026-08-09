@@ -88,7 +88,7 @@ export default function ImageUploader({
   return (
     <div className={className}>
       {label && (
-        <p className="text-xs text-gray-400 mb-1.5 font-medium">{label}</p>
+        <p className="text-xs text-muted mb-1.5 font-medium">{label}</p>
       )}
 
       <input
@@ -105,7 +105,7 @@ export default function ImageUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={disabled || busy}
-        className="w-full inline-flex items-center justify-center gap-2 border border-dashed border-gray-600 hover:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-sm rounded-lg px-4 py-3 transition-colors"
+        className="w-full inline-flex items-center justify-center gap-2 border border-dashed border-line-strong hover:border-accent disabled:opacity-50 disabled:cursor-not-allowed text-body text-sm rounded-lg px-4 py-3 transition-colors"
       >
         {busy ? (
           <>
@@ -119,25 +119,25 @@ export default function ImageUploader({
         )}
       </button>
 
-      <p className="text-[11px] text-gray-600 mt-1.5">
+      <p className="text-[12px] text-subtle mt-1.5">
         JPG, PNG, WebP, GIF or HEIC · up to {maxMb}MB each.
       </p>
 
       {uploads.map((u) => (
         <div key={u.id} className="mt-2 flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-raised rounded-full overflow-hidden">
             <div
-              className="h-full bg-amber-500 transition-all duration-150"
+              className="h-full bg-accent transition-all duration-150"
               style={{ width: `${u.progress}%` }}
             />
           </div>
-          <span className="text-[11px] text-gray-500 w-9 text-right">{u.progress}%</span>
-          <X size={12} className="text-gray-600" />
+          <span className="text-[12px] text-subtle w-9 text-right">{u.progress}%</span>
+          <X size={12} className="text-subtle" />
         </div>
       ))}
 
       {error && (
-        <p className="text-xs text-rose-400 mt-2">{error}</p>
+        <p className="text-xs text-danger mt-2">{error}</p>
       )}
     </div>
   );
