@@ -125,6 +125,29 @@ model User {
   handshakesAsPoster   Handshake[] @relation("HandshakePoster")
   handshakesAsWorker   Handshake[] @relation("HandshakeWorker")
   handshakesProposed   Handshake[] @relation("HandshakeProposer")
+
+  // ─── Young workers (16-17) ────────────────────────────────────────────────
+  // Every comparable platform is 18+, so the teenager with a mower has nowhere
+  // legitimate to go. TryHardly takes them, under rules enforced in code — see
+  // config/youthPolicy.ts for the reasoning and the legal citations.
+  //
+  // Nullable throughout: adults never touch any of this.
+  dateOfBirth        DateTime?
+  // Denormalized from dateOfBirth at verification time so every bid check does
+  // not have to recompute an age. Cleared automatically when they turn 18.
+  isYouthWorker      Boolean   @default(false)
+  // The guardian owns the account and is named on the record. Following the
+  // Fiverr model rather than letting a minor hold a standalone account.
+  guardianName       String?
+  guardianEmail      String?
+  guardianPhone      String?
+  guardianConsentAt  DateTime?
+  // Free text of what the guardian agreed to, captured verbatim at consent so
+  // the record shows the terms as they stood that day rather than as they read
+  // after a later policy edit.
+  guardianConsentTerms String?
+
+  @@index([isYouthWorker])
 }
 
 // Account lifecycle state. ACTIVE is the only state at registration; DELETED is

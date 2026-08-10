@@ -17,6 +17,7 @@ const STATIC_PATHS: Array<{
   { path: '/post-a-job', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/redding', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/find-work-fast', priority: 0.8, changeFrequency: 'weekly' },
+  { path: '/for-young-workers', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/post-job-fast', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/request-help', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/work-alerts', priority: 0.8, changeFrequency: 'monthly' },

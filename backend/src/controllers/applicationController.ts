@@ -10,6 +10,7 @@ import {
 } from '../utils/contactDetection';
 import { findQuestIdsReviewedBy } from '../services/reviewStatusService';
 import { isPlatformPaymentsEnabled } from '../config/paymentsMode';
+import { canYouthBidOnCategory } from '../config/youthPolicy';
 
 // Shown when a worker tries to submit a bid before their payout account is
 // ready. Only reachable in platform-payments mode: in direct-settlement mode
@@ -186,6 +187,29 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
         payoutSetupRequired: true,
       });
       return;
+    }
+
+    // Young workers (16-17) may only bid on outdoor, street-visible work.
+    // Enforced server-side rather than by hiding buttons: the whole point of
+    // the restriction is that it holds even when someone goes around the UI.
+    // Fails closed on unknown categories - see config/youthPolicy.ts.
+    const bidder = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { isYouthWorker: true },
+    });
+    if ((bidder as any)?.isYouthWorker) {
+      const category =
+        (quest as any).category ??
+        (Array.isArray(quest.tags) ? quest.tags[0] : null);
+      const eligibility = canYouthBidOnCategory(category);
+      if (!eligibility.allowed) {
+        res.status(403).json({
+          error: 'Not open to workers under 18',
+          message: eligibility.reason,
+          youthRestricted: true,
+        });
+        return;
+      }
     }
 
     const bidData = buildBidData(req.body || {});

@@ -12,8 +12,7 @@ export default function Footer() {
               Try<span className="text-accent-text">hardly</span>
             </Link>
             <p className="text-sm">
-              The marketplace AI can&apos;t touch. Real work. Real money. Real
-              local.
+              A local marketplace for real, hands-on work.
             </p>
           </div>
 
@@ -50,6 +49,14 @@ export default function Footer() {
                   className="transition-colors hover:text-strong"
                 >
                   Find local work
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/for-young-workers"
+                  className="transition-colors hover:text-strong"
+                >
+                  For young workers (16–17)
                 </Link>
               </li>
               <li>
