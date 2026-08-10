@@ -50,14 +50,15 @@ export default function HomePage() {
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-6 py-14 sm:py-20 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent-text mb-5">
-          <MapPin className="h-3 w-3" /> Local jobs. Real neighbors. Real pay.
+          <MapPin className="h-3 w-3" /> Local jobs. Real people. Real work.
         </div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-5">
-          Hire local help,<br />or get paid to do the work
+          Real local people<br />for hands-on work
         </h1>
         <p className="mx-auto max-w-2xl text-base sm:text-lg text-body mb-3">
-          TryHardly connects neighbors who need a hand with people nearby who want paid work — yard work,
-          moving help, handyman tasks, cleaning, and errands.
+          From licensed contractors to a 16-year-old with a mower, TryHardly connects neighbors
+          with local people who do the work. Each profile builds a real record of completed jobs,
+          ratings, and reliability.
         </p>
         <p className="mx-auto max-w-xl text-sm text-subtle mb-8">
           Free to post. Free to work. You pay your worker directly.
@@ -77,7 +78,6 @@ export default function HomePage() {
             Find local work
           </Link>
         </div>
-
         <form onSubmit={handleSearch} className="max-w-md mx-auto">
           <label htmlFor="zip" className="block text-xs text-muted mb-2">
             Enter your ZIP to open the local job board — every job lists its neighborhood and city.
@@ -100,6 +100,14 @@ export default function HomePage() {
             </button>
           </div>
         </form>
+
+        <Link
+          href="/for-young-workers"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-text hover:text-accent-text-hover transition-colors"
+        >
+          Are you 16 or 17? See how young workers can get started with a parent
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </section>
 
       {/* Stats */}
