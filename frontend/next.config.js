@@ -22,6 +22,36 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // --- Temporary gate: pages whose only content is seed/demo data ---
+      // The leaderboard, guild directory, and progression ladder currently
+      // render placeholder and stale test records rather than real activity.
+      // They stay redirected until there is genuine completed-job data behind
+      // them. Remove these four entries to re-enable the pages.
+      {
+        source: '/leaderboard',
+        destination: '/questboard',
+        permanent: false,
+      },
+      {
+        source: '/leaderboards',
+        destination: '/questboard',
+        permanent: false,
+      },
+      {
+        source: '/progression',
+        destination: '/questboard',
+        permanent: false,
+      },
+      {
+        source: '/guilds/:path*',
+        destination: '/questboard',
+        permanent: false,
+      },
+      {
+        source: '/guilds',
+        destination: '/questboard',
+        permanent: false,
+      },
       {
         source: '/jobs',
         destination: '/questboard',

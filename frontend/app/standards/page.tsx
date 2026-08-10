@@ -86,11 +86,7 @@ export default function StandardsOverviewPage() {
                 <Link href="/verified-pro" className="text-amber-400 hover:underline">
                   Verified Pro
                 </Link>{' '}
-                and your{' '}
-                <Link href="/progression" className="text-amber-400 hover:underline">
-                  ratings &amp; badges
-                </Link>
-                .
+                and your ratings and badges.
               </span>
             </li>
           </ul>

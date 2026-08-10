@@ -310,6 +310,14 @@ const SLUG_ALIASES: Record<string, string> = {
   repairs: 'handyman',
   'pressure-washing': 'pressure',
   powerwashing: 'pressure',
+  // jobCategories.ts exposes 'fencing' and 'labor' but there is no dedicated
+  // standard for either yet. Without these aliases both fell through to the
+  // 'other' default, which showed an "Errands, Delivery & Odd Jobs" checklist
+  // on fencing jobs.
+  fencing: 'handyman',
+  fence: 'handyman',
+  labor: 'moving',
+  'labor-only': 'moving',
 };
 
 export function getTradeStandard(slug: string): TradeStandard | undefined {
