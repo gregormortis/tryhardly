@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { prisma } from '../app';
 import * as stripeService from '../services/stripeService';
 import * as escrowService from '../services/escrowService';
+import { checkJobAmount } from '../middleware/paymentVelocity';
 
 /**
  * Extract a concise, user-safe message from an error thrown by the Stripe SDK.
@@ -493,6 +494,23 @@ export const createQuestCheckout = async (
         message: `Job amount must be at least ${(
           stripeService.MIN_CHARGE_CENTS / 100
         ).toFixed(2)} to authorize a payment.`,
+      });
+      return;
+    }
+
+    // Business floor and ceiling, separate from Stripe's $0.50 technical
+    // minimum above. A $0.50 floor is precisely what makes an endpoint useful
+    // for card testing — the 2026-08-04 attack used $10 charges. No real local
+    // job is worth $10, so a business floor costs nothing legitimate. The
+    // ceiling bounds the damage of a single bad authorization and sits above
+    // the largest real job posted to date. Both are env-tunable; see
+    // middleware/paymentVelocity.ts.
+    const amountCheck = checkJobAmount(amountCents);
+    if (!amountCheck.ok) {
+      res.status(400).json({
+        error: 'Job amount out of range',
+        message: amountCheck.message,
+        reason: amountCheck.reason,
       });
       return;
     }
