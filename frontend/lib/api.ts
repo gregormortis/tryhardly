@@ -11,6 +11,9 @@ export interface ApiError {
   // Set by the backend when a worker tries to submit a bid before their own
   // Stripe Connect payout account is onboarded/ready.
   payoutSetupRequired?: boolean;
+  // Set when a job has reached its bid limit, so the worker can stop spending
+  // time on a form that cannot be submitted.
+  biddingClosed?: boolean;
 }
 
 // Error thrown by the API client on a non-2xx response. Carries the structured
@@ -23,6 +26,7 @@ export class ApiRequestError extends Error {
   details?: unknown;
   workerPayoutNotReady?: boolean;
   payoutSetupRequired?: boolean;
+  biddingClosed?: boolean;
 
   constructor(status: number, body: ApiError) {
     super(body.message || body.error || 'Request failed');
@@ -32,6 +36,7 @@ export class ApiRequestError extends Error {
     this.details = body.details;
     this.workerPayoutNotReady = body.workerPayoutNotReady;
     this.payoutSetupRequired = body.payoutSetupRequired;
+    this.biddingClosed = body.biddingClosed;
   }
 }
 

@@ -42,6 +42,11 @@ interface BidFormProps {
   payoutStatusLoading?: boolean;
   // Where to send the worker to finish required account setup.
   payoutSetupHref?: string;
+  // The job may close while a worker is filling this out. Keep the fields
+  // visible, but make the form read-only once the backend reports that closure.
+  disabled?: boolean;
+  bidCount?: number;
+  maxBids?: number;
 }
 
 export const PAYOUT_SETUP_COPY =
@@ -79,6 +84,9 @@ export default function BidForm({
   payoutReady = true,
   payoutStatusLoading = false,
   payoutSetupHref = '/dashboard',
+  disabled = false,
+  bidCount,
+  maxBids,
 }: BidFormProps) {
   const [bidAmount, setBidAmount] = useState('');
   const [materialCost, setMaterialCost] = useState('');
@@ -176,12 +184,19 @@ export default function BidForm({
   };
 
   return (
-    <div className="space-y-5">
+    <fieldset disabled={disabled} className="min-w-0 space-y-5 border-0 p-0 m-0">
       <div>
         <h3 className="text-base font-semibold text-strong">Submit your bid</h3>
         <p className="text-xs text-subtle mt-1">
           Give the client a clear estimate. {DIRECT_PAYMENT_WORKER}
         </p>
+        {bidCount !== undefined && (
+          <p className="text-xs text-muted mt-2">
+            {maxBids !== undefined && maxBids > 0
+              ? `${bidCount} of ${maxBids} bids — closes at ${maxBids}`
+              : `${bidCount} bids so far`}
+          </p>
+        )}
       </div>
 
       {error && (
@@ -478,10 +493,12 @@ export default function BidForm({
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={submitting || payoutStatusLoading || !payoutReady}
+        disabled={disabled || submitting || payoutStatusLoading || !payoutReady}
         className="w-full bg-accent hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed text-on-accent font-bold py-3 rounded-lg transition-colors"
       >
-        {payoutStatusLoading
+        {disabled
+          ? 'Bidding closed'
+          : payoutStatusLoading
           ? 'Checking account setup…'
           : !payoutReady
           ? 'Finish account setup to submit'
@@ -491,6 +508,6 @@ export default function BidForm({
           ? `Submit bid · ${fmt(totalNum)}`
           : 'Submit bid'}
       </button>
-    </div>
+    </fieldset>
   );
 }

@@ -143,6 +143,37 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
     });
     if (existing) { res.status(400).json({ error: 'Already applied to this quest' }); return; }
 
+    // Bidding controls. Writing a bid is unpaid work, and a worker who writes
+    // five and wins none simply leaves - which a market this small cannot
+    // absorb. TaskRabbit abandoned its bidding auction for exactly this reason:
+    // taskers spent hours bidding instead of working. Capping bids keeps each
+    // one worth writing and hands the poster a shortlist rather than a pile.
+    if (quest.biddingClosedAt) {
+      res.status(400).json({
+        error: 'Bidding closed',
+        message: 'This job has the bids it needs. Have a look at what else is open nearby.',
+        biddingClosed: true,
+      });
+      return;
+    }
+    if (quest.maxApplications && quest.maxApplications > 0) {
+      const bidCount = await prisma.application.count({ where: { questId } });
+      if (bidCount >= quest.maxApplications) {
+        // Close it explicitly so the job board stops advertising it as open
+        // rather than letting workers discover the cap by being rejected.
+        await prisma.quest.update({
+          where: { id: questId },
+          data: { biddingClosedAt: new Date() },
+        });
+        res.status(400).json({
+          error: 'Bidding closed',
+          message: `This job already has ${bidCount} bids. Have a look at what else is open nearby.`,
+          biddingClosed: true,
+        });
+        return;
+      }
+    }
+
     // Payout precondition: a worker must have a connected/ready Stripe Connect
     // payout account before a bid can be SUBMITTED. This does not touch the
     // payment model — no card is charged here; it only ensures that, once the

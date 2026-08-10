@@ -13,6 +13,7 @@ import {
 import { PLATFORM_PAYMENTS_ENABLED } from '@/lib/paymentsMode';
 import EscrowPanel from './EscrowPanel';
 import DirectPaymentPanel from './DirectPaymentPanel';
+import HandshakePanel from './HandshakePanel';
 
 // Owner-facing "what happens next" panel shown immediately after a bid is
 // accepted, right on the quest detail page. The headline tracks the live
@@ -227,6 +228,8 @@ export default function AcceptedBidPanel({
       ) : (
         <DirectPaymentPanel isQuestGiver agreedAmount={acceptedAmount} />
       )}
+
+      {quest.assignedAdventurerId && <HandshakePanel questId={quest.id} />}
     </div>
   );
 }

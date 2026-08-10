@@ -1,6 +1,6 @@
 'use client';
 
-import { HandCoins } from 'lucide-react';
+import { Banknote } from 'lucide-react';
 import {
   DIRECT_PAYMENT_LIMIT,
   DIRECT_PAYMENT_POSTER,
@@ -42,7 +42,7 @@ export default function DirectPaymentPanel({
   return (
     <div className="mt-6 rounded-lg border border-line-strong bg-surface p-4">
       <div className="mb-3 flex items-center gap-2">
-        <HandCoins className="h-4 w-4 text-accent-text" aria-hidden="true" />
+        <Banknote className="h-4 w-4 text-accent-text" aria-hidden="true" />
         <h3 className="text-base font-semibold text-strong">Paying for this job</h3>
       </div>
 

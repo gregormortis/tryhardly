@@ -398,7 +398,7 @@ export default function QuestDetailModal({
                 ) : (
                   <DirectPaymentPanel
                     isQuestGiver={currentUserId === quest.postedBy.id}
-                    agreedAmount={Number(quest.reward) || null}
+                    agreedAmount={Number(quest.pay) || null}
                   />
                 )}
               </div>

@@ -84,6 +84,39 @@ export type QuestPaymentStatus =
   | 'CANCELED'
   | 'CAPTURE_FAILED';
 
+export type HandshakeStatus =
+  | 'PROPOSED'
+  | 'AGREED'
+  | 'DECLINED'
+  | 'SUPERSEDED'
+  | 'BROKEN'
+  | 'HONORED';
+
+// The shared record of the price, timing, place, and scope both parties agreed
+// for an assigned job. Amounts are stored in cents so the recorded total stays
+// exact.
+export interface Handshake {
+  id: string;
+  amountCents: number;
+  scheduledFor?: string | null;
+  scheduleNote?: string | null;
+  location?: string | null;
+  scope: string;
+  paymentMethod?: string | null;
+  status: HandshakeStatus;
+  version: number;
+  posterAgreedAt?: string | null;
+  workerAgreedAt?: string | null;
+  agreedAt?: string | null;
+  declinedAt?: string | null;
+  brokenAt?: string | null;
+  brokenById?: string | null;
+  brokenReason?: string | null;
+  honoredAt?: string | null;
+  proposedById: string;
+  createdAt: string;
+}
+
 export type WalkthroughType = 'NONE' | 'REMOTE' | 'IN_PERSON';
 
 // A single line in a worker's itemized material list.
