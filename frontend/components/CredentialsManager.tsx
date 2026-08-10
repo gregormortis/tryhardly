@@ -16,10 +16,10 @@ const CREDENTIAL_TYPES: { value: CredentialType; label: string }[] = [
 ];
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-yellow-500/20 text-yellow-400',
-  VERIFIED: 'bg-green-500/20 text-green-400',
-  REJECTED: 'bg-red-500/20 text-red-400',
-  EXPIRED: 'bg-gray-700 text-gray-300',
+  PENDING: 'bg-warning/20 text-warning',
+  VERIFIED: 'bg-success/20 text-success',
+  REJECTED: 'bg-danger/20 text-danger',
+  EXPIRED: 'bg-raised-2 text-body',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -156,36 +156,36 @@ export default function CredentialsManager() {
   };
 
   const inputClass =
-    'w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500';
+    'w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent';
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div className="bg-surface border border-line rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-gray-200">Professional credentials ({credentials.length})</h2>
+        <h2 className="font-semibold text-body">Professional credentials ({credentials.length})</h2>
         {!showForm && (
           <button
             onClick={openAdd}
-            className="text-sm border border-gray-700 hover:border-amber-500 hover:text-amber-400 text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+            className="text-sm border border-line-strong hover:border-accent hover:text-accent-text text-body px-3 py-1.5 rounded-lg transition-colors"
           >
             + Add credential
           </button>
         )}
       </div>
 
-      <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+      <p className="text-xs text-subtle mb-4 leading-relaxed">
         Add licenses, insurance, certifications and other proof of your work. New or edited entries are marked
-        <span className="text-yellow-400"> &ldquo;Pending admin review&rdquo;</span> until an admin verifies the details.
+        <span className="text-warning"> &ldquo;Pending admin review&rdquo;</span> until an admin verifies the details.
         Verification means TryHardly reviewed the submitted credential details — it is not a guarantee of legal
-        compliance. <span className="text-gray-400">Do not upload sensitive documents unless necessary</span>; share a
+        compliance. <span className="text-muted">Do not upload sensitive documents unless necessary</span>; share a
         link to proof rather than private files.
       </p>
 
       {/* Add/Edit form */}
       {showForm && (
-        <div className="mb-6 p-4 border border-gray-800 rounded-lg space-y-4 bg-gray-950/40">
+        <div className="mb-6 p-4 border border-line rounded-lg space-y-4 bg-canvas">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
+              <label className="block text-sm font-medium text-body mb-1">Type</label>
               <select
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value as CredentialType })}
@@ -199,7 +199,7 @@ export default function CredentialsManager() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Title / name *</label>
+              <label className="block text-sm font-medium text-body mb-1">Title / name *</label>
               <input
                 type="text"
                 value={form.title}
@@ -209,7 +209,7 @@ export default function CredentialsManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Issuer</label>
+              <label className="block text-sm font-medium text-body mb-1">Issuer</label>
               <input
                 type="text"
                 value={form.issuer}
@@ -219,7 +219,7 @@ export default function CredentialsManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Credential number</label>
+              <label className="block text-sm font-medium text-body mb-1">Credential number</label>
               <input
                 type="text"
                 value={form.credentialNumber}
@@ -229,7 +229,7 @@ export default function CredentialsManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Jurisdiction</label>
+              <label className="block text-sm font-medium text-body mb-1">Jurisdiction</label>
               <input
                 type="text"
                 value={form.jurisdiction}
@@ -239,7 +239,7 @@ export default function CredentialsManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Expiration date</label>
+              <label className="block text-sm font-medium text-body mb-1">Expiration date</label>
               <input
                 type="date"
                 value={form.expirationDate}
@@ -249,7 +249,7 @@ export default function CredentialsManager() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Proof URL</label>
+            <label className="block text-sm font-medium text-body mb-1">Proof URL</label>
             <input
               type="url"
               value={form.proofUrl}
@@ -257,12 +257,12 @@ export default function CredentialsManager() {
               className={inputClass}
               placeholder="https://link-to-public-license-lookup"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-subtle mt-1">
               Prefer a public verification/lookup link. Do not share private documents.
             </p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-body mb-1">Notes</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -272,7 +272,7 @@ export default function CredentialsManager() {
             />
           </div>
           {editingId && (
-            <p className="text-xs text-yellow-500/80">
+            <p className="text-xs text-warning/80">
               Editing details (other than notes) sends a verified credential back to pending review.
             </p>
           )}
@@ -280,13 +280,13 @@ export default function CredentialsManager() {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-semibold px-5 py-2 rounded-lg transition-colors"
+              className="bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-semibold px-5 py-2 rounded-lg transition-colors"
             >
               {saving ? 'Saving...' : editingId ? 'Save changes' : 'Submit for review'}
             </button>
             <button
               onClick={closeForm}
-              className="border border-gray-700 hover:border-gray-600 text-gray-300 px-5 py-2 rounded-lg transition-colors"
+              className="border border-line-strong hover:border-line-strong text-body px-5 py-2 rounded-lg transition-colors"
             >
               Cancel
             </button>
@@ -296,56 +296,56 @@ export default function CredentialsManager() {
 
       {/* List */}
       {loading ? (
-        <p className="text-sm text-gray-500">Loading credentials...</p>
+        <p className="text-sm text-subtle">Loading credentials...</p>
       ) : credentials.length === 0 ? (
-        !showForm && <p className="text-sm text-gray-500">No credentials yet. Add one to build trust with clients.</p>
+        !showForm && <p className="text-sm text-subtle">No credentials yet. Add one to build trust with clients.</p>
       ) : (
         <div className="space-y-3">
           {credentials.map((c) => {
             const typeLabel = CREDENTIAL_TYPES.find((t) => t.value === c.type)?.label || c.type;
             return (
-              <div key={c.id} className="p-4 bg-gray-800 rounded-lg">
+              <div key={c.id} className="p-4 bg-raised rounded-lg">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-300">{typeLabel}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status] || 'bg-gray-700 text-gray-300'}`}>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-raised-2 text-body">{typeLabel}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status] || 'bg-raised-2 text-body'}`}>
                         {STATUS_LABELS[c.status] || c.status}
                       </span>
                     </div>
-                    <p className="text-white font-medium mt-2">{c.title}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-strong font-medium mt-2">{c.title}</p>
+                    <p className="text-xs text-subtle mt-1">
                       {[c.issuer, c.jurisdiction, c.credentialNumber ? `#${c.credentialNumber}` : null]
                         .filter(Boolean)
                         .join(' · ')}
                     </p>
                     {c.expirationDate && (
-                      <p className="text-xs text-gray-500 mt-0.5">Expires {fmtDate(c.expirationDate)}</p>
+                      <p className="text-xs text-subtle mt-0.5">Expires {fmtDate(c.expirationDate)}</p>
                     )}
                     {c.proofUrl && (
                       <a
                         href={c.proofUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-amber-400 hover:text-amber-300 underline mt-1 inline-block"
+                        className="text-xs text-accent-text hover:text-accent-text-hover underline mt-1 inline-block"
                       >
                         Proof link
                       </a>
                     )}
                     {c.status === 'REJECTED' && c.rejectionReason && (
-                      <p className="text-xs text-red-400 mt-1">Reason: {c.rejectionReason}</p>
+                      <p className="text-xs text-danger mt-1">Reason: {c.rejectionReason}</p>
                     )}
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => openEdit(c)}
-                      className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                      className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-accent hover:text-accent-text"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(c.id)}
-                      className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                      className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                     >
                       Delete
                     </button>

@@ -117,18 +117,18 @@ export default function CompletionPanel({
   };
 
   const statusBadge = completed
-    ? { label: 'Completed', cls: 'bg-green-500/20 text-green-400 border-green-500/40' }
+    ? { label: 'Completed', cls: 'bg-success/20 text-success border-success/40' }
     : inReview
       ? {
           label: isQuestGiver ? 'Your confirmation needed' : 'Awaiting poster confirmation',
-          cls: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+          cls: 'bg-accent/20 text-accent-text border-accent/40',
         }
-      : { label: 'In progress', cls: 'bg-blue-500/20 text-blue-400 border-blue-500/40' };
+      : { label: 'In progress', cls: 'bg-info/20 text-info border-info/40' };
 
   return (
-    <div id="work-completion" className="bg-gray-900 border border-gray-800 rounded-xl p-6 scroll-mt-24">
+    <div id="work-completion" className="bg-surface border border-line rounded-xl p-6 scroll-mt-24">
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <h2 className="text-lg font-semibold text-white">Work completion</h2>
+        <h2 className="text-lg font-semibold text-strong">Work completion</h2>
         <span className={`text-xs font-medium px-2 py-1 rounded-full border ${statusBadge.cls}`}>
           {statusBadge.label}
         </span>
@@ -136,8 +136,8 @@ export default function CompletionPanel({
 
       {/* Most recent change request, shown to both parties while back in progress. */}
       {!completed && !inReview && quest.changeRequestNote && (
-        <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-sm text-rose-300">
-          <span className="font-medium text-rose-200">Changes requested:</span> {quest.changeRequestNote}
+        <div className="mb-4 p-3 rounded-lg bg-danger/10 border border-danger/30 text-sm text-danger">
+          <span className="font-medium text-danger">Changes requested:</span> {quest.changeRequestNote}
         </div>
       )}
 
@@ -146,13 +146,13 @@ export default function CompletionPanel({
         <div className="mb-4 space-y-3">
           {quest.completionNote && (
             <div>
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Worker&apos;s notes</p>
-              <p className="text-sm text-gray-300 whitespace-pre-line">{quest.completionNote}</p>
+              <p className="text-xs uppercase tracking-wider text-subtle mb-1">Worker&apos;s notes</p>
+              <p className="text-sm text-body whitespace-pre-line">{quest.completionNote}</p>
             </div>
           )}
           {proofUrls.length > 0 ? (
             <div>
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Proof of work</p>
+              <p className="text-xs uppercase tracking-wider text-subtle mb-2">Proof of work</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {proofUrls.map((url) => (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -160,7 +160,7 @@ export default function CompletionPanel({
                     key={url}
                     src={url}
                     alt="Completion proof"
-                    className="w-full max-h-56 object-cover rounded-lg border border-gray-800"
+                    className="w-full max-h-56 object-cover rounded-lg border border-line"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
@@ -169,15 +169,15 @@ export default function CompletionPanel({
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No proof images were attached.</p>
+            <p className="text-sm text-subtle">No proof images were attached.</p>
           )}
         </div>
       )}
 
       {/* Worker: submit / resubmit completion. */}
       {canSubmit && (
-        <div className="space-y-3 pt-2 border-t border-gray-800">
-          <p className="text-sm text-gray-300">
+        <div className="space-y-3 pt-2 border-t border-line">
+          <p className="text-sm text-body">
             {inReview ? 'Resubmit your work' : 'Mark this done and submit it for review'}
           </p>
           <textarea
@@ -186,7 +186,7 @@ export default function CompletionPanel({
             rows={3}
             maxLength={2000}
             placeholder="Completion notes — what you did, anything the client should know…"
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
+            className="w-full bg-raised border border-line-strong rounded-lg px-3 py-2 text-strong text-sm focus:outline-none focus:border-accent resize-none"
           />
           {/* Renders nothing unless Cloudinary is configured, so the URL box
               below stays the fallback rather than becoming a dead button. */}
@@ -201,12 +201,12 @@ export default function CompletionPanel({
             onChange={(e) => setProofText(e.target.value)}
             rows={2}
             placeholder="Proof photo URLs — one per line (optional)"
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
+            className="w-full bg-raised border border-line-strong rounded-lg px-3 py-2 text-strong text-sm focus:outline-none focus:border-accent resize-none"
           />
           <button
             onClick={submit}
             disabled={busy !== null}
-            className="w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900 disabled:opacity-50"
+            className="w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg bg-accent hover:bg-accent text-on-accent disabled:opacity-50"
           >
             {busy === 'submit' ? 'Submitting…' : inReview ? 'Resubmit for review' : 'Submit for review'}
           </button>
@@ -215,19 +215,19 @@ export default function CompletionPanel({
 
       {/* Worker: waiting on the giver. */}
       {isAssignedWorker && inReview && (
-        <p className="pt-2 text-sm text-gray-500">
+        <p className="pt-2 text-sm text-subtle">
           Submitted for review. We&apos;ll let you know when the client confirms or requests changes.
         </p>
       )}
 
       {/* Giver: confirm or request changes. */}
       {canReview && (
-        <div className="space-y-3 pt-2 border-t border-gray-800">
-          <p className="text-sm text-gray-300">Review the submitted work</p>
+        <div className="space-y-3 pt-2 border-t border-line">
+          <p className="text-sm text-body">Review the submitted work</p>
           <button
             onClick={confirm}
             disabled={busy !== null}
-            className="w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg bg-green-500/90 hover:bg-green-400 text-gray-900 disabled:opacity-50"
+            className="w-full sm:w-auto px-4 py-2 text-sm font-semibold rounded-lg bg-success/90 hover:bg-success text-on-status disabled:opacity-50"
           >
             {busy === 'confirm' ? 'Confirming…' : 'Confirm completion'}
           </button>
@@ -238,12 +238,12 @@ export default function CompletionPanel({
               rows={2}
               maxLength={2000}
               placeholder="Need changes? Tell the worker what to fix (optional)…"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
+              className="w-full bg-raised border border-line-strong rounded-lg px-3 py-2 text-strong text-sm focus:outline-none focus:border-accent resize-none"
             />
             <button
               onClick={requestChanges}
               disabled={busy !== null}
-              className="mt-2 w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-200 hover:border-rose-500 hover:text-rose-300 disabled:opacity-50"
+              className="mt-2 w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg border border-line-strong text-body hover:border-danger hover:text-danger disabled:opacity-50"
             >
               {busy === 'changes' ? 'Sending…' : 'Request changes'}
             </button>
@@ -253,27 +253,27 @@ export default function CompletionPanel({
 
       {/* Giver: nudge while still in progress (worker hasn't submitted yet). */}
       {isQuestGiver && status === 'IN_PROGRESS' && (
-        <p className="pt-2 text-sm text-gray-500">
+        <p className="pt-2 text-sm text-subtle">
           The worker hasn&apos;t submitted this for review yet. You&apos;ll be notified when they do.
         </p>
       )}
 
       {completed && (
         <div className="pt-2 space-y-2">
-          <p className="text-sm text-green-400">
+          <p className="text-sm text-success">
             This task is complete{quest.completedAt ? ` (${new Date(quest.completedAt).toLocaleDateString()})` : ''}.
           </p>
           {viewerHasReviewed ? (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-muted">
               Review submitted.{' '}
-              <a href="#reviews" className="text-amber-400 hover:text-amber-300">
+              <a href="#reviews" className="text-accent-text hover:text-accent-text-hover">
                 See all reviews
               </a>
             </p>
           ) : (
             <a
               href="#reviews"
-              className="inline-block px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900"
+              className="inline-block px-4 py-2 text-sm font-semibold rounded-lg bg-accent hover:bg-accent text-on-accent"
             >
               Leave a review
             </a>

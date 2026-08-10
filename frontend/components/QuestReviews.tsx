@@ -21,9 +21,9 @@ interface Review {
 
 function Stars({ value, className }: { value: number; className?: string }) {
   return (
-    <span className={className || 'text-amber-400'} aria-label={`${value} out of 5 stars`}>
+    <span className={className || 'text-accent-text'} aria-label={`${value} out of 5 stars`}>
       {'★'.repeat(value)}
-      <span className="text-gray-700">{'★'.repeat(Math.max(0, 5 - value))}</span>
+      <span className="text-subtle">{'★'.repeat(Math.max(0, 5 - value))}</span>
     </span>
   );
 }
@@ -140,25 +140,25 @@ export default function QuestReviews({
     !!currentUserId && reviews.some((rev) => rev.reviewer?.id === currentUserId);
 
   return (
-    <div id="reviews" className="bg-gray-900 border border-gray-800 rounded-xl p-6 scroll-mt-24">
-      <h2 className="text-lg font-semibold text-white mb-4">Reviews</h2>
+    <div id="reviews" className="bg-surface border border-line rounded-xl p-6 scroll-mt-24">
+      <h2 className="text-lg font-semibold text-strong mb-4">Reviews</h2>
 
       {canReview && alreadyReviewed && (
-        <p className="mb-6 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm text-green-300">
+        <p className="mb-6 p-3 rounded-lg bg-success/10 border border-success/30 text-sm text-success">
           Review submitted. Thanks for helping others know who to work with.
         </p>
       )}
 
       {canReview && !alreadyReviewed && (
-        <form onSubmit={submit} className="mb-6 p-4 bg-gray-800/50 border border-gray-800 rounded-lg space-y-3">
-          <p className="text-sm text-gray-300">Leave a review for your counterparty</p>
+        <form onSubmit={submit} className="mb-6 p-4 bg-raised border border-line rounded-lg space-y-3">
+          <p className="text-sm text-body">Leave a review for your counterparty</p>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
                 type="button"
                 onClick={() => setRating(n)}
-                className={`text-2xl leading-none transition-colors ${n <= rating ? 'text-amber-400' : 'text-gray-700 hover:text-gray-500'}`}
+                className={`text-2xl leading-none transition-colors ${n <= rating ? 'text-accent-text' : 'text-subtle hover:text-subtle'}`}
                 aria-label={`${n} star${n > 1 ? 's' : ''}`}
               >
                 ★
@@ -171,16 +171,16 @@ export default function QuestReviews({
             rows={3}
             maxLength={1000}
             placeholder="How did it go? Be honest and specific…"
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
+            className="w-full bg-raised border border-line-strong rounded-lg px-3 py-2 text-strong text-sm focus:outline-none focus:border-accent resize-none"
           />
 
           {/* Per-skill ratings — only the quest giver rating the worker. These
               build the worker's skill badges (Bronze → Platinum). */}
           {canRateSkills && (
-            <div className="pt-2 border-t border-gray-800 space-y-3">
+            <div className="pt-2 border-t border-line space-y-3">
               <div>
-                <p className="text-sm text-gray-300">Rate the skills they performed (optional)</p>
-                <p className="text-xs text-gray-500">Helps build their skill badges. Leave blank to skip.</p>
+                <p className="text-sm text-body">Rate the skills they performed (optional)</p>
+                <p className="text-xs text-subtle">Helps build their skill badges. Leave blank to skip.</p>
               </div>
               {skills.map((s, idx) => (
                 <div key={idx} className="flex items-center gap-2 flex-wrap">
@@ -190,7 +190,7 @@ export default function QuestReviews({
                     onChange={(e) => setSkillName(idx, e.target.value)}
                     maxLength={40}
                     placeholder="e.g. Lawn mowing"
-                    className="flex-1 min-w-[8rem] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                    className="flex-1 min-w-[8rem] bg-raised border border-line-strong rounded-lg px-3 py-1.5 text-strong text-sm focus:outline-none focus:border-accent"
                   />
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((n) => (
@@ -198,7 +198,7 @@ export default function QuestReviews({
                         key={n}
                         type="button"
                         onClick={() => setSkillRating(idx, n)}
-                        className={`text-xl leading-none transition-colors ${n <= s.rating ? 'text-amber-400' : 'text-gray-700 hover:text-gray-500'}`}
+                        className={`text-xl leading-none transition-colors ${n <= s.rating ? 'text-accent-text' : 'text-subtle hover:text-subtle'}`}
                         aria-label={`Rate ${s.skillName || 'skill'} ${n} star${n > 1 ? 's' : ''}`}
                       >
                         ★
@@ -208,7 +208,7 @@ export default function QuestReviews({
                   <button
                     type="button"
                     onClick={() => removeSkill(idx)}
-                    className="text-gray-600 hover:text-rose-400 text-sm px-1"
+                    className="text-subtle hover:text-danger text-sm px-1"
                     aria-label="Remove skill"
                   >
                     ✕
@@ -219,7 +219,7 @@ export default function QuestReviews({
                 <button
                   type="button"
                   onClick={addSkill}
-                  className="text-sm text-amber-400 hover:text-amber-300 font-medium"
+                  className="text-sm text-accent-text hover:text-accent-text-hover font-medium"
                 >
                   + Add a skill
                 </button>
@@ -230,7 +230,7 @@ export default function QuestReviews({
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-900 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent hover:bg-accent text-on-accent disabled:opacity-50"
           >
             {submitting ? 'Submitting…' : 'Submit review'}
           </button>
@@ -238,24 +238,24 @@ export default function QuestReviews({
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading reviews…</p>
+        <p className="text-sm text-subtle">Loading reviews…</p>
       ) : reviews.length === 0 ? (
-        <p className="text-sm text-gray-500">No reviews yet.</p>
+        <p className="text-sm text-subtle">No reviews yet.</p>
       ) : (
         <div className="space-y-4">
           {reviews.map((rev) => (
-            <div key={rev.id} className="border-b border-gray-800 last:border-b-0 pb-4 last:pb-0">
+            <div key={rev.id} className="border-b border-line last:border-b-0 pb-4 last:pb-0">
               <div className="flex items-center justify-between gap-3 mb-1">
                 <Link
                   href={`/profile/${rev.reviewer?.username}`}
-                  className="text-sm text-white font-medium hover:text-amber-400"
+                  className="text-sm text-strong font-medium hover:text-accent-text"
                 >
                   {rev.reviewer?.username || 'Someone'}
                 </Link>
                 <Stars value={rev.rating} />
               </div>
-              <p className="text-sm text-gray-400 whitespace-pre-line">{rev.comment}</p>
-              <p className="text-xs text-gray-600 mt-1">{new Date(rev.createdAt).toLocaleDateString()}</p>
+              <p className="text-sm text-muted whitespace-pre-line">{rev.comment}</p>
+              <p className="text-xs text-subtle mt-1">{new Date(rev.createdAt).toLocaleDateString()}</p>
             </div>
           ))}
         </div>

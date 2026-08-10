@@ -55,11 +55,11 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-line bg-canvas backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="text-lg font-bold tracking-tight">
-            Try<span className="text-amber-400">hardly</span>
+            Try<span className="text-accent-text">hardly</span>
           </Link>
 
           <div className="hidden items-center gap-6 md:flex">
@@ -69,8 +69,8 @@ export default function Navbar() {
                 href={link.href}
                 className={`text-sm font-medium transition-colors ${
                   pathname === link.href
-                    ? "text-amber-400"
-                    : "text-zinc-400 hover:text-zinc-100"
+                    ? "text-accent-text"
+                    : "text-muted hover:text-strong"
                 }`}
               >
                 {link.label}
@@ -85,9 +85,9 @@ export default function Navbar() {
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 rounded-lg bg-zinc-900 px-3 py-1.5 transition-colors hover:bg-zinc-800"
+                    className="flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 transition-colors hover:bg-raised"
                   >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-zinc-950">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-bold text-on-accent">
                       {user.username[0].toUpperCase()}
                     </div>
                     <span className="hidden text-sm font-medium sm:block">
@@ -95,26 +95,26 @@ export default function Navbar() {
                     </span>
                   </button>
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-lg border border-zinc-800 bg-zinc-900 py-1 shadow-xl">
+                    <div className="absolute right-0 mt-2 w-56 rounded-lg border border-line bg-surface py-1 shadow-xl">
                       {/* Names the account in use — browsers share one session
                           across tabs, so posters and workers testing both sides
                           otherwise can't tell who they are signed in as. */}
                       <div className="px-4 py-2">
-                        <p className="text-xs text-zinc-500">Signed in as</p>
-                        <p className="truncate text-sm text-zinc-300">{user.email}</p>
+                        <p className="text-xs text-subtle">Signed in as</p>
+                        <p className="truncate text-sm text-body">{user.email}</p>
                       </div>
-                      <hr className="my-1 border-zinc-800" />
+                      <hr className="my-1 border-line" />
                       <Link
                         href="/profile"
                         onClick={() => setUserMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                        className="block px-4 py-2 text-sm text-body hover:bg-raised"
                       >
                         Profile
                       </Link>
                       <Link
                         href="/dashboard"
                         onClick={() => setUserMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                        className="block px-4 py-2 text-sm text-body hover:bg-raised"
                       >
                         Dashboard
                       </Link>
@@ -122,15 +122,15 @@ export default function Navbar() {
                         <Link
                           href="/admin"
                           onClick={() => setUserMenuOpen(false)}
-                          className="block px-4 py-2 text-sm text-amber-400 hover:bg-zinc-800"
+                          className="block px-4 py-2 text-sm text-accent-text hover:bg-raised"
                         >
                           Admin
                         </Link>
                       )}
-                      <hr className="my-1 border-zinc-800" />
+                      <hr className="my-1 border-line" />
                       <button
                         onClick={handleLogout}
-                        className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-zinc-800"
+                        className="block w-full px-4 py-2 text-left text-sm text-danger hover:bg-raised"
                       >
                         Sign out
                       </button>
@@ -141,13 +141,13 @@ export default function Navbar() {
                 <div className="flex items-center gap-2">
                   <Link
                     href="/auth/login"
-                    className="text-sm text-zinc-400 transition-colors hover:text-zinc-100"
+                    className="text-sm text-muted transition-colors hover:text-strong"
                   >
                     Log in
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="rounded-lg bg-amber-500 px-4 py-1.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-400"
+                    className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent"
                   >
                     Sign up
                   </Link>
@@ -155,7 +155,7 @@ export default function Navbar() {
               ))}
 
             <button
-              className="text-zinc-400 hover:text-zinc-100 md:hidden"
+              className="text-muted hover:text-strong md:hidden"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
             >
@@ -184,12 +184,12 @@ export default function Navbar() {
           <div
             aria-hidden="true"
             onClick={() => setMenuOpen(false)}
-            className="fixed inset-0 top-16 z-40 bg-black/60 md:hidden"
+            className="fixed inset-0 top-16 z-40 bg-strong/60 md:hidden"
           />
         )}
 
         {menuOpen && (
-          <div className="relative z-50 space-y-1 border-t border-zinc-800 bg-zinc-950 py-3 md:hidden">
+          <div className="relative z-50 space-y-1 border-t border-line bg-canvas py-3 md:hidden">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -197,8 +197,8 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className={`block rounded px-2 py-2 text-sm transition-colors ${
                   pathname === link.href
-                    ? "bg-zinc-900 text-amber-400"
-                    : "text-zinc-400 hover:text-zinc-100"
+                    ? "bg-surface text-accent-text"
+                    : "text-muted hover:text-strong"
                 }`}
               >
                 {link.label}

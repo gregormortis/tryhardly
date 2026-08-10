@@ -78,12 +78,12 @@ const TIER_TO_DIFFICULTY: Record<TierKey, string> = {
 };
 
 const TIER_MAP: { min: number; max: number; tier: TierKey; classes: string }[] = [
-  { min: 0,    max: 49,       tier: 'novice',     classes: 'text-green-400 bg-green-400/10 border-green-400/20'    },
-  { min: 50,   max: 99,       tier: 'apprentice', classes: 'text-blue-400 bg-blue-400/10 border-blue-400/20'       },
-  { min: 100,  max: 199,      tier: 'journeyman', classes: 'text-amber-400 bg-amber-400/10 border-amber-400/20'    },
-  { min: 200,  max: 499,      tier: 'expert',     classes: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
-  { min: 500,  max: 999,      tier: 'master',     classes: 'text-violet-400 bg-violet-400/10 border-violet-400/20' },
-  { min: 1000, max: Infinity, tier: 'legendary',  classes: 'text-rose-400 bg-rose-400/10 border-rose-400/20'       },
+  { min: 0,    max: 49,       tier: 'novice',     classes: 'text-success bg-success/10 border-success/20'    },
+  { min: 50,   max: 99,       tier: 'apprentice', classes: 'text-info bg-info/10 border-info/20'       },
+  { min: 100,  max: 199,      tier: 'journeyman', classes: 'text-accent-text bg-accent/10 border-accent/20'    },
+  { min: 200,  max: 499,      tier: 'expert',     classes: 'text-warning bg-warning/10 border-warning/20' },
+  { min: 500,  max: 999,      tier: 'master',     classes: 'text-info bg-info/10 border-info/20' },
+  { min: 1000, max: Infinity, tier: 'legendary',  classes: 'text-danger bg-danger/10 border-danger/20'       },
 ];
 
 const STEP_LABELS = ['Job details', 'Scope & budget', 'Review'];
@@ -130,25 +130,25 @@ function reviewBadge(args: {
   if (args.contractorRequired) {
     return {
       label: 'Licensed contractor may be required',
-      classes: 'text-rose-300 bg-rose-400/10 border-rose-400/20',
+      classes: 'text-danger bg-danger/10 border-danger/20',
     };
   }
   if (args.contractorRelevant) {
     return {
       label: 'Contractor-scale job',
-      classes: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
+      classes: 'text-accent-text-hover bg-accent/10 border-accent/20',
     };
   }
   if (args.budgetMode === 'quote') {
     return {
       label: 'Quote needed',
-      classes: 'text-stone-300 bg-white/[0.06] border-white/[0.1]',
+      classes: 'text-body bg-surface border-line',
     };
   }
   if (args.reward >= LARGE_JOB_REWARD) {
     return {
       label: 'Large job',
-      classes: 'text-stone-300 bg-white/[0.06] border-white/[0.1]',
+      classes: 'text-body bg-surface border-line',
     };
   }
   return null;
@@ -206,22 +206,22 @@ function StepIndicator({ current }: { current: number }) {
           <div key={label} className={clsx('flex items-center', i < STEP_LABELS.length - 1 && 'flex-1')}>
             <div className="flex flex-col items-center gap-1.5">
               <div className={clsx(
-                'w-7 h-7 rounded-full flex items-center justify-center font-mono text-[11px] font-semibold border transition-all duration-200',
-                done   ? 'bg-amber-400 border-amber-400 text-zinc-950'
-                       : active ? 'bg-amber-400/15 border-amber-500/50 text-amber-400'
-                                : 'bg-white/[0.04] border-white/10 text-stone-700',
+                'w-7 h-7 rounded-full flex items-center justify-center font-mono text-[12px] font-semibold border transition-all duration-200',
+                done   ? 'bg-accent border-accent text-on-accent'
+                       : active ? 'bg-accent/15 border-accent/50 text-accent-text'
+                                : 'bg-surface border-line text-subtle',
               )}>
                 {done ? '✓' : idx}
               </div>
               <span className={clsx(
-                'font-mono text-[9px] font-semibold tracking-widest uppercase whitespace-nowrap',
-                active ? 'text-amber-400' : done ? 'text-stone-500' : 'text-stone-700',
+                'font-mono text-[11px] font-semibold tracking-widest uppercase whitespace-nowrap',
+                active ? 'text-accent-text' : done ? 'text-subtle' : 'text-subtle',
               )}>{label}</span>
             </div>
             {i < STEP_LABELS.length - 1 && (
               <div className={clsx(
                 'flex-1 h-px mx-2 mb-5 transition-all duration-200',
-                done ? 'bg-amber-500/50' : 'bg-white/[0.06]',
+                done ? 'bg-accent/50' : 'bg-surface',
               )} />
             )}
           </div>
@@ -231,14 +231,14 @@ function StepIndicator({ current }: { current: number }) {
   );
 }
 
-const inputCls = 'w-full font-mono text-[13px] px-3.5 py-2.5 bg-white/[0.03] border border-white/[0.09] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors';
-const labelCls = 'block font-mono text-[10px] font-semibold tracking-widest text-stone-600 uppercase mb-2';
+const inputCls = 'w-full font-mono text-[13px] px-3.5 py-2.5 bg-surface border border-line rounded-md text-body placeholder-subtle focus:outline-none focus:border-accent/40 transition-colors';
+const labelCls = 'block font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-2';
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
     <label className={labelCls}>
       {children}
-      {required && <span className="text-rose-500 ml-1">*</span>}
+      {required && <span className="text-danger ml-1">*</span>}
     </label>
   );
 }
@@ -247,14 +247,14 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 // but the message a poster needs is rendered right under the field that failed.
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="font-mono text-[10px] text-rose-400 mt-1.5 leading-relaxed">{message}</p>;
+  return <p className="font-mono text-[12px] text-danger mt-1.5 leading-relaxed">{message}</p>;
 }
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-start py-3 border-b border-white/[0.05] last:border-b-0">
-      <span className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase flex-shrink-0 mr-4">{label}</span>
-      <span className="font-mono text-[12px] text-stone-400 text-right">{value}</span>
+    <div className="flex justify-between items-start py-3 border-b border-line last:border-b-0">
+      <span className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase flex-shrink-0 mr-4">{label}</span>
+      <span className="font-mono text-[12px] text-muted text-right">{value}</span>
     </div>
   );
 }
@@ -566,14 +566,14 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
   if (postedId) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center py-10 px-6">
+      <div className="min-h-screen bg-canvas flex items-center justify-center py-10 px-6">
         <div className="w-full max-w-sm text-center">
-          <CheckCircle size={48} className="text-green-400 mx-auto mb-4" />
-          <h2 className="font-bold text-2xl text-stone-100 mb-2">Job posted</h2>
-          <p className="font-mono text-[12px] text-stone-500 leading-relaxed mb-2">
+          <CheckCircle size={48} className="text-success mx-auto mb-4" />
+          <h2 className="font-bold text-2xl text-strong mb-2">Job posted</h2>
+          <p className="font-mono text-[12px] text-subtle leading-relaxed mb-2">
             Your job is live on the local job board. Workers nearby can start sending bids now.
           </p>
-          <p className="font-mono text-[10px] text-stone-700 leading-relaxed mb-7">
+          <p className="font-mono text-[12px] text-subtle leading-relaxed mb-7">
             You&apos;ll review the bids and pick a worker. Nothing is charged until then — you
             authorize payment after you accept a bid.
           </p>
@@ -581,26 +581,26 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
           <div className="space-y-2.5 text-left">
             <button
               onClick={() => { window.location.href = `/job/${postedId}`; }}
-              className="w-full font-mono text-[11px] font-semibold tracking-widest px-6 py-3 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+              className="w-full font-mono text-[12px] font-semibold tracking-widest px-6 py-3 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors"
             >
               VIEW YOUR JOB
             </button>
             <button
               onClick={copyJobLink}
-              className="w-full font-mono text-[11px] font-semibold tracking-widest px-6 py-3 border border-white/10 rounded text-stone-400 hover:text-stone-200 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+              className="w-full font-mono text-[12px] font-semibold tracking-widest px-6 py-3 border border-line rounded text-muted hover:text-body hover:border-line transition-all flex items-center justify-center gap-2"
             >
               <Share2 size={12} /> {shareCopied ? 'LINK COPIED ✓' : 'SHARE JOB'}
             </button>
             <div className="flex gap-2.5">
               <button
                 onClick={() => { window.location.href = '/dashboard'; }}
-                className="flex-1 font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-white/[0.08] rounded text-stone-600 hover:text-stone-400 transition-colors"
+                className="flex-1 font-mono text-[12px] font-semibold tracking-widest px-4 py-2.5 border border-line rounded text-subtle hover:text-muted transition-colors"
               >
                 MY DASHBOARD
               </button>
               <button
                 onClick={() => { window.location.href = '/jobs'; }}
-                className="flex-1 font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-white/[0.08] rounded text-stone-600 hover:text-stone-400 transition-colors"
+                className="flex-1 font-mono text-[12px] font-semibold tracking-widest px-4 py-2.5 border border-line rounded text-subtle hover:text-muted transition-colors"
               >
                 BROWSE JOBS
               </button>
@@ -612,19 +612,19 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-stone-400 py-10 px-6">
+    <div className="min-h-screen bg-canvas text-muted py-10 px-6">
       <div className="max-w-xl mx-auto">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="font-bold text-2xl text-stone-100 tracking-tight">Post a local job</h1>
-            <p className="font-mono text-[11px] text-stone-700 mt-1">
+            <h1 className="font-bold text-2xl text-strong tracking-tight">Post a local job</h1>
+            <p className="font-mono text-[12px] text-subtle mt-1">
               Tell us what needs to get done. Workers near you will send bids.
             </p>
           </div>
           {onCancel && (
-            <button onClick={onCancel} className="font-mono text-[11px] text-stone-700 hover:text-stone-500 transition-colors">
+            <button onClick={onCancel} className="font-mono text-[12px] text-subtle hover:text-subtle transition-colors">
               Cancel ×
             </button>
           )}
@@ -632,7 +632,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
         <p
           className={clsx(
-            'font-mono text-[10px] text-stone-500 leading-relaxed rounded-md border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5',
+            'font-mono text-[12px] text-subtle leading-relaxed rounded-md border border-line bg-surface px-3.5 py-2.5',
             !currentUserId || draftRestored ? 'mb-3' : 'mb-8',
           )}
         >
@@ -642,10 +642,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* Logged-out visitors fill the whole form first; the account only comes
             up at the final step, so say so before they start typing. */}
         {!currentUserId && (
-          <p className="font-mono text-[10px] text-stone-500 leading-relaxed mb-8 rounded-md border border-amber-500/25 bg-amber-400/[0.04] px-3.5 py-2.5">
+          <p className="font-mono text-[12px] text-subtle leading-relaxed mb-8 rounded-md border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5">
             No account needed to fill this out. Posting is free — you&apos;ll create a free account
             on the last step to publish your job, get bids, message workers, and choose one.{' '}
-            <a href="/request-help" className="text-amber-400/90 underline hover:text-amber-300">
+            <a href="/request-help" className="text-accent-text underline hover:text-accent-text-hover">
               Or send a quick request instead
             </a>{' '}
             and we&apos;ll line up local help without an account.
@@ -653,7 +653,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         )}
 
         {draftRestored && (
-          <p className="font-mono text-[10px] text-green-300/90 leading-relaxed mb-8 rounded-md border border-green-400/25 bg-green-400/[0.05] px-3.5 py-2.5">
+          <p className="font-mono text-[12px] text-success/90 leading-relaxed mb-8 rounded-md border border-success/25 bg-success/[0.05] px-3.5 py-2.5">
             Your job details were saved. Check them over and post when you&apos;re ready.
           </p>
         )}
@@ -664,7 +664,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {step === 1 && (
           <div className="space-y-5">
             {/* Text-first entry: describe the job in plain language. */}
-            <div className="rounded-lg border border-amber-500/25 bg-amber-400/[0.04] p-4">
+            <div className="rounded-lg border border-accent/25 bg-accent/[0.04] p-4">
               <FieldLabel>Short summary — what do you need done?</FieldLabel>
               <textarea
                 value={needText}
@@ -676,19 +676,19 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               />
               {inference && inferenceSummary && (
                 <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
-                  <p className="font-mono text-[11px] text-amber-300/90">
-                    Looks like: <span className="font-semibold text-amber-300">{inferenceSummary}</span>
+                  <p className="font-mono text-[12px] text-accent-text">
+                    Looks like: <span className="font-semibold text-accent-text-hover">{inferenceSummary}</span>
                   </p>
                   <button
                     type="button"
                     onClick={applyInference}
-                    className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                    className="font-mono text-[12px] font-semibold tracking-widest px-4 py-2 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors flex items-center gap-1.5"
                   >
                     <Wand2 size={12} /> {applied ? 'APPLIED ✓' : 'USE THIS'}
                   </button>
                 </div>
               )}
-              <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
+              <p className="font-mono text-[11px] text-subtle mt-2 leading-relaxed">
                 We&apos;ll guess the details below — you can edit anything before posting. The
                 full details workers read are written on the next step.
               </p>
@@ -706,15 +706,15 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     : 'e.g. Mow front and back lawn, trim hedges'
                 }
                 maxLength={100}
-                className={clsx(inputCls, issueFor('title') && 'border-rose-400/50')}
+                className={clsx(inputCls, issueFor('title') && 'border-danger/50')}
               />
               <FieldError message={issueFor('title')} />
               <div className="flex items-start justify-between gap-3 mt-1.5">
-                <p className="font-mono text-[9px] text-stone-700 leading-relaxed">
+                <p className="font-mono text-[11px] text-subtle leading-relaxed">
                   Name the job the way you&apos;d say it out loud — mowing, dump run, moving help,
                   fence repair, cleaning, errands.
                 </p>
-                <p className="font-mono text-[9px] text-stone-800 whitespace-nowrap">{data.title.length}/100</p>
+                <p className="font-mono text-[11px] text-body whitespace-nowrap">{data.title.length}/100</p>
               </div>
             </div>
 
@@ -723,7 +723,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <select
                 value={data.category}
                 onChange={(e) => update('category', e.target.value)}
-                className={clsx(inputCls, 'cursor-pointer', issueFor('category') && 'border-rose-400/50')}
+                className={clsx(inputCls, 'cursor-pointer', issueFor('category') && 'border-danger/50')}
               >
                 <option value="">Select a category…</option>
                 {CATEGORY_OPTIONS.map((c) => (
@@ -731,7 +731,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 ))}
               </select>
               <FieldError message={issueFor('category')} />
-              <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+              <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                 {selectedCategory
                   ? `Jobs like this: ${selectedCategory.examples.join(' · ')}`
                   : 'This is how workers filter the job board, so pick the closest match.'}
@@ -748,7 +748,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     onChange={(e) => update('areaZip', e.target.value)}
                     placeholder="Area code or ZIP — 916 or 95677"
                     maxLength={10}
-                    className={clsx(inputCls, issueFor('areaZip') && 'border-rose-400/50')}
+                    className={clsx(inputCls, issueFor('areaZip') && 'border-danger/50')}
                   />
                   <FieldError message={issueFor('areaZip')} />
                 </div>
@@ -759,12 +759,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     onChange={(e) => update('state', e.target.value)}
                     placeholder="State — CA"
                     maxLength={2}
-                    className={clsx(inputCls, issueFor('state') && 'border-rose-400/50')}
+                    className={clsx(inputCls, issueFor('state') && 'border-danger/50')}
                   />
                   <FieldError message={issueFor('state')} />
                 </div>
               </div>
-              <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+              <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                 Area code or ZIP and state only. Never post your street address here — share the
                 exact address privately with the worker after you accept their bid.
               </p>
@@ -786,17 +786,17 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 className={clsx(
                   inputCls,
                   'resize-y min-h-[120px] leading-relaxed',
-                  issueFor('description') && 'border-rose-400/50',
+                  issueFor('description') && 'border-danger/50',
                 )}
               />
               <FieldError message={issueFor('description')} />
               <div className="flex items-start justify-between gap-3 mt-1.5">
-                <p className="font-mono text-[9px] text-stone-700 leading-relaxed">
+                <p className="font-mono text-[11px] text-subtle leading-relaxed">
                   This is what workers read before they bid. Size and access matter most — square
                   footage, linear feet, room or load counts, parking, pets, stairs, and anything the
                   worker should bring.
                 </p>
-                <p className="font-mono text-[9px] text-stone-800 whitespace-nowrap">{data.description.length}/1000</p>
+                <p className="font-mono text-[11px] text-body whitespace-nowrap">{data.description.length}/1000</p>
               </div>
             </div>
 
@@ -813,10 +813,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 value={data.photoUrl}
                 onChange={(e) => update('photoUrl', e.target.value)}
                 placeholder="https://example.com/photo.jpg"
-                className={clsx(inputCls, issueFor('photoUrl') && 'border-rose-400/50')}
+                className={clsx(inputCls, issueFor('photoUrl') && 'border-danger/50')}
               />
               <FieldError message={issueFor('photoUrl')} />
-              <p className="font-mono text-[9px] text-stone-800 mt-1.5">
+              <p className="font-mono text-[11px] text-body mt-1.5">
                 Upload a photo of the job, or paste a link to one hosted elsewhere. A photo gets you
                 far more accurate bids.
               </p>
@@ -825,7 +825,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 <img
                   src={data.photoUrl.trim()}
                   alt="Quest preview"
-                  className="mt-3 w-full max-h-48 object-cover rounded-lg border border-white/[0.08]"
+                  className="mt-3 w-full max-h-48 object-cover rounded-lg border border-line"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               )}
@@ -846,20 +846,20 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     className={clsx(
                       'text-left rounded-md border px-3.5 py-2.5 transition-all duration-150',
                       data.budgetMode === opt.mode
-                        ? 'border-amber-500/60 bg-amber-400/10'
-                        : 'border-white/[0.08] hover:border-amber-500/40',
+                        ? 'border-accent/60 bg-accent/10'
+                        : 'border-line hover:border-accent/40',
                     )}
                   >
                     <span className={clsx(
-                      'block font-mono text-[11px] font-semibold tracking-wide',
-                      data.budgetMode === opt.mode ? 'text-amber-400' : 'text-stone-400',
+                      'block font-mono text-[12px] font-semibold tracking-wide',
+                      data.budgetMode === opt.mode ? 'text-accent-text' : 'text-muted',
                     )}>{opt.title}</span>
-                    <span className="block font-mono text-[9px] text-stone-600 mt-0.5 leading-relaxed">{opt.sub}</span>
+                    <span className="block font-mono text-[11px] text-subtle mt-0.5 leading-relaxed">{opt.sub}</span>
                   </button>
                 ))}
               </div>
               {data.budgetMode === 'quote' && (
-                <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
+                <p className="font-mono text-[11px] text-subtle mt-2 leading-relaxed">
                   Good for complex or contractor-type work. Qualified workers bid with their own
                   estimate through TryHardly — you pick one, authorize the agreed amount, and it&apos;s
                   charged after you confirm the work is done.
@@ -878,10 +878,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                       type="button"
                       onClick={() => changePricing({ payType: pt })}
                       className={clsx(
-                        'font-mono text-[11px] font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
+                        'font-mono text-[12px] font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
                         data.payType === pt
-                          ? 'text-amber-400 border-amber-500/60 bg-amber-400/10'
-                          : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                          ? 'text-accent-text border-accent/60 bg-accent/10'
+                          : 'text-subtle border-line hover:text-accent-text hover:border-accent/40',
                       )}
                     >
                       {pt === 'flat' ? 'Flat rate' : 'Hourly'}
@@ -898,7 +898,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <div className="relative">
                     <span className={clsx(
                       'absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-base',
-                      rewardNum > 0 ? 'text-amber-400' : 'text-stone-800',
+                      rewardNum > 0 ? 'text-accent-text' : 'text-body',
                     )}>$</span>
                     <input
                       type="number"
@@ -907,11 +907,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                       placeholder="0"
                       min="10"
                       step="5"
-                      className={clsx(inputCls, 'pl-7', issueFor('reward') && 'border-rose-400/50')}
+                      className={clsx(inputCls, 'pl-7', issueFor('reward') && 'border-danger/50')}
                     />
                   </div>
                   <FieldError message={issueFor('reward')} />
-                  <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                  <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                     What you&apos;re hoping to spend. This is a starting point, not the final charge —
                     workers bid with their own price, and you authorize payment for the amount you
                     agree to after you accept a bid.
@@ -920,10 +920,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               ) : (
                 <div>
                   <FieldLabel>Your budget</FieldLabel>
-                  <div className={clsx(inputCls, 'flex items-center text-stone-500')}>
+                  <div className={clsx(inputCls, 'flex items-center text-subtle')}>
                     Workers will bid on this job
                   </div>
-                  <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                  <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                     No need to guess a number — qualified workers send a detailed bid through
                     TryHardly, and you authorize payment for the one you accept.
                   </p>
@@ -937,10 +937,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   min={minDate}
                   onChange={(e) => update('deadline', e.target.value)}
                   onPaste={handleDeadlinePaste}
-                  className={clsx(inputCls, '[color-scheme:dark]', issueFor('deadline') && 'border-rose-400/50')}
+                  className={clsx(inputCls, '[color-scheme:dark]', issueFor('deadline') && 'border-danger/50')}
                 />
                 <FieldError message={issueFor('deadline')} />
-                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                   The date the work should be done by — at least {MIN_DEADLINE_DAYS} days out
                   ({formatDate(minDate)} or later) so workers have time to bid. You can paste a
                   date like 08/01/2026.
@@ -950,11 +950,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
             {/* Recommended budget helper — deterministic local estimate, applied
                 only on an explicit click so a typed budget is never overwritten. */}
-            <div className="rounded-lg border border-amber-500/25 bg-amber-400/[0.04] p-4">
-              <p className="font-mono text-[10px] font-semibold tracking-widest text-amber-400/90 uppercase mb-1.5 flex items-center gap-1.5">
+            <div className="rounded-lg border border-accent/25 bg-accent/[0.04] p-4">
+              <p className="font-mono text-[12px] font-semibold tracking-widest text-accent-text uppercase mb-1.5 flex items-center gap-1.5">
                 <Sparkles size={11} /> Budget starting point
               </p>
-              <p className="font-mono text-[9px] text-stone-600 mb-2.5 leading-relaxed">
+              <p className="font-mono text-[11px] text-subtle mb-2.5 leading-relaxed">
                 A rough range from what you&apos;ve described — not a quote, and not a price any worker
                 has agreed to. Real bids can land above or below it.
               </p>
@@ -969,16 +969,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <div>
-                        <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
+                        <p className="font-mono text-[11px] tracking-widest text-subtle uppercase">
                           Labor only — you supply materials
                         </p>
                         <span className={clsx(
                           'font-bold',
-                          laborIsPrimary ? 'text-lg text-amber-300' : 'text-base text-stone-300',
+                          laborIsPrimary ? 'text-lg text-accent-text-hover' : 'text-base text-body',
                         )}>
                           ${budgetRec.measured.laborMin}–${budgetRec.measured.laborMax}
                         </span>
-                        <span className="font-mono text-[10px] text-stone-600 ml-2">
+                        <span className="font-mono text-[12px] text-subtle ml-2">
                           suggest ~${budgetRec.measured.laborSuggested}
                         </span>
                       </div>
@@ -987,10 +987,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                           type="button"
                           onClick={() => applyBudgetAmount(budgetRec.measured!.laborSuggested)}
                           className={clsx(
-                            'font-mono text-[9px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
+                            'font-mono text-[11px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
                             laborIsPrimary
-                              ? 'bg-amber-400 text-zinc-950 hover:bg-amber-300'
-                              : 'border border-amber-500/50 text-amber-400 hover:bg-amber-400/10',
+                              ? 'bg-accent text-on-accent hover:bg-accent-hover'
+                              : 'border border-accent/50 text-accent-text hover:bg-accent/10',
                           )}
                         >
                           <Wand2 size={11} /> USE LABOR
@@ -999,18 +999,18 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     </div>
 
                     {budgetRec.measured.totalSuggested != null && (
-                      <div className="flex items-center justify-between gap-3 flex-wrap border-t border-white/[0.06] pt-2.5">
+                      <div className="flex items-center justify-between gap-3 flex-wrap border-t border-line pt-2.5">
                         <div>
-                          <p className="font-mono text-[9px] tracking-widest text-stone-600 uppercase">
+                          <p className="font-mono text-[11px] tracking-widest text-subtle uppercase">
                             Materials + labor — rough total
                           </p>
                           <span className={clsx(
                             'font-bold',
-                            laborIsPrimary ? 'text-base text-stone-300' : 'text-lg text-amber-300',
+                            laborIsPrimary ? 'text-base text-body' : 'text-lg text-accent-text-hover',
                           )}>
                             ~${budgetRec.measured.totalMin}–${budgetRec.measured.totalMax}
                           </span>
-                          <span className="font-mono text-[10px] text-stone-600 ml-2">
+                          <span className="font-mono text-[12px] text-subtle ml-2">
                             suggest ~${budgetRec.measured.totalSuggested}
                           </span>
                         </div>
@@ -1019,10 +1019,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                             type="button"
                             onClick={() => applyBudgetAmount(budgetRec.measured!.totalSuggested!)}
                             className={clsx(
-                              'font-mono text-[9px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
+                              'font-mono text-[11px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
                               laborIsPrimary
-                                ? 'border border-amber-500/50 text-amber-400 hover:bg-amber-400/10'
-                                : 'bg-amber-400 text-zinc-950 hover:bg-amber-300',
+                                ? 'border border-accent/50 text-accent-text hover:bg-accent/10'
+                                : 'bg-accent text-on-accent hover:bg-accent-hover',
                             )}
                           >
                             <Wand2 size={11} /> USE TOTAL
@@ -1031,13 +1031,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                       </div>
                     )}
 
-                    <p className="font-mono text-[10px] text-stone-500 leading-relaxed border-t border-white/[0.06] pt-2.5">
-                      <span className="text-stone-600 uppercase tracking-widest text-[9px]">Time</span>{' '}
+                    <p className="font-mono text-[12px] text-subtle leading-relaxed border-t border-line pt-2.5">
+                      <span className="text-subtle uppercase tracking-widest text-[11px]">Time</span>{' '}
                       {budgetRec.measured.timeEstimate}
                     </p>
 
                     {budgetRec.measured.assumptions.length > 0 && (
-                      <ul className="font-mono text-[9px] text-stone-600 leading-relaxed list-disc list-inside space-y-0.5">
+                      <ul className="font-mono text-[11px] text-subtle leading-relaxed list-disc list-inside space-y-0.5">
                         {budgetRec.measured.assumptions.map((a) => (
                           <li key={a}>{a}</li>
                         ))}
@@ -1045,23 +1045,23 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     )}
                   </div>
                   {budgetApplied && (
-                    <p className="font-mono text-[9px] text-amber-300/80 mt-2">Applied ✓ — edit the budget field any time.</p>
+                    <p className="font-mono text-[11px] text-accent-text mt-2">Applied ✓ — edit the budget field any time.</p>
                   )}
                 </>
               ) : (
                 <>
-                  <p className="font-mono text-[11px] text-stone-400 leading-relaxed">
+                  <p className="font-mono text-[12px] text-muted leading-relaxed">
                     {budgetRec.explanation}
                   </p>
                   <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
-                    <span className="font-bold text-lg text-amber-300">
+                    <span className="font-bold text-lg text-accent-text-hover">
                       ${budgetRec.min}–${budgetRec.max}{data.payType === 'hourly' ? '/hr' : ''}
                     </span>
                     {data.budgetMode === 'fixed' && (
                       <button
                         type="button"
                         onClick={() => applyBudgetAmount(bandMidpoint(budgetRec.min, budgetRec.max))}
-                        className="font-mono text-[10px] font-semibold tracking-widest px-4 py-2 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                        className="font-mono text-[12px] font-semibold tracking-widest px-4 py-2 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors flex items-center gap-1.5"
                       >
                         <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
                       </button>
@@ -1070,7 +1070,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 </>
               )}
 
-              <p className="font-mono text-[9px] text-stone-600 mt-2 leading-relaxed">
+              <p className="font-mono text-[11px] text-subtle mt-2 leading-relaxed">
                 {data.budgetMode === 'quote'
                   ? 'Rough sizing only — workers set the real number in their bids.'
                   : 'A starting point you can change. Bids you receive decide the final amount.'}
@@ -1082,7 +1082,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 <button
                   type="button"
                   onClick={() => changePricing({ budgetMode: 'quote' })}
-                  className="mt-3 w-full font-mono text-[10px] font-semibold tracking-widest px-4 py-2.5 border border-amber-500/50 text-amber-400 rounded hover:bg-amber-400/10 transition-colors"
+                  className="mt-3 w-full font-mono text-[12px] font-semibold tracking-widest px-4 py-2.5 border border-accent/50 text-accent-text rounded hover:bg-accent/10 transition-colors"
                 >
                   This looks like a bigger job — let qualified workers bid it instead
                 </button>
@@ -1094,18 +1094,18 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   className={clsx(
                     'mt-3 rounded-md border p-3 flex items-start gap-2',
                     budgetRec.contractor.required
-                      ? 'border-rose-400/40 bg-rose-400/[0.07]'
-                      : 'border-white/[0.08] bg-white/[0.02]',
+                      ? 'border-danger/40 bg-danger/[0.07]'
+                      : 'border-line bg-surface',
                   )}
                 >
                   <AlertTriangle
                     size={13}
-                    className={clsx('mt-0.5 flex-shrink-0', budgetRec.contractor.required ? 'text-rose-400' : 'text-stone-600')}
+                    className={clsx('mt-0.5 flex-shrink-0', budgetRec.contractor.required ? 'text-danger' : 'text-subtle')}
                   />
                   <p
                     className={clsx(
-                      'font-mono text-[10px] leading-relaxed',
-                      budgetRec.contractor.required ? 'text-rose-300' : 'text-stone-500',
+                      'font-mono text-[12px] leading-relaxed',
+                      budgetRec.contractor.required ? 'text-danger' : 'text-subtle',
                     )}
                   >
                     {budgetRec.contractor.message}
@@ -1127,7 +1127,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <option key={m.value || 'unset'} value={m.value}>{m.label}</option>
                 ))}
               </select>
-              <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+              <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                 {materialsHelperText(data.materialsBy)}
               </p>
             </div>
@@ -1146,7 +1146,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <option value="moderate">Moderate</option>
                   <option value="hard">Hard</option>
                 </select>
-                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                   How challenging is this job?
                 </p>
               </div>
@@ -1162,26 +1162,26 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <option value="soon">Soon</option>
                   <option value="urgent">Urgent</option>
                 </select>
-                <p className="font-mono text-[9px] text-stone-700 mt-1.5 leading-relaxed">
+                <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
                   How soon do you need help?
                 </p>
               </div>
             </div>
 
             {/* Recurring booking */}
-            <div className="rounded-lg border border-white/[0.08] p-4 space-y-3">
+            <div className="rounded-lg border border-line p-4 space-y-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={data.isRecurring}
                   onChange={(e) => update('isRecurring', e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/[0.05] text-amber-500 focus:ring-amber-500"
+                  className="mt-0.5 h-4 w-4 rounded border-line bg-surface text-accent-text focus:ring-accent"
                 />
                 <span>
-                  <span className="block font-mono text-[11px] font-semibold tracking-wide text-stone-300">
+                  <span className="block font-mono text-[12px] font-semibold tracking-wide text-body">
                     This is a recurring job
                   </span>
-                  <span className="block font-mono text-[10px] text-stone-600 mt-0.5">
+                  <span className="block font-mono text-[12px] text-subtle mt-0.5">
                     Keep repeat work (e.g. weekly mowing) on your board. You confirm and pay for each
                     visit separately — nothing is charged in advance.
                   </span>
@@ -1218,8 +1218,8 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
             {/* Secondary TryHardly layer: posting stays simple; tier and worker
                 XP are handled by us after the job is posted. No XP to configure. */}
-            <p className="font-mono text-[9px] text-stone-700 leading-relaxed flex items-start gap-1.5">
-              <Sparkles size={11} className="mt-0.5 flex-shrink-0 text-amber-400/60" />
+            <p className="font-mono text-[11px] text-subtle leading-relaxed flex items-start gap-1.5">
+              <Sparkles size={11} className="mt-0.5 flex-shrink-0 text-accent-text" />
               We&apos;ll size the job automatically after you post.
             </p>
           </div>
@@ -1228,16 +1228,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* ── Step 3: Review ── */}
         {step === 3 && (
           <div>
-            <p className="font-mono text-[11px] text-stone-500 leading-relaxed mb-4">
+            <p className="font-mono text-[12px] text-subtle leading-relaxed mb-4">
               Here&apos;s what workers will see. Check it over — you can edit anything before posting.
             </p>
-            <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl p-6 mb-4">
+            <div className="bg-surface border border-line rounded-xl p-6 mb-4">
               <div className="flex items-start justify-between gap-3 mb-1.5">
-                <h3 className="font-bold text-base text-stone-100">{data.title}</h3>
+                <h3 className="font-bold text-base text-strong">{data.title}</h3>
                 <button
                   type="button"
                   onClick={() => editStep(1)}
-                  className="font-mono text-[10px] text-stone-600 hover:text-amber-400 transition-colors flex-shrink-0 underline"
+                  className="font-mono text-[12px] text-subtle hover:text-accent-text transition-colors flex-shrink-0 underline"
                 >
                   Edit details
                 </button>
@@ -1245,11 +1245,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <div className="flex gap-2 flex-wrap mb-4">
                 {posterBadge && (
                   <span className={clsx(
-                    'font-mono text-[9px] font-semibold tracking-wide border rounded-sm px-2 py-0.5',
+                    'font-mono text-[11px] font-semibold tracking-wide border rounded-sm px-2 py-0.5',
                     posterBadge.classes,
                   )}>{posterBadge.label}</span>
                 )}
-                <span className="font-mono text-[9px] text-stone-500 bg-white/[0.05] border border-white/[0.08] rounded-sm px-2 py-0.5">
+                <span className="font-mono text-[11px] text-subtle bg-surface border border-line rounded-sm px-2 py-0.5">
                   {selectedCategory?.shortLabel}
                 </span>
               </div>
@@ -1285,16 +1285,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               )}
               <div className="pt-3">
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <p className="font-mono text-[10px] font-semibold tracking-widest text-stone-700 uppercase">Full details</p>
+                  <p className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase">Full details</p>
                   <button
                     type="button"
                     onClick={() => editStep(2)}
-                    className="font-mono text-[10px] text-stone-600 hover:text-amber-400 transition-colors flex-shrink-0 underline"
+                    className="font-mono text-[12px] text-subtle hover:text-accent-text transition-colors flex-shrink-0 underline"
                   >
                     Edit scope &amp; budget
                   </button>
                 </div>
-                <p className="font-mono text-[12px] text-stone-500 leading-relaxed line-clamp-4">{data.description}</p>
+                <p className="font-mono text-[12px] text-subtle leading-relaxed line-clamp-4">{data.description}</p>
                 {/* The photo goes out with the job, so the poster sees exactly
                     the one they attached before publishing — or none at all. */}
                 {data.photoUrl.trim() && isValidPhotoUrl(data.photoUrl.trim()) && (
@@ -1302,26 +1302,26 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <img
                     src={data.photoUrl.trim()}
                     alt="Job photo"
-                    className="mt-3 w-full max-h-48 object-cover rounded-lg border border-white/[0.08]"
+                    className="mt-3 w-full max-h-48 object-cover rounded-lg border border-line"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                 )}
               </div>
             </div>
-            <p className="font-mono text-[10px] text-stone-500 leading-relaxed mb-3 rounded-md border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5">
+            <p className="font-mono text-[12px] text-subtle leading-relaxed mb-3 rounded-md border border-line bg-surface px-3.5 py-2.5">
               {TRUST_LINE} Your job goes on the local job board, workers send bids, and you
               authorize the amount you agree to once you accept one.
             </p>
             {!currentUserId && (
-              <p className="font-mono text-[10px] text-amber-300/80 leading-relaxed mb-3 rounded-md border border-amber-500/25 bg-amber-400/[0.04] px-3.5 py-2.5">
+              <p className="font-mono text-[12px] text-accent-text leading-relaxed mb-3 rounded-md border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5">
                 Last step: create a free account to publish this job. Posting stays free — the
                 account is what lets you receive bids, message workers, and pick who does the work.
                 We&apos;ll keep these details and bring you right back here.
               </p>
             )}
-            <p className="font-mono text-[10px] text-stone-800 leading-relaxed mb-5">
+            <p className="font-mono text-[12px] text-body leading-relaxed mb-5">
               By posting, you agree to TryHardly&apos;s terms and{' '}
-              <a href="/prohibited-services" className="underline hover:text-stone-600">prohibited services policy</a>. Payments are processed by Stripe, and the agreed amount is captured with payout to the worker once you confirm the job is complete.
+              <a href="/prohibited-services" className="underline hover:text-subtle">prohibited services policy</a>. Payments are processed by Stripe, and the agreed amount is captured with payout to the worker once you confirm the job is complete.
             </p>
           </div>
         )}
@@ -1329,13 +1329,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* Error summary. Individual messages also render inline under their
             field; this repeats them so nothing is missed off-screen. */}
         {(issues.length > 0 || submitError) && (
-          <div role="alert" className="mt-5 p-3.5 bg-rose-400/[0.07] border border-rose-400/25 rounded-lg space-y-1">
-            <p className="font-mono text-[10px] font-semibold tracking-widest text-rose-400 uppercase mb-1.5">
+          <div role="alert" className="mt-5 p-3.5 bg-danger/[0.07] border border-danger/25 rounded-lg space-y-1">
+            <p className="font-mono text-[12px] font-semibold tracking-widest text-danger uppercase mb-1.5">
               {submitError ? 'Could not post this job' : 'Fix these before you continue'}
             </p>
-            {submitError && <p className="font-mono text-[11px] text-rose-400">· {submitError}</p>}
+            {submitError && <p className="font-mono text-[12px] text-danger">· {submitError}</p>}
             {issues.map((i) => (
-              <p key={`${i.field}-${i.message}`} className="font-mono text-[11px] text-rose-400">· {i.message}</p>
+              <p key={`${i.field}-${i.message}`} className="font-mono text-[12px] text-danger">· {i.message}</p>
             ))}
           </div>
         )}
@@ -1346,7 +1346,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             <button
               type="button"
               onClick={handleBack}
-              className="font-mono text-[11px] font-semibold tracking-widest px-6 py-3 border border-white/10 rounded-md text-stone-600 hover:text-stone-400 hover:border-white/20 transition-all flex items-center gap-1"
+              className="font-mono text-[12px] font-semibold tracking-widest px-6 py-3 border border-line rounded-md text-subtle hover:text-muted hover:border-line transition-all flex items-center gap-1"
             >
               <ChevronLeft size={13} /> BACK
             </button>
@@ -1356,7 +1356,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             <button
               type="button"
               onClick={handleNext}
-              className="font-mono text-[11px] font-semibold tracking-widest px-7 py-3 bg-amber-400 text-zinc-950 rounded-md hover:bg-amber-300 transition-colors flex items-center gap-1"
+              className="font-mono text-[12px] font-semibold tracking-widest px-7 py-3 bg-accent text-on-accent rounded-md hover:bg-accent-hover transition-colors flex items-center gap-1"
             >
               NEXT <ChevronRight size={13} />
             </button>
@@ -1366,10 +1366,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               onClick={handleSubmit}
               disabled={submitting}
               className={clsx(
-                'font-mono text-[11px] font-semibold tracking-widest px-7 py-3 rounded-md transition-all flex items-center gap-1',
+                'font-mono text-[12px] font-semibold tracking-widest px-7 py-3 rounded-md transition-all flex items-center gap-1',
                 submitting
-                  ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40 cursor-default'
-                  : 'bg-amber-400 text-zinc-950 hover:bg-amber-300 cursor-pointer',
+                  ? 'bg-accent/20 text-accent-text border border-accent/40 cursor-default'
+                  : 'bg-accent text-on-accent hover:bg-accent-hover cursor-pointer',
               )}
             >
               {submitting

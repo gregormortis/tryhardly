@@ -106,45 +106,45 @@ export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-gray-950 py-20 px-4">
+    <div className="min-h-screen bg-canvas py-20 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-amber-400 via-orange-500 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 text-strong">
             Frequently Asked Questions
           </h1>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-body">
             Everything you need to know about using Tryhardly
           </p>
         </div>
 
         {/* Always-visible payments summary so the key money flow is readable
             without expanding the accordion (and in static fetches/SEO). */}
-        <div className="mb-12 bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/30 rounded-lg p-8">
-          <h2 className="text-2xl font-bold text-amber-400 mb-4">Payments and payouts</h2>
-          <ul className="space-y-3 text-gray-300">
+        <div className="mb-12 bg-gradient-to-br from-accent/10 to-warning/5 border border-accent/30 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-accent-text mb-4">Payments and payouts</h2>
+          <ul className="space-y-3 text-body">
             <li className="flex gap-3">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-accent-text mt-1">•</span>
               <span>
                 <strong>Authorized at booking.</strong> When a customer books a quest, their payment
                 method is authorized through Stripe. This is not a final charge.
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-accent-text mt-1">•</span>
               <span>
                 <strong>Captured for completed work.</strong> The charge is captured only after the
                 task is completed, under platform rules.
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-accent-text mt-1">•</span>
               <span>
                 <strong>Worker payout follows capture.</strong> Worker payouts are initiated through
                 Stripe Connect after the completed-task payment capture.
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-accent-text mt-1">•</span>
               <span>
                 <strong>Cancel before capture, no charge.</strong> If a quest is cancelled before the
                 charge is captured, the authorization is voided and no final charge is created.
@@ -156,7 +156,7 @@ export default function FAQPage() {
         <div className="space-y-12">
           {faqs.map((section, sectionIdx) => (
             <div key={sectionIdx}>
-              <h2 className="text-3xl font-bold text-amber-400 mb-6">{section.category}</h2>
+              <h2 className="text-3xl font-bold text-accent-text mb-6">{section.category}</h2>
               <div className="space-y-4">
                 {section.questions.map((faq, faqIdx) => {
                   const key = `${sectionIdx}-${faqIdx}`;
@@ -165,17 +165,17 @@ export default function FAQPage() {
                   return (
                     <div
                       key={key}
-                      className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden"
+                      className="bg-surface border border-line rounded-lg overflow-hidden"
                     >
                       <button
                         onClick={() => setOpenIndex(isOpen ? null : key)}
-                        className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-800/50 transition-colors"
+                        className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-raised transition-colors"
                       >
-                        <span className="font-semibold text-gray-100">{faq.q}</span>
-                        <span className="text-amber-400 text-2xl">{isOpen ? '−' : '+'}</span>
+                        <span className="font-semibold text-strong">{faq.q}</span>
+                        <span className="text-accent-text text-2xl">{isOpen ? '−' : '+'}</span>
                       </button>
                       {isOpen && (
-                        <div className="px-6 py-4 border-t border-gray-800 text-gray-300">
+                        <div className="px-6 py-4 border-t border-line text-body">
                           {faq.a}
                         </div>
                       )}
@@ -187,14 +187,14 @@ export default function FAQPage() {
           ))}
         </div>
 
-        <div className="mt-16 bg-gradient-to-r from-amber-900/20 to-purple-900/20 border border-amber-500/50 rounded-lg p-8 text-center">
-          <h3 className="text-2xl font-bold text-amber-400 mb-4">Still have questions?</h3>
-          <p className="text-gray-300 mb-6">
+        <div className="mt-16 bg-gradient-to-r from-accent/20/20 to-info/20 border border-accent/50 rounded-lg p-8 text-center">
+          <h3 className="text-2xl font-bold text-accent-text mb-4">Still have questions?</h3>
+          <p className="text-body mb-6">
             Can&apos;t find the answer you&apos;re looking for? Our support team is here to help.
           </p>
           <a
             href="/contact"
-            className="inline-block bg-amber-600 hover:bg-amber-700 text-black font-bold px-8 py-3 rounded-lg transition-colors"
+            className="inline-block bg-accent hover:bg-accent text-on-accent font-bold px-8 py-3 rounded-lg transition-colors"
           >
             Contact Support
           </a>

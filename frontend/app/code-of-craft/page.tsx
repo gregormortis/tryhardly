@@ -60,20 +60,20 @@ const PRINCIPLES = [
 
 export default function CodeOfCraftPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-300">
+    <div className="min-h-screen bg-canvas text-body">
       <div className="max-w-4xl mx-auto px-4 py-16 sm:py-20">
         {/* Hero */}
         <div className="text-center mb-14">
-          <p className="font-mono text-xs uppercase tracking-widest text-amber-400 mb-3">
+          <p className="font-mono text-xs uppercase tracking-widest text-accent-text mb-3">
             Professional standards
           </p>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-5 bg-gradient-to-r from-amber-400 via-orange-500 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-5 text-strong">
             The Code of Craft
           </h1>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-body max-w-2xl mx-auto leading-relaxed">
             TryHardly is built on trust between real people doing real work. The Code of Craft is the
             standard every worker can pledge to uphold. It is a promise about{' '}
-            <span className="text-white font-semibold">how</span> you work — not a fee, a discount, or a
+            <span className="text-strong font-semibold">how</span> you work — not a fee, a discount, or a
             ranking you can buy.
           </p>
         </div>
@@ -84,15 +84,15 @@ export default function CodeOfCraftPage() {
             {PRINCIPLES.map((p) => (
               <div
                 key={p.title}
-                className="bg-gray-900/50 border border-gray-800 rounded-xl p-5 sm:p-6"
+                className="bg-surface border border-line rounded-xl p-5 sm:p-6"
               >
                 <div className="flex items-start gap-3">
                   <span className="text-2xl leading-none mt-0.5" aria-hidden>
                     {p.icon}
                   </span>
                   <div>
-                    <h2 className="text-lg font-bold text-amber-200 mb-1.5">{p.title}</h2>
-                    <p className="text-sm text-gray-400 leading-relaxed">{p.body}</p>
+                    <h2 className="text-lg font-bold text-accent-text-hover mb-1.5">{p.title}</h2>
+                    <p className="text-sm text-muted leading-relaxed">{p.body}</p>
                   </div>
                 </div>
               </div>
@@ -101,14 +101,14 @@ export default function CodeOfCraftPage() {
         </section>
 
         {/* What pledging means */}
-        <section className="mb-14 bg-amber-500/[0.06] border border-amber-500/25 rounded-xl p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-amber-300 mb-3">What it means to pledge</h2>
-          <p className="text-gray-300 mb-3 leading-relaxed">
+        <section className="mb-14 bg-accent/[0.06] border border-accent/25 rounded-xl p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-accent-text-hover mb-3">What it means to pledge</h2>
+          <p className="text-body mb-3 leading-relaxed">
             Any logged-in worker can pledge to the Code of Craft from their profile. When you pledge, your
-            public profile shows a <span className="text-white font-semibold">“Code of Craft pledged”</span>{' '}
+            public profile shows a <span className="text-strong font-semibold">“Code of Craft pledged”</span>{' '}
             badge so clients can see you have committed to these standards.
           </p>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <p className="text-muted text-sm leading-relaxed">
             The pledge is honest in both directions: it appears only when you have actually pledged, and you
             can withdraw it at any time. It is a personal commitment, not a verification or a guarantee by
             TryHardly — verified credentials and Verified Pro status cover that side of trust.
@@ -117,33 +117,33 @@ export default function CodeOfCraftPage() {
 
         {/* How it fits */}
         <section className="mb-14">
-          <h2 className="text-2xl font-bold text-amber-400 mb-3">How it fits with the rest of TryHardly</h2>
-          <ul className="space-y-3 text-sm text-gray-300">
+          <h2 className="text-2xl font-bold text-accent-text mb-3">How it fits with the rest of TryHardly</h2>
+          <ul className="space-y-3 text-sm text-body">
             <li className="flex items-start gap-2">
-              <span className="text-green-400 mt-0.5">✓</span>
+              <span className="text-success mt-0.5">✓</span>
               <span>
                 Ratings and badges reward consistent, high-quality work — never a lower fee.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-green-400 mt-0.5">✓</span>
+              <span className="text-success mt-0.5">✓</span>
               <span>
-                <Link href="/verified-pro" className="text-amber-400 hover:underline">
+                <Link href="/verified-pro" className="text-accent-text hover:underline">
                   Verified Pro
                 </Link>{' '}
                 builds on the pledge with verified credentials and a real track record.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-green-400 mt-0.5">✓</span>
+              <span className="text-success mt-0.5">✓</span>
               <span>
                 A proof-of-work gallery lets you show honest photos of past work on your profile.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-green-400 mt-0.5">✓</span>
+              <span className="text-success mt-0.5">✓</span>
               <span>
-                <Link href="/standards" className="text-amber-400 hover:underline">
+                <Link href="/standards" className="text-accent-text hover:underline">
                   Work standards &amp; trade checklists
                 </Link>{' '}
                 turn these principles into a practical, job-by-job guide.
@@ -153,21 +153,21 @@ export default function CodeOfCraftPage() {
         </section>
 
         {/* CTA */}
-        <div className="bg-gradient-to-r from-amber-900/20 to-purple-900/20 border border-amber-500/40 rounded-xl p-8 text-center">
-          <h3 className="text-2xl font-bold text-amber-400 mb-3">Take the pledge</h3>
-          <p className="text-gray-300 mb-6">
+        <div className="bg-gradient-to-r from-accent/20/20 to-info/20 border border-accent/40 rounded-xl p-8 text-center">
+          <h3 className="text-2xl font-bold text-accent-text mb-3">Take the pledge</h3>
+          <p className="text-body mb-6">
             Free to join. Pledge to the Code of Craft from your profile and let your work speak for itself.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
               href="/profile"
-              className="inline-block bg-amber-600 hover:bg-amber-700 text-black font-bold px-6 py-3 rounded-lg transition-colors"
+              className="inline-block bg-accent hover:bg-accent text-on-accent font-bold px-6 py-3 rounded-lg transition-colors"
             >
               Pledge from your profile
             </Link>
             <Link
               href="/verified-pro"
-              className="inline-block border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold px-6 py-3 rounded-lg transition-colors"
+              className="inline-block border border-accent/40 hover:border-accent text-accent-text-hover font-bold px-6 py-3 rounded-lg transition-colors"
             >
               Learn about Verified Pro
             </Link>

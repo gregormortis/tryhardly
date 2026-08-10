@@ -39,19 +39,19 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
     }
   };
   return (
-    <div className="rounded-xl border border-zinc-700 bg-zinc-900/60 p-5">
+    <div className="rounded-xl border border-line-strong bg-surface p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
-          <Facebook className="h-4 w-4 text-amber-400" /> {label}
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-strong">
+          <Facebook className="h-4 w-4 text-accent-text" /> {label}
         </h3>
         <button
           type="button"
           onClick={copy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-amber-500/50 hover:bg-zinc-800/70"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-raised px-3 py-1.5 text-xs font-semibold text-body transition-colors hover:border-accent/50 hover:bg-raised"
         >
           {copied ? (
             <>
-              <ClipboardCheck className="h-3.5 w-3.5 text-amber-400" /> Copied
+              <ClipboardCheck className="h-3.5 w-3.5 text-accent-text" /> Copied
             </>
           ) : (
             <>
@@ -60,7 +60,7 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
           )}
         </button>
       </div>
-      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-zinc-300">
+      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-body">
         {text}
       </pre>
     </div>
@@ -69,10 +69,10 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
 
 export default function ReddingLanding() {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-canvas text-strong">
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-6 py-14 text-center sm:py-20">
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-400">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent-text">
           <MapPin className="h-3 w-3" /> Now launching in Redding, CA · Early access
         </div>
         <h1 className="mb-5 text-4xl font-bold tracking-tight sm:text-6xl">
@@ -80,11 +80,11 @@ export default function ReddingLanding() {
           <br />
           local work in Redding
         </h1>
-        <p className="mx-auto mb-3 max-w-2xl text-base text-zinc-300 sm:text-lg">
+        <p className="mx-auto mb-3 max-w-2xl text-base text-body sm:text-lg">
           A simple way to connect local jobs with reliable local help — yard work, hauling,
           moving, cleaning, handyman jobs, and errands.
         </p>
-        <p className="mx-auto mb-8 max-w-xl text-sm text-zinc-500">
+        <p className="mx-auto mb-8 max-w-xl text-sm text-subtle">
           We&apos;re just getting started in Redding. There aren&apos;t thousands of jobs or
           workers yet — that&apos;s the honest truth. The goal right now is matching real local
           jobs with dependable local people, one neighbor at a time.
@@ -93,13 +93,13 @@ export default function ReddingLanding() {
         <div className="mx-auto flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-2xl sm:flex-row">
           <Link
             href={routes.requestHelp}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-amber-400"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-bold text-on-accent transition-colors hover:bg-accent"
           >
             I need help with a job <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href={routes.workAlerts}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-sm font-bold text-zinc-100 transition-colors hover:border-amber-500/50 hover:bg-zinc-900"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-6 py-3 text-sm font-bold text-strong transition-colors hover:border-accent/50 hover:bg-surface"
           >
             I want local work <Bell className="h-4 w-4" />
           </Link>
@@ -107,7 +107,7 @@ export default function ReddingLanding() {
         <div className="mt-4">
           <Link
             href={routes.questboard}
-            className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-amber-400 transition-colors hover:text-amber-300"
+            className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-accent-text transition-colors hover:text-accent-text-hover"
           >
             Or just browse local jobs <ArrowRight className="h-4 w-4" />
           </Link>
@@ -115,12 +115,12 @@ export default function ReddingLanding() {
       </section>
 
       {/* Two-sided cards */}
-      <section className="border-y border-zinc-800 bg-zinc-900/50 py-16">
+      <section className="border-y border-line bg-surface py-16">
         <div className="mx-auto grid max-w-5xl gap-6 px-6 sm:grid-cols-2">
           {/* Requesters */}
-          <div className="flex flex-col rounded-2xl border border-zinc-700 bg-zinc-900 p-7">
-            <h2 className="mb-2 text-xl font-bold text-zinc-100">Need something done?</h2>
-            <p className="mb-5 text-sm text-zinc-400">
+          <div className="flex flex-col rounded-2xl border border-line-strong bg-surface p-7">
+            <h2 className="mb-2 text-xl font-bold text-strong">Need something done?</h2>
+            <p className="mb-5 text-sm text-muted">
               Post what you need and get matched with local people in the Redding area. Common
               jobs people post:
             </p>
@@ -128,8 +128,8 @@ export default function ReddingLanding() {
               {requesterCategories.map((name, i) => {
                 const Icon = categoryIcons[i % categoryIcons.length];
                 return (
-                  <li key={name} className="flex items-center gap-2.5 text-sm text-zinc-300">
-                    <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
+                  <li key={name} className="flex items-center gap-2.5 text-sm text-body">
+                    <span className="flex h-7 w-7 flex-none items-center justify-center rounded-lg bg-accent/10 text-accent-text">
                       <Icon className="h-4 w-4" />
                     </span>
                     {name}
@@ -139,36 +139,36 @@ export default function ReddingLanding() {
             </ul>
             <Link
               href={routes.requestHelp}
-              className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-5 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-amber-400"
+              className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-3 text-sm font-bold text-on-accent transition-colors hover:bg-accent"
             >
               Post a job — it&apos;s free <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
           {/* Workers */}
-          <div className="flex flex-col rounded-2xl border border-zinc-700 bg-zinc-900 p-7">
-            <h2 className="mb-2 text-xl font-bold text-zinc-100">Looking for local work?</h2>
-            <p className="mb-5 text-sm text-zinc-400">
+          <div className="flex flex-col rounded-2xl border border-line-strong bg-surface p-7">
+            <h2 className="mb-2 text-xl font-bold text-strong">Looking for local work?</h2>
+            <p className="mb-5 text-sm text-muted">
               Set up a free profile and get alerts when jobs are posted near you. Be early and
               build the reviews that get you picked.
             </p>
             <ul className="mb-6 space-y-2.5">
-              <li className="flex items-start gap-2.5 text-sm text-zinc-300">
-                <Bell className="mt-0.5 h-4 w-4 flex-none text-amber-400" />
+              <li className="flex items-start gap-2.5 text-sm text-body">
+                <Bell className="mt-0.5 h-4 w-4 flex-none text-accent-text" />
                 Get alerts for new local jobs as they&apos;re posted.
               </li>
-              <li className="flex items-start gap-2.5 text-sm text-zinc-300">
-                <Star className="mt-0.5 h-4 w-4 flex-none text-amber-400" />
+              <li className="flex items-start gap-2.5 text-sm text-body">
+                <Star className="mt-0.5 h-4 w-4 flex-none text-accent-text" />
                 Build a profile and reviews that travel with you.
               </li>
-              <li className="flex items-start gap-2.5 text-sm text-zinc-300">
-                <MapPin className="mt-0.5 h-4 w-4 flex-none text-amber-400" />
+              <li className="flex items-start gap-2.5 text-sm text-body">
+                <MapPin className="mt-0.5 h-4 w-4 flex-none text-accent-text" />
                 Work close to home — real jobs from real neighbors.
               </li>
             </ul>
             <Link
               href={routes.workAlerts}
-              className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg border border-amber-500/50 bg-zinc-950 px-5 py-3 text-sm font-bold text-amber-400 transition-colors hover:bg-amber-500 hover:text-zinc-950"
+              className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg border border-accent/50 bg-canvas px-5 py-3 text-sm font-bold text-accent-text transition-colors hover:bg-accent hover:text-on-accent"
             >
               Get local job alerts <Bell className="h-4 w-4" />
             </Link>
@@ -197,23 +197,23 @@ export default function ReddingLanding() {
             },
           ].map(({ title, desc }, i) => (
             <div key={title} className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-lg font-bold text-amber-400">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-lg font-bold text-accent-text">
                 {i + 1}
               </div>
-              <h3 className="mb-2 font-semibold text-zinc-100">{title}</h3>
-              <p className="text-sm text-zinc-400">{desc}</p>
+              <h3 className="mb-2 font-semibold text-strong">{title}</h3>
+              <p className="text-sm text-muted">{desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Spread the word / share */}
-      <section className="border-t border-zinc-800 bg-zinc-900/50 py-16">
+      <section className="border-t border-line bg-surface py-16">
         <div className="mx-auto max-w-3xl px-6">
           <h2 className="mb-2 text-center text-2xl font-bold tracking-tight sm:text-3xl">
             Help spread the word in Redding
           </h2>
-          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-zinc-400">
+          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-muted">
             Post in a local Facebook group or neighborhood page. Copy a ready-made message, or
             print a flyer to put up around town.
           </p>
@@ -226,13 +226,13 @@ export default function ReddingLanding() {
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
             <Link
               href={routes.flyerRequestHelp}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-950 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-amber-500/50 hover:bg-zinc-900"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-canvas px-5 py-3 text-sm font-semibold text-strong transition-colors hover:border-accent/50 hover:bg-surface"
             >
               <Printer className="h-4 w-4" /> Printable flyer — Need help
             </Link>
             <Link
               href={routes.flyerWorkers}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-950 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-amber-500/50 hover:bg-zinc-900"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-canvas px-5 py-3 text-sm font-semibold text-strong transition-colors hover:border-accent/50 hover:bg-surface"
             >
               <Printer className="h-4 w-4" /> Printable flyer — Find work
             </Link>
@@ -245,20 +245,20 @@ export default function ReddingLanding() {
         <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
           Be part of the Redding launch
         </h2>
-        <p className="mx-auto mb-10 max-w-xl text-zinc-400">
+        <p className="mx-auto mb-10 max-w-xl text-muted">
           It&apos;s early, and that&apos;s the point. Post a job or sign up for work and help build
           a marketplace for real local work in Redding.
         </p>
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <Link
             href={routes.requestHelp}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-8 py-3.5 font-semibold text-zinc-950 transition hover:bg-amber-400"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-8 py-3.5 font-semibold text-on-accent transition hover:bg-accent"
           >
             Post a job <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
             href={routes.workAlerts}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-8 py-3.5 font-semibold transition hover:border-amber-500/50 hover:bg-zinc-900"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-8 py-3.5 font-semibold transition hover:border-accent/50 hover:bg-surface"
           >
             Get work alerts
           </Link>

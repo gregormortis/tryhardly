@@ -5,9 +5,33 @@ const config: Config = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // ─── Semantic tokens (see app/tokens.css) ──────────────────────────
+        // Always prefer these over raw palette shades. Channel-based so
+        // Tailwind alpha modifiers work: bg-accent/10, border-line/40, etc.
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        raised: 'rgb(var(--raised) / <alpha-value>)',
+        'raised-2': 'rgb(var(--raised-2) / <alpha-value>)',
+        line: 'rgb(var(--line) / <alpha-value>)',
+        'line-strong': 'rgb(var(--line-strong) / <alpha-value>)',
+        strong: 'rgb(var(--text-strong) / <alpha-value>)',
+        body: 'rgb(var(--text-body) / <alpha-value>)',
+        muted: 'rgb(var(--text-muted) / <alpha-value>)',
+        subtle: 'rgb(var(--text-subtle) / <alpha-value>)',
+        accent: 'rgb(var(--accent) / <alpha-value>)',
+        'accent-hover': 'rgb(var(--accent-hover) / <alpha-value>)',
+        'accent-text': 'rgb(var(--accent-text) / <alpha-value>)',
+        'accent-text-hover': 'rgb(var(--accent-text-hover) / <alpha-value>)',
+        'on-accent': 'rgb(var(--on-accent) / <alpha-value>)',
+        'on-status': 'rgb(var(--on-status) / <alpha-value>)',
+        success: 'rgb(var(--success) / <alpha-value>)',
+        warning: 'rgb(var(--warning) / <alpha-value>)',
+        danger: 'rgb(var(--danger) / <alpha-value>)',
+        info: 'rgb(var(--info) / <alpha-value>)',
         // Quest-themed color palette
         primary: {
           50: '#f0f9ff',

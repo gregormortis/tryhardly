@@ -135,7 +135,7 @@ function mapBackendQuest(q: BackendQuest): Quest {
 
 function UrgentBadge() {
   return (
-    <span className="font-mono text-[9px] font-semibold tracking-widest text-rose-400 bg-rose-400/10 border border-rose-400/25 rounded-sm px-1.5 py-0.5">
+    <span className="font-mono text-[11px] font-semibold tracking-widest text-danger bg-danger/10 border border-danger/25 rounded-sm px-1.5 py-0.5">
       URGENT
     </span>
   );
@@ -176,7 +176,7 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
       aria-label={`View job: ${quest.title}`}
       className={clsx(
         'relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 rounded-lg border px-4 sm:px-5 py-4 cursor-pointer transition-all duration-200 overflow-hidden',
-        hovered ? 'bg-white/[0.04] border-amber-500/35' : 'bg-white/[0.02] border-white/[0.07]',
+        hovered ? 'bg-surface border-accent/35' : 'bg-surface border-line',
         isNew && 'animate-[slideIn_0.35s_ease_both]',
       )}
     >
@@ -199,19 +199,19 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start gap-2 mb-1.5 flex-wrap">
-            <span className="font-semibold text-[15px] text-stone-100 break-words line-clamp-2 leading-snug">
+            <span className="font-semibold text-[15px] text-strong break-words line-clamp-2 leading-snug">
               {quest.title}
             </span>
             {quest.urgent && <UrgentBadge />}
             {quest.isRecurring && (
-              <span className="font-mono text-[9px] font-semibold tracking-widest border border-amber-500/40 bg-amber-400/10 text-amber-300 rounded-sm px-1.5 py-0.5 whitespace-nowrap">
+              <span className="font-mono text-[11px] font-semibold tracking-widest border border-accent/40 bg-accent/10 text-accent-text-hover rounded-sm px-1.5 py-0.5 whitespace-nowrap">
                 🔁 RECURRING
               </span>
             )}
           </div>
 
           {/* Row 1: the facts a worker decides on — where, by when, how contested. */}
-          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-[12px] text-stone-400">
+          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-[12px] text-muted">
             <span className="flex items-center gap-1 break-words">
               <MapPin size={11} className="shrink-0" />
               <span className="break-words">{locationLabel}</span>
@@ -228,25 +228,25 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
 
           {/* Row 2: classification + freshness, deliberately quieter than row 1. */}
           <div className="flex items-center gap-x-2.5 gap-y-1.5 flex-wrap mt-1.5">
-            <span className="font-mono text-[10px] text-stone-400 bg-white/[0.04] border border-white/[0.08] rounded px-1.5 py-0.5">
+            <span className="font-mono text-[12px] text-muted bg-surface border border-line rounded px-1.5 py-0.5">
               {quest.categoryLabel}
             </span>
             <span
               className={clsx(
-                'font-mono text-[10px] rounded px-1.5 py-0.5 border',
+                'font-mono text-[12px] rounded px-1.5 py-0.5 border',
                 isOpen
-                  ? 'text-green-400 bg-green-400/10 border-green-400/20'
-                  : 'text-stone-500 bg-white/[0.03] border-white/[0.08]',
+                  ? 'text-success bg-success/10 border-success/20'
+                  : 'text-subtle bg-surface border-line',
               )}
             >
               {isOpen ? 'Open for bids' : quest.status.replace(/_/g, ' ').toLowerCase()}
             </span>
-            <span className="font-mono text-[10px] text-stone-600 flex items-center gap-1">
+            <span className="font-mono text-[12px] text-subtle flex items-center gap-1">
               <Clock size={10} className="inline shrink-0" />
               posted {timeAgo(quest.posted)}
             </span>
             {quest.tools.map((t) => (
-              <span key={t} className="font-mono text-[10px] text-stone-600 bg-white/[0.04] border border-white/[0.07] rounded px-1.5 py-0.5">
+              <span key={t} className="font-mono text-[12px] text-subtle bg-surface border border-line rounded px-1.5 py-0.5">
                 {t}
               </span>
             ))}
@@ -258,17 +258,17 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
         <div className="text-left sm:text-right">
           {quest.quoteNeeded ? (
             <>
-              <div className="font-bold text-base text-amber-400 leading-none">Open to bids</div>
-              <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
+              <div className="font-bold text-base text-accent-text leading-none">Open to bids</div>
+              <div className="font-mono text-[11px] text-subtle mt-0.5 tracking-wide">
                 you set the price
               </div>
             </>
           ) : (
             <>
-              <div className="font-bold text-xl text-amber-400 leading-none">
+              <div className="font-bold text-xl text-accent-text leading-none">
                 {payDisplay(quest.pay, quest.payType)}
               </div>
-              <div className="font-mono text-[9px] text-stone-600 mt-0.5 tracking-wide">
+              <div className="font-mono text-[11px] text-subtle mt-0.5 tracking-wide">
                 {quest.payType === 'hourly' ? 'budget per hour' : 'budget, flat'}
               </div>
             </>
@@ -280,10 +280,10 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
         <span
           aria-hidden="true"
           className={clsx(
-            'font-mono text-[11px] font-semibold tracking-widest px-4 py-2 rounded border text-center min-w-[112px] transition-all duration-200',
+            'font-mono text-[12px] font-semibold tracking-widest px-4 py-2 rounded border text-center min-w-[112px] transition-all duration-200',
             hovered
-              ? 'text-zinc-950 bg-amber-400 border-amber-400'
-              : 'text-amber-400 border-amber-500/50',
+              ? 'text-on-accent bg-accent border-accent'
+              : 'text-accent-text border-accent/50',
           )}
         >
           {isOpen ? (isAuthenticated ? 'VIEW & BID' : 'VIEW JOB') : 'VIEW JOB'}
@@ -295,13 +295,13 @@ function QuestCard({ quest, isNew, isAuthenticated }: QuestCardProps) {
 
 function QuestRowSkeleton() {
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-white/[0.06] bg-white/[0.02] px-5 py-4 animate-pulse">
-      <div className="w-10 h-10 rounded-md bg-white/[0.05] flex-shrink-0" />
+    <div className="flex items-center gap-4 rounded-lg border border-line bg-surface px-5 py-4 animate-pulse">
+      <div className="w-10 h-10 rounded-md bg-surface flex-shrink-0" />
       <div className="flex-1 space-y-2">
-        <div className="h-3.5 w-1/2 bg-white/[0.05] rounded" />
-        <div className="h-2.5 w-1/3 bg-white/[0.04] rounded" />
+        <div className="h-3.5 w-1/2 bg-surface rounded" />
+        <div className="h-2.5 w-1/3 bg-surface rounded" />
       </div>
-      <div className="h-7 w-24 bg-white/[0.05] rounded hidden sm:block" />
+      <div className="h-7 w-24 bg-surface rounded hidden sm:block" />
     </div>
   );
 }
@@ -384,19 +384,19 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
   }, [quests, activeCategory, activeSort, search, minPay, maxPay, recurringOnly]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-stone-400">
+    <div className="min-h-screen bg-canvas text-muted">
 
-      <div className="border-b border-white/[0.06]">
+      <div className="border-b border-line">
         <div className="max-w-5xl mx-auto px-4 sm:px-8 py-7">
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div className="max-w-xl">
-              <span className="font-mono text-[9px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-sm px-2 py-0.5 tracking-widest">
+              <span className="font-mono text-[11px] text-accent-text bg-accent/10 border border-accent/20 rounded-sm px-2 py-0.5 tracking-widest">
                 LOCAL JOB BOARD
               </span>
-              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-stone-100 tracking-tight leading-tight">
+              <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-strong tracking-tight leading-tight">
                 Browse local paid jobs
               </h1>
-              <p className="mt-2 text-[14px] text-stone-400 leading-relaxed">
+              <p className="mt-2 text-[14px] text-muted leading-relaxed">
                 Real hands-on work posted by neighbors — yard work, hauling, moving help, handyman
                 jobs, cleaning, and errands. Open a job to see the details and send the poster a
                 bid with your price.
@@ -406,13 +406,13 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             <div className="flex flex-col items-start gap-2.5">
               <a
                 href="/post-a-job"
-                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+                className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors"
               >
                 POST A JOB FREE
               </a>
               <a
                 href="/work-alerts"
-                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 border border-line rounded text-body hover:border-accent/40 hover:text-accent-text transition-all"
               >
                 GET WORKER ALERTS
               </a>
@@ -420,9 +420,9 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           </div>
 
           <div className="mt-5 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="font-mono text-[11px] text-stone-500">
-              <span className="text-stone-100 font-semibold">{quests.length.toLocaleString()}</span>{' '}
+            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            <span className="font-mono text-[12px] text-subtle">
+              <span className="text-strong font-semibold">{quests.length.toLocaleString()}</span>{' '}
               {quests.length === 1 ? 'job open for bids' : 'jobs open for bids'} · new in Redding, CA
               and growing outward
             </span>
@@ -434,13 +434,13 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
 
         <div className="flex items-center gap-3 mb-5 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-600" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by job title, neighborhood, or city..."
               aria-label="Search jobs by title, neighborhood, or city"
-              className="w-full font-mono text-[12px] pl-8 pr-3 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
+              className="w-full font-mono text-[12px] pl-8 pr-3 py-2.5 bg-surface border border-line rounded-md text-body placeholder-subtle focus:outline-none focus:border-accent/40 transition-colors"
             />
           </div>
 
@@ -448,29 +448,29 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             <select
               value={activeSort}
               onChange={(e) => setActiveSort(e.target.value as SortKey)}
-              className="font-mono text-[11px] pl-3 pr-8 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-400 cursor-pointer focus:outline-none focus:border-amber-500/40 appearance-none transition-colors"
+              className="font-mono text-[12px] pl-3 pr-8 py-2.5 bg-surface border border-line rounded-md text-muted cursor-pointer focus:outline-none focus:border-accent/40 appearance-none transition-colors"
             >
               {SORT_OPTIONS.map((s) => (
                 <option key={s.id} value={s.id}>{s.label}</option>
               ))}
             </select>
-            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-600 pointer-events-none" />
+            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" />
           </div>
 
-          <span className="font-mono text-[11px] text-stone-600 whitespace-nowrap">
+          <span className="font-mono text-[12px] text-subtle whitespace-nowrap">
             {visible.length} job{visible.length !== 1 ? 's' : ''} shown
           </span>
         </div>
 
         {/* The board lists the neighborhood and city each poster entered — it does
             not filter by exact ZIP, so the copy promises only what search does. */}
-        <p className="font-mono text-[11px] text-stone-600 mb-4 leading-relaxed">
+        <p className="font-mono text-[12px] text-subtle mb-4 leading-relaxed">
           Jobs list the neighborhood and city the poster entered. Search matches the job title,
           neighborhood, and city — there is no exact ZIP-radius filter yet.
         </p>
 
         <div className="flex items-center gap-2.5 mb-5 flex-wrap">
-          <span className="font-mono text-[10px] text-stone-600 tracking-widest uppercase">
+          <span className="font-mono text-[12px] text-subtle tracking-widest uppercase">
             Poster budget
           </span>
           <input
@@ -481,9 +481,9 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             onChange={(e) => setMinPay(e.target.value)}
             placeholder="Min $"
             aria-label="Minimum pay"
-            className="w-24 font-mono text-[12px] px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
+            className="w-24 font-mono text-[12px] px-3 py-2 bg-surface border border-line rounded-md text-body placeholder-subtle focus:outline-none focus:border-accent/40 transition-colors"
           />
-          <span className="font-mono text-[11px] text-stone-700">to</span>
+          <span className="font-mono text-[12px] text-subtle">to</span>
           <input
             type="number"
             inputMode="numeric"
@@ -492,7 +492,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             onChange={(e) => setMaxPay(e.target.value)}
             placeholder="Max $"
             aria-label="Maximum pay"
-            className="w-24 font-mono text-[12px] px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-md text-stone-300 placeholder-stone-700 focus:outline-none focus:border-amber-500/40 transition-colors"
+            className="w-24 font-mono text-[12px] px-3 py-2 bg-surface border border-line rounded-md text-body placeholder-subtle focus:outline-none focus:border-accent/40 transition-colors"
           />
 
           <button
@@ -500,16 +500,16 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             onClick={() => setRecurringOnly((v) => !v)}
             aria-pressed={recurringOnly}
             className={clsx(
-              'font-mono text-[11px] tracking-wide px-3.5 py-2 rounded-full border whitespace-nowrap transition-all duration-150',
+              'font-mono text-[12px] tracking-wide px-3.5 py-2 rounded-full border whitespace-nowrap transition-all duration-150',
               recurringOnly
-                ? 'font-semibold text-amber-400 border-amber-500/60 bg-amber-400/10'
-                : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                ? 'font-semibold text-accent-text border-accent/60 bg-accent/10'
+                : 'text-subtle border-line hover:text-accent-text hover:border-accent/40',
             )}
           >
             🔁 Recurring only
           </button>
 
-          <span className="font-mono text-[10px] text-stone-700">
+          <span className="font-mono text-[12px] text-subtle">
             Budget is what the poster listed — you can still bid your own price.
           </span>
 
@@ -517,14 +517,14 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             <button
               type="button"
               onClick={() => { setMinPay(''); setMaxPay(''); setRecurringOnly(false); setSearch(''); }}
-              className="font-mono text-[11px] tracking-wide px-3 py-2 text-stone-600 hover:text-amber-400 transition-colors"
+              className="font-mono text-[12px] tracking-wide px-3 py-2 text-subtle hover:text-accent-text transition-colors"
             >
               Clear filters
             </button>
           )}
         </div>
 
-        <div className="font-mono text-[10px] text-stone-600 tracking-widest uppercase mb-2">
+        <div className="font-mono text-[12px] text-subtle tracking-widest uppercase mb-2">
           Type of work
         </div>
         {/* Horizontally scrolling chip row. The fade on the right edge is the
@@ -540,10 +540,10 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 className={clsx(
-                  'font-mono text-[11px] tracking-wide px-3.5 py-1.5 rounded-full border whitespace-nowrap transition-all duration-150',
+                  'font-mono text-[12px] tracking-wide px-3.5 py-1.5 rounded-full border whitespace-nowrap transition-all duration-150',
                   isActive
-                    ? 'font-semibold text-amber-400 border-amber-500/60 bg-amber-400/10'
-                    : 'text-stone-600 border-white/[0.08] hover:text-amber-400 hover:border-amber-500/40',
+                    ? 'font-semibold text-accent-text border-accent/60 bg-accent/10'
+                    : 'text-subtle border-line hover:text-accent-text hover:border-accent/40',
                 )}
               >
                 {cat.label}
@@ -553,7 +553,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           </div>
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-zinc-950 to-transparent"
+            className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-canvas to-transparent"
           />
         </div>
 
@@ -565,26 +565,26 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
               ))}
             </>
           ) : error ? (
-            <div className="text-center py-14 px-6 border border-dashed border-rose-400/20 rounded-lg bg-rose-400/[0.03] flex flex-col items-center gap-3">
-              <AlertTriangle size={22} className="text-rose-400" />
-              <p className="font-mono text-[12px] text-rose-300">Could not load jobs</p>
-              <p className="font-mono text-[11px] text-stone-500 max-w-xs">{error}</p>
+            <div className="text-center py-14 px-6 border border-dashed border-danger/20 rounded-lg bg-danger/[0.03] flex flex-col items-center gap-3">
+              <AlertTriangle size={22} className="text-danger" />
+              <p className="font-mono text-[12px] text-danger">Could not load jobs</p>
+              <p className="font-mono text-[12px] text-subtle max-w-xs">{error}</p>
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2 border border-white/15 rounded-md text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2 border border-line rounded-md text-body hover:border-accent/40 hover:text-accent-text transition-all"
               >
                 TRY AGAIN
               </button>
             </div>
           ) : visible.length === 0 ? (
-            <div className="text-center py-14 px-6 border border-dashed border-white/[0.08] rounded-lg bg-white/[0.015]">
+            <div className="text-center py-14 px-6 border border-dashed border-line rounded-lg bg-surface">
               {quests.length === 0 ? (
                 <>
-                  <p className="text-stone-200 font-semibold text-[15px]">
+                  <p className="text-body font-semibold text-[15px]">
                     No open jobs in this area yet
                   </p>
-                  <p className="text-[13px] text-stone-400 mt-2 max-w-md mx-auto leading-relaxed">
+                  <p className="text-[13px] text-muted mt-2 max-w-md mx-auto leading-relaxed">
                     TryHardly is just getting started in Redding, CA, so the board is still filling
                     up. Post the first local job — it&apos;s free to post — or join worker alerts and
                     we&apos;ll email you when new local work goes live.
@@ -592,19 +592,19 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                   <div className="mt-5 flex flex-col sm:flex-row gap-2.5 justify-center">
                     <a
                       href="/post-a-job"
-                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+                      className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors"
                     >
                       POST A JOB FREE
                     </a>
                     <a
                       href="/work-alerts"
-                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                      className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 border border-line rounded text-body hover:border-accent/40 hover:text-accent-text transition-all"
                     >
                       GET WORKER ALERTS
                     </a>
                     <a
                       href="/request-help"
-                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                      className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 border border-line rounded text-body hover:border-accent/40 hover:text-accent-text transition-all"
                     >
                       REQUEST HELP
                     </a>
@@ -612,10 +612,10 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                 </>
               ) : (
                 <>
-                  <p className="text-stone-200 font-semibold text-[15px]">
+                  <p className="text-body font-semibold text-[15px]">
                     No jobs match these filters
                   </p>
-                  <p className="text-[13px] text-stone-400 mt-2 max-w-md mx-auto leading-relaxed">
+                  <p className="text-[13px] text-muted mt-2 max-w-md mx-auto leading-relaxed">
                     {quests.length === 1
                       ? 'There is 1 other open job on the board.'
                       : `There are ${quests.length} other open jobs on the board.`}{' '}
@@ -631,19 +631,19 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                         setSearch('');
                         setActiveCategory('all');
                       }}
-                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 bg-amber-400 text-zinc-950 rounded hover:bg-amber-300 transition-colors"
+                      className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors"
                     >
                       SHOW ALL JOBS
                     </button>
                     <a
                       href="/post-a-job"
-                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                      className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 border border-line rounded text-body hover:border-accent/40 hover:text-accent-text transition-all"
                     >
                       POST A JOB FREE
                     </a>
                     <a
                       href="/work-alerts"
-                      className="font-mono text-[11px] font-semibold tracking-widest px-5 py-2.5 border border-white/12 rounded text-stone-300 hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                      className="font-mono text-[12px] font-semibold tracking-widest px-5 py-2.5 border border-line rounded text-body hover:border-accent/40 hover:text-accent-text transition-all"
                     >
                       GET WORKER ALERTS
                     </a>
@@ -664,15 +664,15 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
         </div>
 
         {!loading && !error && visible.length > 0 && (
-          <div className="mt-6 rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3.5">
+          <div className="mt-6 rounded-lg border border-line bg-surface px-4 py-3.5">
             <div className="flex items-start gap-2.5">
-              <ShieldCheck size={15} className="text-green-400/80 shrink-0 mt-0.5" />
-              <p className="text-[12px] text-stone-400 leading-relaxed">
+              <ShieldCheck size={15} className="text-success/80 shrink-0 mt-0.5" />
+              <p className="text-[12px] text-muted leading-relaxed">
                 Payments are processed through Stripe — the poster confirms the completed work
                 before the charge is captured, and worker payouts run through Stripe Connect.
                 Reviews are only written by people who finished a job together. Never accept a
                 request to pay or be paid off the platform.{' '}
-                <a href="/faq" className="text-amber-400 hover:text-amber-300">
+                <a href="/faq" className="text-accent-text hover:text-accent-text-hover">
                   How TryHardly works
                 </a>
               </p>
@@ -680,8 +680,8 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
           </div>
         )}
 
-        <div className="mt-12 pt-5 border-t border-white/[0.05] flex flex-wrap gap-3 justify-between items-center">
-          <span className="font-mono text-[10px] text-stone-800 tracking-wider">
+        <div className="mt-12 pt-5 border-t border-line flex flex-wrap gap-3 justify-between items-center">
+          <span className="font-mono text-[12px] text-body tracking-wider">
             © TRYHARDLY.COM · LOCAL WORK · REAL PEOPLE
           </span>
           <div className="flex flex-wrap gap-5">
@@ -694,7 +694,7 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
               <a
                 key={link.href}
                 href={link.href}
-                className="font-mono text-[10px] text-stone-600 hover:text-amber-400 tracking-wide transition-colors"
+                className="font-mono text-[12px] text-subtle hover:text-accent-text tracking-wide transition-colors"
               >
                 {link.label}
               </a>

@@ -18,17 +18,17 @@ export default function PaymentsPayoutsPanel({
   onStatusChange,
 }: PaymentsPayoutsPanelProps) {
   return (
-    <section className="rounded-xl bg-zinc-900 border border-zinc-800 p-4">
+    <section className="rounded-xl bg-surface border border-line p-4">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h2 className="text-base font-bold text-zinc-100">Payments &amp; payouts</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <h2 className="text-base font-bold text-strong">Payments &amp; payouts</h2>
+          <p className="text-xs text-subtle mt-0.5">
             Your Stripe payout account and how money moves on a job.
           </p>
         </div>
         <Link
           href="/profile"
-          className="shrink-0 text-xs text-amber-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60 rounded"
+          className="shrink-0 text-xs text-accent-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded"
         >
           Payout settings
         </Link>
@@ -36,7 +36,7 @@ export default function PaymentsPayoutsPanel({
 
       <StripeConnectButton stripeAccountId={stripeAccountId} onStatusChange={onStatusChange} />
 
-      <p className="text-xs text-zinc-500 mt-3 leading-relaxed">{AUTHORIZE_CAPTURE_PAYOUT_WORKER}</p>
+      <p className="text-xs text-subtle mt-3 leading-relaxed">{AUTHORIZE_CAPTURE_PAYOUT_WORKER}</p>
     </section>
   );
 }

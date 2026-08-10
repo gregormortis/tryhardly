@@ -63,7 +63,7 @@ const EMPTY_MATERIAL: DraftMaterial = {
 };
 
 const inputClass =
-  'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500';
+  'w-full bg-raised border border-line-strong rounded-lg px-3 py-2 text-strong text-sm focus:outline-none focus:border-accent';
 
 function toNumber(value: string): number | undefined {
   if (value.trim() === '') return undefined;
@@ -177,15 +177,15 @@ export default function BidForm({
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-base font-semibold text-white">Submit your bid</h3>
-        <p className="text-xs text-gray-500 mt-1">
+        <h3 className="text-base font-semibold text-strong">Submit your bid</h3>
+        <p className="text-xs text-subtle mt-1">
           Give the client a clear estimate. Costs are estimates you and the client agree on —
           payment is only arranged after the client accepts a bid.
         </p>
       </div>
 
       {error && (
-        <div className="p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm">
+        <div className="p-3 bg-danger/30 border border-danger rounded-lg text-danger text-sm">
           {error}
         </div>
       )}
@@ -193,7 +193,7 @@ export default function BidForm({
       {/* Total bid + breakdown */}
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-xs font-medium text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-muted mb-1">
             Total bid (USD)
           </label>
           <input
@@ -207,7 +207,7 @@ export default function BidForm({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-muted mb-1">
             Material estimate
           </label>
           <input
@@ -221,7 +221,7 @@ export default function BidForm({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-muted mb-1">
             Labor estimate
           </label>
           <input
@@ -235,7 +235,7 @@ export default function BidForm({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-muted mb-1">
             Estimated labor hours
           </label>
           <input
@@ -252,18 +252,18 @@ export default function BidForm({
 
       {/* Live estimate summary */}
       {showSummary && (
-        <div className="rounded-lg border border-gray-700 bg-gray-800/40 px-3 py-2.5 text-sm">
-          <div className="flex items-center justify-between text-gray-400">
+        <div className="rounded-lg border border-line-strong bg-raised px-3 py-2.5 text-sm">
+          <div className="flex items-center justify-between text-muted">
             <span>Materials</span>
             <span>{materialNum !== undefined ? fmt(materialNum) : '—'}</span>
           </div>
-          <div className="flex items-center justify-between text-gray-400 mt-1">
+          <div className="flex items-center justify-between text-muted mt-1">
             <span>Labor</span>
             <span>{laborNum !== undefined ? fmt(laborNum) : '—'}</span>
           </div>
-          <div className="flex items-center justify-between font-semibold text-white mt-2 pt-2 border-t border-gray-700/60">
+          <div className="flex items-center justify-between font-semibold text-strong mt-2 pt-2 border-t border-line-strong/60">
             <span>Total bid</span>
-            <span className="text-amber-400">{totalNum !== undefined ? fmt(totalNum) : '—'}</span>
+            <span className="text-accent-text">{totalNum !== undefined ? fmt(totalNum) : '—'}</span>
           </div>
         </div>
       )}
@@ -271,19 +271,19 @@ export default function BidForm({
       {/* Itemized materials */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-xs font-medium text-gray-400">
+          <label className="block text-xs font-medium text-muted">
             Itemized materials (optional)
           </label>
           <button
             type="button"
             onClick={addMaterial}
-            className="text-xs font-medium text-amber-400 hover:text-amber-300"
+            className="text-xs font-medium text-accent-text hover:text-accent-text-hover"
           >
             + Add material
           </button>
         </div>
         {materials.length === 0 ? (
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-subtle">
             Add line items to itemize what the job needs (name, quantity, unit, cost).
           </p>
         ) : (
@@ -291,7 +291,7 @@ export default function BidForm({
             {materials.map((m, i) => (
               <div
                 key={i}
-                className="grid grid-cols-12 gap-2 items-start bg-gray-800/50 rounded-lg p-2"
+                className="grid grid-cols-12 gap-2 items-start bg-raised rounded-lg p-2"
               >
                 <input
                   value={m.name}
@@ -325,7 +325,7 @@ export default function BidForm({
                   type="button"
                   onClick={() => removeMaterial(i)}
                   aria-label="Remove material"
-                  className="col-span-1 h-9 text-gray-500 hover:text-red-400 text-lg leading-none"
+                  className="col-span-1 h-9 text-subtle hover:text-danger text-lg leading-none"
                 >
                   ×
                 </button>
@@ -338,7 +338,7 @@ export default function BidForm({
               </div>
             ))}
             {materialsTotal > 0 && (
-              <p className="text-xs text-gray-500 text-right">
+              <p className="text-xs text-subtle text-right">
                 Itemized materials ≈ ${materialsTotal.toLocaleString()}
               </p>
             )}
@@ -348,7 +348,7 @@ export default function BidForm({
 
       {/* Tools / timeline */}
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           Tools / equipment / materials you&apos;ll bring
         </label>
         <textarea
@@ -360,7 +360,7 @@ export default function BidForm({
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           Timeline / availability
         </label>
         <input
@@ -372,12 +372,12 @@ export default function BidForm({
       </div>
 
       {/* Walkthrough request */}
-      <div className="rounded-lg border border-gray-700 bg-gray-800/40 p-3 space-y-3">
+      <div className="rounded-lg border border-line-strong bg-raised p-3 space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-200">
+          <label className="block text-sm font-medium text-body">
             Request a walkthrough (optional)
           </label>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-subtle mt-0.5">
             Want to see the site before finalizing your bid? Request a remote walkthrough
             (video call) or an on-site review.
           </p>
@@ -394,8 +394,8 @@ export default function BidForm({
               onClick={() => setWalkthroughType(value)}
               className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                 walkthroughType === value
-                  ? 'border-amber-500 bg-amber-500/15 text-amber-300'
-                  : 'border-gray-700 text-gray-300 hover:border-gray-500'
+                  ? 'border-accent bg-accent/15 text-accent-text-hover'
+                  : 'border-line-strong text-body hover:border-line-strong'
               }`}
             >
               {label}
@@ -404,7 +404,7 @@ export default function BidForm({
         </div>
         {walkthroughType !== 'NONE' && (
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-muted mb-1">
               Proposed times / availability
             </label>
             <textarea
@@ -420,7 +420,7 @@ export default function BidForm({
 
       {/* Notes to client */}
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           Bid breakdown notes / notes to client
         </label>
         <textarea
@@ -434,7 +434,7 @@ export default function BidForm({
 
       {/* Optional cover letter (kept for the simple express-interest path) */}
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           Cover note (optional)
         </label>
         <textarea
@@ -448,14 +448,14 @@ export default function BidForm({
 
       {/* Contractor legal acknowledgement for contractor-scale jobs */}
       {contractorScale && (
-        <label className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 cursor-pointer">
+        <label className="flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/5 p-3 cursor-pointer">
           <input
             type="checkbox"
             checked={legalAck}
             onChange={(e) => setLegalAck(e.target.checked)}
             className="mt-0.5 accent-amber-500"
           />
-          <span className="text-xs text-amber-200/90 leading-relaxed">
+          <span className="text-xs text-accent-text leading-relaxed">
             I am responsible for only accepting work I am legally qualified to perform.
           </span>
         </label>
@@ -464,11 +464,11 @@ export default function BidForm({
       {/* Payout-readiness gate: draft freely, but Submit is blocked until the
           worker's Stripe Connect payout account is onboarded/ready. */}
       {!payoutStatusLoading && !payoutReady && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
-          <p className="text-xs text-amber-200/90 leading-relaxed">{PAYOUT_SETUP_COPY}</p>
+        <div className="rounded-lg border border-accent/40 bg-accent/5 p-3">
+          <p className="text-xs text-accent-text leading-relaxed">{PAYOUT_SETUP_COPY}</p>
           <Link
             href={payoutSetupHref}
-            className="mt-2 inline-block text-xs font-semibold text-amber-400 hover:text-amber-300 underline"
+            className="mt-2 inline-block text-xs font-semibold text-accent-text hover:text-accent-text-hover underline"
           >
             Connect your payout account →
           </Link>
@@ -479,7 +479,7 @@ export default function BidForm({
         type="button"
         onClick={handleSubmit}
         disabled={submitting || payoutStatusLoading || !payoutReady}
-        className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 font-bold py-3 rounded-lg transition-colors"
+        className="w-full bg-accent hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed text-on-accent font-bold py-3 rounded-lg transition-colors"
       >
         {payoutStatusLoading
           ? 'Checking payout account…'

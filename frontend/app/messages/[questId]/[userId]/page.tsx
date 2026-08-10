@@ -76,15 +76,15 @@ export default function MessageThreadPage() {
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-2xl mx-auto">
-        <Link href={`/job/${questId}`} className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-6">
+        <Link href={`/job/${questId}`} className="text-muted hover:text-accent-text text-sm transition-colors flex items-center gap-2 mb-6">
           <span>←</span> Back to quest
         </Link>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-xl flex flex-col h-[70vh]">
-          <div className="px-5 py-4 border-b border-gray-800 flex items-start justify-between gap-3">
+        <div className="bg-surface border border-line rounded-xl flex flex-col h-[70vh]">
+          <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-lg font-semibold text-white">Messages</h1>
-              <p className="text-xs text-gray-500">Quest conversation · text only</p>
+              <h1 className="text-lg font-semibold text-strong">Messages</h1>
+              <p className="text-xs text-subtle">Quest conversation · text only</p>
             </div>
             <ReportButton targetType="USER" targetId={otherId} label="Report user" />
           </div>
@@ -92,16 +92,16 @@ export default function MessageThreadPage() {
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
             {loading && (
               <div className="flex items-center justify-center h-full">
-                <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
               </div>
             )}
 
             {!loading && error && (
-              <div className="text-center text-red-400 text-sm pt-10">{error}</div>
+              <div className="text-center text-danger text-sm pt-10">{error}</div>
             )}
 
             {!loading && !error && messages.length === 0 && (
-              <div className="text-center text-gray-500 text-sm pt-10">
+              <div className="text-center text-subtle text-sm pt-10">
                 No messages yet. Say hello to get started.
               </div>
             )}
@@ -111,10 +111,10 @@ export default function MessageThreadPage() {
               return (
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                    mine ? 'bg-amber-500 text-gray-900' : 'bg-gray-800 text-gray-100'
+                    mine ? 'bg-accent text-on-accent' : 'bg-raised text-strong'
                   }`}>
                     <p className="whitespace-pre-line break-words">{m.content}</p>
-                    <p className={`mt-1 text-[10px] ${mine ? 'text-gray-800' : 'text-gray-500'}`}>
+                    <p className={`mt-1 text-[12px] ${mine ? 'text-body' : 'text-subtle'}`}>
                       {new Date(m.createdAt).toLocaleString()}
                     </p>
                   </div>
@@ -125,17 +125,17 @@ export default function MessageThreadPage() {
           </div>
 
           {user && !error && (
-            <form onSubmit={handleSend} className="border-t border-gray-800 p-3 flex gap-2">
+            <form onSubmit={handleSend} className="border-t border-line p-3 flex gap-2">
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500"
+                className="flex-1 bg-raised border border-line-strong rounded-lg px-3 py-2 text-strong text-sm focus:outline-none focus:border-accent"
               />
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-900 font-semibold rounded-lg text-sm"
+                className="px-4 py-2 bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-semibold rounded-lg text-sm"
               >
                 {sending ? '...' : 'Send'}
               </button>

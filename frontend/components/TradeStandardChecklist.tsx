@@ -37,7 +37,7 @@ export default function TradeStandardChecklist({
   const [open, setOpen] = useState(!defaultCollapsed);
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+    <div className="bg-surface border border-line rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -45,18 +45,18 @@ export default function TradeStandardChecklist({
         className="w-full flex items-center justify-between gap-3 p-6 text-left"
       >
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-amber-400 mb-1">
+          <p className="font-mono text-[12px] uppercase tracking-widest text-accent-text mb-1">
             Trade standard
           </p>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-strong">
             Suggested checklist · {standard.label}
           </h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-muted mt-1">
             A practical guide for this type of work — not a requirement to apply.
           </p>
         </div>
         <span
-          className={`text-gray-400 text-xl transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`text-muted text-xl transition-transform ${open ? 'rotate-180' : ''}`}
           aria-hidden
         >
           ⌄
@@ -67,12 +67,12 @@ export default function TradeStandardChecklist({
         <div className="px-6 pb-6 space-y-5">
           {SECTIONS.map(({ key, title, hint }) => (
             <div key={key}>
-              <h3 className="text-sm font-semibold text-amber-200">{title}</h3>
-              <p className="text-xs text-gray-500 mb-2">{hint}</p>
+              <h3 className="text-sm font-semibold text-accent-text-hover">{title}</h3>
+              <p className="text-xs text-subtle mb-2">{hint}</p>
               <ul className="space-y-1.5">
                 {standard[key].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-gray-300">
-                    <span className="text-green-400 mt-0.5 shrink-0">✓</span>
+                  <li key={item} className="flex items-start gap-2 text-sm text-body">
+                    <span className="text-success mt-0.5 shrink-0">✓</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -81,13 +81,13 @@ export default function TradeStandardChecklist({
           ))}
 
           {showLink && (
-            <p className="text-xs text-gray-500 pt-1">
+            <p className="text-xs text-subtle pt-1">
               See all{' '}
-              <Link href={`/standards/${standard.slug}`} className="text-amber-400 hover:underline">
+              <Link href={`/standards/${standard.slug}`} className="text-accent-text hover:underline">
                 {standard.label} standards
               </Link>{' '}
               or browse the full{' '}
-              <Link href="/standards" className="text-amber-400 hover:underline">
+              <Link href="/standards" className="text-accent-text hover:underline">
                 work standards
               </Link>
               . These are practical guidelines, not legal advice or a guarantee.

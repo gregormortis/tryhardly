@@ -1,12 +1,22 @@
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-zinc-950 text-zinc-100;
-    font-family: var(--font-syne), system-ui, -apple-system, sans-serif;
+    @apply bg-canvas text-body;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
     min-height: 100vh;
+  }
+
+  /* Syne is the brand voice, but it is a display face — good in headings,
+     tiring in paragraphs. Headings only. */
+  h1, h2, h3, .font-display {
+    font-family: var(--font-syne), system-ui, sans-serif;
   }
 
   code, pre, kbd, samp, .font-mono {
@@ -15,6 +25,10 @@
 }
 
 @layer utilities {
+  /* Hide the horizontal scrollbar on chip/filter rows; the gradient fade on
+     the right edge communicates scrollability instead. */
+  .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 
   /* Hide the horizontal scrollbar on chip/filter rows. The gradient fade on
      the right edge communicates scrollability instead. */
@@ -60,13 +74,13 @@ html {
   width: 10px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-zinc-900;
+  @apply bg-raised;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gradient-to-b from-amber-600 to-amber-800 rounded-full;
+  @apply bg-line-strong rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply from-amber-500 to-amber-700;
+  @apply bg-subtle;
 }
 
 a {

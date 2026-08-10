@@ -43,11 +43,11 @@ interface PaymentPanelProps {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  CAPTURED: 'bg-emerald-500/20 text-emerald-400',
-  AUTHORIZED: 'bg-blue-500/20 text-blue-400',
-  CAPTURE_FAILED: 'bg-amber-500/20 text-amber-400',
-  CANCELED: 'bg-red-500/20 text-red-400',
-  NONE: 'bg-zinc-700 text-zinc-400',
+  CAPTURED: 'bg-success/20 text-success',
+  AUTHORIZED: 'bg-info/20 text-info',
+  CAPTURE_FAILED: 'bg-accent/20 text-accent-text',
+  CANCELED: 'bg-danger/20 text-danger',
+  NONE: 'bg-raised-2 text-muted',
 };
 
 // User-facing labels for the internal payment status values.
@@ -148,23 +148,23 @@ export default function PaymentPanel({
   // ── No authorization yet ────────────────────────────────────────────────────
   if (!payment || status === 'NONE') {
     return (
-      <div className="mt-6 p-4 rounded-lg border border-zinc-700 bg-zinc-900">
-        <h3 className="text-base font-semibold text-zinc-100 mb-2">Marketplace Payment</h3>
+      <div className="mt-6 p-4 rounded-lg border border-line-strong bg-surface">
+        <h3 className="text-base font-semibold text-strong mb-2">Marketplace Payment</h3>
         {isQuestGiver ? (
           <div>
-            <p className="text-sm text-zinc-400 mb-3">{AUTHORIZE_CAPTURE_PAYOUT}</p>
-            {error && <p className="text-xs text-rose-400 mb-2">{error}</p>}
+            <p className="text-sm text-muted mb-3">{AUTHORIZE_CAPTURE_PAYOUT}</p>
+            {error && <p className="text-xs text-danger mb-2">{error}</p>}
             <button
               onClick={handleAuthorize}
               disabled={loading}
-              className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-white transition-colors"
+              className="w-full rounded-lg bg-info hover:bg-info disabled:opacity-50 px-4 py-2.5 text-sm font-bold text-strong transition-colors"
             >
               {loading ? 'Starting checkout…' : authorizeButtonLabel(payment?.totalBudget)}
             </button>
-            <p className="mt-2 text-xs text-zinc-500">{AUTHORIZATION_NOT_A_CHARGE}</p>
+            <p className="mt-2 text-xs text-subtle">{AUTHORIZATION_NOT_A_CHARGE}</p>
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Waiting for the poster to authorize a payment method.{' '}
             {AUTHORIZE_CAPTURE_PAYOUT_WORKER}
           </p>
@@ -178,9 +178,9 @@ export default function PaymentPanel({
   const canCancel = isQuestGiver && (status === 'AUTHORIZED' || status === 'CAPTURE_FAILED');
 
   return (
-    <div className="mt-6 p-4 rounded-lg border border-zinc-700 bg-zinc-900 space-y-4">
+    <div className="mt-6 p-4 rounded-lg border border-line-strong bg-surface space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-zinc-100">Marketplace Payment</h3>
+        <h3 className="text-base font-semibold text-strong">Marketplace Payment</h3>
         <span
           className={`text-xs font-medium px-2 py-1 rounded-full ${
             STATUS_STYLES[status] ?? STATUS_STYLES.NONE
@@ -191,17 +191,17 @@ export default function PaymentPanel({
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="bg-zinc-800 rounded p-2">
-          <p className="text-zinc-500 text-xs">Total Budget</p>
-          <p className="text-zinc-100 font-semibold">{formatUsdFromCents(payment.totalBudget)}</p>
+        <div className="bg-raised rounded p-2">
+          <p className="text-subtle text-xs">Total Budget</p>
+          <p className="text-strong font-semibold">{formatUsdFromCents(payment.totalBudget)}</p>
         </div>
-        <div className="bg-zinc-800 rounded p-2">
-          <p className="text-zinc-500 text-xs">Platform Fee</p>
-          <p className="text-zinc-100 font-semibold">{formatUsdFromCents(payment.platformFee)}</p>
+        <div className="bg-raised rounded p-2">
+          <p className="text-subtle text-xs">Platform Fee</p>
+          <p className="text-strong font-semibold">{formatUsdFromCents(payment.platformFee)}</p>
         </div>
       </div>
 
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-subtle">
         {status === 'AUTHORIZED' &&
           `Payment method authorized at booking. ${AUTHORIZATION_NOT_A_CHARGE}`}
         {status === 'CAPTURED' &&
@@ -211,14 +211,14 @@ export default function PaymentPanel({
           'The charge could not be captured (the authorization may have expired). Re-authorize to try again.'}
       </p>
 
-      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
 
       {canCancel && (
         <div className="flex gap-2">
           <button
             onClick={handleCancelAuthorization}
             disabled={actionLoading === 'cancel'}
-            className="flex-1 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 px-3 py-2 text-xs font-bold text-white transition-colors"
+            className="flex-1 rounded-lg bg-danger hover:bg-danger disabled:opacity-50 px-3 py-2 text-xs font-bold text-strong transition-colors"
           >
             {actionLoading === 'cancel' ? 'Canceling…' : 'Cancel Authorization'}
           </button>

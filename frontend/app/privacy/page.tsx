@@ -12,21 +12,21 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gray-950 py-20 px-4">
+    <div className="min-h-screen bg-canvas py-20 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-8 bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-strong">
           Privacy Policy
         </h1>
-        <div className="text-gray-300 space-y-6 leading-relaxed">
-          <p className="text-sm text-gray-400">Last Updated: {LAST_UPDATED}</p>
-          <p className="text-sm text-gray-400">
+        <div className="text-body space-y-6 leading-relaxed">
+          <p className="text-sm text-muted">Last Updated: {LAST_UPDATED}</p>
+          <p className="text-sm text-muted">
             This plain-language policy explains what we collect and why. It is not legal
             advice. See also our{' '}
-            <Link href="/terms" className="text-amber-400 hover:text-amber-300">Terms of Service</Link>.
+            <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">Terms of Service</Link>.
           </p>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">1. Information We Collect</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">1. Information We Collect</h2>
             <p className="mb-2">
               We collect information you provide directly to us when you create an account, post or accept jobs, and use our services:
             </p>
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">2. SMS / Text Messaging</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">2. SMS / Text Messaging</h2>
             <p className="mb-2">
               By providing your mobile number and opting in, you consent to receive SMS messages
               from TryHardly, including one-time verification passcodes, account and gig status
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">3. How We Use Your Information</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">3. How We Use Your Information</h2>
             <p className="mb-2">We use the information we collect to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Provide, maintain, and improve our services</li>
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">4. Information Sharing</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">4. Information Sharing</h2>
             <p className="mb-2">
               We share your information only in these circumstances:
             </p>
@@ -87,20 +87,20 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">5. Data Security</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">5. Data Security</h2>
             <p>
               We implement appropriate technical and organizational measures to protect your personal information. However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">6. Your Rights</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">6. Your Rights</h2>
             <p className="mb-2">You have the right to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Access and update your personal information</li>
               <li>
                 Request deletion of your account and data — see our{' '}
-                <Link href="/account-deletion" className="text-amber-400 hover:text-amber-300">
+                <Link href="/account-deletion" className="text-accent-text hover:text-accent-text-hover">
                   Account &amp; Data Deletion
                 </Link>{' '}
                 page
@@ -112,16 +112,16 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">7. Deleting Your Account &amp; Data</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">7. Deleting Your Account &amp; Data</h2>
             <p className="mb-2">
               You can request deletion of your account and personal data at any time. The most
               reliable way is from within the app or on the web: sign in, then use the option in your
               profile settings or on the{' '}
-              <Link href="/account-deletion" className="text-amber-400 hover:text-amber-300">
+              <Link href="/account-deletion" className="text-accent-text hover:text-accent-text-hover">
                 Account &amp; Data Deletion
               </Link>{' '}
               page. Your request is logged and queued for our team to review. You may also email{' '}
-              <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
+              <a href="mailto:support@tryhardly.com" className="text-accent-text hover:text-accent-text-hover">
                 support@tryhardly.com
               </a>{' '}
               from your account email.
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               Full details and a request button are on the{' '}
-              <Link href="/account-deletion" className="text-amber-400 hover:text-amber-300">
+              <Link href="/account-deletion" className="text-accent-text hover:text-accent-text-hover">
                 Account &amp; Data Deletion
               </Link>{' '}
               page.
@@ -143,41 +143,41 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">8. Cookies and Tracking</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">8. Cookies and Tracking</h2>
             <p>
               We use cookies and similar tracking technologies to track activity on our service and hold certain information. You can instruct your browser to refuse cookies or alert you when cookies are being sent.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">9. Children&apos;s Privacy</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">9. Children&apos;s Privacy</h2>
             <p>
               Our service is not intended for users under the age of 18. We do not knowingly collect information from children under 18. If you believe we have collected information from a child, please contact us.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">10. International Users &amp; Governing Law</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">10. International Users &amp; Governing Law</h2>
             <p>
               Your information may be transferred to and maintained on servers located outside of your country. By using Tryhardly, you consent to this transfer. This policy is governed by the laws of [STATE/COUNTRY OF INCORPORATION], and local privacy laws in your location may grant you additional rights.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">11. Changes to This Policy</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">11. Changes to This Policy</h2>
             <p>
               We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-amber-400 mb-4">12. Contact Us</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">12. Contact Us</h2>
             <p>
               If you have questions about this Privacy Policy, please contact us at:
             </p>
             <p className="mt-2">
               Email:{' '}
-              <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
+              <a href="mailto:support@tryhardly.com" className="text-accent-text hover:text-accent-text-hover">
                 support@tryhardly.com
               </a>
             </p>

@@ -73,10 +73,10 @@ function initials(name: string): string {
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-center py-16 px-6 bg-gray-900 border border-gray-800 rounded-xl">
+    <div className="text-center py-16 px-6 bg-surface border border-line rounded-xl">
       <div className="text-4xl mb-3">🌱</div>
-      <p className="text-gray-400 max-w-md mx-auto">{children}</p>
-      <Link href="/progression" className="text-amber-400 hover:underline mt-3 inline-block text-sm">
+      <p className="text-muted max-w-md mx-auto">{children}</p>
+      <Link href="/progression" className="text-accent-text hover:underline mt-3 inline-block text-sm">
         How ratings &amp; badges work →
       </Link>
     </div>
@@ -84,13 +84,13 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 function RankCell({ rank }: { rank: number }) {
-  const color = rank === 1 ? 'text-amber-400' : rank === 2 ? 'text-gray-300' : rank === 3 ? 'text-orange-600' : 'text-gray-500';
+  const color = rank === 1 ? 'text-accent-text' : rank === 2 ? 'text-body' : rank === 3 ? 'text-warning' : 'text-subtle';
   return <div className={`text-xl font-bold w-10 text-center shrink-0 ${color}`}>{rankBadge(rank)}</div>;
 }
 
 function Avatar({ name }: { name: string }) {
   return (
-    <div className="w-10 h-10 rounded-full bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-sm font-bold text-amber-300 shrink-0">
+    <div className="w-10 h-10 rounded-full bg-accent/15 border border-accent/25 flex items-center justify-center text-sm font-bold text-accent-text-hover shrink-0">
       {initials(name)}
     </div>
   );
@@ -100,23 +100,23 @@ function WorkerRow({ entry, showRating }: { entry: WorkerEntry; showRating?: boo
   return (
     <Link
       href={`/profile/${entry.username}`}
-      className="bg-gray-900 border border-gray-800 hover:border-amber-500/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
+      className="bg-surface border border-line hover:border-accent/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
     >
       <RankCell rank={entry.rank} />
       <Avatar name={entry.displayName || entry.username} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-white truncate">{entry.displayName || entry.username}</span>
+          <span className="font-semibold text-strong truncate">{entry.displayName || entry.username}</span>
           {entry.verified && (
-            <span className="text-[10px] font-mono uppercase tracking-wider text-sky-400 bg-sky-400/10 border border-sky-400/25 rounded px-1.5 py-0.5">
+            <span className="text-[12px] font-mono uppercase tracking-wider text-info bg-info/10 border border-info/25 rounded px-1.5 py-0.5">
               Verified
             </span>
           )}
           {entry.guild && (
-            <span className="text-[10px] text-gray-500">Team {entry.guild.name}</span>
+            <span className="text-[12px] text-subtle">Team {entry.guild.name}</span>
           )}
         </div>
-        <div className="text-xs text-gray-500 mt-0.5">
+        <div className="text-xs text-subtle mt-0.5">
           {entry.averageRating != null ? `${entry.averageRating.toFixed(1)}★ · ${entry.ratingCount} review${entry.ratingCount === 1 ? '' : 's'}` : 'No ratings yet'}
           {' · '}{entry.completedJobs} job{entry.completedJobs === 1 ? '' : 's'}
           {entry.verifiedCredentials > 0 && ` · ${entry.verifiedCredentials} verified credential${entry.verifiedCredentials === 1 ? '' : 's'}`}
@@ -124,13 +124,13 @@ function WorkerRow({ entry, showRating }: { entry: WorkerEntry; showRating?: boo
         </div>
       </div>
       <div className="text-right hidden sm:block shrink-0">
-        <div className="text-lg font-bold text-amber-400">{entry.reputationScore.toLocaleString()}</div>
-        <div className="text-[10px] text-gray-500 uppercase tracking-wider">Reputation</div>
+        <div className="text-lg font-bold text-accent-text">{entry.reputationScore.toLocaleString()}</div>
+        <div className="text-[12px] text-subtle uppercase tracking-wider">Reputation</div>
       </div>
       {showRating && entry.averageRating != null && (
         <div className="text-right hidden sm:block shrink-0">
-          <div className="text-lg font-bold text-green-400">{entry.averageRating.toFixed(1)}★</div>
-          <div className="text-[10px] text-gray-500 uppercase tracking-wider">Avg rating</div>
+          <div className="text-lg font-bold text-success">{entry.averageRating.toFixed(1)}★</div>
+          <div className="text-[12px] text-subtle uppercase tracking-wider">Avg rating</div>
         </div>
       )}
     </Link>
@@ -138,8 +138,8 @@ function WorkerRow({ entry, showRating }: { entry: WorkerEntry; showRating?: boo
 }
 
 const SKILL_TIER_STYLE: Record<'GOLD' | 'PLATINUM', string> = {
-  GOLD: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/25',
-  PLATINUM: 'text-cyan-300 bg-cyan-300/10 border-cyan-300/25',
+  GOLD: 'text-warning bg-warning/10 border-warning/25',
+  PLATINUM: 'text-info bg-info/10 border-info/25',
 };
 
 const SKILL_TIER_LABEL: Record<'GOLD' | 'PLATINUM', string> = {
@@ -151,18 +151,18 @@ function SkillMasterRow({ entry }: { entry: SkillMasterEntry }) {
   return (
     <Link
       href={`/profile/${entry.worker.username}`}
-      className="bg-gray-900 border border-gray-800 hover:border-amber-500/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
+      className="bg-surface border border-line hover:border-accent/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
     >
       <RankCell rank={entry.rank} />
       <Avatar name={entry.worker.displayName || entry.worker.username} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-white truncate">{entry.skillName}</span>
-          <span className={`text-[10px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 border ${SKILL_TIER_STYLE[entry.tier]}`}>
+          <span className="font-semibold text-strong truncate">{entry.skillName}</span>
+          <span className={`text-[12px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 border ${SKILL_TIER_STYLE[entry.tier]}`}>
             {SKILL_TIER_LABEL[entry.tier]}
           </span>
         </div>
-        <div className="text-xs text-gray-500 mt-0.5">
+        <div className="text-xs text-subtle mt-0.5">
           {entry.worker.displayName || entry.worker.username} · {entry.averageRating.toFixed(1)}★ over {entry.ratingCount} rating{entry.ratingCount === 1 ? '' : 's'}
         </div>
       </div>
@@ -176,21 +176,21 @@ function TeamRow({ entry }: { entry: TeamEntry }) {
   return (
     <Link
       href={`/guilds/${entry.id}`}
-      className="bg-gray-900 border border-gray-800 hover:border-amber-500/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
+      className="bg-surface border border-line hover:border-accent/30 rounded-xl p-4 flex items-center gap-4 transition-colors"
     >
       <RankCell rank={entry.rank} />
-      <div className="w-10 h-10 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center text-sm font-bold text-gray-300 shrink-0">
+      <div className="w-10 h-10 rounded-md bg-raised border border-line-strong flex items-center justify-center text-sm font-bold text-body shrink-0">
         {initials(entry.name)}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-white truncate">{entry.name}</div>
-        <div className="text-xs text-gray-500 mt-0.5">
+        <div className="font-semibold text-strong truncate">{entry.name}</div>
+        <div className="text-xs text-subtle mt-0.5">
           {entry.memberCount} worker{entry.memberCount === 1 ? '' : 's'}
         </div>
       </div>
       <div className="text-right hidden sm:block shrink-0">
-        <div className="text-lg font-bold text-amber-400">{entry.reputationScore.toLocaleString()}</div>
-        <div className="text-[10px] text-gray-500 uppercase tracking-wider">Reputation</div>
+        <div className="text-lg font-bold text-accent-text">{entry.reputationScore.toLocaleString()}</div>
+        <div className="text-[12px] text-subtle uppercase tracking-wider">Reputation</div>
       </div>
     </Link>
   );
@@ -216,12 +216,12 @@ export default function LeaderboardsPage() {
   const activeTab = useMemo(() => TABS.find((t) => t.key === tab)!, [tab]);
 
   return (
-    <div className="min-h-screen bg-gray-950 py-12 px-4">
+    <div className="min-h-screen bg-canvas py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">Top rated workers</h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-strong mb-2">Top rated workers</h1>
+          <p className="text-muted max-w-2xl mx-auto">
             Workers listed here are ranked on their record of paid work on TryHardly: client ratings and reviews,
             completed jobs, and verified credentials. Rankings are never based on earnings or on paying for placement.
           </p>
@@ -235,21 +235,21 @@ export default function LeaderboardsPage() {
               onClick={() => setTab(t.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 tab === t.key
-                  ? 'bg-amber-500 text-black'
-                  : 'bg-gray-900 text-gray-400 border border-gray-800 hover:text-gray-100'
+                  ? 'bg-accent text-on-accent'
+                  : 'bg-surface text-muted border border-line hover:text-strong'
               }`}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <p className="text-center text-sm text-gray-500 mb-8">{activeTab.blurb}</p>
+        <p className="text-center text-sm text-subtle mb-8">{activeTab.blurb}</p>
 
         {/* Content */}
         {loading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 animate-pulse h-[68px]" />
+              <div key={i} className="bg-surface border border-line rounded-xl p-4 animate-pulse h-[68px]" />
             ))}
           </div>
         ) : !data ? (
@@ -302,7 +302,7 @@ export default function LeaderboardsPage() {
         )}
 
         {/* Footer note */}
-        <p className="text-center text-xs text-gray-600 mt-10 max-w-xl mx-auto">
+        <p className="text-center text-xs text-subtle mt-10 max-w-xl mx-auto">
           Rankings recognize reliability and quality of work. They carry no cash, discounts, or fee changes — the
           marketplace fee stays a flat 12% for everyone.
         </p>

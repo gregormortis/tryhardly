@@ -44,23 +44,23 @@ export default function StandardCategoryPage({ params }: { params: { category: s
   if (!std) notFound();
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-300">
+    <div className="min-h-screen bg-canvas text-body">
       <div className="max-w-3xl mx-auto px-4 py-16 sm:py-20">
         <Link
           href="/standards"
-          className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-8"
+          className="text-muted hover:text-accent-text text-sm transition-colors flex items-center gap-2 mb-8"
         >
           <span>←</span> All work standards
         </Link>
 
         {/* Header */}
         <div className="mb-12">
-          <p className="font-mono text-xs uppercase tracking-widest text-amber-400 mb-3">
+          <p className="font-mono text-xs uppercase tracking-widest text-accent-text mb-3">
             Trade standard
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-white">{std.label}</h1>
-          <p className="text-lg text-gray-300 leading-relaxed">{std.blurb}</p>
-          <p className="text-sm text-gray-500 leading-relaxed mt-3">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-strong">{std.label}</h1>
+          <p className="text-lg text-body leading-relaxed">{std.blurb}</p>
+          <p className="text-sm text-subtle leading-relaxed mt-3">
             A practical checklist — not legal advice and not a guarantee by TryHardly. Use it to set
             expectations and turn finished work into clear proof and reviews.
           </p>
@@ -71,14 +71,14 @@ export default function StandardCategoryPage({ params }: { params: { category: s
           {SECTIONS.map(({ key, title, intro }) => (
             <section
               key={key}
-              className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 sm:p-7"
+              className="bg-surface border border-line rounded-xl p-6 sm:p-7"
             >
-              <h2 className="text-xl font-bold text-amber-200 mb-1">{title}</h2>
-              <p className="text-sm text-gray-500 mb-4">{intro}</p>
+              <h2 className="text-xl font-bold text-accent-text-hover mb-1">{title}</h2>
+              <p className="text-sm text-subtle mb-4">{intro}</p>
               <ul className="space-y-2">
                 {std[key].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-gray-300">
-                    <span className="text-green-400 mt-0.5 shrink-0">✓</span>
+                  <li key={item} className="flex items-start gap-2 text-sm text-body">
+                    <span className="text-success mt-0.5 shrink-0">✓</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -88,22 +88,22 @@ export default function StandardCategoryPage({ params }: { params: { category: s
         </div>
 
         {/* Footer links */}
-        <div className="mt-12 bg-gradient-to-r from-amber-900/20 to-purple-900/20 border border-amber-500/40 rounded-xl p-8 text-center">
-          <h3 className="text-xl font-bold text-amber-400 mb-3">Turn this into proof</h3>
-          <p className="text-gray-300 mb-6 text-sm leading-relaxed">
+        <div className="mt-12 bg-gradient-to-r from-accent/20/20 to-info/20 border border-accent/40 rounded-xl p-8 text-center">
+          <h3 className="text-xl font-bold text-accent-text mb-3">Turn this into proof</h3>
+          <p className="text-body mb-6 text-sm leading-relaxed">
             Follow the checklist, document the work, and let your finished jobs build your reputation
             through reviews and skill badges.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
               href="/code-of-craft"
-              className="inline-block bg-amber-600 hover:bg-amber-700 text-black font-bold px-6 py-3 rounded-lg transition-colors"
+              className="inline-block bg-accent hover:bg-accent text-on-accent font-bold px-6 py-3 rounded-lg transition-colors"
             >
               The Code of Craft
             </Link>
             <Link
               href="/jobs"
-              className="inline-block border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold px-6 py-3 rounded-lg transition-colors"
+              className="inline-block border border-accent/40 hover:border-accent text-accent-text-hover font-bold px-6 py-3 rounded-lg transition-colors"
             >
               Browse the questboard
             </Link>

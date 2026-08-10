@@ -30,20 +30,20 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-amber-400 mb-2">Reset your password</h1>
-          <p className="text-gray-400">We&apos;ll email you a link to choose a new password</p>
+          <h1 className="text-3xl font-bold text-accent-text mb-2">Reset your password</h1>
+          <p className="text-muted">We&apos;ll email you a link to choose a new password</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
+        <div className="bg-surface border border-line rounded-xl p-8">
           {sent ? (
             <div className="text-center space-y-4">
               <div className="text-4xl">📬</div>
-              <p className="text-gray-200">
-                If an account exists for <span className="text-amber-400">{email}</span>, a reset
+              <p className="text-body">
+                If an account exists for <span className="text-accent-text">{email}</span>, a reset
                 link is on its way. Check your inbox (and spam folder).
               </p>
               <Link
                 href="/auth/login"
-                className="inline-block text-amber-400 hover:text-amber-300 text-sm font-medium"
+                className="inline-block text-accent-text hover:text-accent-text-hover text-sm font-medium"
               >
                 ← Back to sign in
               </Link>
@@ -51,18 +51,18 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               {error && (
-                <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm">
+                <div className="mb-4 p-3 bg-danger/30 border border-danger rounded-lg text-danger text-sm">
                   {error}
                 </div>
               )}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-body mb-1">Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
                     placeholder="your@email.com"
                     required
                   />
@@ -70,14 +70,14 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-800 text-black font-semibold py-2.5 rounded-lg transition-colors"
+                  className="w-full bg-accent hover:bg-accent disabled:bg-accent text-on-accent font-semibold py-2.5 rounded-lg transition-colors"
                 >
                   {loading ? 'Sending...' : 'Send reset link'}
                 </button>
               </form>
-              <p className="mt-6 text-center text-gray-500 text-sm">
+              <p className="mt-6 text-center text-subtle text-sm">
                 Remembered it?{' '}
-                <Link href="/auth/login" className="text-amber-400 hover:text-amber-300">
+                <Link href="/auth/login" className="text-accent-text hover:text-accent-text-hover">
                   Sign in
                 </Link>
               </p>

@@ -29,12 +29,12 @@ export default function Flyer({
   const svg = qrSvg(qrUrl, { ecl: 'H', margin: 2, size: 600, dark: '#000000', light: '#ffffff' });
 
   return (
-    <div className="flyer-screen min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="flyer-screen min-h-screen bg-canvas text-strong">
       {/* Screen-only toolbar */}
       <div className="no-print mx-auto flex max-w-[8.5in] items-center justify-between px-6 py-5">
         <Link
           href={backHref}
-          className="text-sm font-semibold text-amber-400 transition-colors hover:text-amber-300"
+          className="text-sm font-semibold text-accent-text transition-colors hover:text-accent-text-hover"
         >
           ← Back to Redding launch
         </Link>
