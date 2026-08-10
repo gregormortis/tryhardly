@@ -98,9 +98,6 @@ export default function PricingPage() {
             <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>Verified credentials and a clean record open more skilled work</span></li>
             <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">★</span><span>A strong review history builds client confidence and repeat hires</span></li>
           </ul>
-          <a href="/progression" className="inline-block mt-5 text-amber-400 hover:text-amber-300 font-semibold text-sm">
-            How ratings &amp; badges work →
-          </a>
         </div>
 
         {/* How payments work */}

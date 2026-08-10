@@ -800,10 +800,10 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                       activity.
                     </p>
                     <Link
-                      href="/leaderboards"
+                      href="/questboard"
                       className="mt-2.5 inline-block font-mono text-[10px] text-amber-400 hover:underline"
                     >
-                      See top rated workers →
+                      Browse local jobs →
                     </Link>
                   </div>
                 )}

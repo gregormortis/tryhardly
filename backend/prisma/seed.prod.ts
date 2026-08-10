@@ -8,6 +8,15 @@
  *
  * Run (only when explicitly approved):
  *   SEED_CONFIRM=yes DATABASE_URL=... npx ts-node prisma/seed.prod.ts
+ *
+ * ⚠️  DEMO GUILDS ARE DISABLED IN PRODUCTION.
+ *   This script previously created two showcase guilds (CodeCrusaders and
+ *   DesignDynasty) led by demo_guild_leader_cc / demo_guild_leader_dd. Those
+ *   rows reached production and became the entire visible content of the
+ *   public /guilds page — two developer/designer "demo" teams on a Redding
+ *   yard-work marketplace. Seeding them is now opt-in behind SEED_DEMO_GUILDS=yes
+ *   so it can still be used on a local or staging database, never by accident
+ *   on prod. See backend/scripts/audit-demo-data.ts to remove existing rows.
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -202,8 +211,13 @@ async function main() {
       users.set(spec.email, user);
     }
 
-    console.log('🏰 Upserting demo guilds…');
-    for (const spec of DEMO_GUILDS) {
+    const seedDemoGuilds = process.env.SEED_DEMO_GUILDS === 'yes';
+    if (!seedDemoGuilds) {
+      console.log(
+        '⏭️  Skipping demo guilds (set SEED_DEMO_GUILDS=yes to seed them on a non-production database).',
+      );
+    }
+    for (const spec of seedDemoGuilds ? DEMO_GUILDS : []) {
       const leader = users.get(spec.leaderEmail);
       if (!leader) throw new Error(`Missing leader ${spec.leaderEmail}`);
 

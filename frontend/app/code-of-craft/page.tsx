@@ -122,10 +122,7 @@ export default function CodeOfCraftPage() {
             <li className="flex items-start gap-2">
               <span className="text-green-400 mt-0.5">✓</span>
               <span>
-                <Link href="/progression" className="text-amber-400 hover:underline">
-                  Ratings &amp; badges
-                </Link>{' '}
-                reward consistent, high-quality work — never a lower fee.
+                Ratings and badges reward consistent, high-quality work — never a lower fee.
               </span>
             </li>
             <li className="flex items-start gap-2">

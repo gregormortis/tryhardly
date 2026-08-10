@@ -28,13 +28,13 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-bold text-amber-400 mb-4">1. Information We Collect</h2>
             <p className="mb-2">
-              We collect information you provide directly to us when you create an account, post or accept quests, and use our services:
+              We collect information you provide directly to us when you create an account, post or accept jobs, and use our services:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Account information (name, email, password)</li>
               <li>Profile information (skills, portfolio, bio)</li>
               <li>Payment information (processed securely through third-party providers)</li>
-              <li>Quest and project information</li>
+              <li>Job and project information</li>
               <li>Communications and messages</li>
             </ul>
           </section>
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
               We share your information only in these circumstances:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>With other users as necessary to facilitate quests</li>
+              <li>With other users as necessary to facilitate jobs</li>
               <li>With service providers who help us operate the platform</li>
               <li>When required by law or to protect rights and safety</li>
               <li>In connection with a merger or acquisition</li>

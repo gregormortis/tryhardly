@@ -22,6 +22,40 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // --- Temporary gate: pages whose only content is seed/demo data ---
+      // The leaderboard, guild directory, and progression ladder render
+      // placeholder and stale test records rather than real activity. They
+      // stay redirected until there is genuine completed-job data behind
+      // them. Delete this block to re-enable the pages.
+      //
+      // These point straight at /jobs rather than /questboard so they do not
+      // chain through the rename redirect below.
+      {
+        source: '/leaderboard',
+        destination: '/jobs',
+        permanent: false,
+      },
+      {
+        source: '/leaderboards',
+        destination: '/jobs',
+        permanent: false,
+      },
+      {
+        source: '/progression',
+        destination: '/jobs',
+        permanent: false,
+      },
+      {
+        source: '/guilds/:path*',
+        destination: '/jobs',
+        permanent: false,
+      },
+      {
+        source: '/guilds',
+        destination: '/jobs',
+        permanent: false,
+      },
+
       // --- Marketplace URL rename (permanent) ---
       // The board, job detail and posting flow moved off RPG slugs and onto
       // plain marketplace paths: /jobs, /job/:id, /post-a-job. These are 301s
@@ -40,12 +74,6 @@ const nextConfig = {
         source: '/post-quest',
         destination: '/post-a-job',
         permanent: true,
-      },
-      {
-        // Job history moved onto the guild detail page; this path has no page of its own.
-        source: '/guilds/:id/quests',
-        destination: '/guilds/:id',
-        permanent: false,
       },
       {
         source: '/facebook',
