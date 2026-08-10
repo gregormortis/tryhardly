@@ -31,34 +31,39 @@ export default function RefundsPage() {
           </p>
 
           <section>
-            <h2 className="text-2xl font-bold text-accent-text mb-4">1. How payments work</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">1. How payment works</h2>
             <p>
-              TryHardly is a marketplace that connects people who need local help (job posters,
-              or clients) with people who can do the work (workers). We are a marketplace facilitator —{' '}
-              <span className="text-strong font-semibold">we are not the service provider</span>, and we are not a
-              bank or money transmitter. All payments are processed directly by{' '}
-              <span className="text-strong font-semibold">Stripe</span>, and worker payouts are handled through{' '}
-              <span className="text-strong font-semibold">Stripe Connect</span> after completed-job payment
-              capture. Posting a job is free; TryHardly charges workers a flat 12% platform
-              service fee on completed paid jobs. TryHardly does not provide regulated financial
-              services.
+              TryHardly connects people who need local help (job posters, or clients) with
+              people who can do the work (workers).{' '}
+              <span className="text-strong font-semibold">We are not the service provider and
+              we do not process payments.</span> Payment for a job is agreed and settled
+              directly between the job poster and the worker, by whatever method they choose.
+              TryHardly is not a party to that payment and is not a bank, money transmitter,
+              or payment processor.
             </p>
             <p className="mt-2">
-              When a job poster selects a worker, TryHardly may obtain a payment authorization
-              for the quoted amount. A payment authorization is not a completed charge and may
-              appear as a temporary pending transaction on your statement. TryHardly captures
-              payment when the job is confirmed completed, or is deemed completed under the
-              platform&rsquo;s confirmation rules. If a job is canceled or does not proceed,
-              TryHardly may void or cancel the authorization.
+              This has a direct consequence for refunds, and we would rather state it plainly
+              here than have you discover it during a dispute:{' '}
+              <span className="text-strong font-semibold">TryHardly cannot issue a refund,
+              reverse a payment, or recover money on your behalf.</span> We never receive the
+              money, so there is nothing for us to return. Posting a job and bidding on jobs
+              are both free, and TryHardly currently charges no fees of any kind.
+            </p>
+            <p className="mt-2">
+              Before work begins, agree the amount and the payment method with the other party
+              and keep that agreement in TryHardly messages. On larger jobs, consider paying
+              in a way that leaves a record, and consider splitting payment so that part of it
+              follows completion.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-accent-text mb-4">2. Cancellations before work starts</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">2. Cancellations</h2>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>A job poster may cancel before the worker begins work; if a payment authorization was obtained, it is voided or canceled and the job poster is not charged.</li>
+              <li>A job poster may cancel before the worker begins work. Because no payment is taken by TryHardly, canceling simply closes the job listing.</li>
               <li>A worker may withdraw before starting at no penalty.</li>
-              <li>If no payment authorization was obtained, canceling simply closes the job listing.</li>
+              <li>Repeated last-minute cancellations by either side are recorded and may result in removal from the platform.</li>
+              <li>If money has already changed hands between the poster and the worker, any return of it is a matter between those two parties. TryHardly cannot reverse it.</li>
             </ul>
           </section>
 
@@ -69,18 +74,19 @@ export default function RefundsPage() {
               actually delivered:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>If the work was not delivered or does not match what was agreed, the job poster may request a full or partial refund.</li>
-              <li>If the work was delivered as agreed, the worker is entitled to payment for what was completed.</li>
-              <li>Partial work generally means a partial refund proportional to what remains undone.</li>
+              <li>If the work was not delivered or does not match what was agreed, the job poster should raise it with the worker first, in TryHardly messages so there is a record.</li>
+              <li>If the work was delivered as agreed, the worker is owed the agreed amount.</li>
+              <li>Partial work generally warrants partial payment, proportional to what was completed.</li>
+              <li>TryHardly cannot enforce any of this or move money, but the outcome is recorded against both accounts and is visible to future counterparties.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-accent-text mb-4">4. Platform &amp; processing fees</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">4. Platform fees</h2>
             <p>
-              When a refund is issued, the TryHardly platform service fee associated with the
-              refunded amount is returned as well. Stripe payment-processing fees, where they
-              apply, may be non-refundable in line with Stripe&apos;s standard practices.
+              There are none. Posting a job, creating a worker account, and bidding are all
+              free, and TryHardly takes no commission on any job. Because we charge nothing
+              and receive nothing, there is no TryHardly fee to refund.
             </p>
           </section>
 
@@ -99,20 +105,24 @@ export default function RefundsPage() {
               </li>
               <li>Include any photos, messages, or deliverables that show the agreed scope and the result.</li>
               <li>We review both sides and aim to respond within 5 business days.</li>
-              <li>Our decision on any refund of amounts processed through the platform is final.</li>
+              <li>We record the outcome against both accounts. We cannot order or issue a refund, because we never held the money — but a pattern of reports leads to removal from the platform.</li>
             </ol>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-accent-text mb-4">6. Chargebacks &amp; card disputes</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">6. What we can and cannot do</h2>
+            <p className="mb-2">
+              <span className="text-strong font-semibold">We cannot</span> refund you, reverse
+              a payment, recover money, hold money pending a decision, or compel either party
+              to pay. We are not in the payment chain at any point.
+            </p>
             <p>
-              Card payments are processed by Stripe. If you dispute a charge with your bank or
-              card issuer, that dispute is handled through Stripe&apos;s standard process, and we
-              may submit evidence such as messages, photos, the agreed scope, and proof of
-              completed work on the relevant party&apos;s behalf. Please contact us before
-              initiating a chargeback — most issues are resolved faster directly, and as an
-              intermediary we are well placed to help. Fraudulent or abusive chargebacks may
-              result in account suspension.
+              <span className="text-strong font-semibold">We can</span> review the messages
+              and photos attached to a job, record the outcome on both accounts so it is
+              visible to everyone they deal with afterward, remove accounts with a pattern of
+              complaints, and give you a copy of the job record if you pursue the matter
+              yourself. If you paid by a method with its own protections, such as a card or
+              certain payment apps, raise the dispute with that provider directly.
             </p>
           </section>
 
@@ -120,9 +130,9 @@ export default function RefundsPage() {
             <h2 className="text-2xl font-bold text-accent-text mb-4">7. Our role &amp; jurisdiction</h2>
             <p>
               TryHardly is a US-based marketplace and intermediary. We are not the service
-              provider and are not a party to the work agreement between job posters and
-              workers; our role is to connect the two and to facilitate payments through
-              Stripe. This policy is governed by the laws of the State of California, United
+              provider and are not a party to the work agreement or the payment between job
+              posters and workers; our role is to connect the two and keep the record of what
+              happened. This policy is governed by the laws of the State of California, United
               States. Consumer-protection laws in your state may grant you additional rights
               that this policy does not limit.
             </p>

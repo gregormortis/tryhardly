@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { JOB_CATEGORIES, jobCategoryFromTags } from '@/lib/jobCategories';
 import { timingLabel, bidCountLabel } from '@/lib/questCardCopy';
 import { parseLocationLine } from '@/lib/jobLocation';
+import { DIRECT_PAYMENT_LIMIT, DIRECT_PAYMENT_SHORT } from '@/lib/paymentCopy';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -668,10 +669,8 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
             <div className="flex items-start gap-2.5">
               <ShieldCheck size={15} className="text-success/80 shrink-0 mt-0.5" />
               <p className="text-[12px] text-muted leading-relaxed">
-                Payments are processed through Stripe — the poster confirms the completed work
-                before the charge is captured, and worker payouts run through Stripe Connect.
-                Reviews are only written by people who finished a job together. Never accept a
-                request to pay or be paid off the platform.{' '}
+                {DIRECT_PAYMENT_SHORT} Agree on the amount, method, and timing before work starts.{' '}
+                {DIRECT_PAYMENT_LIMIT} Reviews are only written by people who finished a job together.{' '}
                 <a href="/faq" className="text-accent-text hover:text-accent-text-hover">
                   How TryHardly works
                 </a>

@@ -5,8 +5,8 @@ import { ArrowRight, Briefcase, MapPin, Shield, Star, Users, Wrench, Hammer, Che
 
 const stats = [
   { value: 'Free', label: 'To post a job' },
-  { value: '12%', label: 'Flat worker fee' },
-  { value: 'Stripe', label: 'Payments & payouts' },
+  { value: '100%', label: 'Workers keep their pay' },
+  { value: 'No fee', label: 'We take no cut' },
   { value: 'Redding', label: 'First launch city' },
 ];
 
@@ -22,11 +22,11 @@ const categories = [
 const howItWorks = [
   { title: 'Post the job — free', desc: 'Describe the task, set your budget, and post it in minutes. Yard work, moving help, handyman jobs, cleaning, errands.' },
   { title: 'Pick a local worker', desc: 'Nearby workers apply. Compare their bids, ratings, and completed jobs before you choose.' },
-  { title: 'Pay through Stripe', desc: 'The payment method is authorized when you book, and the agreed amount is captured once the job is done.' },
+  { title: 'Pay them directly', desc: 'Settle up with your worker however you both prefer once the job is done. TryHardly takes no cut of it.' },
 ];
 
 const trustSignals = [
-  { icon: Shield, title: 'Stripe-Powered Payments', desc: 'Payments are processed by Stripe. Worker payouts run through Stripe Connect after the charge for a completed job is captured.' },
+  { icon: Shield, title: 'No Cut Of Your Pay', desc: 'You pay your worker directly and they keep every dollar. TryHardly takes no commission and charges no fees.' },
   { icon: Star, title: 'Reviews From Real Jobs', desc: 'Ratings and reviews come from jobs completed on TryHardly — not imported from anywhere else.' },
   { icon: Users, title: 'Profiles That Earn Their History', desc: 'A worker profile grows as they complete jobs, so their track record is built here in the open.' },
   { icon: Banknote, title: 'Clear Pay Up Front', desc: 'Every job lists its pay before anyone applies, so there is nothing to haggle over later.' },
@@ -60,7 +60,7 @@ export default function HomePage() {
           moving help, handyman tasks, cleaning, and errands.
         </p>
         <p className="mx-auto max-w-xl text-sm text-subtle mb-8">
-          Free to post. 12% flat worker fee. Stripe-powered payments.
+          Free to post. Free to work. You pay your worker directly.
         </p>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-6">
@@ -160,33 +160,33 @@ export default function HomePage() {
         <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-accent/5 p-6 sm:p-10">
           <div className="flex items-center gap-2 mb-4">
             <Banknote className="h-5 w-5 text-accent-text" />
-            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">How payments work</h2>
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">How paying works</h2>
           </div>
           <p className="text-sm text-body mb-6">
-            TryHardly is a marketplace that connects people who need local help with workers who can do it. We are an
-            intermediary — we are not the service provider. Payments are processed by{' '}
-            <span className="font-semibold text-strong">Stripe</span>, and worker payouts are handled through{' '}
-            <span className="font-semibold text-strong">Stripe Connect</span> after completed-task payment capture.
+            TryHardly introduces you to local workers and keeps the record of how each job
+            went. We are not the service provider, and we do not handle the money. You and
+            your worker agree an amount here and settle it directly, which also means we
+            take no cut of it.
           </p>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-line-strong bg-surface p-4">
               <p className="text-sm font-semibold text-strong mb-1">Posting is free</p>
-              <p className="text-xs text-muted">Customers never pay to post a job. Your payment method is authorized at booking, and the agreed charge is captured for completed work under platform rules.</p>
+              <p className="text-xs text-muted">No posting fee, no booking fee, and no card on file. Describe the job and local workers respond.</p>
             </div>
             <div className="rounded-xl border border-line-strong bg-surface p-4">
-              <p className="text-sm font-semibold text-strong mb-1">12% worker fee</p>
-              <p className="text-xs text-muted">TryHardly takes a flat 12% platform service fee from worker payouts on completed paid jobs.</p>
+              <p className="text-sm font-semibold text-strong mb-1">Workers keep 100%</p>
+              <p className="text-xs text-muted">No marketplace fee comes out of a worker&apos;s pay, and there is no charge for leads that go nowhere.</p>
             </div>
             <div className="rounded-xl border border-line-strong bg-surface p-4">
-              <p className="text-sm font-semibold text-strong mb-1">Paid after completion</p>
-              <p className="text-xs text-muted">Payouts are initiated through Stripe Connect after payment capture for completed tasks.</p>
+              <p className="text-sm font-semibold text-strong mb-1">You settle directly</p>
+              <p className="text-xs text-muted">Cash, Venmo, Zelle, or check — whatever suits you both. Agree the amount and method before work starts.</p>
             </div>
           </div>
           <Link
             href="/pricing"
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-text hover:text-accent-text-hover transition-colors"
           >
-            See full pricing &amp; fees <ArrowRight className="h-4 w-4" />
+            See how it works <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         </div>

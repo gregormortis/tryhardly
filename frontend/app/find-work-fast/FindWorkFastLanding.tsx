@@ -73,8 +73,8 @@ const benefits = [
   },
   {
     icon: ShieldCheck,
-    title: 'Clear marketplace payouts',
-    desc: 'A job’s budget is clear before you bid, and payouts are processed through Stripe Connect after the charge for completed work is captured. Booking and payouts are temporarily unavailable while we move to a new processor — browsing, profiles, and the worker list are open now.',
+    title: 'Direct pay, all yours',
+    desc: 'Agree on the payment method and timing with the customer before you start. The customer pays you directly, and you keep 100%.',
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'How do I get paid?',
-    a: 'Each job lists its budget up front. When a poster accepts your bid their payment method is authorized — that is not a charge. Once the poster confirms the work is done, the charge is captured and your payout is processed through Stripe Connect. TryHardly takes a flat 12% from completed paid jobs and nothing otherwise. One thing to know up front: we are between payment processors right now, so booking and payout setup are temporarily unavailable. You can still browse, build your profile, and join the worker list. Everyone on the list gets an email the day it reopens.',
+    a: 'The customer pays you directly. Agree on the amount, method, and timing before you start. Cash, Venmo, Zelle, and check all work if you both agree. You keep 100%, and TryHardly does not process the payment.',
   },
   {
     q: 'What kind of work is on here?',

@@ -25,17 +25,12 @@ const CHECKS = [
   {
     title: 'Email verification',
     status: 'Required',
-    body: 'Every new account must confirm its email address through a single-use link before it can do anything that touches money. A worker cannot create a Stripe Connect payout account until that confirmation is complete. This blocks throwaway-address signups.',
+    body: 'Every new account must confirm its email address through a single-use link before it can post a job or bid on one. It is a low bar on its own, but it blocks throwaway-address signups and gives every account a real contact route.',
   },
   {
-    title: 'Government ID and selfie',
-    status: 'Required before payout',
-    body: 'Workers must pass Stripe Identity verification — a government-issued photo ID matched against a live selfie — before they can receive their first payout. This is handled by Stripe, not by us, and we never see or store the ID document itself.',
-  },
-  {
-    title: 'Payment protection',
-    status: 'Always on',
-    body: 'Your payment method is authorized when you accept a bid, which is not a charge. The charge is captured only after you confirm the job is finished. Cancel before the work is done and the authorization is voided. No cash changes hands, and no one is paid for work that was not completed.',
+    title: 'You pay your worker directly',
+    status: 'How it works',
+    body: 'TryHardly does not process payments and takes no cut. You and your worker agree an amount here and settle it directly \u2014 cash, Venmo, Zelle, check, whatever suits you both. Agree the amount and the method before the work starts, and keep that conversation on TryHardly so there is a record of it.',
   },
   {
     title: 'Licenses and credentials',
@@ -48,39 +43,50 @@ const CHECKS = [
     body: 'A review can only be written by someone who actually completed a job with you on TryHardly. Reviews are never imported from other platforms, never purchased, and never written by us.',
   },
   {
+    title: 'A record that follows people',
+    status: 'The main protection',
+    body: 'Every completed job, rating, and report stays attached to the account that earned it. A worker who does good work builds something worth keeping. A worker who does not, cannot walk away from it and reappear clean. That record is what TryHardly actually offers.',
+  },
+  {
     title: 'Reporting',
     status: 'On every profile and job',
-    body: 'Every worker profile and every job listing has a report link. Reports go straight to a human. Anyone asking to be paid outside TryHardly should be reported — that is a policy violation and it voids every protection on this page.',
+    body: 'Every worker profile and every job listing has a report link. Reports go straight to a human, and we read all of them. Repeated problems get accounts removed.',
   },
 ];
 
 const NOT_DONE = [
-  'We do not currently run criminal background checks. When we start, we will name the vendor and say exactly what is searched.',
+  'We do not process payments, so we cannot refund, reverse, chargeback, or guarantee any payment between you and a worker. This is the most important limit on this page.',
+  'We do not run criminal background checks. When we start, we will name the vendor and say exactly what is searched.',
+  'We do not verify government ID. Accounts are verified by email address only.',
   'We do not carry insurance covering property damage or injury. Workers are independent contractors responsible for their own coverage.',
-  'We do not employ, supervise, train, or dispatch workers. TryHardly is a marketplace facilitator, not the service provider.',
-  'We do not guarantee the quality of any individual job. We do run a dispute process, and we do withhold capture until you confirm the work is done.',
+  'We do not employ, supervise, train, or dispatch workers. TryHardly is an introduction service, not the service provider.',
+  'We do not guarantee the quality of any individual job. What we do is keep an honest record of how each one went.',
 ];
 
 const FAQS = [
   {
+    q: 'Does TryHardly handle the payment?',
+    a: 'No. You pay your worker directly, however you both agree \u2014 cash, Venmo, Zelle, check. TryHardly takes no cut and never touches the money, which also means we cannot refund or reverse it. Agree the amount and the payment method before the work starts.',
+  },
+  {
+    q: 'Then what am I actually getting from TryHardly?',
+    a: 'Local workers who show up, with a visible record of the jobs they have done and how those went. Finding someone reliable is the hard part of getting yard work or hauling done, and that is the part we do. We are not a payment service and we do not pretend to be one.',
+  },
+  {
     q: 'Is every worker on TryHardly ID-verified?',
-    a: 'Every worker who has been paid has passed Stripe Identity government ID and selfie verification, because that check gates the first payout. A brand-new worker who has not yet been paid may still be mid-verification.',
+    a: 'No. Accounts are verified by email address only. We verify professional credentials where a public registry exists, and we show ratings and completed-job history on every profile, but we do not check government ID and we will not imply that we do.',
   },
   {
     q: 'Do you run criminal background checks?',
-    a: 'Not today. We verify identity through Stripe Identity and we verify professional credentials where a public registry exists, but we do not currently run criminal background checks. We would rather say so plainly than imply a standard we do not meet.',
+    a: 'Not today. We would rather say so plainly than imply a standard we do not meet. Read the worker\u2019s reviews and completed-job history, and ask for references on larger jobs.',
   },
   {
     q: 'What happens if something goes wrong on a job?',
-    a: 'Email support@tryhardly.com within 14 days. We respond within one business day, review both sides, and can refund a captured charge or void an authorization that has not been captured. Because we do not capture payment until you confirm completion, most problems can be resolved before any money moves.',
+    a: 'Email support@tryhardly.com. We respond within one business day and we read both sides. We cannot move money, so we cannot refund you \u2014 but the outcome is recorded against the account, and accounts with repeated problems are removed. Keeping your messages and your agreement on TryHardly gives us something to look at.',
   },
   {
-    q: 'What if a worker asks me to pay them directly, in cash or by app?',
-    a: 'Report it. Paying off-platform removes every protection described on this page — there is no authorization to void, no dispute process, and no record of the agreement. Circumventing platform payment is grounds for removal.',
-  },
-  {
-    q: 'Does TryHardly hold my money?',
-    a: 'No. TryHardly is not a bank and does not hold customer funds. All payments are processed by Stripe, and worker payouts run through Stripe Connect after a completed job is captured.',
+    q: 'How do I protect myself on a bigger job?',
+    a: 'Agree the price in writing here before anything starts. Pay in a way that leaves a record rather than untraceable cash. For larger work, split payment so part of it lands after you have seen the finished result. Ask for proof of licensing and insurance where the job calls for it.',
   },
 ];
 

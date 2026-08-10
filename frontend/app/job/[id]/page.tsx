@@ -8,6 +8,8 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Quest, Application } from '@/lib/types';
 import EscrowPanel from '@/components/EscrowPanel';
+import DirectPaymentPanel from '@/components/DirectPaymentPanel';
+import { PLATFORM_PAYMENTS_ENABLED } from '@/lib/paymentsMode';
 import ReportButton from '@/components/ReportButton';
 import QuestReviews from '@/components/QuestReviews';
 import CompletionPanel from '@/components/CompletionPanel';
@@ -38,10 +40,15 @@ export default function QuestDetailPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [generatingOccurrence, setGeneratingOccurrence] = useState(false);
-  // Worker-side payout readiness: a worker may draft a bid but can only submit
-  // once their own Stripe Connect payout account is onboarded/ready.
-  const [payoutReady, setPayoutReady] = useState(false);
-  const [payoutStatusLoading, setPayoutStatusLoading] = useState(true);
+  // Worker-side payout readiness: in platform-payments mode a worker may draft
+  // a bid but can only submit once their own payout account is onboarded. In
+  // direct mode there is no payout account to onboard — the worker collects
+  // from the customer — so the gate would block every bid on the platform for
+  // no reason. Start open and skip the status call entirely.
+  const [payoutReady, setPayoutReady] = useState(!PLATFORM_PAYMENTS_ENABLED);
+  const [payoutStatusLoading, setPayoutStatusLoading] = useState(
+    PLATFORM_PAYMENTS_ENABLED,
+  );
 
   useEffect(() => {
     fetchQuest();
@@ -53,6 +60,13 @@ export default function QuestDetailPage() {
   // otherwise. Fails closed (not ready) if the status can't be read.
   useEffect(() => {
     let cancelled = false;
+    if (!PLATFORM_PAYMENTS_ENABLED) {
+      // No payout account exists in direct mode; /payments/connect/status is
+      // gated to 410 and bidding must stay open.
+      setPayoutReady(true);
+      setPayoutStatusLoading(false);
+      return;
+    }
     if (!user) {
       setPayoutReady(false);
       setPayoutStatusLoading(false);
@@ -493,17 +507,19 @@ export default function QuestDetailPage() {
                 the point they decide whether to bid. */}
             <div className="bg-surface border border-line rounded-xl p-5">
               <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">
-                How you get paid safely
+                Getting paid
               </h3>
               <ul className="space-y-2.5 text-xs text-muted leading-relaxed">
-                <li>Payments are processed through Stripe — never cash off the platform.</li>
+                <li>The customer pays you directly, and you keep all of it.</li>
                 <li>
-                  The poster confirms the completed work, then the charge is captured and your
-                  payout is processed through Stripe Connect.
+                  Agree the amount and how you will be paid before you start, and keep that
+                  conversation here so there is a record of it.
                 </li>
-                <li>Reviews are only written by people who finished a job together.</li>
                 <li>
-                  Report anyone who asks you to pay or be paid outside TryHardly.
+                  Ask the customer to confirm the job here afterward — that is what builds
+                  your record.
+                </li>
+                <li>Reviews are only written by people who finished a job together.
                 </li>
               </ul>
             </div>
@@ -576,7 +592,14 @@ export default function QuestDetailPage() {
                 column) once a bid is accepted, so we only render the sidebar
                 panel for the assigned worker to avoid a duplicate CTA. */}
             {isAssignedWorker && quest.status !== 'OPEN' && (
-              <EscrowPanel questId={quest.id} isQuestGiver={false} questStatus={quest.status} />
+              PLATFORM_PAYMENTS_ENABLED ? (
+                <EscrowPanel questId={quest.id} isQuestGiver={false} questStatus={quest.status} />
+              ) : (
+                <DirectPaymentPanel
+                  isQuestGiver={false}
+                  agreedAmount={Number(quest.reward) || null}
+                />
+              )
             )}
           </div>
         </div>

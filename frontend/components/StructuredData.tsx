@@ -130,9 +130,8 @@ export function ServiceSchema({
         category: categorySlug,
         provider: { '@id': `${siteUrl}/#organization` },
         areaServed,
-        // Posting is free to the customer; the platform fee is charged to the
-        // worker on completed paid jobs only. Stated plainly so the markup
-        // matches the pricing page.
+        // Posting and bidding are free, and TryHardly does not process the
+        // direct payment between the customer and worker.
         offers: {
           '@type': 'Offer',
           url: `${siteUrl}/post-a-job`,
@@ -140,7 +139,7 @@ export function ServiceSchema({
           priceCurrency: 'USD',
           availability: 'https://schema.org/InStock',
           description:
-            'Posting a job is free. Workers pay a flat 12% marketplace fee on completed paid jobs.',
+            'Posting a job is free. Workers keep 100% of the amount they agree on with the customer. TryHardly does not take a platform fee or process payment.',
         },
       }}
     />
