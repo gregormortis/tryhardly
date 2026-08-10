@@ -6,6 +6,7 @@ import { createNotification } from '../services/notificationService';
 import { awardCompletionXp } from '../services/progressionService';
 import { sendEmail, emailTemplates } from '../services/mailerService';
 import { captureAuthorizedPayment } from './paymentController';
+import { honorHandshakeForQuest } from '../services/handshakeService';
 
 // ─── Work completion protocol ───────────────────────────────────────────────
 // The worker→client completion handshake that feeds XP, reviews, proof-of-work,
@@ -151,6 +152,16 @@ export const confirmCompletion = async (req: AuthRequest, res: Response): Promis
     // path (or with no authorization) simply have nothing to capture, and a
     // capture error is recorded as CAPTURE_FAILED for the quest giver to retry
     // via POST /api/payments/quest/:id/capture.
+    // Mark the agreed terms as honoured. This is what turns the Handshake into
+    // a reliability signal: "honoured" means the poster actually confirmed the
+    // work, not merely that both sides once agreed. Best-effort - a job with no
+    // handshake has nothing to mark, and this must never block confirmation.
+    try {
+      await honorHandshakeForQuest(quest.id);
+    } catch (e) {
+      console.error('confirmCompletion handshake error:', e);
+    }
+
     try {
       const result = await captureAuthorizedPayment(quest.id);
       if (result.captured) {

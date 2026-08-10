@@ -119,6 +119,12 @@ model User {
 
   @@index([email])
   @@index([username])
+
+  // The Handshake: mutual agreements on job terms. Three relations because a
+  // user can be either side of one, and either side can propose.
+  handshakesAsPoster   Handshake[] @relation("HandshakePoster")
+  handshakesAsWorker   Handshake[] @relation("HandshakeWorker")
+  handshakesProposed   Handshake[] @relation("HandshakeProposer")
 }
 
 // Account lifecycle state. ACTIVE is the only state at registration; DELETED is
@@ -182,7 +188,15 @@ model Quest {
 
   // Metadata
   tags            String[]
+  // Cap on how many bids a job will take before it stops accepting more.
+  // Enforced from this release. Bidding is unpaid work for the worker, and a
+  // worker who writes five bids and wins none simply leaves — which a market
+  // this small cannot absorb. Capping keeps each bid worth writing and gives
+  // the poster a shortlist rather than a pile.
   maxApplications Int?
+  // Closes bidding early once the poster has enough to choose from, without
+  // cancelling the job.
+  biddingClosedAt DateTime?
 
   // Relations
   questGiverId         String
@@ -199,6 +213,10 @@ model Quest {
   // requests changes (→ back to IN_PROGRESS). All fields are nullable / default
   // 0 so existing rows are unaffected and the legacy "owner marks complete"
   // path keeps working unchanged.
+  // Mutual agreements on price/time/place/scope for this job. Multiple rows
+  // exist when terms were renegotiated; at most one is AGREED at a time.
+  handshakes            Handshake[]
+
   completionNote        String?
   // Worker-supplied proof image URLs for the completion request (no file storage).
   completionProofUrls   String[]  @default([])
@@ -622,6 +640,10 @@ enum NotificationType {
   COMPLETION_SUBMITTED
   COMPLETION_CONFIRMED
   COMPLETION_CHANGES_REQUESTED
+  HANDSHAKE_PROPOSED
+  HANDSHAKE_AGREED
+  HANDSHAKE_DECLINED
+  HANDSHAKE_BROKEN
 }
 
 // ─── Password Reset ──────────────────────────────────────────────────────────
@@ -1058,4 +1080,123 @@ enum DeletionRequestStatus {
   PENDING
   COMPLETED
   CANCELLED
+}
+
+
+// ─── The Handshake ──────────────────────────────────────────────────────────
+//
+// A mutual, timestamped agreement on the four things local jobs actually go
+// wrong over: price, when, where, and what is included.
+//
+// Why this exists
+// ---------------
+// TryHardly does not process payments, so there is no authorization to act as
+// a commitment device. Without one, both sides can walk away for free, and
+// ghosting is already the most common failure in local services in both
+// directions. The Handshake is the replacement: a shared record that both
+// parties explicitly agreed to, which cannot be quietly edited afterwards.
+//
+// It is deliberately NOT a contract TryHardly enforces, and it moves no money.
+// Its force comes from being visible and permanent: honouring handshakes is
+// what builds a reliability record, and breaking one is recorded against the
+// account that broke it.
+//
+// It also addresses the most common local-services dispute, which is not fraud
+// but honest disagreement about what the quoted price included.
+//
+// Immutability
+// ------------
+// While PROPOSED, the proposer may revise the terms (each revision bumps
+// `version`). Once AGREED the terms are frozen: any change requires both
+// parties to agree a new Handshake, and the superseded one is retained. This
+// is the whole point — an agreement either side can silently rewrite is not
+// evidence of anything.
+model Handshake {
+  id        String   @id @default(uuid())
+
+  questId   String
+  quest     Quest    @relation(fields: [questId], references: [id])
+
+  // Both parties, captured explicitly rather than derived from the quest, so
+  // the record still reads correctly if the job is later reassigned.
+  posterId  String
+  poster    User     @relation("HandshakePoster", fields: [posterId], references: [id])
+  workerId  String
+  worker    User     @relation("HandshakeWorker", fields: [workerId], references: [id])
+
+  // Who put these terms forward. Either side may propose.
+  proposedById String
+  proposedBy   User   @relation("HandshakeProposer", fields: [proposedById], references: [id])
+
+  // ── The agreed terms ──
+  // Price in cents, to avoid float drift on an amount both parties are relying
+  // on. This is a record of what they agreed between themselves; TryHardly
+  // neither collects nor guarantees it.
+  amountCents   Int
+  // When the work happens. Nullable because some jobs are genuinely
+  // "sometime this week", and forcing a false precision would make people
+  // agree to something they do not mean.
+  scheduledFor  DateTime?
+  // Free text, e.g. "Saturday morning" — used when scheduledFor is null.
+  scheduleNote  String?
+  // Where. Kept as free text rather than a structured address: the useful
+  // detail is often "round the back, gate code 1234".
+  location      String?
+  // What is included, and explicitly what is not. The single most valuable
+  // field here, and the one most disputes turn on.
+  scope         String
+  // How payment will be made, e.g. "cash on completion", "Venmo same day".
+  // Agreeing this up front prevents the most common awkward ending.
+  paymentMethod String?
+
+  status    HandshakeStatus @default(PROPOSED)
+  version   Int             @default(1)
+
+  // ── Confirmations ──
+  // The proposing side is implicitly agreed at creation; the other side's
+  // acceptance is what makes it binding as a record.
+  posterAgreedAt DateTime?
+  workerAgreedAt DateTime?
+  agreedAt       DateTime?
+
+  // ── Endings ──
+  declinedAt   DateTime?
+  declinedById String?
+  // Set when a party abandons an AGREED handshake. Recorded against them, and
+  // the reason is required so a legitimate cancellation can be told apart from
+  // a no-show.
+  brokenAt     DateTime?
+  brokenById   String?
+  brokenReason String?
+  // Set when the work actually happened, driven by completion confirmation.
+  honoredAt    DateTime?
+
+  // Retained rather than deleted when replaced, so the negotiation history is
+  // auditable.
+  supersededById String?    @unique
+  supersededBy   Handshake? @relation("HandshakeRevision", fields: [supersededById], references: [id])
+  supersedes     Handshake? @relation("HandshakeRevision")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([questId])
+  @@index([posterId])
+  @@index([workerId])
+  @@index([status])
+}
+
+enum HandshakeStatus {
+  // Put forward by one side, awaiting the other.
+  PROPOSED
+  // Both sides agreed. Terms are frozen from here.
+  AGREED
+  // The other side said no. Either party may propose fresh terms.
+  DECLINED
+  // Replaced by a renegotiated Handshake.
+  SUPERSEDED
+  // Abandoned after agreement. Counts against whoever broke it.
+  BROKEN
+  // The work happened. Counts for both.
+  HONORED
 }

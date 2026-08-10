@@ -18,6 +18,7 @@ import BidForm, { type BidPayload } from '@/components/BidForm';
 import BidComparison from '@/components/BidComparison';
 import AcceptedBidPanel from '@/components/AcceptedBidPanel';
 import AssignedWorkerPanel from '@/components/AssignedWorkerPanel';
+import HandshakePanel from '@/components/HandshakePanel';
 import { resolveTradeStandard } from '@/lib/tradeStandards';
 import { jobCategoryFromTags } from '@/lib/jobCategories';
 import { timingLabel, bidCountLabel } from '@/lib/questCardCopy';
@@ -36,6 +37,7 @@ export default function QuestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [biddingClosed, setBiddingClosed] = useState(false);
   const [error, setError] = useState('');
   const [applications, setApplications] = useState<Application[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
@@ -171,6 +173,9 @@ export default function QuestDetailPage() {
       await fetchQuest(true);
     } catch (err: any) {
       const msg = err.message || 'Failed to submit bid';
+      if (err?.biddingClosed) {
+        setBiddingClosed(true);
+      }
       setError(msg);
       toast.error(msg);
     } finally {
@@ -476,6 +481,9 @@ export default function QuestDetailPage() {
                     contractorScale={isContractorScale}
                     submitting={applying}
                     onSubmit={handleApply}
+                    disabled={biddingClosed}
+                    bidCount={applications.length}
+                    maxBids={quest.maxApplications}
                     payoutReady={payoutReady}
                     payoutStatusLoading={payoutStatusLoading}
                     payoutSetupHref="/dashboard"
@@ -592,14 +600,17 @@ export default function QuestDetailPage() {
                 column) once a bid is accepted, so we only render the sidebar
                 panel for the assigned worker to avoid a duplicate CTA. */}
             {isAssignedWorker && quest.status !== 'OPEN' && (
-              PLATFORM_PAYMENTS_ENABLED ? (
-                <EscrowPanel questId={quest.id} isQuestGiver={false} questStatus={quest.status} />
-              ) : (
-                <DirectPaymentPanel
-                  isQuestGiver={false}
-                  agreedAmount={Number(quest.reward) || null}
-                />
-              )
+              <>
+                {PLATFORM_PAYMENTS_ENABLED ? (
+                  <EscrowPanel questId={quest.id} isQuestGiver={false} questStatus={quest.status} />
+                ) : (
+                  <DirectPaymentPanel
+                    isQuestGiver={false}
+                    agreedAmount={Number(quest.reward) || null}
+                  />
+                )}
+                <HandshakePanel questId={quest.id} />
+              </>
             )}
           </div>
         </div>

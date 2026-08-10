@@ -9,6 +9,7 @@ const mockPrisma = {
     create: jest.fn(),
     update: jest.fn(),
     updateMany: jest.fn(),
+    count: jest.fn(),
   },
   user: {
     findUnique: jest.fn(),
@@ -277,6 +278,82 @@ describe('applyToQuest — detailed bid payload', () => {
       expect.objectContaining({ payoutSetupRequired: true })
     );
     expect(mockPrisma.application.create).not.toHaveBeenCalled();
+  });
+
+  // ─── Bid controls ─────────────────────────────────────────────────────────
+  // Writing a bid is unpaid work. TaskRabbit abandoned its bidding auction
+  // because taskers spent hours bidding instead of working, and a 25-worker
+  // market cannot absorb that churn.
+
+  it('refuses a bid once the cap is reached, and closes bidding', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue({ ...OPEN_QUEST, maxApplications: 5 });
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.application.count.mockResolvedValue(5);
+    mockPrisma.quest.update.mockResolvedValue({});
+
+    const res = mockRes();
+    await applyToQuest(
+      { params: { questId: 'q1' }, user: { id: 'worker1' }, body: { bidAmount: '500' } } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].biddingClosed).toBe(true);
+    // Closed explicitly, so the board stops advertising it as open rather than
+    // letting workers find out by being rejected.
+    expect(mockPrisma.quest.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { biddingClosedAt: expect.any(Date) } })
+    );
+    expect(mockPrisma.application.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts a bid while under the cap', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue({ ...OPEN_QUEST, maxApplications: 5 });
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.application.count.mockResolvedValue(3);
+    mockPrisma.application.create.mockResolvedValue({ id: 'a9', adventurer: { username: 'w' } });
+
+    const res = mockRes();
+    await applyToQuest(
+      { params: { questId: 'q1' }, user: { id: 'worker1' }, body: { bidAmount: '500' } } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it('refuses a bid on a job whose bidding was closed by the poster', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue({
+      ...OPEN_QUEST,
+      biddingClosedAt: new Date(),
+    });
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+
+    const res = mockRes();
+    await applyToQuest(
+      { params: { questId: 'q1' }, user: { id: 'worker1' }, body: { bidAmount: '500' } } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].biddingClosed).toBe(true);
+    // No cap lookup needed when it is already closed.
+    expect(mockPrisma.application.count).not.toHaveBeenCalled();
+  });
+
+  it('leaves bidding open when no cap is set', async () => {
+    mockPrisma.quest.findUnique.mockResolvedValue({ ...OPEN_QUEST, maxApplications: null });
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.application.create.mockResolvedValue({ id: 'a10', adventurer: { username: 'w' } });
+
+    const res = mockRes();
+    await applyToQuest(
+      { params: { questId: 'q1' }, user: { id: 'worker1' }, body: { bidAmount: '500' } } as any,
+      res
+    );
+
+    expect(mockPrisma.application.count).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 
   // ─── Direct-settlement mode ───────────────────────────────────────────────
