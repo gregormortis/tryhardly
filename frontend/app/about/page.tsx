@@ -105,7 +105,7 @@ export default function AboutPage() {
               Create an account
             </a>
             <a
-              href="/questboard"
+              href="/jobs"
               className="bg-gray-800 hover:bg-gray-700 text-gray-100 font-bold px-8 py-4 rounded-lg transition-colors"
             >
               Browse local jobs

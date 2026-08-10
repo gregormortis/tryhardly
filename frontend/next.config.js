@@ -23,45 +23,57 @@ const nextConfig = {
   async redirects() {
     return [
       // --- Temporary gate: pages whose only content is seed/demo data ---
-      // The leaderboard, guild directory, and progression ladder currently
-      // render placeholder and stale test records rather than real activity.
-      // They stay redirected until there is genuine completed-job data behind
-      // them. Remove these four entries to re-enable the pages.
+      // The leaderboard, guild directory, and progression ladder render
+      // placeholder and stale test records rather than real activity. They
+      // stay redirected until there is genuine completed-job data behind
+      // them. Delete this block to re-enable the pages.
+      //
+      // These point straight at /jobs rather than /questboard so they do not
+      // chain through the rename redirect below.
       {
         source: '/leaderboard',
-        destination: '/questboard',
+        destination: '/jobs',
         permanent: false,
       },
       {
         source: '/leaderboards',
-        destination: '/questboard',
+        destination: '/jobs',
         permanent: false,
       },
       {
         source: '/progression',
-        destination: '/questboard',
+        destination: '/jobs',
         permanent: false,
       },
       {
         source: '/guilds/:path*',
-        destination: '/questboard',
+        destination: '/jobs',
         permanent: false,
       },
       {
         source: '/guilds',
-        destination: '/questboard',
+        destination: '/jobs',
         permanent: false,
       },
+
+      // --- Marketplace URL rename (permanent) ---
+      // The board, job detail and posting flow moved off RPG slugs and onto
+      // plain marketplace paths: /jobs, /job/:id, /post-a-job. These are 301s
+      // so the old URLs pass their link equity to the new ones.
       {
-        source: '/jobs',
-        destination: '/questboard',
-        permanent: false,
+        source: '/questboard',
+        destination: '/jobs',
+        permanent: true,
       },
       {
-        // Job history moved onto the guild detail page; this path has no page of its own.
-        source: '/guilds/:id/quests',
-        destination: '/guilds/:id',
-        permanent: false,
+        source: '/questboard/:id',
+        destination: '/job/:id',
+        permanent: true,
+      },
+      {
+        source: '/post-quest',
+        destination: '/post-a-job',
+        permanent: true,
       },
       {
         source: '/facebook',
@@ -80,7 +92,7 @@ const nextConfig = {
       },
       {
         source: '/post-job',
-        destination: '/post-quest',
+        destination: '/post-a-job',
         permanent: false,
       },
       {

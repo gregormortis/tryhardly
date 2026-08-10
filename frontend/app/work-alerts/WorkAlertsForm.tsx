@@ -119,7 +119,7 @@ export default function WorkAlertsForm() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/questboard"
+              href="/jobs"
               className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-6 py-3 rounded-lg transition-colors"
             >
               Browse the job board <ArrowRight size={16} />
@@ -344,7 +344,7 @@ export default function WorkAlertsForm() {
 
           <p className="text-center text-xs text-gray-600">
             Want to apply to jobs right now?{' '}
-            <Link href="/questboard" className="text-amber-400 hover:text-amber-300">
+            <Link href="/jobs" className="text-amber-400 hover:text-amber-300">
               Browse the live job board
             </Link>
             .

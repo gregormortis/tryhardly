@@ -164,7 +164,7 @@ export default function LeaderboardPage() {
           <p className="text-gray-400 mb-6">Complete more jobs, build your reputation, and climb the ranks.</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
-              href="/questboard"
+              href="/jobs"
               className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-bold px-8 py-3 rounded-lg transition-colors"
             >
               Find Quests

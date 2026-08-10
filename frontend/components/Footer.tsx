@@ -22,7 +22,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/questboard"
+                  href="/jobs"
                   className="transition-colors hover:text-zinc-100"
                 >
                   Browse jobs
@@ -30,7 +30,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/post-quest"
+                  href="/post-a-job"
                   className="transition-colors hover:text-zinc-100"
                 >
                   Post a job
@@ -187,6 +187,14 @@ export default function Footer() {
                   className="transition-colors hover:text-zinc-100"
                 >
                   Refunds &amp; Disputes
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/trust"
+                  className="transition-colors hover:text-zinc-100"
+                >
+                  Trust &amp; Safety
                 </Link>
               </li>
               <li>

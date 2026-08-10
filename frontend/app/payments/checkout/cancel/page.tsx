@@ -28,14 +28,14 @@ function CheckoutCancel() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             {questId && (
               <Link
-                href={`/questboard/${questId}`}
+                href={`/job/${questId}`}
                 className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2.5 px-5 rounded-lg transition-colors"
               >
                 Back to job
               </Link>
             )}
             <Link
-              href="/questboard"
+              href="/jobs"
               className="inline-block bg-gray-800 hover:bg-gray-700 text-gray-100 font-semibold py-2.5 px-5 rounded-lg transition-colors"
             >
               Browse the job board

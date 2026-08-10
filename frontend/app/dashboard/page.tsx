@@ -52,7 +52,7 @@ interface DashboardData {
 }
 
 function jobHref(job: DashboardJob): string {
-  return `/questboard/${job.questId}${job.nextStep.hash ?? ''}`;
+  return `/job/${job.questId}${job.nextStep.hash ?? ''}`;
 }
 
 function money(amount?: number): string | null {
@@ -365,7 +365,7 @@ export default function DashboardPage() {
       key="posted"
       title="Jobs you posted"
       subtitle="Bids, bookings and completions on the work you need done."
-      action={{ label: '+ Post a job', href: '/post-quest' }}
+      action={{ label: '+ Post a job', href: '/post-a-job' }}
     >
       {dataLoading ? (
         <RowSkeleton />
@@ -385,7 +385,7 @@ export default function DashboardPage() {
       ) : (
         <EmptyState
           message="You haven't posted a job yet. Describe the work and local pros can bid on it."
-          cta={{ label: 'Post a job', href: '/post-quest' }}
+          cta={{ label: 'Post a job', href: '/post-a-job' }}
         />
       )}
     </SectionCard>
@@ -396,7 +396,7 @@ export default function DashboardPage() {
       key="working"
       title="Jobs you're working"
       subtitle="Work you were hired for, and what each job needs from you next."
-      action={{ label: 'Find local work', href: '/questboard' }}
+      action={{ label: 'Find local work', href: '/jobs' }}
     >
       {dataLoading ? (
         <RowSkeleton />
@@ -416,7 +416,7 @@ export default function DashboardPage() {
       ) : (
         <EmptyState
           message="No jobs booked with you yet. Bids you win show up here with the next step on each one."
-          cta={{ label: 'Browse local jobs', href: '/questboard' }}
+          cta={{ label: 'Browse local jobs', href: '/jobs' }}
         />
       )}
     </SectionCard>
@@ -429,7 +429,7 @@ export default function DashboardPage() {
       key="bids"
       title="Bids you submitted"
       subtitle="Bids still waiting on a decision. Won bids move to “Jobs you're working”."
-      action={{ label: 'Browse local jobs', href: '/questboard' }}
+      action={{ label: 'Browse local jobs', href: '/jobs' }}
     >
       <div className="space-y-2">
         {openBids.slice(0, SECTION_LIMIT).map(job => (
@@ -445,7 +445,7 @@ export default function DashboardPage() {
   ) : (
     <p key="bids" className="mb-6 text-sm text-zinc-500">
       No bids submitted yet.{' '}
-      <Link href="/questboard" className="text-amber-400 hover:underline">
+      <Link href="/jobs" className="text-amber-400 hover:underline">
         Browse local jobs
       </Link>{' '}
       and submit a bid when something matches your skills.
@@ -467,13 +467,13 @@ export default function DashboardPage() {
         </h1>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
-            href="/post-quest"
+            href="/post-a-job"
             className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-zinc-950 transition-colors hover:bg-amber-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             Post a job
           </Link>
           <Link
-            href="/questboard"
+            href="/jobs"
             className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-amber-500/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
           >
             Browse local jobs
@@ -524,13 +524,13 @@ export default function DashboardPage() {
         ) : nothingToDo ? (
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/post-quest"
+              href="/post-a-job"
               className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-zinc-950 transition-colors hover:bg-amber-400"
             >
               Post a job
             </Link>
             <Link
-              href="/questboard"
+              href="/jobs"
               className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-amber-500/40"
             >
               Find local work
@@ -601,8 +601,8 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
-          { label: 'Browse local jobs', href: '/questboard' },
-          { label: 'Post a job', href: '/post-quest' },
+          { label: 'Browse local jobs', href: '/jobs' },
+          { label: 'Post a job', href: '/post-a-job' },
           { label: 'My profile', href: '/profile' },
           { label: 'Messages', href: '/messages' },
         ].map(action => (

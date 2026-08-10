@@ -145,7 +145,7 @@ export default function FindWorkFastLanding() {
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto">
           <Link
-            href="/questboard"
+            href="/jobs"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
             Browse local jobs <ArrowRight className="h-4 w-4" />
@@ -207,7 +207,7 @@ export default function FindWorkFastLanding() {
         </div>
         <div className="mt-12 text-center">
           <Link
-            href="/questboard"
+            href="/jobs"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-zinc-950 hover:bg-amber-400 transition-colors"
           >
             Browse local jobs <ArrowRight className="h-4 w-4" />
@@ -236,7 +236,7 @@ export default function FindWorkFastLanding() {
           </div>
           <p className="mt-8 text-center text-sm text-zinc-500">
             Good with your hands?{' '}
-            <Link href="/questboard" className="text-amber-400 hover:text-amber-300">
+            <Link href="/jobs" className="text-amber-400 hover:text-amber-300">
               See what&apos;s open near you
             </Link>
             .
@@ -352,7 +352,7 @@ export default function FindWorkFastLanding() {
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href="/questboard"
+              href="/jobs"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-8 py-3.5 font-semibold text-zinc-950 transition hover:bg-amber-400"
             >
               Browse local jobs <ArrowRight className="h-5 w-5" />

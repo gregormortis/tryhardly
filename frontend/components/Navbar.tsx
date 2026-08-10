@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import NotificationBell from "./NotificationBell";
 
 const navLinks = [
-  { href: "/questboard", label: "Browse jobs" },
-  { href: "/post-quest", label: "Post a job" },
+  { href: "/jobs", label: "Browse jobs" },
+  { href: "/post-a-job", label: "Post a job" },
   { href: "/#how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/trust", label: "Trust & safety" },
   { href: "/redding", label: "Redding launch" },
 ];
 
@@ -20,6 +21,32 @@ export default function Navbar() {
   const { user, logout, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Close the mobile menu on navigation. Without this the panel stays open
+  // behind the new page when a link routes client-side.
+  useEffect(() => {
+    setMenuOpen(false);
+    setUserMenuOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll and support Escape while the mobile menu is open, so the
+  // page underneath cannot be scrolled or tapped through.
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   const handleLogout = () => {
     logout();
@@ -154,7 +181,15 @@ export default function Navbar() {
         </div>
 
         {menuOpen && (
-          <div className="space-y-1 border-t border-zinc-800 py-3 md:hidden">
+          <div
+            aria-hidden="true"
+            onClick={() => setMenuOpen(false)}
+            className="fixed inset-0 top-16 z-40 bg-black/60 md:hidden"
+          />
+        )}
+
+        {menuOpen && (
+          <div className="relative z-50 space-y-1 border-t border-zinc-800 bg-zinc-950 py-3 md:hidden">
             {navLinks.map((link) => (
               <Link
                 key={link.href}

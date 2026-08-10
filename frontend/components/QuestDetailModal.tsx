@@ -8,7 +8,7 @@ import { api } from '../lib/api';
 
 // TODO(escrow-readiness): This modal still models a quest with mock-shaped
 // fields (tier/pay/postedBy/status:'open'|'claimed'). The canonical, fully
-// wired quest detail UI lives at app/questboard/[id]/page.tsx and renders the
+// wired quest detail UI lives at app/job/[id]/page.tsx and renders the
 // EscrowPanel against real backend data. This modal now talks to the real API
 // via lib/api (no more non-existent /api/quests Next mock routes), but a proper
 // rewrite mapping the backend Quest shape (reward/difficulty/questGiver/
@@ -220,13 +220,13 @@ export default function QuestDetailModal({
 
   function handleClaim() {
     if (!currentUserId) {
-      window.location.href = `/login?redirect=/questboard/${questId}`;
+      window.location.href = `/login?redirect=/job/${questId}`;
       return;
     }
     // Bidding is now a detailed flow (amount, materials, labor, walkthrough), so
     // send the worker to the full job page to submit a proper bid rather than
     // posting an empty application here.
-    window.location.href = `/questboard/${questId}`;
+    window.location.href = `/job/${questId}`;
   }
 
   if (!isOpen) return null;

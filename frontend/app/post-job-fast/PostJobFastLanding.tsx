@@ -236,7 +236,7 @@ export default function PostJobFastLanding() {
           </div>
           <p className="mt-8 text-center text-sm text-zinc-500">
             Got something else?{' '}
-            <Link href="/post-quest" className="text-amber-400 hover:text-amber-300">
+            <Link href="/post-a-job" className="text-amber-400 hover:text-amber-300">
               Post any local odd job
             </Link>
             .
@@ -358,7 +358,7 @@ export default function PostJobFastLanding() {
               Request help &mdash; no account needed <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
-              href="/questboard"
+              href="/jobs"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-8 py-3.5 font-semibold transition hover:border-amber-500/50 hover:bg-zinc-900"
             >
               Browse starter quests

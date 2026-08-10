@@ -9,7 +9,7 @@ export default function QuestDetailPage({ params }: { params: { id: string } }) 
     <QuestDetailModal
       questId={params.id}
       isOpen={true}
-      onClose={() => router.push('/questboard')}
+      onClose={() => router.push('/jobs')}
     />
   );
 }

@@ -161,7 +161,7 @@ export default function ServicePackagesBrowse() {
                   Request help
                 </Link>
                 <Link
-                  href="/post-quest"
+                  href="/post-a-job"
                   className="border border-gray-700 hover:border-amber-500 hover:text-amber-400 text-gray-200 font-medium px-5 py-2.5 rounded-lg transition-colors"
                 >
                   Post a job

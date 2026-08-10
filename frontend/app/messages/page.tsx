@@ -74,7 +74,7 @@ export default function MessagesInboxPage() {
                 Messages start when you apply to a quest or someone applies to yours.
               </p>
               <Link
-                href="/questboard"
+                href="/jobs"
                 className="inline-block mt-5 text-amber-400 hover:text-amber-300 text-sm font-medium"
               >
                 Browse the questboard →

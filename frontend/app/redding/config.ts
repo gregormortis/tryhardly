@@ -15,7 +15,7 @@ export const links = {
   landingFacebookWorker: `${SITE_URL}/redding?source=facebook-worker`,
   requestHelp: `${SITE_URL}/request-help?source=redding`,
   workAlerts: `${SITE_URL}/work-alerts?source=redding`,
-  questboard: `${SITE_URL}/questboard?source=redding`,
+  questboard: `${SITE_URL}/jobs?source=redding`,
   // Flyer QR targets carry their own source so scans from printed flyers are
   // attributable separately from the digital `redding` CTAs.
   flyerRequestHelpTarget: `${SITE_URL}/request-help?source=flyer-requester`,
@@ -28,7 +28,7 @@ export const links = {
 export const routes = {
   requestHelp: '/request-help?source=redding',
   workAlerts: '/work-alerts?source=redding',
-  questboard: '/questboard?source=redding',
+  questboard: '/jobs?source=redding',
   flyerRequestHelp: '/redding/flyer/request-help',
   flyerWorkers: '/redding/flyer/workers',
 } as const;
