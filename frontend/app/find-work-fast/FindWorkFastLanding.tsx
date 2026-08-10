@@ -74,7 +74,7 @@ const benefits = [
   {
     icon: ShieldCheck,
     title: 'Clear marketplace payouts',
-    desc: 'Built so a job’s reward is clear up front, with eligible earnings paid out after charge capture. For now you can browse, apply, and arrange work for free.',
+    desc: 'A job’s budget is clear before you bid, and payouts are processed through Stripe Connect after the charge for completed work is captured. Payments are paused during a processor review — browsing, profiles, and the worker list are open now.',
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'How do I get paid?',
-    a: 'Each job lists its reward up front. Jobs marked payment verified have a valid payment method on file. For eligible completed jobs, payout is initiated after payment capture under platform rules. Workers are paid for completed approved work; canceled or uncompleted jobs are not charged. For now you can also browse, apply, and arrange the job directly — no surprises on what it pays.',
+    a: 'Each job lists its budget up front. When a poster accepts your bid their payment method is authorized — that is not a charge. Once the poster confirms the work is done, the charge is captured and your payout is processed through Stripe Connect. TryHardly takes a flat 12% from completed paid jobs and nothing otherwise. One thing to know up front: payments are paused right now while our processor completes a review, so payout setup is temporarily unavailable. You can still browse, build your profile, and join the worker list, and you will hear from us the moment it is back on.',
   },
   {
     q: 'What kind of work is on here?',
