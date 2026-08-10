@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Check, Shield, Sun } from 'lucide-react';
 
-const title = 'Local work for young workers (16–17)';
+const title = 'Young workers (16–17): parent-owned household accounts';
 const description =
-  'TryHardly gives 16- and 17-year-olds a place to find eligible outdoor jobs, earn directly from neighbors, and build a real work record—with a parent or guardian owning the account.';
+  'Parents and guardians can create one TryHardly household account for their 16- and 17-year-old workers, approve every job, and help them build a real work record.';
 
 const allowedWork = [
   'Yard work: walk-behind mowing, trimming, raking, and weeding',
@@ -51,13 +51,13 @@ export default function YoungWorkersPage() {
             A first job can start with a mower.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
-            The minimum age is 16. If you are 16 or 17, you can earn real money doing eligible
-            outdoor work for neighbors. It is free to use, you keep what you earn, and each
-            completed job can become part of a real work record you can use later.
+            The minimum age is 16. Young workers can earn real money doing eligible outdoor work
+            for neighbors. Each named young worker builds a record of completed jobs, ratings, and
+            reliability they can point to later as a reference.
           </p>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-subtle">
-            A parent or guardian owns the account and must consent. That is how we make room for
-            young workers without treating the rules as an afterthought.
+            A parent or guardian creates and owns the account. Young workers do not have separate
+            accounts or logins.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
@@ -81,25 +81,61 @@ export default function YoungWorkersPage() {
           <h2 className="text-xl font-bold tracking-tight text-strong">For 16- and 17-year-olds</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted">
             Mow lawns, rake leaves, trim, weed, run an errand, and do the kind of outdoor help
-            neighbors actually need. You keep 100% of what the customer pays you directly.
+            neighbors actually need. You can work under a parent or guardian&apos;s household
+            account, alongside a sibling if you have one.
           </p>
           <p className="mt-4 text-sm leading-relaxed text-muted">
-            Your completed jobs, ratings, and reliability build a record that can help when you
-            need a reference for your next job, application, or opportunity.
+            Your completed jobs, ratings, and reliability are recorded under your name—not just
+            the account—so they can help when you need a reference for your next job, application,
+            or opportunity.
           </p>
         </article>
 
         <article className="rounded-xl border border-line bg-surface p-6 sm:p-8">
           <h2 className="text-xl font-bold tracking-tight text-strong">For parents and guardians</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            You own the account and must give consent. We ask you to stay involved: look over the
-            job, agree on the payment arrangement, and make sure the work stays within these rules.
+            You create and own one household account. You can add more than one under-18 household
+            member, and there is no separate login for a young worker.
           </p>
           <p className="mt-4 text-sm leading-relaxed text-muted">
-            Eligible jobs are outdoor and street-visible only. The goal is a useful first work
-            experience, not putting a teenager in an adult situation.
+            You approve every job before work starts: that job, that customer, that address, and
+            that day. Eligible jobs are outdoor and street-visible only.
           </p>
         </article>
+      </section>
+
+      <section className="border-y border-line bg-surface">
+        <div className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold text-accent-text">Approval for every job</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-strong">
+              You know the details before your young worker goes.
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              A signup checkbox is not approval for a Saturday job at a specific address. Before
+              work begins, the parent or guardian on the household account must approve that job,
+              that customer, that address, and that day.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
+            <article className="rounded-xl border border-line bg-raised p-6">
+              <h3 className="text-lg font-bold text-strong">Changed details mean new approval</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                If the customer changes the address or the time after you approve, that approval is
+                automatically cancelled. You must approve the new details before work starts.
+              </p>
+            </article>
+
+            <article className="rounded-xl border border-line bg-raised p-6">
+              <h3 className="text-lg font-bold text-strong">The named worker keeps their record</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                One household account can support siblings, while each named young worker keeps
+                their own completed jobs, ratings, and reliability record.
+              </p>
+            </article>
+          </div>
+        </div>
       </section>
 
       <section id="the-rules" className="border-y border-line bg-surface">
@@ -163,7 +199,31 @@ export default function YoungWorkersPage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-xl border border-line bg-raised p-6 sm:p-8">
+          <p className="text-sm font-semibold text-accent-text">A parent&apos;s decision</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-strong">
+            Look into the neighborhood yourself before you say yes.
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            When you approve a job, TryHardly shows you the job address and links you to{' '}
+            <a
+              href="https://www.meganslaw.ca.gov/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-accent-text underline underline-offset-4 hover:text-accent-text"
+            >
+              California&apos;s official Megan&apos;s Law site
+            </a>
+            . You can use it to look into the neighborhood yourself before saying yes.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            TryHardly does not check, screen, search, or verify anyone against any sex offender
+            registry. The decision is yours. Keeping that judgment with the responsible adult is a
+            deliberate part of how household accounts work.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <p className="text-sm font-semibold text-accent-text">How to get started</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-strong">
@@ -175,10 +235,10 @@ export default function YoungWorkersPage() {
                   1
                 </span>
                 <div>
-                  <h3 className="font-semibold text-strong">Set up the account together</h3>
+                  <h3 className="font-semibold text-strong">Create one household account</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted">
-                    A parent or guardian creates and owns the account, gives consent, and stays
-                    involved in the plan.
+                    A parent or guardian creates and owns the account, then adds each young worker
+                    by name. Young workers do not have separate logins.
                   </p>
                 </div>
               </li>
@@ -199,10 +259,10 @@ export default function YoungWorkersPage() {
                   3
                 </span>
                 <div>
-                  <h3 className="font-semibold text-strong">Do the job well and build your record</h3>
+                  <h3 className="font-semibold text-strong">Approve the details, then build the record</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted">
-                    Finish what you agreed to do, then let the completed job speak for your
-                    reliability.
+                    The parent approves the job details before work begins. Finish what you agreed
+                    to do, then let the completed job speak for the young worker&apos;s reliability.
                   </p>
                 </div>
               </li>
@@ -212,8 +272,8 @@ export default function YoungWorkersPage() {
           <aside className="h-fit rounded-xl border border-line bg-surface p-6">
             <h2 className="text-lg font-bold text-strong">Agree on payment up front</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              TryHardly does not process payments. The customer pays the young worker directly, so
-              a parent and the customer should agree on the amount and payment method before the
+              TryHardly does not process payments. The customer pays directly, so a parent or
+              guardian and the customer should agree on the amount and payment method before the
               work begins.
             </p>
             <Link

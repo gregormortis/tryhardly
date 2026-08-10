@@ -3,6 +3,7 @@ import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { createNotification } from '../services/notificationService';
 import { findContactInfoInFields, CONTACT_INFO_VALIDATION_MESSAGE } from '../utils/contactDetection';
+import { getApprovalState } from '../services/minorApprovalService';
 
 // ─── The Handshake ──────────────────────────────────────────────────────────
 //
@@ -223,6 +224,20 @@ export const proposeHandshake = async (req: AuthRequest, res: Response): Promise
       });
     });
 
+    // New terms mean any existing parental approval describes a job that no
+    // longer exists. Revoke it so the parent is asked again rather than the
+    // approval silently carrying over to a different address or time.
+    try {
+      const { revokeStaleApprovals } = await import('../services/minorApprovalService');
+      await revokeStaleApprovals(quest.id, {
+        address: location ?? '',
+        scheduledFor,
+        scheduleNote,
+      });
+    } catch (e) {
+      console.error('proposeHandshake approval revocation error:', e);
+    }
+
     const recipientId = isPoster ? quest.assignedAdventurerId! : quest.questGiverId;
     await createNotification({
       userId: recipientId,
@@ -265,6 +280,26 @@ export const agreeHandshake = async (req: AuthRequest, res: Response): Promise<v
       res.status(400).json({
         error: 'Waiting on the other side',
         message: 'You proposed these terms, so you have already agreed to them.',
+      });
+      return;
+    }
+
+    // If an under-18 is doing this work, the adult on the account must have
+    // approved this specific job - this address, this time - before it can go
+    // live. Agreeing terms is the moment the job becomes real, so this is the
+    // right gate. Enforced here rather than in the UI because the whole point
+    // of the rule is that it holds when someone goes around the UI.
+    const approval = await getApprovalState(hs.questId, hs.workerId, {
+      address: hs.location ?? '',
+      scheduledFor: hs.scheduledFor,
+      scheduleNote: hs.scheduleNote,
+    });
+    if (approval.required && !approval.approved) {
+      res.status(403).json({
+        error: 'Waiting on a parent or guardian',
+        message: approval.reason,
+        needsGuardianApproval: true,
+        staleBecause: approval.staleBecause,
       });
       return;
     }

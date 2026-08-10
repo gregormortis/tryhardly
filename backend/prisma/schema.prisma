@@ -126,28 +126,23 @@ model User {
   handshakesAsWorker   Handshake[] @relation("HandshakeWorker")
   handshakesProposed   Handshake[] @relation("HandshakeProposer")
 
-  // ─── Young workers (16-17) ────────────────────────────────────────────────
-  // Every comparable platform is 18+, so the teenager with a mower has nowhere
-  // legitimate to go. TryHardly takes them, under rules enforced in code — see
-  // config/youthPolicy.ts for the reasoning and the legal citations.
+  // ─── Household accounts ───────────────────────────────────────────────────
+  // A minor never holds their own TryHardly account. A parent or guardian holds
+  // it, and their under-18 household members work under it. See
+  // config/youthPolicy.ts for the rules and the legal citations.
   //
-  // Nullable throughout: adults never touch any of this.
-  dateOfBirth        DateTime?
-  // Denormalized from dateOfBirth at verification time so every bid check does
-  // not have to recompute an age. Cleared automatically when they turn 18.
-  isYouthWorker      Boolean   @default(false)
-  // The guardian owns the account and is named on the record. Following the
-  // Fiverr model rather than letting a minor hold a standalone account.
-  guardianName       String?
-  guardianEmail      String?
-  guardianPhone      String?
-  guardianConsentAt  DateTime?
-  // Free text of what the guardian agreed to, captured verbatim at consent so
-  // the record shows the terms as they stood that day rather than as they read
-  // after a later policy edit.
-  guardianConsentTerms String?
+  // This is stronger than one-time consent at signup. One-time consent is a
+  // checkbox. A responsible adult who knows which address their kid is at, on
+  // which day, and who the customer is, is actual supervision — so approval is
+  // required per job, not once per account.
+  dateOfBirth          DateTime?
+  // True when this adult account has at least one active household minor.
+  // Denormalized so the bid-eligibility check is a single field read.
+  isHouseholdAccount   Boolean   @default(false)
+  householdMinors      HouseholdMinor[]
+  minorJobApprovals    MinorJobApproval[] @relation("MinorApprovalApprover")
 
-  @@index([isYouthWorker])
+  @@index([isHouseholdAccount])
 }
 
 // Account lifecycle state. ACTIVE is the only state at registration; DELETED is
@@ -239,6 +234,8 @@ model Quest {
   // Mutual agreements on price/time/place/scope for this job. Multiple rows
   // exist when terms were renegotiated; at most one is AGREED at a time.
   handshakes            Handshake[]
+  // Per-job approvals where a household minor is doing the work.
+  minorApprovals        MinorJobApproval[]
 
   completionNote        String?
   // Worker-supplied proof image URLs for the completion request (no file storage).
@@ -1222,4 +1219,120 @@ enum HandshakeStatus {
   BROKEN
   // The work happened. Counts for both.
   HONORED
+}
+
+
+// ─── Household minors ───────────────────────────────────────────────────────
+//
+// An under-18 household member who works under a parent's account. This is
+// deliberately NOT a User: there is no login, no password, no separate
+// identity. The adult is the account holder and the accountable party.
+//
+// The named minor still accumulates their own record, because that is much of
+// the value for them — a 16-year-old who mows twenty lawns well should be able
+// to point to it later. It just belongs to a person, not to a login.
+model HouseholdMinor {
+  id          String   @id @default(uuid())
+
+  // The parent or guardian who holds the account.
+  accountId   String
+  account     User     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // First name only. There is no reason to hold a minor's full legal name to
+  // let them mow a neighbour's lawn.
+  firstName   String
+  dateOfBirth DateTime
+
+  // Set false rather than deleting, so completed-job history survives when
+  // they turn 18 or stop working.
+  active      Boolean  @default(true)
+
+  // Verbatim text of what the guardian agreed to, captured at consent, so the
+  // record shows the terms as they stood that day rather than as they read
+  // after a later policy edit.
+  consentTerms String
+  consentAt    DateTime @default(now())
+
+  approvals   MinorJobApproval[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([accountId])
+  @@index([active])
+}
+
+// ─── Per-job parental approval ──────────────────────────────────────────────
+//
+// A household minor may not start a job until the adult on the account has
+// approved that specific job. Not the account, not the category — that job, at
+// that address, on that day.
+//
+// Why the snapshot fields exist
+// -----------------------------
+// Approval is for a specific place and time. If the customer later changes the
+// address or the schedule, the thing the parent approved no longer exists, and
+// the approval is invalidated automatically rather than silently carrying over
+// to somewhere the parent never agreed to. That is the difference between a
+// consent record and a consent theatre.
+//
+// On the registry acknowledgement field
+// -------------------------------------
+// TryHardly does NOT check anyone against a sex offender registry and must not.
+// California Penal Code 290.46(j)(2)(H) makes it a prohibited use to apply
+// registry information to "benefits, privileges, or services provided by any
+// business establishment", with liability up to treble actual damages, a civil
+// penalty up to $25,000, attorney's fees, and injunctive exposure for a
+// "pattern or practice" - which is precisely what an automated screening
+// feature would be.
+//
+// A parent checking to protect their own child is a different matter, and fits
+// the statute's authorized use: "only to protect a person at risk". So the
+// platform shows the parent the address and links them to the official state
+// site, and records only that they were shown it. The check, the judgement and
+// the decision stay with the responsible adult, which is both lawful and
+// better.
+//
+// We never claim to screen anyone. Care.com paid a $1,000,000 California
+// district attorney settlement over claims about registry checks it did not
+// perform, on top of an $8,500,000 FTC settlement.
+model MinorJobApproval {
+  id           String   @id @default(uuid())
+
+  minorId      String
+  minor        HouseholdMinor @relation(fields: [minorId], references: [id], onDelete: Cascade)
+
+  questId      String
+  quest        Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  // The adult who approved. Recorded explicitly rather than inferred from the
+  // minor's account, so the record still reads correctly later.
+  approvedById String
+  approvedBy   User     @relation("MinorApprovalApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime @default(now())
+
+  // What the parent was actually looking at when they said yes.
+  addressAtApproval   String
+  scheduleAtApproval  DateTime?
+  scheduleNoteAtApproval String?
+  customerNameAtApproval String
+  amountCentsAtApproval  Int?
+
+  // Set when the parent confirms they were shown the address and the link to
+  // the official registry site. This records that they were informed. It is
+  // NOT a screening result, and TryHardly performs no check.
+  safetyInfoShownAt   DateTime?
+
+  // Invalidated automatically when the approved details change, or by the
+  // parent withdrawing.
+  revokedAt     DateTime?
+  revokedReason String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // One live approval per minor per job.
+  @@unique([minorId, questId])
+  @@index([questId])
+  @@index([approvedById])
 }

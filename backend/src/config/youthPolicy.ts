@@ -18,10 +18,40 @@
 // lawfully run a power mower for an employer, a 16-year-old may.
 // Under-13s are excluded outright so COPPA never enters the picture.
 //
-// ── Why a parent owns the account ──
-// Follows the Fiverr model. The guardian consents, is contactable, and is
-// named on the record. This is stricter than the law strictly requires for
-// 13–17s, which is the point: the standard should exceed the minimum.
+// ── Why a parent owns the account, and approves every job ──
+// A minor never holds their own account. A parent or guardian holds it and
+// their under-18 household members work under it.
+//
+// One-time consent at signup is a checkbox. It does not tell a parent which
+// address their kid is standing at on Saturday morning. So approval is required
+// PER JOB — that job, that address, that day — and it is invalidated
+// automatically if the customer later changes the address or the time. A
+// consent record that silently carries over to a place the parent never agreed
+// to is consent theatre.
+//
+// ── On sex offender registry checks ──
+// TryHardly does NOT check anyone against a registry, and must not.
+// California Penal Code 290.46(j)(2)(H) makes it a PROHIBITED USE to apply
+// registry information to "benefits, privileges, or services provided by any
+// business establishment". Exposure is treble actual damages, attorney's fees,
+// exemplary damages, a civil penalty up to $25,000, and injunctive relief for a
+// "pattern or practice" of misuse — which is exactly what an automated
+// screening feature is. The Attorney General, any district attorney, any city
+// attorney, or any aggrieved person may bring it.
+//
+// The statute authorizes use "only to protect a person at risk", and a parent
+// checking to protect their own child fits that cleanly. So the platform shows
+// the parent the address and links them to the official state site, and records
+// only that they were shown it. The judgement stays with the responsible adult.
+// That is lawful, and it is better than a platform guessing.
+//
+// There is also no lawful technical route: neither meganslaw.ca.gov nor the
+// federal NSOPW publishes an API, and NSOPW's conditions of use expressly bar
+// automated searching.
+//
+// And we never claim to screen. Care.com paid a $1,000,000 California district
+// attorney settlement over registry-check claims it did not honour, plus an
+// $8,500,000 FTC settlement.
 //
 // ── Sources ──
 // California DLSE Child Labor Laws pamphlet:
@@ -172,3 +202,81 @@ export function canYouthBidOnCategory(category: string | null | undefined): Yout
 // 4. Does California's regulation of employment/referral agencies create a
 //    separate licensing obligation, distinct from child-labor law?
 // 5. Do standard liability policies exclude minor-worker exposure?
+
+
+// ─── Per-job approval ───────────────────────────────────────────────────────
+
+/**
+ * Fields whose change invalidates an existing parental approval.
+ *
+ * The parent approved a specific place at a specific time. Change either and
+ * the thing they agreed to no longer exists.
+ */
+export const APPROVAL_INVALIDATING_FIELDS = [
+  'address',
+  'scheduledFor',
+  'scheduleNote',
+] as const;
+
+export interface ApprovalSnapshot {
+  addressAtApproval: string;
+  scheduleAtApproval?: Date | null;
+  scheduleNoteAtApproval?: string | null;
+}
+
+export interface CurrentJobDetails {
+  address: string;
+  scheduledFor?: Date | null;
+  scheduleNote?: string | null;
+}
+
+function sameTime(a?: Date | null, b?: Date | null): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return a.getTime() === b.getTime();
+}
+
+function sameText(a?: string | null, b?: string | null): boolean {
+  return (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase();
+}
+
+/**
+ * Whether an approval still matches the job as it now stands.
+ *
+ * Deliberately strict. A near-match is not a match: "12 Oak St" and "12 Oak
+ * Street, round the back" may well be the same house, but the parent should
+ * re-approve rather than have the platform decide the difference is immaterial.
+ */
+export function isApprovalStillValid(
+  snapshot: ApprovalSnapshot,
+  current: CurrentJobDetails,
+): { valid: boolean; changed?: string } {
+  if (!sameText(snapshot.addressAtApproval, current.address)) {
+    return { valid: false, changed: 'address' };
+  }
+  if (!sameTime(snapshot.scheduleAtApproval, current.scheduledFor)) {
+    return { valid: false, changed: 'scheduledFor' };
+  }
+  if (!sameText(snapshot.scheduleNoteAtApproval, current.scheduleNote)) {
+    return { valid: false, changed: 'scheduleNote' };
+  }
+  return { valid: true };
+}
+
+/**
+ * The official California registry search, for a PARENT to use themselves.
+ *
+ * Exported as a constant so it is never templated into a server-side lookup by
+ * accident. Nothing in this codebase may fetch it: see the registry note at the
+ * top of this file.
+ */
+export const CA_REGISTRY_PARENT_URL = 'https://www.meganslaw.ca.gov/';
+
+/**
+ * Whether a job is inside platform hours for a young worker.
+ * Tighter than California's legal 5am-10pm for 16-17 year olds.
+ */
+export function isWithinYouthHours(when: Date): boolean {
+  const h = when.getHours();
+  return h >= YOUTH_EARLIEST_HOUR && h < YOUTH_LATEST_HOUR;
+}

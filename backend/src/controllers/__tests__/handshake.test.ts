@@ -14,6 +14,10 @@
 // flow regardless of which module a given function lives in.
 const mockDb = {
   quest: { findUnique: jest.fn(), update: jest.fn() },
+  // Household accounts: agreeing terms is gated on per-job parental approval.
+  user: { findUnique: jest.fn() },
+  householdMinor: { count: jest.fn(), findMany: jest.fn(), updateMany: jest.fn() },
+  minorJobApproval: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn() },
   handshake: {
     findFirst: jest.fn(),
     findUnique: jest.fn(),
@@ -67,6 +71,9 @@ const VALID = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // Default: an ordinary adult account, so existing cases are unaffected.
+  mockDb.user.findUnique.mockResolvedValue({ isHouseholdAccount: false });
+  mockDb.minorJobApproval.findMany.mockResolvedValue([]);
   mockPrisma.$transaction.mockImplementation(async (fn: any) =>
     fn({
       handshake: {
@@ -290,5 +297,121 @@ describe('honorHandshakeForQuest', () => {
   it('swallows errors so completion is never blocked', async () => {
     mockPrisma.handshake.findFirst.mockRejectedValue(new Error('db down'));
     await expect(honorHandshakeForQuest('q1')).resolves.toBe(false);
+  });
+});
+
+
+// ─── Household accounts: per-job parental approval ──────────────────────────
+//
+// A minor never holds their own account; a parent does, and their under-18
+// household members work under it. One-time consent at signup tells a parent
+// nothing about which address their kid is standing at on Saturday morning, so
+// approval is required per job and is checked at the moment terms are agreed —
+// the point the job becomes real.
+describe('agreeHandshake with a household account', () => {
+  const HS = {
+    id: 'h1',
+    questId: 'q1',
+    posterId: POSTER,
+    workerId: WORKER,
+    proposedById: POSTER,
+    status: 'PROPOSED',
+    location: '412 Oak Street, Redding',
+    scheduledFor: new Date('2026-08-15T10:00:00'),
+    scheduleNote: 'Saturday morning',
+    quest: { id: 'q1', title: 'Mow the back lawn' },
+  };
+
+  beforeEach(() => {
+    mockDb.handshake.findUnique.mockResolvedValue(HS);
+    mockDb.user.findUnique.mockResolvedValue({ isHouseholdAccount: true });
+  });
+
+  it('blocks agreement when no parent has approved this job', async () => {
+    mockDb.minorJobApproval.findFirst.mockResolvedValue(null);
+
+    const res = mockRes();
+    await agreeHandshake(req(WORKER, {}, { id: 'h1' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json.mock.calls[0][0].needsGuardianApproval).toBe(true);
+    expect(mockDb.handshake.update).not.toHaveBeenCalled();
+  });
+
+  it('blocks agreement when the address changed after approval', async () => {
+    // The whole point: an approval must never silently carry over to an address
+    // the parent never saw.
+    mockDb.minorJobApproval.findFirst.mockResolvedValue({
+      id: 'ap1',
+      addressAtApproval: '9 Pine Avenue, Redding',
+      scheduleAtApproval: HS.scheduledFor,
+      scheduleNoteAtApproval: HS.scheduleNote,
+      minor: { firstName: 'Sam', active: true },
+    });
+
+    const res = mockRes();
+    await agreeHandshake(req(WORKER, {}, { id: 'h1' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json.mock.calls[0][0].staleBecause).toBe('address');
+    expect(mockDb.handshake.update).not.toHaveBeenCalled();
+  });
+
+  it('blocks agreement when the schedule changed after approval', async () => {
+    mockDb.minorJobApproval.findFirst.mockResolvedValue({
+      id: 'ap1',
+      addressAtApproval: HS.location,
+      scheduleAtApproval: new Date('2026-08-15T19:00:00'),
+      scheduleNoteAtApproval: HS.scheduleNote,
+      minor: { firstName: 'Sam', active: true },
+    });
+
+    const res = mockRes();
+    await agreeHandshake(req(WORKER, {}, { id: 'h1' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json.mock.calls[0][0].staleBecause).toBe('scheduledFor');
+  });
+
+  it('blocks agreement when the approved minor is no longer active', async () => {
+    mockDb.minorJobApproval.findFirst.mockResolvedValue({
+      id: 'ap1',
+      addressAtApproval: HS.location,
+      scheduleAtApproval: HS.scheduledFor,
+      scheduleNoteAtApproval: HS.scheduleNote,
+      minor: { firstName: 'Sam', active: false },
+    });
+
+    const res = mockRes();
+    await agreeHandshake(req(WORKER, {}, { id: 'h1' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it('allows agreement when a matching approval is in place', async () => {
+    mockDb.minorJobApproval.findFirst.mockResolvedValue({
+      id: 'ap1',
+      addressAtApproval: HS.location,
+      scheduleAtApproval: HS.scheduledFor,
+      scheduleNoteAtApproval: HS.scheduleNote,
+      minor: { firstName: 'Sam', active: true },
+    });
+    mockDb.handshake.update.mockResolvedValue({ id: 'h1', status: 'AGREED' });
+
+    const res = mockRes();
+    await agreeHandshake(req(WORKER, {}, { id: 'h1' }), res);
+
+    expect(mockDb.handshake.update.mock.calls[0][0].data.status).toBe('AGREED');
+  });
+
+  it('does not gate ordinary adult accounts', async () => {
+    mockDb.user.findUnique.mockResolvedValue({ isHouseholdAccount: false });
+    mockDb.handshake.update.mockResolvedValue({ id: 'h1', status: 'AGREED' });
+
+    const res = mockRes();
+    await agreeHandshake(req(WORKER, {}, { id: 'h1' }), res);
+
+    expect(mockDb.minorJobApproval.findFirst).not.toHaveBeenCalled();
+    expect(mockDb.handshake.update).toHaveBeenCalled();
   });
 });

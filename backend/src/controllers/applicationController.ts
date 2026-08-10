@@ -189,15 +189,16 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    // Young workers (16-17) may only bid on outdoor, street-visible work.
+    // Household accounts, where an under-18 does the work, may only bid on
+    // outdoor, street-visible work.
     // Enforced server-side rather than by hiding buttons: the whole point of
     // the restriction is that it holds even when someone goes around the UI.
     // Fails closed on unknown categories - see config/youthPolicy.ts.
     const bidder = await prisma.user.findUnique({
       where: { id: req.user!.id },
-      select: { isYouthWorker: true },
+      select: { isHouseholdAccount: true },
     });
-    if ((bidder as any)?.isYouthWorker) {
+    if ((bidder as any)?.isHouseholdAccount) {
       const category =
         (quest as any).category ??
         (Array.isArray(quest.tags) ? quest.tags[0] : null);
