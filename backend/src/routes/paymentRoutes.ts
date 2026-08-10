@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
 import { rateLimit } from '../middleware/rateLimit';
+import { platformCheckoutBreaker } from '../middleware/paymentVelocity';
 import {
   createConnectedAccount,
   getOnboardingLink,
@@ -96,7 +97,20 @@ router.get('/identity/status', authenticate, getIdentityStatus);
 // Create a Checkout Session for a job (authorize-only, manual capture): the
 // client's card is authorized — not charged — and the 12% fee + worker payout
 // route on capture to the worker's connected account (quest giver only).
-router.post('/quest/:questId/checkout', authenticate, paymentInitiationLimiter, perUserCheckoutLimiter, createQuestCheckout);
+// Layer 3: platform-wide velocity circuit breaker. The two limiters above are
+// per-IP and per-user; neither sees the platform as a whole, so a handful of
+// coordinated accounts still adds up. This caps TOTAL checkout initiations
+// across everyone and alerts the ops inbox the first time it trips in a
+// window. See middleware/paymentVelocity.ts for the arithmetic against the
+// 2026-08-04 incident.
+router.post(
+  '/quest/:questId/checkout',
+  authenticate,
+  paymentInitiationLimiter,
+  perUserCheckoutLimiter,
+  platformCheckoutBreaker,
+  createQuestCheckout,
+);
 
 // Capture the authorized payment for a completed task (quest giver or admin).
 // The primary trigger is completion confirmation; this is an explicit fallback.
