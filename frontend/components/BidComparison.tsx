@@ -48,16 +48,16 @@ function money(n?: number | string | null): string | null {
 }
 
 function statusBadge(status: Application['status']): string {
-  if (status === 'ACCEPTED') return 'bg-green-500/20 text-green-400';
-  if (status === 'REJECTED') return 'bg-gray-700 text-gray-400';
-  return 'bg-yellow-500/20 text-yellow-400';
+  if (status === 'ACCEPTED') return 'bg-success/20 text-success';
+  if (status === 'REJECTED') return 'bg-raised-2 text-muted';
+  return 'bg-warning/20 text-warning';
 }
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-900/60 rounded-lg px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="text-sm font-medium text-gray-100">{value}</div>
+    <div className="bg-surface rounded-lg px-3 py-2">
+      <div className="text-[12px] uppercase tracking-wide text-subtle">{label}</div>
+      <div className="text-sm font-medium text-strong">{value}</div>
     </div>
   );
 }
@@ -84,12 +84,12 @@ export default function BidComparison({
 
   if (applications.length === 0) {
     return (
-      <div className="text-center py-10 border border-dashed border-gray-800 rounded-lg bg-gray-950/30">
-        <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gray-800/80 mb-3">
-          <MessageSquare size={20} className="text-gray-500" />
+      <div className="text-center py-10 border border-dashed border-line rounded-lg bg-canvas">
+        <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-raised mb-3">
+          <MessageSquare size={20} className="text-subtle" />
         </div>
-        <p className="text-sm text-gray-300 font-medium">No bids yet</p>
-        <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto leading-relaxed">
+        <p className="text-sm text-body font-medium">No bids yet</p>
+        <p className="text-xs text-subtle mt-1 max-w-sm mx-auto leading-relaxed">
           Workers can submit a full estimate with materials, labor, and timeline. Share your job to
           attract qualified workers.
         </p>
@@ -101,17 +101,17 @@ export default function BidComparison({
     <div className="space-y-3">
       {/* Summary bar — at-a-glance price range across active bids */}
       {activePrices.length > 1 && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 bg-gray-950/40 px-4 py-2.5">
-          <span className="text-xs text-gray-400">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-canvas px-4 py-2.5">
+          <span className="text-xs text-muted">
             {activePrices.length} priced {activePrices.length === 1 ? 'bid' : 'bids'}
           </span>
-          <span className="text-xs text-gray-300">
+          <span className="text-xs text-body">
             Range{' '}
-            <span className="font-semibold text-amber-400">{money(lowestBid)}</span>
+            <span className="font-semibold text-accent-text">{money(lowestBid)}</span>
             {highestBid !== lowestBid && (
               <>
                 {' – '}
-                <span className="font-semibold text-amber-400">{money(highestBid)}</span>
+                <span className="font-semibold text-accent-text">{money(highestBid)}</span>
               </>
             )}
           </span>
@@ -134,10 +134,10 @@ export default function BidComparison({
             key={app.id}
             className={`p-4 rounded-lg border transition-colors ${
               app.status === 'ACCEPTED'
-                ? 'border-green-500/40 bg-green-500/5'
+                ? 'border-success/40 bg-success/5'
                 : isSetAside
-                ? 'border-gray-800 bg-gray-800/30 opacity-70'
-                : 'border-gray-800 bg-gray-800/60 hover:border-gray-700'
+                ? 'border-line bg-raised opacity-70'
+                : 'border-line bg-raised hover:border-line-strong'
             }`}
           >
             {/* Header: worker + total bid */}
@@ -146,26 +146,26 @@ export default function BidComparison({
                 href={`/profile/${app.adventurer?.username}`}
                 className="flex items-center gap-3 group min-w-0"
               >
-                <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold text-sm shrink-0">
+                <div className="w-10 h-10 bg-accent/20 border border-accent/40 rounded-full flex items-center justify-center text-accent-text font-bold text-sm shrink-0">
                   {app.adventurer?.username?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-white font-medium group-hover:text-amber-400 truncate">
+                  <p className="text-strong font-medium group-hover:text-accent-text truncate">
                     {app.adventurer?.username}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-subtle truncate">
                     Lv.{app.adventurer?.level} • {guildPathLabel(app.adventurer?.adventurerClass)}
                   </p>
                 </div>
               </Link>
               <div className="text-right shrink-0">
                 {money(total) ? (
-                  <div className="text-xl font-bold text-amber-400">{money(total)}</div>
+                  <div className="text-xl font-bold text-accent-text">{money(total)}</div>
                 ) : (
-                  <div className="text-sm text-gray-500">No price named</div>
+                  <div className="text-sm text-subtle">No price named</div>
                 )}
                 <span
-                  className={`inline-block mt-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${statusBadge(
+                  className={`inline-block mt-1 text-[12px] font-medium px-2 py-0.5 rounded-full ${statusBadge(
                     app.status
                   )}`}
                 >
@@ -178,18 +178,18 @@ export default function BidComparison({
             {(isLowest || walkthrough || app.legalQualificationAck) && (
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {isLowest && app.status !== 'ACCEPTED' && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
+                  <span className="text-[12px] px-2 py-0.5 rounded-full border border-success/40 bg-success/10 text-success">
                     Lowest bid
                   </span>
                 )}
                 {walkthrough && (
-                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/10 text-sky-300">
+                  <span className="inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full border border-info/40 bg-info/10 text-info">
                     {app.walkthroughType === 'REMOTE' ? <Video size={11} /> : <MapPin size={11} />}
                     {walkthrough}
                   </span>
                 )}
                 {app.legalQualificationAck && (
-                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">
+                  <span className="inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-accent-text-hover">
                     <ShieldCheck size={11} />
                     Qualification acknowledged
                   </span>
@@ -223,22 +223,22 @@ export default function BidComparison({
                 onClick={() =>
                   setExpanded((prev) => ({ ...prev, [app.id]: !prev[app.id] }))
                 }
-                className="mt-3 text-xs font-medium text-amber-400 hover:text-amber-300"
+                className="mt-3 text-xs font-medium text-accent-text hover:text-accent-text-hover"
               >
                 {isOpen ? 'Hide details' : 'View full bid'}
               </button>
             )}
 
             {isOpen && (
-              <div className="mt-3 space-y-3 border-t border-gray-700/60 pt-3">
+              <div className="mt-3 space-y-3 border-t border-line-strong/60 pt-3">
                 {app.materialItems && app.materialItems.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-1">
+                    <div className="text-xs font-semibold text-body mb-1">
                       Itemized materials
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-xs text-gray-400">
-                        <thead className="text-gray-500">
+                      <table className="w-full text-xs text-muted">
+                        <thead className="text-subtle">
                           <tr className="text-left">
                             <th className="py-1 pr-2">Material</th>
                             <th className="py-1 pr-2">Qty</th>
@@ -249,8 +249,8 @@ export default function BidComparison({
                         </thead>
                         <tbody>
                           {app.materialItems.map((m, i) => (
-                            <tr key={i} className="border-t border-gray-800">
-                              <td className="py-1 pr-2 text-gray-200">{m.name}</td>
+                            <tr key={i} className="border-t border-line">
+                              <td className="py-1 pr-2 text-body">{m.name}</td>
                               <td className="py-1 pr-2">{m.quantity ?? '—'}</td>
                               <td className="py-1 pr-2">{m.unit ?? '—'}</td>
                               <td className="py-1 pr-2">{money(m.estimatedCost) ?? '—'}</td>
@@ -264,34 +264,34 @@ export default function BidComparison({
                 )}
                 {app.toolsNeeded && (
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-0.5">
+                    <div className="text-xs font-semibold text-body mb-0.5">
                       Tools / equipment
                     </div>
-                    <p className="text-xs text-gray-400 whitespace-pre-line">{app.toolsNeeded}</p>
+                    <p className="text-xs text-muted whitespace-pre-line">{app.toolsNeeded}</p>
                   </div>
                 )}
                 {app.proposedWalkthroughTimes && (
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-0.5">
+                    <div className="text-xs font-semibold text-body mb-0.5">
                       Proposed walkthrough times
                     </div>
-                    <p className="text-xs text-gray-400 whitespace-pre-line">
+                    <p className="text-xs text-muted whitespace-pre-line">
                       {app.proposedWalkthroughTimes}
                     </p>
                   </div>
                 )}
                 {app.bidNotes && (
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-0.5">
+                    <div className="text-xs font-semibold text-body mb-0.5">
                       Notes to client
                     </div>
-                    <p className="text-xs text-gray-400 whitespace-pre-line">{app.bidNotes}</p>
+                    <p className="text-xs text-muted whitespace-pre-line">{app.bidNotes}</p>
                   </div>
                 )}
                 {app.coverLetter && (
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-0.5">Cover note</div>
-                    <p className="text-xs text-gray-400 whitespace-pre-line">{app.coverLetter}</p>
+                    <div className="text-xs font-semibold text-body mb-0.5">Cover note</div>
+                    <p className="text-xs text-muted whitespace-pre-line">{app.coverLetter}</p>
                   </div>
                 )}
               </div>
@@ -304,7 +304,7 @@ export default function BidComparison({
                   <button
                     onClick={() => onAccept(app.id)}
                     disabled={actioningId === app.id}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-green-500 hover:bg-green-400 text-gray-900 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-success hover:bg-success text-on-status disabled:opacity-50 transition-colors"
                   >
                     {actioningId === app.id ? (
                       'Accepting…'
@@ -318,7 +318,7 @@ export default function BidComparison({
                   <button
                     onClick={() => onReject(app.id)}
                     disabled={actioningId === app.id}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-gray-600 hover:text-gray-100 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-line-strong text-body hover:border-line-strong hover:text-strong disabled:opacity-50 transition-colors"
                   >
                     Set aside
                   </button>
@@ -327,7 +327,7 @@ export default function BidComparison({
               {app.adventurerId && (
                 <Link
                   href={`/messages/${questId}/${app.adventurerId}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-line-strong text-body hover:border-accent hover:text-accent-text transition-colors"
                 >
                   <MessageSquare size={14} />
                   Message

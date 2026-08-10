@@ -36,13 +36,13 @@ const initialState: FormState = {
 };
 
 const inputClass =
-  'w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-amber-500 focus:outline-none';
+  'w-full bg-raised border border-line-strong rounded-lg px-4 py-3 text-strong placeholder-subtle focus:border-accent focus:outline-none';
 
 function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="block text-gray-300 mb-1.5 text-sm font-medium">
+    <label className="block text-body mb-1.5 text-sm font-medium">
       {children}
-      {required && <span className="text-rose-500 ml-1">*</span>}
+      {required && <span className="text-danger ml-1">*</span>}
     </label>
   );
 }
@@ -106,27 +106,27 @@ export default function WorkAlertsForm() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 py-16">
+      <div className="min-h-screen bg-canvas flex items-center justify-center px-4 py-16">
         <div className="max-w-md text-center">
-          <CheckCircle size={48} className="text-green-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-3">You&apos;re on the list</h1>
-          <p className="text-gray-400 leading-relaxed mb-6">
+          <CheckCircle size={48} className="text-success mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-strong mb-3">You&apos;re on the list</h1>
+          <p className="text-muted leading-relaxed mb-6">
             Thanks{data.name ? `, ${data.name.split(' ')[0]}` : ''}! We&apos;ll email{' '}
-            <span className="text-gray-200">{data.email}</span> when local jobs that match come up.
+            <span className="text-body">{data.email}</span> when local jobs that match come up.
           </p>
-          <p className="text-sm text-gray-500 mb-8">
+          <p className="text-sm text-subtle mb-8">
             Want to start now? Live jobs are on the job board — applying takes an account.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/jobs"
-              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-6 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent text-on-accent font-semibold px-6 py-3 rounded-lg transition-colors"
             >
               Browse the job board <ArrowRight size={16} />
             </Link>
             <Link
               href="/auth/register"
-              className="inline-flex items-center justify-center gap-2 border border-gray-700 text-gray-200 hover:border-amber-500 px-6 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 border border-line-strong text-body hover:border-accent px-6 py-3 rounded-lg transition-colors"
             >
               Create an account
             </Link>
@@ -137,11 +137,11 @@ export default function WorkAlertsForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 py-12 px-4">
+    <div className="min-h-screen bg-canvas py-12 px-4">
       <div className="max-w-xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Get local work alerts</h1>
-          <p className="text-gray-400">
+          <h1 className="text-3xl font-bold text-strong mb-2">Get local work alerts</h1>
+          <p className="text-muted">
             Tell us what you do and where. We&apos;ll email you when matching jobs come up — no account
             required.
           </p>
@@ -208,8 +208,8 @@ export default function WorkAlertsForm() {
                     onClick={() => toggleSkill(c.slug)}
                     className={`text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
                       active
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                        : 'border-gray-700 text-gray-300 hover:border-gray-500'
+                        ? 'border-accent bg-accent/10 text-accent-text-hover'
+                        : 'border-line-strong text-body hover:border-line-strong'
                     }`}
                   >
                     {c.label}
@@ -232,7 +232,7 @@ export default function WorkAlertsForm() {
                 placeholder="Min $"
                 aria-label="Minimum pay"
               />
-              <span className="text-gray-600 text-sm">to</span>
+              <span className="text-subtle text-sm">to</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -244,7 +244,7 @@ export default function WorkAlertsForm() {
                 aria-label="Maximum pay"
               />
             </div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-subtle mt-1">
               We&apos;ll skip alerts for jobs that pay below your minimum.
             </p>
           </div>
@@ -260,61 +260,61 @@ export default function WorkAlertsForm() {
             />
           </div>
 
-          <label className="flex items-center gap-3 text-sm text-gray-300">
+          <label className="flex items-center gap-3 text-sm text-body">
             <input
               type="checkbox"
               checked={data.hasTools}
               onChange={(e) => update('hasTools', e.target.checked)}
-              className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+              className="h-4 w-4 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
             />
             I have my own tools / truck
           </label>
 
-          <fieldset className="border border-gray-800 rounded-lg p-4 space-y-3">
-            <legend className="px-1 text-sm font-medium text-gray-300">How should we reach you?</legend>
+          <fieldset className="border border-line rounded-lg p-4 space-y-3">
+            <legend className="px-1 text-sm font-medium text-body">How should we reach you?</legend>
 
-            <label className="flex items-start gap-3 text-sm text-gray-300">
+            <label className="flex items-start gap-3 text-sm text-body">
               <input
                 type="checkbox"
                 checked={data.emailAlertsOptIn}
                 onChange={(e) => update('emailAlertsOptIn', e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+                className="mt-0.5 h-4 w-4 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
               />
               <span>
                 Email me when matching jobs come up
-                <span className="block text-xs text-gray-600">Recommended — this is how alerts are sent today.</span>
+                <span className="block text-xs text-subtle">Recommended — this is how alerts are sent today.</span>
               </span>
             </label>
 
-            <label className="flex items-start gap-3 text-sm text-gray-300">
+            <label className="flex items-start gap-3 text-sm text-body">
               <input
                 type="checkbox"
                 checked={data.smsAlertsOptIn}
                 onChange={(e) => update('smsAlertsOptIn', e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+                className="mt-0.5 h-4 w-4 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
               />
               <span>
                 Text me job alerts
-                <span className="block text-xs text-gray-600">
+                <span className="block text-xs text-subtle">
                   Add your phone above and we&apos;ll include you when text alerts go live. Email alerts start right away.
                 </span>
               </span>
             </label>
 
             {data.smsAlertsOptIn && (
-              <p className="text-[11px] leading-relaxed text-gray-600 border-t border-gray-800 pt-3">
+              <p className="text-[12px] leading-relaxed text-subtle border-t border-line pt-3">
                 By opting in you agree to receive recurring automated job-alert texts from TryHardly at
                 the number you provide. Consent is not a condition of getting work. Message &amp; data
-                rates may apply. Reply <span className="text-gray-400 font-medium">STOP</span> to cancel
-                or <span className="text-gray-400 font-medium">HELP</span> for help. See our{' '}
-                <Link href="/terms" className="text-amber-400 hover:text-amber-300">Terms</Link> and{' '}
-                <Link href="/privacy" className="text-amber-400 hover:text-amber-300">Privacy Policy</Link>.
+                rates may apply. Reply <span className="text-muted font-medium">STOP</span> to cancel
+                or <span className="text-muted font-medium">HELP</span> for help. See our{' '}
+                <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">Terms</Link> and{' '}
+                <Link href="/privacy" className="text-accent-text hover:text-accent-text-hover">Privacy Policy</Link>.
               </p>
             )}
           </fieldset>
 
           {error && (
-            <div className="bg-red-900/30 border border-red-700 rounded-lg p-3 text-red-300 text-sm">
+            <div className="bg-danger/30 border border-danger rounded-lg p-3 text-danger text-sm">
               {error}
             </div>
           )}
@@ -322,7 +322,7 @@ export default function WorkAlertsForm() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 font-semibold py-3 rounded-lg transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed text-on-accent font-semibold py-3 rounded-lg transition-colors"
           >
             {submitting ? (
               <>
@@ -335,16 +335,16 @@ export default function WorkAlertsForm() {
             )}
           </button>
 
-          <p className="text-center text-xs text-gray-600">
+          <p className="text-center text-xs text-subtle">
             By signing up you agree to our{' '}
-            <Link href="/terms" className="text-amber-400 hover:text-amber-300">Terms</Link>{' '}
+            <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">Terms</Link>{' '}
             and{' '}
-            <Link href="/privacy" className="text-amber-400 hover:text-amber-300">Privacy Policy</Link>.
+            <Link href="/privacy" className="text-accent-text hover:text-accent-text-hover">Privacy Policy</Link>.
           </p>
 
-          <p className="text-center text-xs text-gray-600">
+          <p className="text-center text-xs text-subtle">
             Want to apply to jobs right now?{' '}
-            <Link href="/jobs" className="text-amber-400 hover:text-amber-300">
+            <Link href="/jobs" className="text-accent-text hover:text-accent-text-hover">
               Browse the live job board
             </Link>
             .

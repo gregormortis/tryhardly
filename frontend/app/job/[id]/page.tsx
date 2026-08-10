@@ -168,8 +168,8 @@ export default function QuestDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading job details…</p>
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-subtle">Loading job details…</p>
         </div>
       </div>
     );
@@ -179,9 +179,9 @@ export default function QuestDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-100 mb-2">Job not found</h2>
-          <p className="text-gray-400 mb-6">This job is no longer listed.</p>
-          <Link href="/jobs" className="text-amber-400 hover:text-amber-300 font-medium">
+          <h2 className="text-2xl font-bold text-strong mb-2">Job not found</h2>
+          <p className="text-muted mb-6">This job is no longer listed.</p>
+          <Link href="/jobs" className="text-accent-text hover:text-accent-text-hover font-medium">
             ← Back to all jobs
           </Link>
         </div>
@@ -231,7 +231,7 @@ export default function QuestDetailPage() {
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Back link */}
-        <Link href="/jobs" className="text-gray-400 hover:text-amber-400 text-sm transition-colors flex items-center gap-2 mb-8">
+        <Link href="/jobs" className="text-muted hover:text-accent-text text-sm transition-colors flex items-center gap-2 mb-8">
           <span>←</span> Back to all jobs
         </Link>
 
@@ -239,30 +239,30 @@ export default function QuestDetailPage() {
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <div className="bg-surface border border-line rounded-xl p-6">
               {/* The gamified worker rank (NOVICE…LEGENDARY) used to headline this
                   card. It is derived from the budget, not from the poster or the
                   work, so it told a visitor nothing true about the job. */}
               <div className="flex items-start justify-between gap-3 mb-4">
-                <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">{jobCategory.label}</span>
+                <span className="text-xs text-muted bg-raised px-2 py-1 rounded">{jobCategory.label}</span>
                 {!isOwner && <ReportButton targetType="QUEST" targetId={quest.id} />}
               </div>
-              <h1 className="text-3xl font-bold text-white mb-4">{quest.title}</h1>
+              <h1 className="text-3xl font-bold text-strong mb-4">{quest.title}</h1>
               {quest.isRecurring && (
                 <div className="mb-4 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent-text-hover">
                     🔁 {recurrenceSummary(quest) || 'Recurring'}
                   </span>
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
                 {poster && (
-                  <span>Posted by <span className="text-amber-400">{poster.username}</span></span>
+                  <span>Posted by <span className="text-accent-text">{poster.username}</span></span>
                 )}
                 <span>•</span>
                 <span>{bidCountLabel(quest._count?.applications ?? 0)}</span>
                 <span>•</span>
-                <span className={daysLeft !== null && daysLeft <= 2 ? 'text-red-400' : 'text-gray-400'}>
+                <span className={daysLeft !== null && daysLeft <= 2 ? 'text-danger' : 'text-muted'}>
                   {timingLabel(quest.deadline)}
                 </span>
               </div>
@@ -281,17 +281,17 @@ export default function QuestDetailPage() {
             {showAssignedWorkerNextSteps && <AssignedWorkerPanel quest={quest} />}
 
             {/* Description */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">What the job involves</h2>
-              <div className="text-gray-300 leading-relaxed whitespace-pre-line">{quest.description}</div>
+            <div className="bg-surface border border-line rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-strong mb-4">What the job involves</h2>
+              <div className="text-body leading-relaxed whitespace-pre-line">{quest.description}</div>
             </div>
 
             {/* Suggested trade standard / completion checklist */}
             <TradeStandardChecklist standard={tradeStandard} defaultCollapsed />
 
             {/* Photos */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Photos</h2>
+            <div className="bg-surface border border-line rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-strong mb-4">Photos</h2>
               {photoUrls.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {photoUrls.map((url) => (
@@ -300,27 +300,27 @@ export default function QuestDetailPage() {
                       key={url}
                       src={url}
                       alt="Job photo"
-                      className="w-full max-h-64 object-cover rounded-lg border border-gray-800"
+                      className="w-full max-h-64 object-cover rounded-lg border border-line"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-gray-700 bg-gray-800/30 px-4 py-8 text-center">
+                <div className="rounded-lg border border-dashed border-line-strong bg-raised px-4 py-8 text-center">
                   <div className="text-3xl mb-2">🖼️</div>
-                  <p className="text-sm text-gray-400">No photos yet.</p>
-                  <p className="text-xs text-gray-500 mt-1">Photos can be added when posting a job.</p>
+                  <p className="text-sm text-muted">No photos yet.</p>
+                  <p className="text-xs text-subtle mt-1">Photos can be added when posting a job.</p>
                 </div>
               )}
             </div>
 
             {/* Tags */}
             {skillTags.length > 0 && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Job details</h2>
+              <div className="bg-surface border border-line rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-strong mb-4">Job details</h2>
                 <div className="flex flex-wrap gap-2">
                   {skillTags.map((tag: string) => (
-                    <span key={tag} className="px-3 py-1 bg-gray-800 text-amber-400 text-sm rounded-full border border-gray-700">
+                    <span key={tag} className="px-3 py-1 bg-raised text-accent-text text-sm rounded-full border border-line-strong">
                       {tag}
                     </span>
                   ))}
@@ -362,11 +362,11 @@ export default function QuestDetailPage() {
 
             {/* Bids (visible to quest owner) — full breakdown + comparison. */}
             {isOwner && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-1">
+              <div className="bg-surface border border-line rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-strong mb-1">
                   Bids ({applications.length})
                 </h2>
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-xs text-subtle mb-4">
                   Compare bids and accept one. Accepting a bid assigns that worker and sets the
                   agreed amount — no payment is arranged until you choose.
                 </p>
@@ -384,38 +384,38 @@ export default function QuestDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Budget / quote card */}
-            <div className="bg-gray-900 border border-amber-500/30 rounded-xl p-6">
+            <div className="bg-surface border border-accent/30 rounded-xl p-6">
               <div className="text-center mb-6">
                 {isQuoteMode ? (
                   <>
-                    <div className="text-2xl font-bold text-amber-400">Open to bids</div>
-                    <div className="text-gray-500 text-sm mt-1">
+                    <div className="text-2xl font-bold text-accent-text">Open to bids</div>
+                    <div className="text-subtle text-sm mt-1">
                       Quote needed — workers set the price
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="text-4xl font-bold text-amber-400">
+                    <div className="text-4xl font-bold text-accent-text">
                       ${quest.reward?.toLocaleString()}
                     </div>
-                    <div className="text-gray-500 text-sm mt-1">Client budget</div>
-                    <div className="text-gray-600 text-xs mt-1">Workers can bid with their own estimate</div>
+                    <div className="text-subtle text-sm mt-1">Client budget</div>
+                    <div className="text-subtle text-xs mt-1">Workers can bid with their own estimate</div>
                   </>
                 )}
               </div>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm">
+                <div className="mb-4 p-3 bg-danger/30 border border-danger rounded-lg text-danger text-sm">
                   {error}
                 </div>
               )}
 
               {isOwner ? (
-                <div className="text-center p-3 bg-blue-900/30 border border-blue-700 rounded-lg text-blue-400 text-sm">
+                <div className="text-center p-3 bg-info/30 border border-info rounded-lg text-info text-sm">
                   This is your job
                 </div>
               ) : applied ? (
-                <div className="text-center p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-400">
+                <div className="text-center p-3 bg-success/30 border border-success rounded-lg text-success">
                   ✓ Bid submitted! The client will review it.
                 </div>
               ) : !user ? (
@@ -424,11 +424,11 @@ export default function QuestDetailPage() {
                     onClick={() =>
                       router.push(`/auth/login?redirect=${encodeURIComponent(`/job/${quest.id}`)}`)
                     }
-                    className="w-full bg-amber-500 hover:bg-amber-400 text-gray-900 font-black py-3 rounded-lg transition-colors text-lg"
+                    className="w-full bg-accent hover:bg-accent text-on-accent font-black py-3 rounded-lg transition-colors text-lg"
                   >
                     Sign in to bid
                   </button>
-                  <p className="text-xs text-gray-400 leading-relaxed">
+                  <p className="text-xs text-muted leading-relaxed">
                     Creating an account is free. Before you submit a bid you&apos;ll connect a Stripe
                     Connect payout account — that&apos;s how TryHardly sends your money after the
                     poster confirms the completed work. It takes a few minutes and you only do it
@@ -436,20 +436,20 @@ export default function QuestDetailPage() {
                   </p>
                 </div>
               ) : isAssignedWorker ? (
-                <div className="text-center p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-400 text-sm">
+                <div className="text-center p-3 bg-success/30 border border-success rounded-lg text-success text-sm">
                   This job is yours — you&apos;re the assigned worker.
                 </div>
               ) : quest.status !== 'OPEN' ? (
-                <div className="text-center p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 text-sm">
+                <div className="text-center p-3 bg-raised border border-line-strong rounded-lg text-muted text-sm">
                   This job is no longer open for bids.
                 </div>
               ) : (
                 <>
                   {/* Set expectations before the form: a bid is a proposal, the
                       poster chooses, and nothing is charged at this step. */}
-                  <div className="mb-4 rounded-lg border border-gray-800 bg-gray-800/40 p-3">
-                    <p className="text-xs font-semibold text-gray-300">How bidding works</p>
-                    <ol className="mt-1.5 space-y-1 text-xs text-gray-400 leading-relaxed list-decimal list-inside">
+                  <div className="mb-4 rounded-lg border border-line bg-raised p-3">
+                    <p className="text-xs font-semibold text-body">How bidding works</p>
+                    <ol className="mt-1.5 space-y-1 text-xs text-muted leading-relaxed list-decimal list-inside">
                       <li>Send a detailed bid — your price, materials, hours, and timeline.</li>
                       <li>The poster compares the bids they receive and picks the one they want.</li>
                       <li>
@@ -469,33 +469,33 @@ export default function QuestDetailPage() {
                 </>
               )}
 
-              <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
+              <div className="mt-4 pt-4 border-t border-line space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Status</span>
-                  <span className={quest.status === 'OPEN' ? 'text-green-400' : 'text-gray-400'}>
+                  <span className="text-subtle">Status</span>
+                  <span className={quest.status === 'OPEN' ? 'text-success' : 'text-muted'}>
                     {quest.status?.replace('_', ' ')}
                   </span>
                 </div>
                 {quest.deadline && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Deadline</span>
-                    <span className="text-gray-300">{new Date(quest.deadline).toLocaleDateString()}</span>
+                    <span className="text-subtle">Deadline</span>
+                    <span className="text-body">{new Date(quest.deadline).toLocaleDateString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Posted</span>
-                  <span className="text-gray-300">{new Date(quest.createdAt).toLocaleDateString()}</span>
+                  <span className="text-subtle">Posted</span>
+                  <span className="text-body">{new Date(quest.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
 
             {/* Trust cues — same promise a worker sees on the board, restated at
                 the point they decide whether to bid. */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            <div className="bg-surface border border-line rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">
                 How you get paid safely
               </h3>
-              <ul className="space-y-2.5 text-xs text-gray-400 leading-relaxed">
+              <ul className="space-y-2.5 text-xs text-muted leading-relaxed">
                 <li>Payments are processed through Stripe — never cash off the platform.</li>
                 <li>
                   The poster confirms the completed work, then the charge is captured and your
@@ -510,28 +510,28 @@ export default function QuestDetailPage() {
 
             {/* Recurring booking management (owner only) */}
             {isOwner && quest.isRecurring && (
-              <div className="bg-gray-900 border border-amber-500/30 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <div className="bg-surface border border-accent/30 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-accent-text-hover uppercase tracking-wider mb-2 flex items-center gap-2">
                   🔁 Recurring job
                 </h3>
-                <p className="text-sm text-gray-400 mb-1">{recurrenceSummary(quest)}</p>
+                <p className="text-sm text-muted mb-1">{recurrenceSummary(quest)}</p>
                 {quest.nextOccurrenceAt ? (
-                  <p className="text-xs text-gray-500 mb-4">
+                  <p className="text-xs text-subtle mb-4">
                     Suggested next visit: {new Date(quest.nextOccurrenceAt).toLocaleDateString()}
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-500 mb-4">
+                  <p className="text-xs text-subtle mb-4">
                     This series has reached its end date.
                   </p>
                 )}
                 <button
                   onClick={handleGenerateOccurrence}
                   disabled={generatingOccurrence}
-                  className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-900 font-semibold py-2.5 rounded-lg transition-colors text-sm"
+                  className="w-full bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-semibold py-2.5 rounded-lg transition-colors text-sm"
                 >
                   {generatingOccurrence ? 'Posting…' : 'Post next visit'}
                 </button>
-                <p className="text-[11px] text-gray-600 mt-3 leading-relaxed">
+                <p className="text-[12px] text-subtle mt-3 leading-relaxed">
                   Posts a fresh copy of this job to the board. You confirm and pay for each visit
                   on completion — nothing is charged in advance.
                 </p>
@@ -542,10 +542,10 @@ export default function QuestDetailPage() {
                 shown here was a gamification number that reads as a credential on
                 a public job page. Real reputation lives on the linked profile. */}
             {poster && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Posted by</h3>
+              <div className="bg-surface border border-line rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-4">Posted by</h3>
                 <Link href={`/profile/${poster.username}`} className="flex items-center gap-3 group">
-                  <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center text-amber-400 font-bold">
+                  <div className="w-10 h-10 bg-accent/20 border border-accent/40 rounded-full flex items-center justify-center text-accent-text font-bold">
                     {poster.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={poster.avatarUrl} alt={poster.username} className="w-full h-full rounded-full object-cover" />
@@ -554,8 +554,8 @@ export default function QuestDetailPage() {
                     )}
                   </div>
                   <div>
-                    <div className="text-white font-medium group-hover:text-amber-400">{poster.username}</div>
-                    <div className="text-gray-500 text-xs">View profile</div>
+                    <div className="text-strong font-medium group-hover:text-accent-text">{poster.username}</div>
+                    <div className="text-subtle text-xs">View profile</div>
                   </div>
                 </Link>
 
@@ -563,7 +563,7 @@ export default function QuestDetailPage() {
                 {user && quest.assignedAdventurerId === user.id && (
                   <Link
                     href={`/messages/${quest.id}/${poster.id}`}
-                    className="mt-4 block text-center px-3 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                    className="mt-4 block text-center px-3 py-2 text-sm font-medium rounded-lg border border-line-strong text-body hover:border-accent hover:text-accent-text"
                   >
                     Message the job poster
                   </Link>

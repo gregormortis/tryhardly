@@ -27,11 +27,11 @@ export default function CreateGuildPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
-          <p className="text-gray-400 mb-6">You need an account to start a guild.</p>
-          <Link href="/auth/login" className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-6 py-3 rounded-lg">
+          <h2 className="text-2xl font-bold text-strong mb-2">Login Required</h2>
+          <p className="text-muted mb-6">You need an account to start a guild.</p>
+          <Link href="/auth/login" className="bg-accent hover:bg-accent text-on-accent font-semibold px-6 py-3 rounded-lg">
             Login
           </Link>
         </div>
@@ -59,43 +59,43 @@ export default function CreateGuildPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 py-12 px-4">
+    <div className="min-h-screen bg-canvas py-12 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/guilds" className="text-amber-400 hover:text-amber-300 text-sm flex items-center gap-1 mb-4">
+          <Link href="/guilds" className="text-accent-text hover:text-accent-text-hover text-sm flex items-center gap-1 mb-4">
             ← Back to all guilds
           </Link>
-          <h1 className="text-3xl font-bold text-white">Start a guild</h1>
-          <p className="text-gray-400 mt-1">Bring workers together to share standards, mentor each other, and take on local jobs as a team</p>
+          <h1 className="text-3xl font-bold text-strong">Start a guild</h1>
+          <p className="text-muted mt-1">Bring workers together to share standards, mentor each other, and take on local jobs as a team</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-900/30 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg">
+            <div className="bg-danger/30 border border-danger/30 text-danger px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
           {/* Guild name */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-white">Identity</h2>
+          <div className="bg-surface border border-line rounded-xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-strong">Identity</h2>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Guild name *</label>
+              <label className="block text-sm font-medium text-body mb-1">Guild name *</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 placeholder="North Side Trades"
                 maxLength={50}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-raised border border-line-strong rounded-lg px-4 py-3 text-strong placeholder-subtle focus:outline-none focus:border-accent"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Guild tag * <span className="text-gray-500">(2-5 uppercase letters)</span>
+              <label className="block text-sm font-medium text-body mb-1">
+                Guild tag * <span className="text-subtle">(2-5 uppercase letters)</span>
               </label>
               <input
                 type="text"
@@ -103,30 +103,30 @@ export default function CreateGuildPage() {
                 onChange={e => setForm({ ...form, tag: e.target.value.toUpperCase().slice(0, 5) })}
                 placeholder="ICS"
                 maxLength={5}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 font-mono uppercase"
+                className="w-full bg-raised border border-line-strong rounded-lg px-4 py-3 text-strong placeholder-subtle focus:outline-none focus:border-accent font-mono uppercase"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Description *</label>
+              <label className="block text-sm font-medium text-body mb-1">Description *</label>
               <textarea
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
                 placeholder="What work does your team take on, and what kind of workers are you looking for?"
                 rows={4}
                 maxLength={500}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
+                className="w-full bg-raised border border-line-strong rounded-lg px-4 py-3 text-strong placeholder-subtle focus:outline-none focus:border-accent resize-none"
               />
-              <div className="text-right text-xs text-gray-500 mt-1">{form.description.length}/500</div>
+              <div className="text-right text-xs text-subtle mt-1">{form.description.length}/500</div>
             </div>
           </div>
 
           {/* Settings */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-white">Settings</h2>
+          <div className="bg-surface border border-line rounded-xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-strong">Settings</h2>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Skill focus</label>
+              <label className="block text-sm font-medium text-body mb-2">Skill focus</label>
               <div className="grid grid-cols-3 gap-2">
                 {SPECIALTIES.map(spec => (
                   <button
@@ -135,8 +135,8 @@ export default function CreateGuildPage() {
                     onClick={() => setForm({ ...form, specialty: form.specialty === spec ? '' : spec })}
                     className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
                       form.specialty === spec
-                        ? 'bg-amber-500 border-amber-500 text-black'
-                        : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-amber-500/50'
+                        ? 'bg-accent border-accent text-on-accent'
+                        : 'bg-raised border-line-strong text-body hover:border-accent/50'
                     }`}
                   >
                     {spec}
@@ -146,14 +146,14 @@ export default function CreateGuildPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Maximum workers</label>
+              <label className="block text-sm font-medium text-body mb-1">Maximum workers</label>
               <input
                 type="number"
                 value={form.maxMembers}
                 onChange={e => setForm({ ...form, maxMembers: parseInt(e.target.value) || 20 })}
                 min={2}
                 max={100}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-raised border border-line-strong rounded-lg px-4 py-3 text-strong focus:outline-none focus:border-accent"
               />
             </div>
 
@@ -162,16 +162,16 @@ export default function CreateGuildPage() {
                 type="button"
                 onClick={() => setForm({ ...form, isRecruiting: !form.isRecruiting })}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  form.isRecruiting ? 'bg-green-500' : 'bg-gray-600'
+                  form.isRecruiting ? 'bg-success' : 'bg-raised-2'
                 }`}
               >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                <span className={`absolute top-1 w-4 h-4 rounded-full bg-surface transition-transform ${
                   form.isRecruiting ? 'left-7' : 'left-1'
                 }`} />
               </button>
               <div>
-                <div className="text-white font-medium">Open to new members</div>
-                <div className="text-xs text-gray-500">Let workers ask to join your team</div>
+                <div className="text-strong font-medium">Open to new members</div>
+                <div className="text-xs text-subtle">Let workers ask to join your team</div>
               </div>
             </div>
           </div>
@@ -180,14 +180,14 @@ export default function CreateGuildPage() {
           <div className="flex gap-4">
             <Link
               href="/guilds"
-              className="flex-1 text-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold px-6 py-4 rounded-xl transition-colors"
+              className="flex-1 text-center bg-raised hover:bg-raised-2 text-body font-semibold px-6 py-4 rounded-xl transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-bold px-6 py-4 rounded-xl transition-colors"
+              className="flex-1 bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-bold px-6 py-4 rounded-xl transition-colors"
             >
               {loading ? 'Creating...' : 'Create guild'}
             </button>

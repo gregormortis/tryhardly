@@ -4,12 +4,12 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-zinc-800 bg-zinc-900 text-zinc-400">
+    <footer className="border-t border-line bg-surface text-muted">
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="space-y-4">
-            <Link href="/" className="text-lg font-bold text-zinc-100">
-              Try<span className="text-amber-400">hardly</span>
+            <Link href="/" className="text-lg font-bold text-strong">
+              Try<span className="text-accent-text">hardly</span>
             </Link>
             <p className="text-sm">
               The marketplace AI can&apos;t touch. Real work. Real money. Real
@@ -18,12 +18,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 font-semibold text-zinc-100">Marketplace</h3>
+            <h3 className="mb-4 font-semibold text-strong">Marketplace</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/jobs"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Browse jobs
                 </Link>
@@ -31,7 +31,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/post-a-job"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Post a job
                 </Link>
@@ -39,7 +39,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/post-job-fast"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Post your job in 60 seconds
                 </Link>
@@ -47,7 +47,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/find-work-fast"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Find local work
                 </Link>
@@ -55,7 +55,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/service-packages"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Services
                 </Link>
@@ -63,7 +63,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/request-help"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Request help (no account)
                 </Link>
@@ -71,7 +71,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/work-alerts"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Get work alerts
                 </Link>
@@ -79,7 +79,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/redding"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Redding launch
                 </Link>
@@ -87,7 +87,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/pricing"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Pricing
                 </Link>
@@ -101,12 +101,12 @@ export default function Footer() {
               exist and stay linked from pricing, trade standards, and the code of
               craft, where a worker is already reading about how ranking works. */}
           <div>
-            <h3 className="mb-4 font-semibold text-zinc-100">Resources</h3>
+            <h3 className="mb-4 font-semibold text-strong">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/code-of-craft"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Code of Craft
                 </Link>
@@ -114,7 +114,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/verified-pro"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Verified Pro
                 </Link>
@@ -122,7 +122,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/standards"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Trade standards
                 </Link>
@@ -130,7 +130,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/faq"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   FAQ
                 </Link>
@@ -138,7 +138,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/about"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   About
                 </Link>
@@ -146,7 +146,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Contact
                 </Link>
@@ -154,7 +154,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/support"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Support
                 </Link>
@@ -163,12 +163,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 font-semibold text-zinc-100">Legal</h3>
+            <h3 className="mb-4 font-semibold text-strong">Legal</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/privacy"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Privacy Policy
                 </Link>
@@ -176,7 +176,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/terms"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Terms of Service
                 </Link>
@@ -184,7 +184,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/refunds"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Refunds &amp; Disputes
                 </Link>
@@ -192,7 +192,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/trust"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Trust &amp; Safety
                 </Link>
@@ -200,7 +200,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/community-guidelines"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Community Guidelines
                 </Link>
@@ -208,7 +208,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/prohibited-services"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Prohibited Services
                 </Link>
@@ -216,7 +216,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/account-deletion"
-                  className="transition-colors hover:text-zinc-100"
+                  className="transition-colors hover:text-strong"
                 >
                   Delete Account &amp; Data
                 </Link>
@@ -225,7 +225,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-zinc-800 pt-8 text-center text-sm">
+        <div className="mt-12 border-t border-line pt-8 text-center text-sm">
           <p>&copy; {currentYear} Tryhardly. All rights reserved.</p>
         </div>
       </div>

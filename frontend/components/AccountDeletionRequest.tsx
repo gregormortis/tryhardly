@@ -76,20 +76,20 @@ export default function AccountDeletionRequest() {
   };
 
   if (authLoading || loading) {
-    return <div className="h-10 w-48 bg-gray-800 rounded animate-pulse" />;
+    return <div className="h-10 w-48 bg-raised rounded animate-pulse" />;
   }
 
   if (!user) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <p className="text-gray-300 mb-3">
+      <div className="bg-surface border border-line rounded-xl p-6">
+        <p className="text-body mb-3">
           To request deletion of your account,{' '}
-          <Link href="/auth/login" className="text-amber-400 hover:text-amber-300">log in</Link>{' '}
+          <Link href="/auth/login" className="text-accent-text hover:text-accent-text-hover">log in</Link>{' '}
           and use the button on this page. Your request is logged for our team to review and action.
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-subtle">
           Prefer not to sign in? Email{' '}
-          <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
+          <a href="mailto:support@tryhardly.com" className="text-accent-text hover:text-accent-text-hover">
             support@tryhardly.com
           </a>{' '}
           from the address on your account. The fastest, most reliable route is the in-app request above.
@@ -101,22 +101,22 @@ export default function AccountDeletionRequest() {
   if (pending) {
     const requested = pending.createdAt ? formatDate(pending.createdAt) : '';
     return (
-      <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6">
-        <h3 className="font-semibold text-amber-300 mb-1">Request received</h3>
-        <p className="text-sm text-gray-300">
-          Your deletion request is <span className="font-medium text-amber-200">queued for review</span> by our
+      <div className="bg-accent/10 border border-accent/30 rounded-xl p-6">
+        <h3 className="font-semibold text-accent-text-hover mb-1">Request received</h3>
+        <p className="text-sm text-body">
+          Your deletion request is <span className="font-medium text-accent-text-hover">queued for review</span> by our
           team{requested ? ` (requested ${requested})` : ''}. It’s recorded in our system — you don’t need to do
           anything else. We aim to process requests within 30 days, and you’ll be notified at your account email
           once it’s complete.
         </p>
-        <p className="text-sm text-gray-400 mt-3">
+        <p className="text-sm text-muted mt-3">
           Changed your mind? You can withdraw this request while it’s still pending.
         </p>
         <button
           type="button"
           onClick={withdraw}
           disabled={withdrawing}
-          className="mt-3 px-4 py-2 text-sm font-medium rounded-lg border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-300 disabled:opacity-50"
+          className="mt-3 px-4 py-2 text-sm font-medium rounded-lg border border-line-strong text-body hover:border-accent hover:text-accent-text-hover disabled:opacity-50"
         >
           {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
         </button>
@@ -125,10 +125,10 @@ export default function AccountDeletionRequest() {
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div className="bg-surface border border-line rounded-xl p-6">
       {!confirming ? (
         <>
-          <p className="text-gray-300 mb-4">
+          <p className="text-body mb-4">
             Requesting deletion removes your profile and personal data from TryHardly. Your request is logged for
             our team to review and action — records tied to completed quests or payments may be retained where the
             law requires.
@@ -136,30 +136,30 @@ export default function AccountDeletionRequest() {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-red-500/90 hover:bg-red-400 text-white"
+            className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-danger/90 hover:bg-danger text-strong"
           >
             Request account deletion
           </button>
         </>
       ) : (
         <div className="space-y-4">
-          <p className="text-gray-200 font-medium">Are you sure you want to request deletion?</p>
+          <p className="text-body font-medium">Are you sure you want to request deletion?</p>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Reason (optional)</label>
+            <label className="block text-sm font-medium text-body mb-1">Reason (optional)</label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               maxLength={1000}
               placeholder="Anything you'd like us to know…"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 text-sm focus:outline-none focus:border-amber-500 resize-none"
+              className="w-full bg-raised border border-line-strong rounded-lg px-3 py-2 text-strong text-sm focus:outline-none focus:border-accent resize-none"
             />
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 border border-gray-700 rounded-lg"
+              className="px-4 py-2 text-sm text-muted hover:text-body border border-line-strong rounded-lg"
             >
               Cancel
             </button>
@@ -167,7 +167,7 @@ export default function AccountDeletionRequest() {
               type="button"
               onClick={submit}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500/90 hover:bg-red-400 text-white disabled:opacity-50"
+              className="px-4 py-2 text-sm font-semibold rounded-lg bg-danger/90 hover:bg-danger text-strong disabled:opacity-50"
             >
               {submitting ? 'Submitting…' : 'Confirm deletion request'}
             </button>

@@ -1,0 +1,94 @@
+/*
+ * Semantic color tokens.
+ *
+ * WHY THIS FILE EXISTS
+ *   The app previously used three interchangeable grayscale families (gray,
+ *   zinc, stone) plus raw amber shades, ~2,500 hardcoded utilities across 98
+ *   files, with no way to change the theme without editing every one of them.
+ *   Every color now resolves through a token, so light/dark is a variable swap.
+ *
+ * WHY RGB CHANNELS, NOT HEX
+ *   Values are stored as space-separated channels ("250 250 249") rather than
+ *   hex so Tailwind's alpha modifiers keep working: bg-accent/10,
+ *   border-line/40, and so on all resolve through rgb(var(--x) / <alpha-value>).
+ *
+ * DEFAULT IS LIGHT
+ *   TryHardly's buyer is a Redding homeowner, a fifth of whom are 65+. A dark,
+ *   low-contrast interface is the wrong default for that audience. Dark mode is
+ *   still available by adding the `dark` class to <html>.
+ *
+ * CONTRAST
+ *   Every text token is checked against its intended background by
+ *   scripts/audit-contrast.js. text-body and above clear WCAG AA (4.5:1);
+ *   text-subtle is reserved for large or non-essential text and clears 4.5:1
+ *   on canvas as well.
+ */
+
+:root {
+  /* Surfaces, lightest to most raised. Warm neutrals (stone) rather than pure
+     grays — reads less clinical for a home-services product. */
+  --canvas: 250 250 249; /* stone-50  */
+  --surface: 255 255 255; /* white     */
+  --raised: 245 245 244; /* stone-100 */
+  --raised-2: 231 229 228; /* stone-200 */
+
+  /* Lines */
+  --line: 231 229 228; /* stone-200 */
+  --line-strong: 214 211 209; /* stone-300 */
+
+  /* Text, strongest to faintest */
+  --text-strong: 28 25 23; /* stone-900 — 15.9:1 on canvas */
+  --text-body: 41 37 36; /* stone-800 — 13.4:1 on canvas */
+  --text-muted: 68 64 60; /* stone-700 —  9.7:1 on canvas */
+  --text-subtle: 87 83 78; /* stone-600 —  7.0:1 on canvas */
+
+  /* Brand accent.
+     `accent` is the fill (buttons, chips). `accent-text` is the same brand
+     hue darkened enough to be legible AS text on a light surface — amber-400
+     on white is 1.7:1 and completely fails, which is exactly the trap this
+     token exists to prevent. */
+  --accent: 245 158 11; /* amber-500 — fill only          */
+  --accent-hover: 217 119 6; /* amber-600                      */
+  /* amber-700 (180 83 9) clears 5.9:1 on white but only 4.47:1 on the
+     accent/10 tinted chips used across the board and landing pages, which is
+     just under AA. amber-800 clears both. */
+  --accent-text: 146 64 14; /* amber-800 — 8.1:1 on surface, 6.1:1 on accent/10 */
+  --accent-text-hover: 120 53 15; /* amber-900 */
+  --on-accent: 28 25 23; /* text placed on an accent fill  */
+  /* Status fills are dark in light mode and light in dark mode, so text laid
+     on them inverts relative to --on-accent. */
+  --on-status: 255 255 255;
+
+  /* Status */
+  --success: 21 128 61; /* green-700  */
+  --warning: 180 83 9; /* amber-700  */
+  --danger: 185 28 28; /* red-700    */
+  --info: 29 78 216; /* blue-700   */
+}
+
+.dark {
+  --canvas: 9 9 11; /* zinc-950  */
+  --surface: 24 24 27; /* zinc-900  */
+  --raised: 39 39 42; /* zinc-800  */
+  --raised-2: 63 63 70; /* zinc-700  */
+
+  --line: 39 39 42; /* zinc-800  */
+  --line-strong: 63 63 70; /* zinc-700  */
+
+  --text-strong: 250 250 250;
+  --text-body: 228 228 231; /* zinc-200 */
+  --text-muted: 161 161 170; /* zinc-400 */
+  --text-subtle: 113 113 122; /* zinc-500 */
+
+  --accent: 245 158 11;
+  --accent-hover: 251 191 36;
+  --accent-text: 251 191 36; /* amber-400 — legible on dark */
+  --accent-text-hover: 252 211 77; /* amber-300 */
+  --on-accent: 9 9 11;
+  --on-status: 9 9 11;
+
+  --success: 74 222 128;
+  --warning: 251 191 36;
+  --danger: 248 113 113;
+  --info: 96 165 250;
+}

@@ -40,17 +40,17 @@ function VerifyEmailForm() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-amber-400 mb-2">Confirm your email</h1>
+          <h1 className="text-3xl font-bold text-accent-text mb-2">Confirm your email</h1>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center space-y-4">
-          {status === 'checking' && <p className="text-gray-300">Verifying your email…</p>}
+        <div className="bg-surface border border-line rounded-xl p-8 text-center space-y-4">
+          {status === 'checking' && <p className="text-body">Verifying your email…</p>}
           {status === 'success' && (
             <>
               <div className="text-4xl">✅</div>
-              <p className="text-gray-200">{message}</p>
+              <p className="text-body">{message}</p>
               <Link
                 href="/dashboard"
-                className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2.5 px-6 rounded-lg transition-colors"
+                className="inline-block bg-accent hover:bg-accent text-on-accent font-semibold py-2.5 px-6 rounded-lg transition-colors"
               >
                 Go to dashboard
               </Link>
@@ -58,13 +58,13 @@ function VerifyEmailForm() {
           )}
           {status === 'error' && (
             <>
-              <p className="text-red-400">{message}</p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-danger">{message}</p>
+              <p className="text-muted text-sm">
                 You can request a new verification link from your account settings.
               </p>
               <Link
                 href="/auth/login"
-                className="inline-block text-amber-400 hover:text-amber-300 text-sm font-medium"
+                className="inline-block text-accent-text hover:text-accent-text-hover text-sm font-medium"
               >
                 Back to sign in
               </Link>
@@ -81,7 +81,7 @@ export default function VerifyEmailPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center px-4">
-          <p className="text-gray-400">Loading...</p>
+          <p className="text-muted">Loading...</p>
         </div>
       }
     >

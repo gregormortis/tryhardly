@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RequestHelpPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-950" />}>
+    <Suspense fallback={<div className="min-h-screen bg-canvas" />}>
       <RequestHelpForm />
     </Suspense>
   );

@@ -86,16 +86,16 @@ const FAQS = [
 
 export default function TrustPage() {
   return (
-    <div className="bg-zinc-950 min-h-screen">
+    <div className="bg-canvas min-h-screen">
       <FaqSchema items={FAQS} />
       <BreadcrumbSchema trail={[{ name: 'Trust & Safety', path: '/trust' }]} />
 
-      <section className="border-b border-white/[0.06] px-4 sm:px-8 py-12">
+      <section className="border-b border-line px-4 sm:px-8 py-12">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-bold text-3xl sm:text-4xl text-stone-100 tracking-tight mb-4">
+          <h1 className="font-bold text-3xl sm:text-4xl text-strong tracking-tight mb-4">
             Trust &amp; safety
           </h1>
-          <p className="text-stone-400 leading-relaxed">
+          <p className="text-muted leading-relaxed">
             You are letting someone you have not met come to your home. That deserves a straight
             answer about what we check, how your money is handled, and what we do not do. All of it
             is on this page, including the gaps.
@@ -105,39 +105,39 @@ export default function TrustPage() {
 
       <section className="px-4 sm:px-8 py-12">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-bold text-xl text-stone-100 tracking-tight mb-6">What we check</h2>
+          <h2 className="font-bold text-xl text-strong tracking-tight mb-6">What we check</h2>
           <div className="space-y-5">
             {CHECKS.map((c) => (
               <div
                 key={c.title}
-                className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-5"
+                className="rounded-lg border border-line bg-surface p-5"
               >
                 <div className="flex flex-wrap items-center gap-3 mb-2">
-                  <h3 className="text-base font-semibold text-stone-100">{c.title}</h3>
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-amber-300 bg-amber-400/10 border border-amber-500/30 rounded px-2 py-0.5">
+                  <h3 className="text-base font-semibold text-strong">{c.title}</h3>
+                  <span className="font-mono text-[12px] uppercase tracking-wider text-accent-text-hover bg-accent/10 border border-accent/30 rounded px-2 py-0.5">
                     {c.status}
                   </span>
                 </div>
-                <p className="text-sm text-stone-400 leading-relaxed">{c.body}</p>
+                <p className="text-sm text-muted leading-relaxed">{c.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-4 sm:px-8 py-12 border-t border-white/[0.05]">
+      <section className="px-4 sm:px-8 py-12 border-t border-line">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-bold text-xl text-stone-100 tracking-tight mb-3">
+          <h2 className="font-bold text-xl text-strong tracking-tight mb-3">
             What we do not do
           </h2>
-          <p className="text-sm text-stone-500 leading-relaxed mb-5">
+          <p className="text-sm text-subtle leading-relaxed mb-5">
             Plenty of platforms are vague here. We would rather you know the limits before you book
             than find out afterwards.
           </p>
           <ul className="space-y-3">
             {NOT_DONE.map((n) => (
-              <li key={n} className="flex items-start gap-3 text-sm text-stone-400 leading-relaxed">
-                <span className="text-stone-600 mt-0.5 shrink-0">—</span>
+              <li key={n} className="flex items-start gap-3 text-sm text-muted leading-relaxed">
+                <span className="text-subtle mt-0.5 shrink-0">—</span>
                 <span>{n}</span>
               </li>
             ))}
@@ -145,30 +145,30 @@ export default function TrustPage() {
         </div>
       </section>
 
-      <section className="px-4 sm:px-8 py-12 border-t border-white/[0.05]">
+      <section className="px-4 sm:px-8 py-12 border-t border-line">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-bold text-xl text-stone-100 tracking-tight mb-6">
+          <h2 className="font-bold text-xl text-strong tracking-tight mb-6">
             Common questions
           </h2>
           <div className="space-y-6">
             {FAQS.map((f) => (
               <div key={f.q}>
-                <h3 className="text-sm font-semibold text-stone-200 mb-1.5">{f.q}</h3>
-                <p className="text-sm text-stone-400 leading-relaxed">{f.a}</p>
+                <h3 className="text-sm font-semibold text-body mb-1.5">{f.q}</h3>
+                <p className="text-sm text-muted leading-relaxed">{f.a}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-4 sm:px-8 py-12 border-t border-white/[0.05]">
+      <section className="px-4 sm:px-8 py-12 border-t border-line">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-bold text-xl text-stone-100 tracking-tight mb-3">
+          <h2 className="font-bold text-xl text-strong tracking-tight mb-3">
             Something feels wrong?
           </h2>
-          <p className="text-sm text-stone-400 leading-relaxed mb-5">
+          <p className="text-sm text-muted leading-relaxed mb-5">
             Email{' '}
-            <a href="mailto:support@tryhardly.com" className="text-amber-400 hover:text-amber-300">
+            <a href="mailto:support@tryhardly.com" className="text-accent-text hover:text-accent-text-hover">
               support@tryhardly.com
             </a>
             . A human reads every message and we reply within one business day. If you are in
@@ -177,19 +177,19 @@ export default function TrustPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/community-guidelines"
-              className="font-mono text-[11px] tracking-widest px-4 py-2.5 border border-white/[0.12] text-stone-300 rounded hover:border-amber-500/40 hover:text-amber-400 transition-colors"
+              className="font-mono text-[12px] tracking-widest px-4 py-2.5 border border-line text-body rounded hover:border-accent/40 hover:text-accent-text transition-colors"
             >
               COMMUNITY GUIDELINES
             </Link>
             <Link
               href="/prohibited-services"
-              className="font-mono text-[11px] tracking-widest px-4 py-2.5 border border-white/[0.12] text-stone-300 rounded hover:border-amber-500/40 hover:text-amber-400 transition-colors"
+              className="font-mono text-[12px] tracking-widest px-4 py-2.5 border border-line text-body rounded hover:border-accent/40 hover:text-accent-text transition-colors"
             >
               PROHIBITED SERVICES
             </Link>
             <Link
               href="/refunds"
-              className="font-mono text-[11px] tracking-widest px-4 py-2.5 border border-white/[0.12] text-stone-300 rounded hover:border-amber-500/40 hover:text-amber-400 transition-colors"
+              className="font-mono text-[12px] tracking-widest px-4 py-2.5 border border-line text-body rounded hover:border-accent/40 hover:text-accent-text transition-colors"
             >
               REFUNDS &amp; DISPUTES
             </Link>

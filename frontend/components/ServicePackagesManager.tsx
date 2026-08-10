@@ -170,42 +170,42 @@ export default function ServicePackagesManager() {
   };
 
   const inputClass =
-    'w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-100 focus:outline-none focus:border-amber-500';
+    'w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent';
 
   const priceDisabled = form.priceType === 'QUOTE_NEEDED';
   const showContractorNote = requiresContractorNote(form.category);
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div className="bg-surface border border-line rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-gray-200">Service packages ({packages.length})</h2>
+        <h2 className="font-semibold text-body">Service packages ({packages.length})</h2>
         {!showForm && (
           <button
             onClick={openAdd}
-            className="text-sm border border-gray-700 hover:border-amber-500 hover:text-amber-400 text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+            className="text-sm border border-line-strong hover:border-accent hover:text-accent-text text-body px-3 py-1.5 rounded-lg transition-colors"
           >
             + Add package
           </button>
         )}
       </div>
 
-      <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+      <p className="text-xs text-subtle mb-4 leading-relaxed">
         Publish repeatable local services clients can browse and request — e.g.{' '}
-        <span className="text-gray-400">&ldquo;Dump Run — Pickup Truck Load&rdquo;</span>,{' '}
-        <span className="text-gray-400">&ldquo;2-Hour Yard Cleanup&rdquo;</span>, or{' '}
-        <span className="text-gray-400">&ldquo;Move One Couch or Appliance.&rdquo;</span> Packages are
+        <span className="text-muted">&ldquo;Dump Run — Pickup Truck Load&rdquo;</span>,{' '}
+        <span className="text-muted">&ldquo;2-Hour Yard Cleanup&rdquo;</span>, or{' '}
+        <span className="text-muted">&ldquo;Move One Couch or Appliance.&rdquo;</span> Packages are
         listings only — requesting one starts a normal job. No payment is taken from a package; you and the
         client agree on details and price before any payment, exactly as you do today. Only{' '}
-        <span className="text-gray-400">published</span> packages appear on your public profile and the
+        <span className="text-muted">published</span> packages appear on your public profile and the
         services page.
       </p>
 
       {/* Add/Edit form */}
       {showForm && (
-        <div className="mb-6 p-4 border border-gray-800 rounded-lg space-y-4 bg-gray-950/40">
+        <div className="mb-6 p-4 border border-line rounded-lg space-y-4 bg-canvas">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Title *</label>
+              <label className="block text-sm font-medium text-body mb-1">Title *</label>
               <input
                 type="text"
                 value={form.title}
@@ -215,7 +215,7 @@ export default function ServicePackagesManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Category *</label>
+              <label className="block text-sm font-medium text-body mb-1">Category *</label>
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -229,7 +229,7 @@ export default function ServicePackagesManager() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Pricing</label>
+              <label className="block text-sm font-medium text-body mb-1">Pricing</label>
               <select
                 value={form.priceType}
                 onChange={(e) => setForm({ ...form, priceType: e.target.value as ServicePriceType })}
@@ -241,12 +241,12 @@ export default function ServicePackagesManager() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-subtle mt-1">
                 {PRICE_TYPE_OPTIONS.find((o) => o.value === form.priceType)?.hint}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-body mb-1">
                 Price {priceDisabled ? '(not used for quotes)' : '(USD)'}
               </label>
               <input
@@ -263,7 +263,7 @@ export default function ServicePackagesManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-body mb-1">Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value.slice(0, 5000) })}
@@ -274,7 +274,7 @@ export default function ServicePackagesManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">What&apos;s included</label>
+            <label className="block text-sm font-medium text-body mb-1">What&apos;s included</label>
             <textarea
               value={form.includedScope}
               onChange={(e) => setForm({ ...form, includedScope: e.target.value.slice(0, 2000) })}
@@ -286,7 +286,7 @@ export default function ServicePackagesManager() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Add-ons</label>
+              <label className="block text-sm font-medium text-body mb-1">Add-ons</label>
               <textarea
                 value={form.addOns}
                 onChange={(e) => setForm({ ...form, addOns: e.target.value.slice(0, 2000) })}
@@ -296,7 +296,7 @@ export default function ServicePackagesManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Exclusions</label>
+              <label className="block text-sm font-medium text-body mb-1">Exclusions</label>
               <textarea
                 value={form.exclusions}
                 onChange={(e) => setForm({ ...form, exclusions: e.target.value.slice(0, 2000) })}
@@ -308,7 +308,7 @@ export default function ServicePackagesManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Materials policy</label>
+            <label className="block text-sm font-medium text-body mb-1">Materials policy</label>
             <input
               type="text"
               value={form.materialsPolicy}
@@ -320,7 +320,7 @@ export default function ServicePackagesManager() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Service area</label>
+              <label className="block text-sm font-medium text-body mb-1">Service area</label>
               <input
                 type="text"
                 value={form.serviceArea}
@@ -330,7 +330,7 @@ export default function ServicePackagesManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Availability</label>
+              <label className="block text-sm font-medium text-body mb-1">Availability</label>
               <input
                 type="text"
                 value={form.availability}
@@ -342,7 +342,7 @@ export default function ServicePackagesManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Tools / equipment provided</label>
+            <label className="block text-sm font-medium text-body mb-1">Tools / equipment provided</label>
             <input
               type="text"
               value={form.toolsProvided}
@@ -353,7 +353,7 @@ export default function ServicePackagesManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Photo URL</label>
+            <label className="block text-sm font-medium text-body mb-1">Photo URL</label>
             <input
               type="url"
               value={form.imageUrl}
@@ -364,23 +364,23 @@ export default function ServicePackagesManager() {
           </div>
 
           {showContractorNote && (
-            <p className="text-xs text-amber-500/90 leading-relaxed border border-amber-500/20 bg-amber-500/5 rounded-lg p-3">
+            <p className="text-xs text-accent-text leading-relaxed border border-accent/20 bg-accent/5 rounded-lg p-3">
               Some work in this category may require a licensed and insured contractor depending on scope and
               local rules. You are responsible for only offering services you are legally qualified to perform
               and for meeting any licensing requirements in your area.
             </p>
           )}
 
-          <label className="flex items-start gap-3 text-sm text-gray-300">
+          <label className="flex items-start gap-3 text-sm text-body">
             <input
               type="checkbox"
               checked={form.active}
               onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+              className="mt-1 h-4 w-4 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
             />
             <span>
               Publish this package
-              <span className="block text-xs text-gray-500 mt-0.5">
+              <span className="block text-xs text-subtle mt-0.5">
                 Published packages appear on your public profile and the services page. Leave unchecked to keep
                 it as a draft.
               </span>
@@ -391,13 +391,13 @@ export default function ServicePackagesManager() {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-semibold px-5 py-2 rounded-lg transition-colors"
+              className="bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-semibold px-5 py-2 rounded-lg transition-colors"
             >
               {saving ? 'Saving...' : editingId ? 'Save changes' : 'Create package'}
             </button>
             <button
               onClick={closeForm}
-              className="border border-gray-700 hover:border-gray-600 text-gray-300 px-5 py-2 rounded-lg transition-colors"
+              className="border border-line-strong hover:border-line-strong text-body px-5 py-2 rounded-lg transition-colors"
             >
               Cancel
             </button>
@@ -407,18 +407,18 @@ export default function ServicePackagesManager() {
 
       {/* List */}
       {loading ? (
-        <p className="text-sm text-gray-500">Loading service packages...</p>
+        <p className="text-sm text-subtle">Loading service packages...</p>
       ) : packages.length === 0 ? (
         !showForm && (
-          <div className="text-center py-10 border border-dashed border-gray-800 rounded-lg bg-gray-950/30">
-            <p className="text-sm text-gray-300 font-medium">No service packages yet</p>
-            <p className="text-xs text-gray-500 mt-1 mb-4 max-w-sm mx-auto leading-relaxed">
+          <div className="text-center py-10 border border-dashed border-line rounded-lg bg-canvas">
+            <p className="text-sm text-body font-medium">No service packages yet</p>
+            <p className="text-xs text-subtle mt-1 mb-4 max-w-sm mx-auto leading-relaxed">
               Add one to let clients find and request your local services from your profile and the
               services page.
             </p>
             <button
               onClick={openAdd}
-              className="text-sm bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-4 py-2 rounded-lg transition-colors"
+              className="text-sm bg-accent hover:bg-accent text-on-accent font-semibold px-4 py-2 rounded-lg transition-colors"
             >
               + Add your first package
             </button>
@@ -429,48 +429,48 @@ export default function ServicePackagesManager() {
           {packages.map((p) => (
             <div
               key={p.id}
-              className="p-4 bg-gray-800/70 border border-gray-800 rounded-lg transition-colors hover:border-gray-700"
+              className="p-4 bg-raised border border-line rounded-lg transition-colors hover:border-line-strong"
             >
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                        p.active ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-gray-400'
+                      className={`inline-flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 rounded-full ${
+                        p.active ? 'bg-success/20 text-success' : 'bg-raised-2 text-muted'
                       }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${p.active ? 'bg-green-400' : 'bg-gray-500'}`}
+                        className={`w-1.5 h-1.5 rounded-full ${p.active ? 'bg-success' : 'bg-raised-2'}`}
                       />
                       {p.active ? 'Published' : 'Draft'}
                     </span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-700 text-gray-300">
+                    <span className="text-[12px] px-2 py-0.5 rounded-full bg-raised-2 text-body">
                       {categoryLabel(p.category)}
                     </span>
-                    <span className="text-xs font-semibold text-amber-400">{formatPackagePrice(p)}</span>
+                    <span className="text-xs font-semibold text-accent-text">{formatPackagePrice(p)}</span>
                   </div>
-                  <p className="text-white font-medium mt-2">{p.title}</p>
-                  {p.serviceArea && <p className="text-xs text-gray-500 mt-1">{p.serviceArea}</p>}
+                  <p className="text-strong font-medium mt-2">{p.title}</p>
+                  {p.serviceArea && <p className="text-xs text-subtle mt-1">{p.serviceArea}</p>}
                   {p.description && (
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{p.description}</p>
+                    <p className="text-xs text-muted mt-1 line-clamp-2">{p.description}</p>
                   )}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={() => toggleActive(p)}
-                    className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-green-500 hover:text-green-400"
+                    className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-success hover:text-success"
                   >
                     {p.active ? 'Unpublish' : 'Publish'}
                   </button>
                   <button
                     onClick={() => openEdit(p)}
-                    className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-amber-500 hover:text-amber-400"
+                    className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-accent hover:text-accent-text"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(p.id)}
-                    className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:border-red-500 hover:text-red-400"
+                    className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-danger hover:text-danger"
                   >
                     Delete
                   </button>

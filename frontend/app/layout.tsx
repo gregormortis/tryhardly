@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import { DM_Mono, Syne } from 'next/font/google';
+import { DM_Mono, Syne, Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -11,6 +11,14 @@ const dmMono = DM_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-dm-mono',
+});
+
+// Body copy face. Inter is a humanist sans designed for UI text and reads
+// well at small sizes, which matters for an older homeowner audience.
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
 });
 
 const syne = Syne({
@@ -41,7 +49,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'TryHardly',
   },
   formatDetection: {
@@ -71,8 +79,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#09090b',
-  colorScheme: 'dark',
+  themeColor: '#fafaf9',
+  colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
@@ -84,13 +92,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${dmMono.variable} ${syne.variable}`}>
+    <html lang="en" className={`${dmMono.variable} ${syne.variable} ${inter.variable}`}>
       <head>
         {/* Plausible Analytics */}
         <script defer data-domain="tryhardly.com" src="https://plausible.io/js/script.js" />
         <OrganizationSchema />
       </head>
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+      <body className="min-h-screen bg-canvas text-strong antialiased">
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-68P7FQSY7L"
