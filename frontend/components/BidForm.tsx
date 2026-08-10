@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { MaterialItem, WalkthroughType } from '@/lib/types';
+import { DIRECT_PAYMENT_WORKER } from '@/lib/paymentCopy';
 
 // Professional, non-gamified bid submission form for a worker applying to a job.
 // Collects a total bid, a material/labor breakdown, an itemized material list,
@@ -32,19 +33,19 @@ interface BidFormProps {
   contractorScale: boolean;
   submitting: boolean;
   onSubmit: (payload: BidPayload) => void;
-  // Payout readiness gating. A worker may draft a bid freely, but Submit Bid is
-  // disabled until their Stripe Connect payout account is onboarded/ready. When
+  // Account-readiness gating. A worker may draft a bid freely, but Submit Bid is
+  // disabled until their required account setup is ready. When
   // `payoutReady` is undefined the status is still loading; when false we block
   // submission and surface the connect-payout guidance. Defaults keep the form
   // fully enabled for callers that don't gate on payout status.
   payoutReady?: boolean;
   payoutStatusLoading?: boolean;
-  // Where to send the worker to connect/finish their payout account.
+  // Where to send the worker to finish required account setup.
   payoutSetupHref?: string;
 }
 
 export const PAYOUT_SETUP_COPY =
-  'Connect your payout account before submitting bids. This lets TryHardly process worker payouts through Stripe Connect after completed-task payment capture.';
+  'Complete the required account setup before submitting bids.';
 
 interface DraftMaterial {
   name: string;
@@ -124,8 +125,8 @@ export default function BidForm({
   const handleSubmit = () => {
     setError('');
 
-    // Payout precondition: a worker can draft a bid, but cannot submit until
-    // their Stripe Connect payout account is ready. Guard here as well as via the
+    // Setup precondition: a worker can draft a bid, but cannot submit until
+    // their required account setup is ready. Guard here as well as via the
     // disabled button so the copy is always shown when they try.
     if (!payoutReady) {
       setError(PAYOUT_SETUP_COPY);
@@ -179,8 +180,7 @@ export default function BidForm({
       <div>
         <h3 className="text-base font-semibold text-strong">Submit your bid</h3>
         <p className="text-xs text-subtle mt-1">
-          Give the client a clear estimate. Costs are estimates you and the client agree on —
-          payment is only arranged after the client accepts a bid.
+          Give the client a clear estimate. {DIRECT_PAYMENT_WORKER}
         </p>
       </div>
 
@@ -461,8 +461,8 @@ export default function BidForm({
         </label>
       )}
 
-      {/* Payout-readiness gate: draft freely, but Submit is blocked until the
-          worker's Stripe Connect payout account is onboarded/ready. */}
+      {/* Account-readiness gate: draft freely, but Submit is blocked until the
+          worker's required account setup is ready. */}
       {!payoutStatusLoading && !payoutReady && (
         <div className="rounded-lg border border-accent/40 bg-accent/5 p-3">
           <p className="text-xs text-accent-text leading-relaxed">{PAYOUT_SETUP_COPY}</p>
@@ -470,7 +470,7 @@ export default function BidForm({
             href={payoutSetupHref}
             className="mt-2 inline-block text-xs font-semibold text-accent-text hover:text-accent-text-hover underline"
           >
-            Connect your payout account →
+            Finish account setup →
           </Link>
         </div>
       )}
@@ -482,9 +482,9 @@ export default function BidForm({
         className="w-full bg-accent hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed text-on-accent font-bold py-3 rounded-lg transition-colors"
       >
         {payoutStatusLoading
-          ? 'Checking payout account…'
+          ? 'Checking account setup…'
           : !payoutReady
-          ? 'Connect payout account to submit'
+          ? 'Finish account setup to submit'
           : submitting
           ? 'Submitting bid…'
           : totalNum !== undefined

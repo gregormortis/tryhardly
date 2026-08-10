@@ -71,32 +71,30 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-accent-text mb-4">5. Payments, Fees &amp; Payouts</h2>
+            <h2 className="text-2xl font-bold text-accent-text mb-4">5. Payments &amp; Fees</h2>
             <p className="mb-2">
-              Payments on TryHardly are processed by{' '}
-              <span className="text-strong font-semibold">Stripe</span>, and worker payouts are handled through{' '}
-              <span className="text-strong font-semibold">Stripe Connect</span> after completed-job payment capture.
-              TryHardly is a marketplace facilitator: we facilitate booking and payment
-              processing through Stripe between job posters and workers but we are not the
-              service provider. TryHardly is not a bank or
-              money transmitter and does not provide regulated financial services. All payments
-              are processed directly by Stripe.
+              <span className="text-strong font-semibold">TryHardly does not process payments.</span>{' '}
+              We introduce job posters to workers and maintain the record of jobs, ratings,
+              and reviews. Payment for any job is arranged and settled{' '}
+              <span className="text-strong font-semibold">directly between the job poster and
+              the worker</span>, by whatever method they agree. TryHardly is not a party to
+              that payment, does not receive it, does not hold it at any point, and is not a
+              bank, money transmitter, or payment processor.
             </p>
             <p className="mb-2">
-              When a job poster selects a worker, TryHardly may obtain a payment authorization
-              for the quoted amount. A payment authorization is not a completed charge and may
-              appear as a temporary pending transaction on your statement. TryHardly captures
-              payment when the job is confirmed completed, or is deemed completed under the
-              platform&rsquo;s confirmation rules. If a job is canceled or does not proceed,
-              TryHardly may void or cancel the authorization, and you are not charged. Worker
-              payouts are initiated after payment capture for completed jobs through Stripe
-              Connect.
+              Because TryHardly is not a party to the payment, TryHardly{' '}
+              <span className="text-strong font-semibold">cannot refund, reverse, recover, or
+              guarantee</span> any amount paid or owed between a job poster and a worker. Job
+              posters and workers are solely responsible for agreeing the amount, the timing,
+              and the method of payment, and for any tax obligations arising from it. Workers
+              are independent contractors and are not employees, agents, or subcontractors of
+              TryHardly.
             </p>
             <p>
-              Posting a job is free for clients. TryHardly charges workers a flat 12% platform
-              service fee on completed paid jobs. The fee does not change with rank, and
-              applicable fees are shown before you commit to a transaction. Refunds and
-              disputes are handled under our{' '}
+              Posting a job is free. Creating a worker account and bidding on jobs is free.
+              TryHardly currently charges no fee to either side and takes no commission on any
+              job. If TryHardly introduces fees in future, they will be disclosed in advance
+              and will not apply retroactively. Disputes are handled under our{' '}
               <Link href="/refunds" className="text-accent-text hover:text-accent-text-hover">Refund &amp; Dispute Policy</Link>.
             </p>
           </section>

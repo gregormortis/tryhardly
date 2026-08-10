@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
 import { rateLimit } from '../middleware/rateLimit';
 import { platformCheckoutBreaker } from '../middleware/paymentVelocity';
+import { isPlatformPaymentsEnabled } from '../config/paymentsMode';
 import {
   createConnectedAccount,
   getOnboardingLink,
@@ -73,12 +74,50 @@ export function legacyEscrowGate(_req: Request, res: Response, next: NextFunctio
   });
 }
 
+/**
+ * Gate for every endpoint that accepts a card, moves money, or onboards a
+ * worker for payouts.
+ *
+ * TryHardly currently runs in `direct` payments mode: the customer and the
+ * worker settle between themselves and the platform never touches the money.
+ * See config/paymentsMode.ts for why. In that mode these endpoints are not
+ * merely unused — they must be unreachable, because an endpoint that can
+ * create a Checkout Session is an endpoint that can be attacked, which is
+ * exactly what happened on 2026-08-04.
+ *
+ * Returns 410 Gone rather than 404 so the path reads as deliberately retired
+ * rather than mistyped. Flip PAYMENTS_MODE=platform to restore.
+ */
+export function platformPaymentsGate(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (isPlatformPaymentsEnabled()) {
+    next();
+    return;
+  }
+  res.status(410).json({
+    error: 'Gone',
+    message:
+      'TryHardly does not process payments. Customers and workers arrange ' +
+      'payment directly between themselves. Job posting, bidding, messaging, ' +
+      'and completion confirmation are unaffected.',
+  });
+}
+
 // --- Stripe Connect Onboarding ---
 // Create a Stripe Connect Express account for the current user
-router.post('/connect', authenticate, paymentInitiationLimiter, createConnectedAccount);
+router.post(
+  '/connect',
+  authenticate,
+  platformPaymentsGate,
+  paymentInitiationLimiter,
+  createConnectedAccount,
+);
 
 // Get an onboarding link for the current user's Stripe Connect account
-router.get('/connect/onboarding', authenticate, getOnboardingLink);
+router.get('/connect/onboarding', authenticate, platformPaymentsGate, getOnboardingLink);
 
 // Read the current user's payout-account status from Stripe (charges/payouts/
 // details + requirements due). Used by the UI to render connect/resume/complete.
@@ -88,7 +127,13 @@ router.get('/connect/status', authenticate, getConnectStatus);
 // Second layer of the post-2026-08-04 fraud remediation, alongside email
 // verification. Create/resume a hosted verification session for the current
 // user.
-router.post('/identity/verify', authenticate, paymentInitiationLimiter, createIdentityVerification);
+router.post(
+  '/identity/verify',
+  authenticate,
+  platformPaymentsGate,
+  paymentInitiationLimiter,
+  createIdentityVerification,
+);
 
 // Read the current user's identity verification status.
 router.get('/identity/status', authenticate, getIdentityStatus);
@@ -106,6 +151,7 @@ router.get('/identity/status', authenticate, getIdentityStatus);
 router.post(
   '/quest/:questId/checkout',
   authenticate,
+  platformPaymentsGate,
   paymentInitiationLimiter,
   perUserCheckoutLimiter,
   platformCheckoutBreaker,
@@ -114,11 +160,19 @@ router.post(
 
 // Capture the authorized payment for a completed task (quest giver or admin).
 // The primary trigger is completion confirmation; this is an explicit fallback.
-router.post('/quest/:questId/capture', authenticate, paymentInitiationLimiter, captureQuestPayment);
+router.post(
+  '/quest/:questId/capture',
+  authenticate,
+  platformPaymentsGate,
+  paymentInitiationLimiter,
+  captureQuestPayment,
+);
 
 // Cancel/void the authorization for a canceled or uncompleted job (quest giver
 // or admin). Does not "release funds" — there are none held; it voids the
 // pending card authorization so the customer is never charged.
+// Left reachable in direct mode on purpose: if any authorization survives from
+// the platform-payments era, the poster must always be able to void it.
 router.post('/quest/:questId/cancel-authorization', authenticate, cancelQuestAuthorization);
 
 // --- Payment status (non-escrow marketplace flow) ---

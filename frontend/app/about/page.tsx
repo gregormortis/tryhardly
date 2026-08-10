@@ -9,7 +9,7 @@ export default function AboutPage() {
           </h1>
           <p className="text-xl text-body leading-relaxed">
             A marketplace for local, hands-on work. Post the job you need done, get bids from
-            nearby workers, and pay through Stripe when the work is finished.
+            nearby workers, and settle payment directly with the worker you choose.
           </p>
         </div>
       </section>
@@ -26,8 +26,7 @@ export default function AboutPage() {
           </p>
           <p className="text-lg text-body leading-relaxed">
             Workers keep a public track record here. Reviews are tied to jobs that were actually
-            completed and paid through the platform, so a good reputation is earned rather than
-            claimed.
+            completed through TryHardly, so a good reputation is earned rather than claimed.
           </p>
         </div>
       </section>
@@ -40,8 +39,8 @@ export default function AboutPage() {
             <div className="bg-surface p-6 rounded-lg border border-line">
               <h3 className="text-xl font-bold mb-3 text-accent-text">Reputation you can check</h3>
               <p className="text-body">
-                Reviews and ratings come from completed, paid jobs. Every worker profile shows the
-                work they&apos;ve finished, so you can judge them on their record instead of a pitch.
+                Reviews and ratings come from completed jobs. Every worker profile shows the work
+                they&apos;ve finished, so you can judge them on their record instead of a pitch.
               </p>
             </div>
             <div className="bg-surface p-6 rounded-lg border border-line">
@@ -51,11 +50,10 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="bg-surface p-6 rounded-lg border border-line">
-              <h3 className="text-xl font-bold mb-3 text-accent-text">Stripe-powered payments</h3>
+              <h3 className="text-xl font-bold mb-3 text-accent-text">Direct payment, no cut</h3>
               <p className="text-body">
-                Card payments are handled by Stripe. The payment is authorized once the job poster
-                chooses a worker, charged after the completed work is confirmed, and paid out to the
-                worker through Stripe Connect.
+                You and the worker agree on payment directly: cash, Venmo, Zelle, check, or what
+                works for both of you. Workers keep 100%. TryHardly does not process the payment.
               </p>
             </div>
           </div>
@@ -83,8 +81,8 @@ export default function AboutPage() {
               <div className="text-muted">Accounts &amp; job posts moderated</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-success mb-2">Stripe Connect</div>
-              <div className="text-muted">Payouts after completed-job capture</div>
+              <div className="text-2xl font-bold text-success mb-2">Workers keep 100%</div>
+              <div className="text-muted">No platform fee</div>
             </div>
           </div>
         </div>

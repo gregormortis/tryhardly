@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'How ratings, badges, and worker reputation work — TryHardly',
   description:
-    'How experience levels, skill badges, verified credentials, and worker teams build a worker reputation on TryHardly. Reputation is earned from completed jobs and client reviews — it never changes the fee.',
+    'How experience levels, skill badges, verified credentials, and worker teams build a worker reputation on TryHardly. Reputation is earned from completed jobs and client reviews — it earns visibility and trust.',
 };
 
 const LEVELS = [
@@ -21,7 +21,7 @@ const LEVELS = [
       'Be active for 14 days',
       'Complete 5+ jobs',
       'Hold a 4.0★+ average across 5+ ratings',
-      'No unresolved disputes on your record',
+      'No unresolved serious account reports',
     ],
   },
   {
@@ -73,7 +73,7 @@ const LEVELS = [
       'Complete 400+ jobs',
       'Hold a 4.9★+ average across 80+ ratings',
       'Run a worker team of 10+ active workers with a strong shared record',
-      'No serious disputes on your record',
+      'No serious account reports on your record',
       'Maintain a team 4.8★+ average and a clean 180-day record',
     ],
     gated: 'a worker team role',
@@ -90,7 +90,7 @@ const SKILL_TIERS = [
 
 const PROBATION_STAGES = [
   { stage: 'Warning', detail: 'A dip in ratings or a recent low review puts a soft flag on your account. Nothing changes yet — it is a heads-up.' },
-  { stage: 'Probation', detail: 'A continued pattern of low ratings or a dispute moves you to probation. Your level is held in place while you recover.' },
+  { stage: 'Probation', detail: 'A continued pattern of low ratings or a serious account report moves you to probation. Your level is held in place while you recover.' },
   { stage: 'Level hold', detail: 'While held, you keep your current level but cannot move up until the pattern clears and your recent record improves.' },
   { stage: 'Review & reduction', detail: 'Only after human review — for serious or repeated issues — can a level be lowered. A level is never reduced automatically over a single bad day.' },
 ];
@@ -107,8 +107,8 @@ export default function ProgressionPage() {
           <p className="text-lg text-body max-w-2xl mx-auto">
             A worker&apos;s standing on TryHardly comes from finished work: completed jobs, client reviews tied to
             those jobs, verified credentials, and a reliable record. Reputation earns
-            <span className="text-strong font-semibold"> visibility and trust</span>, never a lower fee — the
-            marketplace fee stays a flat 12% for every worker, at every level.
+            <span className="text-strong font-semibold"> visibility and trust</span>, including stronger
+            profiles, badges, and access to team leadership.
           </p>
         </div>
 
@@ -173,7 +173,7 @@ export default function ProgressionPage() {
             <span className="text-strong font-semibold">Trusted specialist</span> asks that you work with a team in
             good standing. <span className="text-strong font-semibold">Senior specialist</span> asks that you help
             organize or mentor within one. <span className="text-strong font-semibold">Top rated</span> asks that you
-            run a team with a real roster, a strong shared record, and no serious disputes.
+            run a team with a real roster, a strong shared record, and no serious account reports.
           </p>
           <p className="text-muted text-sm">
             Working solo is always fine — every step up to Experienced is reachable on your own record alone.
@@ -204,7 +204,7 @@ export default function ProgressionPage() {
           <h2 className="text-2xl font-bold text-danger mb-3">Keeping reputation honest</h2>
           <p className="text-body mb-4">
             Levels and badges are a trust signal for clients, so they have to stay trustworthy. A pattern of low
-            ratings, several bad reviews in a row, or a severe dispute moves an account through a clear, fair
+            ratings, several bad reviews in a row, or a serious account report moves an account through a clear, fair
             process — never a sudden drop. Each step is reversible by getting back to good work.
           </p>
           <ol className="space-y-2.5 mb-4">
@@ -254,7 +254,7 @@ export default function ProgressionPage() {
             ))}
           </div>
           <p className="text-subtle text-sm mt-5">
-            Recognition badges are recognition only. They carry no cash, discounts, or fee changes — see the{' '}
+            Recognition badges are recognition only. They help clients see your track record — see the{' '}
             <a href="/leaderboards" className="text-accent-text hover:underline">top rated workers</a> for how
             ratings and completed work are recognized across the platform.
           </p>
@@ -302,7 +302,7 @@ export default function ProgressionPage() {
         {/* CTA */}
         <div className="bg-gradient-to-r from-accent/20/20 to-info/20 border border-accent/40 rounded-xl p-8 text-center">
           <h3 className="text-2xl font-bold text-accent-text mb-3">Start building your record</h3>
-          <p className="text-body mb-6">Free to join. Flat 12% only when you complete a paid job.</p>
+          <p className="text-body mb-6">Free to join. Keep 100% of the amount you agree on with the customer.</p>
           <div className="flex flex-wrap justify-center gap-3">
             <a href="/auth/register" className="inline-block bg-accent hover:bg-accent text-on-accent font-bold px-6 py-3 rounded-lg transition-colors">
               Create your account

@@ -23,7 +23,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
   const cat = resolveJobCategory(params.category);
   const city = formatCitySlug(params.city);
   const title = `${cat.label} in ${city}`;
-  const description = `Find or post ${cat.label.toLowerCase()} in ${city}. Post a job free, get bids from local workers, and pay through Stripe only when the work is done.`;
+  const description = `Find or post ${cat.label.toLowerCase()} in ${city}. Post a job free, get bids from local workers, and settle payment directly with the worker you choose.`;
   return {
     title,
     description,
@@ -49,16 +49,16 @@ export default function JobCategoryCityPage({ params }: PageProps) {
       a: `Prices are set by the local workers who bid on your job, not by TryHardly. You enter your own budget when you post, workers bid against it, and you pick the bid you want. Posting is always free.`,
     },
     {
-      q: `When do I pay?`,
-      a: `Your payment method is authorized when you accept a bid. An authorization is not a charge. The charge is captured only after you confirm the job is finished, and the worker is paid out through Stripe Connect after that capture. If you cancel before the work is done, the authorization is voided.`,
+      q: `How does payment work?`,
+      a: `You and the worker settle the agreed amount directly. Agree on the payment method and timing before work starts. Cash, Venmo, Zelle, and check all work if you both agree. TryHardly does not process the payment.`,
     },
     {
       q: `What does TryHardly charge?`,
-      a: `Posting a job is free. Workers pay a flat 12% marketplace fee on completed paid jobs. There are no lead fees, no memberships, and no charges for jobs that never happen.`,
+      a: `Nothing right now. Posting and bidding are free, and workers keep 100% of the amount they agree on. TryHardly does not take a platform fee.`,
     },
     {
       q: `How do I know the worker is legitimate?`,
-      a: `Every worker confirms their email address, and every worker must pass Stripe Identity government ID and selfie verification before they can be paid. Reviews are only written by people who actually completed a job together.`,
+      a: `Every worker confirms their email address. Read their profile, reviews, and credentials, then ask the questions that matter for your job. Reviews are only written by people who completed a job together.`,
     },
   ];
 

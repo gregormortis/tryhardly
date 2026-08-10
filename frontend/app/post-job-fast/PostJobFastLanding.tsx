@@ -73,8 +73,8 @@ const trust = [
   },
   {
     icon: ShieldCheck,
-    title: 'Marketplace payout flow',
-    desc: 'Built so marketplace payouts are initiated after payment capture for completed tasks. You can post and hire for free today.',
+    title: 'Direct payment, no platform fee',
+    desc: 'You and the worker agree how and when to settle payment directly. Posting is free, and TryHardly does not take a cut.',
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'Do I have to pay through the site?',
-    a: 'Not required today. TryHardly uses a marketplace payout flow so payout is initiated after payment capture for completed tasks. For now you can post, get applications, and arrange the job for free.',
+    a: 'No. You pay the worker directly. Agree on the amount, method, and timing before work starts. Cash, Venmo, Zelle, and check all work if you both agree. TryHardly does not process the payment or take a cut.',
   },
   {
     q: 'What kind of jobs work here?',

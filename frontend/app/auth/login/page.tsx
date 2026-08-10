@@ -27,7 +27,7 @@ function LoginForm() {
       : redirect && redirect.startsWith('/jobs')
       ? {
           heading: 'Sign in to bid on this job',
-          sub: 'A free account lets you send the poster a detailed bid. Before your first bid you’ll connect a Stripe Connect payout account — that’s how you get paid once the poster confirms the completed work.',
+          sub: 'A free account lets you send the poster a detailed bid. If you get the job, agree on payment directly with the poster before you start.',
         }
       : {
           heading: 'Welcome back',

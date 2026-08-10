@@ -22,9 +22,9 @@ const helpTopics = [
   {
     icon: ScrollText,
     title: 'Policies',
-    body: 'Read how refunds, disputes, and the marketplace rules work before you start.',
+    body: 'Read the marketplace rules and what TryHardly can and cannot help with before you start.',
     href: '/refunds',
-    cta: 'Refund & dispute policy',
+    cta: 'Marketplace policies',
   },
   {
     icon: ShieldCheck,
@@ -101,8 +101,7 @@ export default function SupportPage() {
             <li className="flex gap-3">
               <span className="text-accent-text mt-1">•</span>
               <span>
-                We&apos;re launching locally in <strong>Redding, CA</strong> first, with
-                starter jobs seeded so the board isn&apos;t empty on day one.
+                We&apos;re building locally in <strong>Redding, CA</strong> first.
               </span>
             </li>
             <li className="flex gap-3">
@@ -115,10 +114,9 @@ export default function SupportPage() {
             <li className="flex gap-3">
               <span className="text-accent-text mt-1">•</span>
               <span>
-                Marketplace payments run on Stripe: a payment method is authorized when a worker is
-                chosen, the charge is captured for completed jobs under platform rules, and worker
-                payouts are made through Stripe Connect after completed-job payment capture. We&apos;ll tell you
-                clearly when your account can use them.
+                Customers and workers settle payment directly. Agree on the amount, method, and timing
+                before work begins. TryHardly does not process payments, take a fee, refund, reverse, or
+                mediate payment.
               </span>
             </li>
             <li className="flex gap-3">

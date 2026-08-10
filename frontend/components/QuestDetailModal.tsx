@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { X, MapPin, Clock, Star, Wrench, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import EscrowPanel from './EscrowPanel';
+import DirectPaymentPanel from './DirectPaymentPanel';
+import { PLATFORM_PAYMENTS_ENABLED } from '@/lib/paymentsMode';
 import { api } from '../lib/api';
 
 // TODO(escrow-readiness): This modal still models a quest with mock-shaped
@@ -384,12 +386,21 @@ export default function QuestDetailModal({
                   </p>
                 )}
 
-                {/* Marketplace payment panel (non-escrow manual-capture flow) */}
-                <EscrowPanel
-                  questId={quest.id}
-                  isQuestGiver={currentUserId === quest.postedBy.id}
-                  questStatus={quest.status}
-                />
+                {/* Payment panel. Platform mode shows the manual-capture
+                    authorization flow; direct mode explains that the customer
+                    and worker settle between themselves. */}
+                {PLATFORM_PAYMENTS_ENABLED ? (
+                  <EscrowPanel
+                    questId={quest.id}
+                    isQuestGiver={currentUserId === quest.postedBy.id}
+                    questStatus={quest.status}
+                  />
+                ) : (
+                  <DirectPaymentPanel
+                    isQuestGiver={currentUserId === quest.postedBy.id}
+                    agreedAmount={Number(quest.reward) || null}
+                  />
+                )}
               </div>
             )}
           </div>

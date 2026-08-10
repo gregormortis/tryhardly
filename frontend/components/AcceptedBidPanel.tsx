@@ -5,8 +5,14 @@ import toast from 'react-hot-toast';
 import { CheckCircle2, MapPin, Phone } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Application, Quest } from '@/lib/types';
-import { posterPaymentNextStep, type PaymentStatusValue } from '@/lib/paymentCopy';
+import {
+  DIRECT_PAYMENT_SHORT,
+  posterPaymentNextStep,
+  type PaymentStatusValue,
+} from '@/lib/paymentCopy';
+import { PLATFORM_PAYMENTS_ENABLED } from '@/lib/paymentsMode';
 import EscrowPanel from './EscrowPanel';
+import DirectPaymentPanel from './DirectPaymentPanel';
 
 // Owner-facing "what happens next" panel shown immediately after a bid is
 // accepted, right on the quest detail page. The headline tracks the live
@@ -57,7 +63,15 @@ export default function AcceptedBidPanel({
     (status: PaymentStatusValue) => setPaymentStatus(status),
     []
   );
-  const nextStep = posterPaymentNextStep(paymentStatus);
+  // In direct-settlement mode there is no authorization to track, so the
+  // headline stops asking for one and tells the poster what actually happens
+  // next: coordinate, get the work done, confirm it.
+  const nextStep = PLATFORM_PAYMENTS_ENABLED
+    ? posterPaymentNextStep(paymentStatus)
+    : {
+        heading: 'Next step: agree the details with your worker',
+        detail: DIRECT_PAYMENT_SHORT,
+      };
 
   const workerId =
     acceptedApplication?.adventurerId ?? quest.assignedAdventurerId ?? null;
@@ -200,13 +214,19 @@ export default function AcceptedBidPanel({
         )}
       </div>
 
-      {/* Payment authorization CTA + live status (manual-capture Checkout flow). */}
-      <EscrowPanel
-        questId={quest.id}
-        isQuestGiver
-        questStatus={quest.status}
-        onStatusChange={handlePaymentStatusChange}
-      />
+      {/* Payment. In platform mode this is the authorization CTA + live status
+          for the manual-capture Checkout flow. In direct mode there is nothing
+          to authorize, so it explains who pays whom instead. */}
+      {PLATFORM_PAYMENTS_ENABLED ? (
+        <EscrowPanel
+          questId={quest.id}
+          isQuestGiver
+          questStatus={quest.status}
+          onStatusChange={handlePaymentStatusChange}
+        />
+      ) : (
+        <DirectPaymentPanel isQuestGiver agreedAmount={acceptedAmount} />
+      )}
     </div>
   );
 }

@@ -16,7 +16,7 @@ const faqs = [
       },
       {
         q: 'Is Tryhardly free to join?',
-        a: 'Yes! Creating an account is completely free. We only charge commission when you complete jobs as a worker.'
+        a: 'Yes. Creating an account is free. Posting and bidding are free too, and workers keep the full amount they agree on with the customer.'
       }
     ]
   },
@@ -25,11 +25,11 @@ const faqs = [
     questions: [
       {
         q: 'How does the marketplace fee work?',
-        a: 'Workers pay a flat 12% marketplace fee on completed paid jobs — the same rate for everyone. There are no tiers, no listing fees, and no subscriptions. You only pay when you get paid.'
+        a: 'There is no marketplace fee. Workers keep 100% of the amount they agree on with the customer. Posting, bidding, and using TryHardly are free right now.'
       },
       {
-        q: 'Does the 12% fee ever change?',
-        a: 'No. The fee is a flat 12% no matter how experienced you are. Building a strong reputation earns you more trust, visibility, and access — like skill badges and team leadership — not a cheaper cut.'
+        q: 'Does my reputation change what I keep?',
+        a: 'No. You keep 100% at every level. A strong reputation earns more trust, visibility, and access, such as skill badges and team leadership.'
       },
       {
         q: 'How does my reputation grow on Tryhardly?',
@@ -41,7 +41,7 @@ const faqs = [
       },
       {
         q: 'How do I get paid?',
-        a: 'Marketplace payments are processed through Stripe. When a customer books, their payment method is authorized — this is not a final charge. Once the task is completed, that authorization is captured under platform rules, and your payout is initiated through Stripe Connect after the completed-task payment capture. You can then transfer it to your bank account or PayPal.'
+        a: 'The customer pays you directly. Agree on the amount, method, and timing before you start. Cash, Venmo, Zelle, and check all work if you both agree. You keep all of it; TryHardly does not take a cut.'
       }
     ]
   },
@@ -58,7 +58,7 @@ const faqs = [
       },
       {
         q: 'What if I\'m not satisfied with the work?',
-        a: 'We have a resolution process. If the work doesn\'t meet the job requirements, you can request revisions or open a dispute. Our team will mediate to ensure fair outcomes.'
+        a: 'Talk with the worker first and be clear about what needs to be finished. TryHardly keeps the job record and ratings, but payment is between you and the worker. We cannot refund, reverse, or mediate the payment.'
       },
       {
         q: 'Can I hire the same worker again?',
@@ -67,19 +67,19 @@ const faqs = [
     ]
   },
   {
-    category: 'Payment & Security',
+    category: 'Direct payment',
     questions: [
       {
-        q: 'Is my payment secure?',
-        a: 'Yes! Marketplace payments are processed through Stripe. Your payment method is authorized at booking, the charge is captured for completed work under platform rules, and worker payouts are made through Stripe Connect after completed-task payment capture. If a job is cancelled before capture, the authorization is voided and no final charge is created.'
+        q: 'Does TryHardly process or protect the payment?',
+        a: 'No. You and the worker settle payment directly. Agree on the amount, payment method, and timing before work starts. TryHardly keeps the job record and both sides’ ratings, but cannot refund, reverse, or guarantee the payment.'
       },
       {
-        q: 'What payment methods do you accept?',
-        a: 'We accept credit cards, debit cards, PayPal, and bank transfers. Payouts can be sent via PayPal or direct deposit.'
+        q: 'What payment methods can we use?',
+        a: 'That is up to you and the worker. Many neighbors use cash, Venmo, Zelle, or check. Agree on the method before the job starts.'
       },
       {
         q: 'Are there any refunds?',
-        a: 'If a job is cancelled before work begins, full refunds are issued. For completed work, refunds are handled through our dispute resolution process based on whether requirements were met.'
+        a: 'No. Because payment happens directly between the customer and worker, TryHardly cannot refund or reverse it. Agree on the payment plan before work begins.'
       }
     ]
   },
@@ -117,37 +117,37 @@ export default function FAQPage() {
           </p>
         </div>
 
-        {/* Always-visible payments summary so the key money flow is readable
+        {/* Always-visible direct-payment summary so the key money flow is readable
             without expanding the accordion (and in static fetches/SEO). */}
         <div className="mb-12 bg-gradient-to-br from-accent/10 to-warning/5 border border-accent/30 rounded-lg p-8">
-          <h2 className="text-2xl font-bold text-accent-text mb-4">Payments and payouts</h2>
+          <h2 className="text-2xl font-bold text-accent-text mb-4">How direct payment works</h2>
           <ul className="space-y-3 text-body">
             <li className="flex gap-3">
               <span className="text-accent-text mt-1">•</span>
               <span>
-                <strong>Authorized at booking.</strong> When a customer books a quest, their payment
-                method is authorized through Stripe. This is not a final charge.
+                <strong>Agree before work starts.</strong> The customer and worker agree on the amount,
+                payment method, and timing directly.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-accent-text mt-1">•</span>
               <span>
-                <strong>Captured for completed work.</strong> The charge is captured only after the
-                task is completed, under platform rules.
+                <strong>Settle directly.</strong> Use cash, Venmo, Zelle, check, or another method you
+                both prefer.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-accent-text mt-1">•</span>
               <span>
-                <strong>Worker payout follows capture.</strong> Worker payouts are initiated through
-                Stripe Connect after the completed-task payment capture.
+                <strong>Workers keep 100%.</strong> TryHardly does not process the payment or take a
+                marketplace fee.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-accent-text mt-1">•</span>
               <span>
-                <strong>Cancel before capture, no charge.</strong> If a quest is cancelled before the
-                charge is captured, the authorization is voided and no final charge is created.
+                <strong>Know the limit.</strong> TryHardly keeps the job record and ratings, but cannot
+                refund, reverse, or guarantee a direct payment.
               </span>
             </li>
           </ul>

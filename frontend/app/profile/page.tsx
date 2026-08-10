@@ -10,7 +10,6 @@ import type { Application, User } from '@/lib/types';
 import CredentialsManager from '@/components/CredentialsManager';
 import ServicePackagesManager from '@/components/ServicePackagesManager';
 import ProfessionalismManager from '@/components/ProfessionalismManager';
-import StripeConnectButton from '@/components/StripeConnectButton';
 import { GUILD_PATHS, guildPathLabel } from '@/lib/guildPath';
 
 export default function ProfilePage() {
@@ -284,13 +283,13 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Payout account (Stripe Connect) */}
+        {/* Direct payment */}
         <div className="bg-surface border border-line rounded-xl p-6">
-          <h2 className="font-semibold text-body mb-1">Payout Account</h2>
-          <p className="text-sm text-subtle mb-4">
-            Set up Stripe Connect to receive payouts for completed quests.
+          <h2 className="font-semibold text-body mb-1">How you get paid</h2>
+          <p className="text-sm text-subtle">
+            TryHardly does not process payments. Agree on the amount, method, and timing directly
+            with the customer before work starts. You keep 100% of what you earn.
           </p>
-          <StripeConnectButton stripeAccountId={(displayProfile as any).stripeAccountId} />
         </div>
 
         {/* Professional credentials */}

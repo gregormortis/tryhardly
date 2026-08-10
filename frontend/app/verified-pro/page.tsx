@@ -25,8 +25,8 @@ const CHECKLIST = [
     ),
   },
   {
-    title: 'Verify a credential (or hold account verification)',
-    body: 'Add at least one verified credential — a license, insurance, certification, or similar — or hold TryHardly account verification where applicable.',
+    title: 'Add a credential or confirm your email',
+    body: 'Add a license, insurance document, certification, or similar credential. Your account email must also be confirmed.',
   },
   {
     title: 'Complete 3+ jobs',
@@ -38,7 +38,7 @@ const CHECKLIST = [
   },
   {
     title: 'Keep a clean record',
-    body: 'No unresolved or serious disputes on your account.',
+    body: 'No unresolved serious account reports.',
   },
 ];
 
@@ -96,10 +96,9 @@ export default function VerifiedProPage() {
             checklist. It reflects standing earned through quality work.
           </p>
           <p className="text-muted text-sm leading-relaxed">
-            It is not a legal guarantee, a license, or a fee change — the marketplace fee stays a flat 12% for
-            everyone. Clients should still confirm licensing requirements for their own project and location.
-            Account verification and credential verification mean TryHardly reviewed submitted details; they
-            are not a warranty of outcomes.
+            It is not a license or proof of how a job will turn out. It can help a worker earn visibility and
+            trust, but clients should still confirm licensing requirements for their own project and location.
+            Account verification means email verification.
           </p>
         </section>
 

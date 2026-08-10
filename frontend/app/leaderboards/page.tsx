@@ -222,7 +222,7 @@ export default function LeaderboardsPage() {
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-strong mb-2">Top rated workers</h1>
           <p className="text-muted max-w-2xl mx-auto">
-            Workers listed here are ranked on their record of paid work on TryHardly: client ratings and reviews,
+            Workers listed here are ranked on their record of completed work on TryHardly: client ratings and reviews,
             completed jobs, and verified credentials. Rankings are never based on earnings or on paying for placement.
           </p>
         </div>
@@ -303,8 +303,8 @@ export default function LeaderboardsPage() {
 
         {/* Footer note */}
         <p className="text-center text-xs text-subtle mt-10 max-w-xl mx-auto">
-          Rankings recognize reliability and quality of work. They carry no cash, discounts, or fee changes — the
-          marketplace fee stays a flat 12% for everyone.
+          Rankings recognize reliability and quality of work. They can earn a worker more visibility and trust,
+          but everyone keeps 100% of what they agree to earn.
         </p>
       </div>
     </div>
