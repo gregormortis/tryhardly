@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { AuthProvider } from '../lib/auth';
 import { OrganizationSchema } from '../components/StructuredData';
+import ServiceStatusBanner from '../components/ServiceStatusBanner';
 
 const dmMono = DM_Mono({
   subsets: ['latin'],
@@ -113,6 +114,7 @@ export default function RootLayout({
           `}
         </Script>
         <AuthProvider>
+          <ServiceStatusBanner />
           <Navbar />
           <main>{children}</main>
           <Footer />
