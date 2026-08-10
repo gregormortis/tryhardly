@@ -20,11 +20,41 @@ const PORT = process.env.PORT || 4000;
 
 // Start server
 const server = app.listen(PORT, () => {
-  console.log(`\n🚀 Tryhardly API Server`);
-  console.log(`⚔️  Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🎯 Server running on port ${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/health`);
-  console.log(`\n🏰 Ready to accept quests!\n`);
+  console.log(`\nTryHardly API server`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Listening on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+
+  // Startup readiness check for the alerting path.
+  //
+  // Both alert channels fail silently by design: reportError is a no-op
+  // without SENTRY_DSN, and mailerService falls back to a NoopEmailProvider in
+  // production when EMAIL_PROVIDER/RESEND_API_KEY are unset. A deploy can
+  // therefore look perfectly healthy while having no way to tell a human that
+  // something is wrong. The 2026-08-04 card-testing incident ran unnoticed
+  // until Stripe closed the account; surfacing this at boot makes that
+  // specific silence hard to miss.
+  const emailProvider = (process.env.EMAIL_PROVIDER || '').toLowerCase();
+  const emailLive =
+    emailProvider === 'resend'
+      ? Boolean(process.env.RESEND_API_KEY)
+      : emailProvider === 'log'
+        ? true
+        : process.env.NODE_ENV !== 'production';
+  const sentryLive = Boolean(process.env.SENTRY_DSN);
+
+  console.log(
+    `Alerting: email=${emailLive ? 'on' : 'OFF'} sentry=${sentryLive ? 'on' : 'off'} ` +
+      `ops=${process.env.OPS_ALERT_EMAIL || 'support@tryhardly.com'}`,
+  );
+  if (!emailLive && !sentryLive) {
+    console.error(
+      '[STARTUP WARNING] No alert channel is configured. Payment abuse alerts ' +
+        'will only appear in these logs. Set EMAIL_PROVIDER=resend with ' +
+        'RESEND_API_KEY, or SENTRY_DSN, so alerts reach a human.',
+    );
+  }
+  console.log('');
 });
 
 // Graceful shutdown
