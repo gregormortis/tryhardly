@@ -69,7 +69,12 @@ const OPEN_QUEST = {
 };
 
 describe('applyToQuest — detailed bid payload', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Direct settlement is the production default; tests that exercise the
+    // platform-payments path opt in explicitly.
+    delete process.env.PAYMENTS_MODE;
+  });
 
   it('persists the full bid (amounts, materials, walkthrough) and ignores invalid values', async () => {
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
@@ -218,6 +223,9 @@ describe('applyToQuest — detailed bid payload', () => {
   });
 
   it('blocks submitting a bid when the worker has no payout account', async () => {
+    // Payout readiness only gates bids when the platform is actually paying
+    // workers. See the direct-mode cases below.
+    process.env.PAYMENTS_MODE = 'platform';
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
     mockPrisma.application.findFirst.mockResolvedValue(null);
     // No stripeAccountId → not payout-ready.
@@ -242,6 +250,7 @@ describe('applyToQuest — detailed bid payload', () => {
   });
 
   it('blocks submitting a bid when the payout account is not fully onboarded', async () => {
+    process.env.PAYMENTS_MODE = 'platform';
     mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
     mockPrisma.application.findFirst.mockResolvedValue(null);
     mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: 'acct_pending' });
@@ -269,10 +278,71 @@ describe('applyToQuest — detailed bid payload', () => {
     );
     expect(mockPrisma.application.create).not.toHaveBeenCalled();
   });
+
+  // ─── Direct-settlement mode ───────────────────────────────────────────────
+  // Regression cover for a live bug: the frontend payout gate was removed but
+  // this server-side one was not, and because it fails closed it rejected
+  // EVERY bid on the platform. No worker has a connected account in direct
+  // mode, and the platform's Stripe credentials no longer resolve.
+
+  it('accepts a bid in direct mode even though the worker has no payout account', async () => {
+    process.env.PAYMENTS_MODE = 'direct';
+    mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: null });
+    mockPrisma.application.create.mockResolvedValue({
+      id: 'a3',
+      adventurer: { username: 'w' },
+    });
+
+    const res = mockRes();
+    await applyToQuest(
+      {
+        params: { questId: 'q1' },
+        user: { id: 'worker1' },
+        body: { bidAmount: '500' },
+      } as any,
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(mockPrisma.application.create).toHaveBeenCalled();
+  });
+
+  it('does not call Stripe at all when bidding in direct mode', async () => {
+    process.env.PAYMENTS_MODE = 'direct';
+    mockPrisma.quest.findUnique.mockResolvedValue(OPEN_QUEST);
+    mockPrisma.application.findFirst.mockResolvedValue(null);
+    mockPrisma.user.findUnique.mockResolvedValue({ stripeAccountId: 'acct_stale' });
+    mockPrisma.application.create.mockResolvedValue({
+      id: 'a4',
+      adventurer: { username: 'w' },
+    });
+
+    const res = mockRes();
+    await applyToQuest(
+      {
+        params: { questId: 'q1' },
+        user: { id: 'worker1' },
+        body: { bidAmount: '250' },
+      } as any,
+      res
+    );
+
+    // A stale account id left over from the platform era must not cause a
+    // Stripe lookup, which would fail and take the bid down with it.
+    expect(mockGetAccount).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
 });
 
 describe('acceptApplication — multi-bid selection + payment handoff', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Direct settlement is the production default; tests that exercise the
+    // platform-payments path opt in explicitly.
+    delete process.env.PAYMENTS_MODE;
+  });
 
   it('sets quest.reward to the accepted bid and rejects only the other bids', async () => {
     mockPrisma.application.findUnique.mockResolvedValue({
