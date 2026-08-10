@@ -36,9 +36,12 @@ type StatusKey = 'payments_paused' | 'maintenance';
 const STATUSES: Record<StatusKey, { headline: string; detail: string; href: string; cta: string }> =
   {
     payments_paused: {
-      headline: 'Payments are paused while our processor completes a review.',
+      // Copy updated 2026-08-09: the processor review concluded and was
+      // declined, so "completes a review" became untrue the moment it landed.
+      // A status banner that is out of date is worse than none.
+      headline: 'Booking and payouts are temporarily unavailable.',
       detail:
-        'You can browse jobs, post a job, and join the worker list now. Bidding and payouts turn back on as soon as the review clears, and everyone on the list hears from us first.',
+        'We are moving to a new payment processor. You can browse jobs, post a job, and join the worker list now, and everyone on the list gets an email the day booking reopens.',
       href: '/support',
       cta: 'Questions',
     },
