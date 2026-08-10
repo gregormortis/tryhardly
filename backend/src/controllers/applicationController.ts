@@ -9,12 +9,13 @@ import {
   CONTACT_INFO_VALIDATION_MESSAGE,
 } from '../utils/contactDetection';
 import { findQuestIdsReviewedBy } from '../services/reviewStatusService';
+import { isPlatformPaymentsEnabled } from '../config/paymentsMode';
 
-// Shown when a worker tries to submit a bid before their Stripe Connect payout
-// account is onboarded/ready. Workers may view jobs and draft a bid, but a bid
-// can only be SUBMITTED once payouts can actually be routed to them on capture.
+// Shown when a worker tries to submit a bid before their payout account is
+// ready. Only reachable in platform-payments mode: in direct-settlement mode
+// there is no payout account, because the worker collects from the customer.
 export const PAYOUT_SETUP_REQUIRED_MESSAGE =
-  'Connect your payout account before submitting bids. This lets TryHardly process worker payouts through Stripe Connect after completed-task payment capture.';
+  'Connect your payout account before submitting bids, so a payout can be routed to you when a job is completed.';
 
 // Whether the bidding worker's Stripe Connect account is ready to receive the
 // routed payout for the marketplace destination-charge flow. Mirrors the
@@ -24,6 +25,12 @@ export const PAYOUT_SETUP_REQUIRED_MESSAGE =
 // to Stripe all read as not-ready (fail closed) so we never accept a bid we
 // couldn't pay out on.
 async function isWorkerPayoutReady(userId: string): Promise<boolean> {
+  // In direct-settlement mode the worker is paid by the customer, so there is
+  // no connected account to be ready. Checking anyway would reject every bid on
+  // the platform: no worker has an account, and the platform's Stripe
+  // credentials no longer resolve, so this would fail closed on all of them.
+  if (!isPlatformPaymentsEnabled()) return true;
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { stripeAccountId: true },
