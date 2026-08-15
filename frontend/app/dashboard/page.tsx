@@ -21,6 +21,7 @@ import {
 } from '../../lib/dashboard';
 import { countActiveQuests, isActiveWorkStatus } from '../../lib/workStatus';
 import type { WorkRole } from '../../lib/workStatus';
+import { PLATFORM_PAYMENTS_ENABLED } from '../../lib/paymentsMode';
 
 const XP_PER_LEVEL = 1000;
 // Sections list the most relevant rows and link out for the rest.
@@ -121,7 +122,7 @@ function TestJobChip() {
   return (
     <span
       title="This job is marked as a test or admin record."
-      className="shrink-0 rounded border border-line-strong px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-muted"
+      className="shrink-0 rounded border border-line-strong px-2 py-1 text-sm font-semibold text-muted"
     >
       Test job
     </span>
@@ -159,18 +160,18 @@ function JobRow({ job }: { job: DashboardJob }) {
           <p className="truncate text-sm font-medium text-strong">{job.title}</p>
           {job.isTest && <TestJobChip />}
         </div>
-        <p className="mt-0.5 text-xs text-muted">{job.nextStep.label}</p>
+        <p className="mt-0.5 text-sm text-muted">{job.nextStep.label}</p>
         {meta.length > 0 && (
-          <p className="mt-1 truncate text-xs text-subtle">{meta.join(' • ')}</p>
+          <p className="mt-1 truncate text-sm text-subtle">{meta.join(' • ')}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {job.payment && (
-          <span className={`rounded px-2 py-1 text-xs ${job.payment.tone}`}>{job.payment.label}</span>
+          <span className={`rounded px-2 py-1 text-sm ${job.payment.tone}`}>{job.payment.label}</span>
         )}
         {job.nextStep.cta && (
           <span
-            className={`rounded px-2 py-1 text-xs font-medium ${TONE_CLASSES[job.nextStep.tone].pill}`}
+            className={`rounded px-2 py-1 text-sm font-medium ${TONE_CLASSES[job.nextStep.tone].pill}`}
           >
             {job.nextStep.cta} →
           </span>
@@ -196,12 +197,12 @@ function SectionCard({
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-strong">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-xs text-subtle">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-sm text-subtle">{subtitle}</p>}
         </div>
         {action && (
           <Link
             href={action.href}
-            className="shrink-0 rounded text-xs text-accent-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="shrink-0 rounded text-sm text-accent-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             {action.label}
           </Link>
@@ -231,12 +232,12 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-lg border border-dashed border-line px-4 py-5 text-center">
-      <p className="text-sm text-muted">{message}</p>
+      <p className="text-base text-muted">{message}</p>
       <Link
         href={cta.href}
-        className="mt-2 inline-block rounded text-sm font-medium text-accent-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        className="btn-primary mt-3"
       >
-        {cta.label} →
+        {cta.label}
       </Link>
     </div>
   );
@@ -337,10 +338,13 @@ export default function DashboardPage() {
     job => job.nextStep.cta === 'Leave review'
   ).length;
   const pendingBidCount = applications.filter(app => app.status === 'PENDING').length;
-  // Payout setup is only worth prompting for on an account that works jobs, and
-  // only when Stripe actually answered — a failed status check is not a warning.
+  // Payout setup is only shown in platform-payments mode, and only when Stripe
+  // actually answered — a failed status check is not a warning.
   const payoutActionNeeded =
-    applications.length > 0 && payoutStatus !== null && !payoutStatus.onboarded;
+    PLATFORM_PAYMENTS_ENABLED &&
+    applications.length > 0 &&
+    payoutStatus !== null &&
+    !payoutStatus.onboarded;
   const nothingToDo = !dataLoading && actionJobs.length === 0 && !payoutActionNeeded;
 
   const primaryRole = primaryDashboardRole(postedJobs.length, workerJobs.length);
@@ -355,7 +359,7 @@ export default function DashboardPage() {
     reviewsOwed > 0
       ? { label: `${reviewsOwed} review${reviewsOwed === 1 ? '' : 's'} to leave`, tone: 'text-info border-info/30' }
       : null,
-    payoutStatus?.onboarded
+    PLATFORM_PAYMENTS_ENABLED && payoutStatus?.onboarded
       ? { label: 'Payouts ready', tone: 'text-success border-success/30' }
       : null,
   ].filter(Boolean) as { label: string; tone: string }[];
@@ -377,7 +381,7 @@ export default function DashboardPage() {
             ))}
           </div>
           {postedJobs.length > SECTION_LIMIT && (
-            <p className="mt-3 text-xs text-subtle">
+            <p className="mt-3 text-sm text-subtle">
               Showing {SECTION_LIMIT} of {postedJobs.length} jobs you posted.
             </p>
           )}
@@ -408,7 +412,7 @@ export default function DashboardPage() {
             ))}
           </div>
           {workerJobs.length > SECTION_LIMIT && (
-            <p className="mt-3 text-xs text-subtle">
+            <p className="mt-3 text-sm text-subtle">
               Showing {SECTION_LIMIT} of {workerJobs.length} jobs you were hired for.
             </p>
           )}
@@ -437,7 +441,7 @@ export default function DashboardPage() {
         ))}
       </div>
       {openBids.length > SECTION_LIMIT && (
-        <p className="mt-3 text-xs text-subtle">
+        <p className="mt-3 text-sm text-subtle">
           Showing {SECTION_LIMIT} of {openBids.length} bids.
         </p>
       )}
@@ -461,20 +465,20 @@ export default function DashboardPage() {
     <div className="mx-auto min-h-screen max-w-4xl bg-canvas px-4 py-8">
       {/* Header: who you are, what you can start, and the live counts. */}
       <header className="mb-8">
-        <p className="text-xs uppercase tracking-widest text-subtle">Your dashboard</p>
-        <h1 className="mt-1 text-3xl font-bold text-strong">
+        <p className="eyebrow">Your dashboard</p>
+        <h1 className="mt-1 text-xl font-bold text-strong">
           Welcome back, <span className="text-accent-text">{user.username}</span>
         </h1>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
             href="/post-a-job"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-on-accent transition-colors hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="btn-primary"
           >
             Post a job
           </Link>
           <Link
             href="/jobs"
-            className="rounded-lg border border-line-strong px-4 py-2 text-sm font-medium text-body transition-colors hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="btn-secondary"
           >
             Browse local jobs
           </Link>
@@ -484,7 +488,7 @@ export default function DashboardPage() {
             {chips.map(chip => (
               <span
                 key={chip.label}
-                className={`rounded-full border px-3 py-1 text-xs ${chip.tone}`}
+                className={`rounded-full border px-3 py-1 text-sm ${chip.tone}`}
               >
                 {chip.label}
               </span>
@@ -506,14 +510,14 @@ export default function DashboardPage() {
             <h2 className="text-base font-bold text-strong">
               {nothingToDo ? "You're caught up" : 'Action required'}
             </h2>
-            <p className="mt-0.5 text-xs text-subtle">
+            <p className="mt-0.5 text-sm text-subtle">
               {nothingToDo
                 ? 'Nothing needs your attention right now.'
                 : 'Steps waiting on you, most important first.'}
             </p>
           </div>
           {!nothingToDo && actionJobs.length > 0 && (
-            <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-xs text-accent-text-hover">
+            <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-sm text-accent-text-hover">
               {actionJobs.length} to do
             </span>
           )}
@@ -525,13 +529,13 @@ export default function DashboardPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               href="/post-a-job"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-on-accent transition-colors hover:bg-accent"
+              className="btn-primary"
             >
               Post a job
             </Link>
             <Link
               href="/jobs"
-              className="rounded-lg border border-line-strong px-4 py-2 text-sm font-medium text-body transition-colors hover:border-accent/40"
+              className="btn-secondary"
             >
               Find local work
             </Link>
@@ -546,13 +550,13 @@ export default function DashboardPage() {
                       ? 'Finish your Stripe payout setup'
                       : 'Connect a payout account'}
                   </p>
-                  <p className="mt-0.5 text-xs text-muted">
+                  <p className="mt-0.5 text-sm text-muted">
                     Required before you can be paid for completed work.
                   </p>
                 </div>
                 <Link
                   href="#payments-payouts"
-                  className="shrink-0 rounded bg-info/20 px-2 py-1 text-xs font-medium text-info"
+                  className="shrink-0 rounded bg-info/20 px-2 py-1 text-sm font-medium text-info"
                 >
                   Payments &amp; payouts →
                 </Link>
@@ -562,7 +566,7 @@ export default function DashboardPage() {
               <JobRow key={`action-${job.key}`} job={job} />
             ))}
             {actionJobs.length > ACTION_LIMIT && (
-              <p className="pt-1 text-xs text-subtle">
+              <p className="pt-1 text-sm text-subtle">
                 {actionJobs.length - ACTION_LIMIT} more waiting on you further down the page.
               </p>
             )}
@@ -572,18 +576,20 @@ export default function DashboardPage() {
 
       {sections}
 
-      <div id="payments-payouts" className="mb-6 scroll-mt-4">
-        <PaymentsPayoutsPanel
-          stripeAccountId={user.stripeAccountId || null}
-          onStatusChange={handlePayoutStatus}
-        />
-      </div>
+      {PLATFORM_PAYMENTS_ENABLED && (
+        <div id="payments-payouts" className="mb-6 scroll-mt-4">
+          <PaymentsPayoutsPanel
+            stripeAccountId={user.stripeAccountId || null}
+            onStatusChange={handlePayoutStatus}
+          />
+        </div>
+      )}
 
       {/* Reputation is secondary flavour here — it never outranks the work. */}
       <section className="mb-6 rounded-xl border border-line bg-surface p-4">
         <div className="mb-2 flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-semibold text-body">Reputation &amp; level</h2>
-          <span className="text-xs text-subtle">
+          <span className="text-sm text-subtle">
             Level {user.level} • {user.xp.toLocaleString()} points total
           </span>
         </div>
@@ -593,7 +599,7 @@ export default function DashboardPage() {
             style={{ width: `${xpPercent}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-subtle">
+        <p className="mt-1 text-sm text-subtle">
           {XP_PER_LEVEL - xpProgress} points to level {user.level + 1} — earned by completing jobs and
           collecting reviews.
         </p>
@@ -609,7 +615,7 @@ export default function DashboardPage() {
           <Link
             key={action.label}
             href={action.href}
-            className="rounded-xl border border-line bg-surface p-3 text-center text-xs text-muted transition-colors hover:border-accent/40 hover:text-body"
+            className="btn-secondary min-h-20 text-center"
           >
             {action.label}
           </Link>

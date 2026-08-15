@@ -47,14 +47,17 @@
      hue darkened enough to be legible AS text on a light surface — amber-400
      on white is 1.7:1 and completely fails, which is exactly the trap this
      token exists to prevent. */
-  --accent: 245 158 11; /* amber-500 — fill only          */
-  --accent-hover: 217 119 6; /* amber-600                      */
+  /* The fill used to be amber-500 with near-black text, which reads as a
+     caution label rather than a button. amber-700 with white text clears AA
+     (4.9:1), looks deliberate rather than alarming, and keeps the warm hue. */
+  --accent: 180 83 9; /* amber-700 — fill only          */
+  --accent-hover: 146 64 14; /* amber-800                      */
   /* amber-700 (180 83 9) clears 5.9:1 on white but only 4.47:1 on the
      accent/10 tinted chips used across the board and landing pages, which is
      just under AA. amber-800 clears both. */
   --accent-text: 146 64 14; /* amber-800 — 8.1:1 on surface, 6.1:1 on accent/10 */
   --accent-text-hover: 120 53 15; /* amber-900 */
-  --on-accent: 28 25 23; /* text placed on an accent fill  */
+  --on-accent: 255 255 255; /* text placed on an accent fill  */
   /* Status fills are dark in light mode and light in dark mode, so text laid
      on them inverts relative to --on-accent. */
   --on-status: 255 255 255;

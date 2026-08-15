@@ -62,10 +62,10 @@ export default function AccountDeletionPage() {
             <h2 className="text-2xl font-bold text-accent-text mb-3">What may be retained</h2>
             <p>
               Some records may be kept where the law requires it or to protect other users — for
-              example, transaction and payout records needed for tax, accounting, fraud-prevention,
-              and dispute purposes. Payment processing is handled by our payment provider; their
-              retention is governed by their own policies. Retained records are limited to what is
-              necessary and are not used to re-create your profile.
+              example, job and account records needed for fraud prevention and dispute purposes.
+              TryHardly does not process payments or collect payment card information. Customers and
+              workers settle payment directly with each other. Retained records are limited to what
+              is necessary and are not used to re-create your profile.
             </p>
           </section>
 

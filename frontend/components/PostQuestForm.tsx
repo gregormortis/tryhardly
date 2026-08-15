@@ -27,6 +27,7 @@ import {
   type PostJobFormValues,
 } from '../lib/postJobDraft';
 import type { RecurrenceCadence } from '../lib/types';
+import { PLATFORM_PAYMENTS_ENABLED } from '../lib/paymentsMode';
 import ImageUploader from './ImageUploader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,8 +35,8 @@ import ImageUploader from './ImageUploader';
 // The poster-entered values (and their pricing/materials unions) live in
 // lib/postJobDraft so the logged-out draft round trip shares one shape with the
 // form. `fixed` pricing means the poster names a budget; `quote` lets qualified
-// workers apply with their own estimate through TryHardly. Both are paid in-app
-// via Stripe.
+// workers apply with their own estimate through TryHardly. The price remains
+// editable until the poster chooses a bid.
 type FormData = PostJobFormValues;
 
 type TierKey = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'legendary';
@@ -102,7 +103,9 @@ const URGENCY_LABELS: Record<Urgency, string> = {
 
 // Repeated verbatim on the form and the review step: the one thing a first-time
 // poster needs to know before they type anything.
-const TRUST_LINE = 'Free to post. Workers bid. You authorize payment only after choosing a worker.';
+const TRUST_LINE = PLATFORM_PAYMENTS_ENABLED
+  ? 'Free to post. Workers bid. You authorize payment only after choosing a worker.'
+  : 'Free to post. Local workers bid. You pay your worker directly when the job is done.';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -206,7 +209,7 @@ function StepIndicator({ current }: { current: number }) {
           <div key={label} className={clsx('flex items-center', i < STEP_LABELS.length - 1 && 'flex-1')}>
             <div className="flex flex-col items-center gap-1.5">
               <div className={clsx(
-                'w-7 h-7 rounded-full flex items-center justify-center font-mono text-[12px] font-semibold border transition-all duration-200',
+                'w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold border transition-all duration-200',
                 done   ? 'bg-accent border-accent text-on-accent'
                        : active ? 'bg-accent/15 border-accent/50 text-accent-text'
                                 : 'bg-surface border-line text-subtle',
@@ -214,7 +217,7 @@ function StepIndicator({ current }: { current: number }) {
                 {done ? '✓' : idx}
               </div>
               <span className={clsx(
-                'font-mono text-[11px] font-semibold tracking-widest uppercase whitespace-nowrap',
+                'text-sm font-semibold whitespace-nowrap',
                 active ? 'text-accent-text' : done ? 'text-subtle' : 'text-subtle',
               )}>{label}</span>
             </div>
@@ -231,8 +234,8 @@ function StepIndicator({ current }: { current: number }) {
   );
 }
 
-const inputCls = 'w-full font-mono text-[13px] px-3.5 py-2.5 bg-surface border border-line rounded-md text-body placeholder-subtle focus:outline-none focus:border-accent/40 transition-colors';
-const labelCls = 'block font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase mb-2';
+const inputCls = 'w-full min-h-12 text-base px-3.5 py-2.5 bg-surface border border-line rounded-md text-body placeholder-subtle focus:outline-none focus:border-accent/40 transition-colors';
+const labelCls = 'block text-base font-semibold text-strong mb-2';
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -247,14 +250,14 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 // but the message a poster needs is rendered right under the field that failed.
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="font-mono text-[12px] text-danger mt-1.5 leading-relaxed">{message}</p>;
+  return <p className="text-sm text-danger mt-1.5 leading-relaxed">{message}</p>;
 }
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-start py-3 border-b border-line last:border-b-0">
-      <span className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase flex-shrink-0 mr-4">{label}</span>
-      <span className="font-mono text-[12px] text-muted text-right">{value}</span>
+      <span className="text-sm font-semibold text-subtle flex-shrink-0 mr-4">{label}</span>
+      <span className="text-sm text-muted text-right">{value}</span>
     </div>
   );
 }
@@ -569,40 +572,41 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
       <div className="min-h-screen bg-canvas flex items-center justify-center py-10 px-6">
         <div className="w-full max-w-sm text-center">
           <CheckCircle size={48} className="text-success mx-auto mb-4" />
-          <h2 className="font-bold text-2xl text-strong mb-2">Job posted</h2>
-          <p className="font-mono text-[12px] text-subtle leading-relaxed mb-2">
+          <h2 className="font-bold text-xl text-strong mb-2">Job posted</h2>
+          <p className="text-base text-subtle leading-relaxed mb-2">
             Your job is live on the local job board. Workers nearby can start sending bids now.
           </p>
-          <p className="font-mono text-[12px] text-subtle leading-relaxed mb-7">
-            You&apos;ll review the bids and pick a worker. Nothing is charged until then — you
-            authorize payment after you accept a bid.
+          <p className="text-base text-subtle leading-relaxed mb-7">
+            {PLATFORM_PAYMENTS_ENABLED
+              ? 'You’ll review the bids and pick a worker. Nothing is charged until then — you authorize payment after you accept a bid.'
+              : 'You’ll review the bids and pick a worker. Agree on the final price and pay your worker directly when the job is done.'}
           </p>
 
           <div className="space-y-2.5 text-left">
             <button
               onClick={() => { window.location.href = `/job/${postedId}`; }}
-              className="w-full font-mono text-[12px] font-semibold tracking-widest px-6 py-3 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors"
+              className="btn-primary btn-lg btn-block"
             >
-              VIEW YOUR JOB
+              View your job
             </button>
             <button
               onClick={copyJobLink}
-              className="w-full font-mono text-[12px] font-semibold tracking-widest px-6 py-3 border border-line rounded text-muted hover:text-body hover:border-line transition-all flex items-center justify-center gap-2"
+              className="btn-secondary btn-block"
             >
-              <Share2 size={12} /> {shareCopied ? 'LINK COPIED ✓' : 'SHARE JOB'}
+              <Share2 size={16} /> {shareCopied ? 'Link copied' : 'Share job'}
             </button>
             <div className="flex gap-2.5">
               <button
                 onClick={() => { window.location.href = '/dashboard'; }}
-                className="flex-1 font-mono text-[12px] font-semibold tracking-widest px-4 py-2.5 border border-line rounded text-subtle hover:text-muted transition-colors"
+                className="btn-secondary flex-1"
               >
-                MY DASHBOARD
+                My dashboard
               </button>
               <button
                 onClick={() => { window.location.href = '/jobs'; }}
-                className="flex-1 font-mono text-[12px] font-semibold tracking-widest px-4 py-2.5 border border-line rounded text-subtle hover:text-muted transition-colors"
+                className="btn-secondary flex-1"
               >
-                BROWSE JOBS
+                Browse jobs
               </button>
             </div>
           </div>
@@ -618,13 +622,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="font-bold text-2xl text-strong tracking-tight">Post a local job</h1>
-            <p className="font-mono text-[12px] text-subtle mt-1">
+            <h1 className="font-bold text-xl text-strong tracking-tight">Post a local job</h1>
+            <p className="text-base text-subtle mt-1">
               Tell us what needs to get done. Workers near you will send bids.
             </p>
           </div>
           {onCancel && (
-            <button onClick={onCancel} className="font-mono text-[12px] text-subtle hover:text-subtle transition-colors">
+            <button onClick={onCancel} className="btn-secondary px-4 py-2 min-h-11">
               Cancel ×
             </button>
           )}
@@ -632,7 +636,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
         <p
           className={clsx(
-            'font-mono text-[12px] text-subtle leading-relaxed rounded-md border border-line bg-surface px-3.5 py-2.5',
+            'text-sm text-subtle leading-relaxed rounded-md border border-line bg-surface px-3.5 py-2.5',
             !currentUserId || draftRestored ? 'mb-3' : 'mb-8',
           )}
         >
@@ -642,7 +646,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* Logged-out visitors fill the whole form first; the account only comes
             up at the final step, so say so before they start typing. */}
         {!currentUserId && (
-          <p className="font-mono text-[12px] text-subtle leading-relaxed mb-8 rounded-md border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5">
+          <p className="text-sm text-subtle leading-relaxed mb-8 rounded-md border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5">
             No account needed to fill this out. Posting is free — you&apos;ll create a free account
             on the last step to publish your job, get bids, message workers, and choose one.{' '}
             <a href="/request-help" className="text-accent-text underline hover:text-accent-text-hover">
@@ -653,7 +657,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         )}
 
         {draftRestored && (
-          <p className="font-mono text-[12px] text-success/90 leading-relaxed mb-8 rounded-md border border-success/25 bg-success/[0.05] px-3.5 py-2.5">
+          <p className="text-sm text-success/90 leading-relaxed mb-8 rounded-md border border-success/25 bg-success/[0.05] px-3.5 py-2.5">
             Your job details were saved. Check them over and post when you&apos;re ready.
           </p>
         )}
@@ -676,19 +680,19 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               />
               {inference && inferenceSummary && (
                 <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
-                  <p className="font-mono text-[12px] text-accent-text">
+                  <p className="text-base text-accent-text">
                     Looks like: <span className="font-semibold text-accent-text-hover">{inferenceSummary}</span>
                   </p>
                   <button
                     type="button"
                     onClick={applyInference}
-                    className="font-mono text-[12px] font-semibold tracking-widest px-4 py-2 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors flex items-center gap-1.5"
+                    className="btn-secondary px-4 py-2 min-h-11"
                   >
-                    <Wand2 size={12} /> {applied ? 'APPLIED ✓' : 'USE THIS'}
+                    <Wand2 size={16} /> {applied ? 'Applied' : 'Use this'}
                   </button>
                 </div>
               )}
-              <p className="font-mono text-[11px] text-subtle mt-2 leading-relaxed">
+              <p className="text-base text-subtle mt-2 leading-relaxed">
                 We&apos;ll guess the details below — you can edit anything before posting. The
                 full details workers read are written on the next step.
               </p>
@@ -710,11 +714,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               />
               <FieldError message={issueFor('title')} />
               <div className="flex items-start justify-between gap-3 mt-1.5">
-                <p className="font-mono text-[11px] text-subtle leading-relaxed">
+                <p className="text-sm text-subtle leading-relaxed">
                   Name the job the way you&apos;d say it out loud — mowing, dump run, moving help,
                   fence repair, cleaning, errands.
                 </p>
-                <p className="font-mono text-[11px] text-body whitespace-nowrap">{data.title.length}/100</p>
+                <p className="text-sm text-body whitespace-nowrap">{data.title.length}/100</p>
               </div>
             </div>
 
@@ -731,7 +735,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 ))}
               </select>
               <FieldError message={issueFor('category')} />
-              <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
+              <p className="text-sm text-subtle mt-1.5 leading-relaxed">
                 {selectedCategory
                   ? `Jobs like this: ${selectedCategory.examples.join(' · ')}`
                   : 'This is how workers filter the job board, so pick the closest match.'}
@@ -742,7 +746,9 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <FieldLabel required>Job location / area</FieldLabel>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label htmlFor="job-area-zip" className="block text-sm font-medium text-strong mb-2">Area code or ZIP</label>
                   <input
+                    id="job-area-zip"
                     type="text"
                     value={data.areaZip}
                     onChange={(e) => update('areaZip', e.target.value)}
@@ -753,7 +759,9 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <FieldError message={issueFor('areaZip')} />
                 </div>
                 <div>
+                  <label htmlFor="job-state" className="block text-sm font-medium text-strong mb-2">State</label>
                   <input
+                    id="job-state"
                     type="text"
                     value={data.state}
                     onChange={(e) => update('state', e.target.value)}
@@ -764,7 +772,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <FieldError message={issueFor('state')} />
                 </div>
               </div>
-              <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
+              <p className="text-sm text-subtle mt-1.5 leading-relaxed">
                 Area code or ZIP and state only. Never post your street address here — share the
                 exact address privately with the worker after you accept their bid.
               </p>
@@ -791,12 +799,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               />
               <FieldError message={issueFor('description')} />
               <div className="flex items-start justify-between gap-3 mt-1.5">
-                <p className="font-mono text-[11px] text-subtle leading-relaxed">
+                <p className="text-sm text-subtle leading-relaxed">
                   This is what workers read before they bid. Size and access matter most — square
                   footage, linear feet, room or load counts, parking, pets, stairs, and anything the
                   worker should bring.
                 </p>
-                <p className="font-mono text-[11px] text-body whitespace-nowrap">{data.description.length}/1000</p>
+                <p className="text-sm text-body whitespace-nowrap">{data.description.length}/1000</p>
               </div>
             </div>
 
@@ -816,7 +824,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 className={clsx(inputCls, issueFor('photoUrl') && 'border-danger/50')}
               />
               <FieldError message={issueFor('photoUrl')} />
-              <p className="font-mono text-[11px] text-body mt-1.5">
+              <p className="text-sm text-body mt-1.5">
                 Upload a photo of the job, or paste a link to one hosted elsewhere. A photo gets you
                 far more accurate bids.
               </p>
@@ -851,18 +859,18 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     )}
                   >
                     <span className={clsx(
-                      'block font-mono text-[12px] font-semibold tracking-wide',
+                      'block text-sm font-semibold tracking-wide',
                       data.budgetMode === opt.mode ? 'text-accent-text' : 'text-muted',
                     )}>{opt.title}</span>
-                    <span className="block font-mono text-[11px] text-subtle mt-0.5 leading-relaxed">{opt.sub}</span>
+                    <span className="block text-sm text-subtle mt-0.5 leading-relaxed">{opt.sub}</span>
                   </button>
                 ))}
               </div>
               {data.budgetMode === 'quote' && (
-                <p className="font-mono text-[11px] text-subtle mt-2 leading-relaxed">
-                  Good for complex or contractor-type work. Qualified workers bid with their own
-                  estimate through TryHardly — you pick one, authorize the agreed amount, and it&apos;s
-                  charged after you confirm the work is done.
+                <p className="text-sm text-subtle mt-2 leading-relaxed">
+                  {PLATFORM_PAYMENTS_ENABLED
+                    ? 'Good for complex or contractor-type work. Qualified workers bid with their own estimate through TryHardly — you pick one, authorize the agreed amount, and it’s charged after you confirm the work is done.'
+                    : 'Good for complex or contractor-type work. Qualified workers bid with their own estimate through TryHardly — you pick one, agree on the final price, and settle directly with the worker.'}
                 </p>
               )}
             </div>
@@ -878,7 +886,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                       type="button"
                       onClick={() => changePricing({ payType: pt })}
                       className={clsx(
-                        'font-mono text-[12px] font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
+                        'text-sm font-semibold tracking-wide px-5 py-2 rounded-full border transition-all duration-150',
                         data.payType === pt
                           ? 'text-accent-text border-accent/60 bg-accent/10'
                           : 'text-subtle border-line hover:text-accent-text hover:border-accent/40',
@@ -911,10 +919,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     />
                   </div>
                   <FieldError message={issueFor('reward')} />
-                  <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
-                    What you&apos;re hoping to spend. This is a starting point, not the final charge —
-                    workers bid with their own price, and you authorize payment for the amount you
-                    agree to after you accept a bid.
+                  <p className="text-sm text-subtle mt-1.5 leading-relaxed">
+                    {PLATFORM_PAYMENTS_ENABLED
+                      ? 'What you’re hoping to spend. This is a starting point, not the final charge — workers bid with their own price, and you authorize payment for the amount you agree to after you accept a bid.'
+                      : 'What you’re hoping to spend. This is a starting point, not the final price — workers can bid their own price. Once you choose a worker, agree on the amount and pay them directly when the job is done.'}
                   </p>
                 </div>
               ) : (
@@ -923,9 +931,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <div className={clsx(inputCls, 'flex items-center text-subtle')}>
                     Workers will bid on this job
                   </div>
-                  <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
-                    No need to guess a number — qualified workers send a detailed bid through
-                    TryHardly, and you authorize payment for the one you accept.
+                  <p className="text-sm text-subtle mt-1.5 leading-relaxed">
+                    {PLATFORM_PAYMENTS_ENABLED
+                      ? 'No need to guess a number — qualified workers send a detailed bid through TryHardly, and you authorize payment for the one you accept.'
+                      : 'No need to guess a number — qualified workers send a detailed bid through TryHardly. Choose the one that works for you, then settle the agreed amount directly with that worker.'}
                   </p>
                 </div>
               )}
@@ -940,7 +949,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   className={clsx(inputCls, '[color-scheme:dark]', issueFor('deadline') && 'border-danger/50')}
                 />
                 <FieldError message={issueFor('deadline')} />
-                <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
+                <p className="text-sm text-subtle mt-1.5 leading-relaxed">
                   The date the work should be done by — at least {MIN_DEADLINE_DAYS} days out
                   ({formatDate(minDate)} or later) so workers have time to bid. You can paste a
                   date like 08/01/2026.
@@ -951,10 +960,10 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             {/* Recommended budget helper — deterministic local estimate, applied
                 only on an explicit click so a typed budget is never overwritten. */}
             <div className="rounded-lg border border-accent/25 bg-accent/[0.04] p-4">
-              <p className="font-mono text-[12px] font-semibold tracking-widest text-accent-text uppercase mb-1.5 flex items-center gap-1.5">
-                <Sparkles size={11} /> Budget starting point
+              <p className="eyebrow mb-1.5 flex items-center gap-1.5">
+                <Sparkles size={14} /> Budget starting point
               </p>
-              <p className="font-mono text-[11px] text-subtle mb-2.5 leading-relaxed">
+              <p className="text-sm text-subtle mb-2.5 leading-relaxed">
                 A rough range from what you&apos;ve described — not a quote, and not a price any worker
                 has agreed to. Real bids can land above or below it.
               </p>
@@ -969,7 +978,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <div>
-                        <p className="font-mono text-[11px] tracking-widest text-subtle uppercase">
+                        <p className="eyebrow text-subtle">
                           Labor only — you supply materials
                         </p>
                         <span className={clsx(
@@ -978,7 +987,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                         )}>
                           ${budgetRec.measured.laborMin}–${budgetRec.measured.laborMax}
                         </span>
-                        <span className="font-mono text-[12px] text-subtle ml-2">
+                        <span className="text-sm text-subtle ml-2">
                           suggest ~${budgetRec.measured.laborSuggested}
                         </span>
                       </div>
@@ -987,13 +996,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                           type="button"
                           onClick={() => applyBudgetAmount(budgetRec.measured!.laborSuggested)}
                           className={clsx(
-                            'font-mono text-[11px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
+                            'btn-secondary px-3 py-2 min-h-11',
                             laborIsPrimary
                               ? 'bg-accent text-on-accent hover:bg-accent-hover'
                               : 'border border-accent/50 text-accent-text hover:bg-accent/10',
                           )}
                         >
-                          <Wand2 size={11} /> USE LABOR
+                          <Wand2 size={14} /> Use labor budget
                         </button>
                       )}
                     </div>
@@ -1001,7 +1010,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     {budgetRec.measured.totalSuggested != null && (
                       <div className="flex items-center justify-between gap-3 flex-wrap border-t border-line pt-2.5">
                         <div>
-                          <p className="font-mono text-[11px] tracking-widest text-subtle uppercase">
+                          <p className="eyebrow text-subtle">
                             Materials + labor — rough total
                           </p>
                           <span className={clsx(
@@ -1010,7 +1019,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                           )}>
                             ~${budgetRec.measured.totalMin}–${budgetRec.measured.totalMax}
                           </span>
-                          <span className="font-mono text-[12px] text-subtle ml-2">
+                          <span className="text-sm text-subtle ml-2">
                             suggest ~${budgetRec.measured.totalSuggested}
                           </span>
                         </div>
@@ -1019,25 +1028,25 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                             type="button"
                             onClick={() => applyBudgetAmount(budgetRec.measured!.totalSuggested!)}
                             className={clsx(
-                              'font-mono text-[11px] font-semibold tracking-widest px-3 py-2 rounded transition-colors flex items-center gap-1.5',
+                            'btn-secondary px-3 py-2 min-h-11',
                               laborIsPrimary
                                 ? 'border border-accent/50 text-accent-text hover:bg-accent/10'
                                 : 'bg-accent text-on-accent hover:bg-accent-hover',
                             )}
                           >
-                            <Wand2 size={11} /> USE TOTAL
+                          <Wand2 size={14} /> Use total budget
                           </button>
                         )}
                       </div>
                     )}
 
-                    <p className="font-mono text-[12px] text-subtle leading-relaxed border-t border-line pt-2.5">
-                      <span className="text-subtle uppercase tracking-widest text-[11px]">Time</span>{' '}
+                    <p className="text-sm text-subtle leading-relaxed border-t border-line pt-2.5">
+                      <span className="eyebrow text-subtle">Time</span>{' '}
                       {budgetRec.measured.timeEstimate}
                     </p>
 
                     {budgetRec.measured.assumptions.length > 0 && (
-                      <ul className="font-mono text-[11px] text-subtle leading-relaxed list-disc list-inside space-y-0.5">
+                      <ul className="text-sm text-subtle leading-relaxed list-disc list-inside space-y-0.5">
                         {budgetRec.measured.assumptions.map((a) => (
                           <li key={a}>{a}</li>
                         ))}
@@ -1045,12 +1054,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                     )}
                   </div>
                   {budgetApplied && (
-                    <p className="font-mono text-[11px] text-accent-text mt-2">Applied ✓ — edit the budget field any time.</p>
+                    <p className="text-sm text-accent-text mt-2">Applied ✓ — edit the budget field any time.</p>
                   )}
                 </>
               ) : (
                 <>
-                  <p className="font-mono text-[12px] text-muted leading-relaxed">
+                  <p className="text-sm text-muted leading-relaxed">
                     {budgetRec.explanation}
                   </p>
                   <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
@@ -1061,16 +1070,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                       <button
                         type="button"
                         onClick={() => applyBudgetAmount(bandMidpoint(budgetRec.min, budgetRec.max))}
-                        className="font-mono text-[12px] font-semibold tracking-widest px-4 py-2 bg-accent text-on-accent rounded hover:bg-accent-hover transition-colors flex items-center gap-1.5"
+                        className="btn-secondary px-4 py-2 min-h-11"
                       >
-                        <Wand2 size={12} /> {budgetApplied ? 'APPLIED ✓' : 'USE THIS BUDGET'}
+                        <Wand2 size={16} /> {budgetApplied ? 'Applied' : 'Use this budget'}
                       </button>
                     )}
                   </div>
                 </>
               )}
 
-              <p className="font-mono text-[11px] text-subtle mt-2 leading-relaxed">
+              <p className="text-sm text-subtle mt-2 leading-relaxed">
                 {data.budgetMode === 'quote'
                   ? 'Rough sizing only — workers set the real number in their bids.'
                   : 'A starting point you can change. Bids you receive decide the final amount.'}
@@ -1082,7 +1091,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 <button
                   type="button"
                   onClick={() => changePricing({ budgetMode: 'quote' })}
-                  className="mt-3 w-full font-mono text-[12px] font-semibold tracking-widest px-4 py-2.5 border border-accent/50 text-accent-text rounded hover:bg-accent/10 transition-colors"
+                  className="btn-secondary btn-block mt-3"
                 >
                   This looks like a bigger job — let qualified workers bid it instead
                 </button>
@@ -1104,7 +1113,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   />
                   <p
                     className={clsx(
-                      'font-mono text-[12px] leading-relaxed',
+                      'text-sm leading-relaxed',
                       budgetRec.contractor.required ? 'text-danger' : 'text-subtle',
                     )}
                   >
@@ -1127,7 +1136,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <option key={m.value || 'unset'} value={m.value}>{m.label}</option>
                 ))}
               </select>
-              <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
+              <p className="text-sm text-subtle mt-1.5 leading-relaxed">
                 {materialsHelperText(data.materialsBy)}
               </p>
             </div>
@@ -1146,7 +1155,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <option value="moderate">Moderate</option>
                   <option value="hard">Hard</option>
                 </select>
-                <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
+                <p className="text-sm text-subtle mt-1.5 leading-relaxed">
                   How challenging is this job?
                 </p>
               </div>
@@ -1162,7 +1171,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   <option value="soon">Soon</option>
                   <option value="urgent">Urgent</option>
                 </select>
-                <p className="font-mono text-[11px] text-subtle mt-1.5 leading-relaxed">
+                <p className="text-sm text-subtle mt-1.5 leading-relaxed">
                   How soon do you need help?
                 </p>
               </div>
@@ -1178,12 +1187,13 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                   className="mt-0.5 h-4 w-4 rounded border-line bg-surface text-accent-text focus:ring-accent"
                 />
                 <span>
-                  <span className="block font-mono text-[12px] font-semibold tracking-wide text-body">
+                  <span className="block text-base font-semibold text-body">
                     This is a recurring job
                   </span>
-                  <span className="block font-mono text-[12px] text-subtle mt-0.5">
-                    Keep repeat work (e.g. weekly mowing) on your board. You confirm and pay for each
-                    visit separately — nothing is charged in advance.
+                  <span className="block text-sm text-subtle mt-0.5">
+                    {PLATFORM_PAYMENTS_ENABLED
+                      ? 'Keep repeat work (e.g. weekly mowing) on your board. You confirm and pay for each visit separately — nothing is charged in advance.'
+                      : 'Keep repeat work (e.g. weekly mowing) on your board. You and the worker agree how each visit will be paid, then settle directly.'}
                   </span>
                 </span>
               </label>
@@ -1218,7 +1228,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
 
             {/* Secondary TryHardly layer: posting stays simple; tier and worker
                 XP are handled by us after the job is posted. No XP to configure. */}
-            <p className="font-mono text-[11px] text-subtle leading-relaxed flex items-start gap-1.5">
+            <p className="text-sm text-subtle leading-relaxed flex items-start gap-1.5">
               <Sparkles size={11} className="mt-0.5 flex-shrink-0 text-accent-text" />
               We&apos;ll size the job automatically after you post.
             </p>
@@ -1228,7 +1238,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
         {/* ── Step 3: Review ── */}
         {step === 3 && (
           <div>
-            <p className="font-mono text-[12px] text-subtle leading-relaxed mb-4">
+            <p className="text-sm text-subtle leading-relaxed mb-4">
               Here&apos;s what workers will see. Check it over — you can edit anything before posting.
             </p>
             <div className="bg-surface border border-line rounded-xl p-6 mb-4">
@@ -1237,7 +1247,7 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 <button
                   type="button"
                   onClick={() => editStep(1)}
-                  className="font-mono text-[12px] text-subtle hover:text-accent-text transition-colors flex-shrink-0 underline"
+                  className="text-sm text-subtle hover:text-accent-text transition-colors flex-shrink-0 underline"
                 >
                   Edit details
                 </button>
@@ -1245,11 +1255,11 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               <div className="flex gap-2 flex-wrap mb-4">
                 {posterBadge && (
                   <span className={clsx(
-                    'font-mono text-[11px] font-semibold tracking-wide border rounded-sm px-2 py-0.5',
+                    'text-sm font-semibold tracking-wide border rounded-sm px-2 py-0.5',
                     posterBadge.classes,
                   )}>{posterBadge.label}</span>
                 )}
-                <span className="font-mono text-[11px] text-subtle bg-surface border border-line rounded-sm px-2 py-0.5">
+                <span className="text-sm text-subtle bg-surface border border-line rounded-sm px-2 py-0.5">
                   {selectedCategory?.shortLabel}
                 </span>
               </div>
@@ -1285,16 +1295,16 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               )}
               <div className="pt-3">
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <p className="font-mono text-[12px] font-semibold tracking-widest text-subtle uppercase">Full details</p>
+                  <p className="eyebrow">Full details</p>
                   <button
                     type="button"
                     onClick={() => editStep(2)}
-                    className="font-mono text-[12px] text-subtle hover:text-accent-text transition-colors flex-shrink-0 underline"
+                    className="text-sm text-subtle hover:text-accent-text transition-colors flex-shrink-0 underline"
                   >
                     Edit scope &amp; budget
                   </button>
                 </div>
-                <p className="font-mono text-[12px] text-subtle leading-relaxed line-clamp-4">{data.description}</p>
+                <p className="text-sm text-subtle leading-relaxed line-clamp-4">{data.description}</p>
                 {/* The photo goes out with the job, so the poster sees exactly
                     the one they attached before publishing — or none at all. */}
                 {data.photoUrl.trim() && isValidPhotoUrl(data.photoUrl.trim()) && (
@@ -1308,20 +1318,23 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
                 )}
               </div>
             </div>
-            <p className="font-mono text-[12px] text-subtle leading-relaxed mb-3 rounded-md border border-line bg-surface px-3.5 py-2.5">
-              {TRUST_LINE} Your job goes on the local job board, workers send bids, and you
-              authorize the amount you agree to once you accept one.
+            <p className="text-base text-subtle leading-relaxed mb-3 rounded-md border border-line bg-surface px-3.5 py-2.5">
+              {TRUST_LINE} Your job goes on the local job board, workers send bids, and you choose
+              the worker and price that work for you.
             </p>
             {!currentUserId && (
-              <p className="font-mono text-[12px] text-accent-text leading-relaxed mb-3 rounded-md border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5">
+              <p className="text-sm text-accent-text leading-relaxed mb-3 rounded-md border border-accent/25 bg-accent/[0.04] px-3.5 py-2.5">
                 Last step: create a free account to publish this job. Posting stays free — the
                 account is what lets you receive bids, message workers, and pick who does the work.
                 We&apos;ll keep these details and bring you right back here.
               </p>
             )}
-            <p className="font-mono text-[12px] text-body leading-relaxed mb-5">
+            <p className="text-base text-body leading-relaxed mb-5">
               By posting, you agree to TryHardly&apos;s terms and{' '}
-              <a href="/prohibited-services" className="underline hover:text-subtle">prohibited services policy</a>. Payments are processed by Stripe, and the agreed amount is captured with payout to the worker once you confirm the job is complete.
+              <a href="/prohibited-services" className="underline hover:text-subtle">prohibited services policy</a>.{' '}
+              {PLATFORM_PAYMENTS_ENABLED
+                ? 'Payments are processed by Stripe, and the agreed amount is captured with payout to the worker once you confirm the job is complete.'
+                : 'You and your worker agree on the price and settle payment directly. TryHardly does not process the payment, hold funds, or take a cut.'}
             </p>
           </div>
         )}
@@ -1330,12 +1343,12 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             field; this repeats them so nothing is missed off-screen. */}
         {(issues.length > 0 || submitError) && (
           <div role="alert" className="mt-5 p-3.5 bg-danger/[0.07] border border-danger/25 rounded-lg space-y-1">
-            <p className="font-mono text-[12px] font-semibold tracking-widest text-danger uppercase mb-1.5">
-              {submitError ? 'Could not post this job' : 'Fix these before you continue'}
+            <p className="text-base font-semibold text-danger mb-1.5">
+              {submitError ? 'We couldn’t post your job yet' : 'Please fix these items before continuing'}
             </p>
-            {submitError && <p className="font-mono text-[12px] text-danger">· {submitError}</p>}
+            {submitError && <p className="text-sm text-danger">Please try again. If it still does not work, contact support.</p>}
             {issues.map((i) => (
-              <p key={`${i.field}-${i.message}`} className="font-mono text-[12px] text-danger">· {i.message}</p>
+              <p key={`${i.field}-${i.message}`} className="text-sm text-danger">· {i.message}</p>
             ))}
           </div>
         )}
@@ -1346,9 +1359,9 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             <button
               type="button"
               onClick={handleBack}
-              className="font-mono text-[12px] font-semibold tracking-widest px-6 py-3 border border-line rounded-md text-subtle hover:text-muted hover:border-line transition-all flex items-center gap-1"
+              className="btn-secondary"
             >
-              <ChevronLeft size={13} /> BACK
+              <ChevronLeft size={16} /> Back
             </button>
           ) : <div />}
 
@@ -1356,9 +1369,9 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
             <button
               type="button"
               onClick={handleNext}
-              className="font-mono text-[12px] font-semibold tracking-widest px-7 py-3 bg-accent text-on-accent rounded-md hover:bg-accent-hover transition-colors flex items-center gap-1"
+              className="btn-primary btn-lg"
             >
-              NEXT <ChevronRight size={13} />
+              Next <ChevronRight size={16} />
             </button>
           ) : (
             <button
@@ -1366,17 +1379,15 @@ export default function PostQuestForm({ currentUserId = null, onSuccess, onCance
               onClick={handleSubmit}
               disabled={submitting}
               className={clsx(
-                'font-mono text-[12px] font-semibold tracking-widest px-7 py-3 rounded-md transition-all flex items-center gap-1',
-                submitting
-                  ? 'bg-accent/20 text-accent-text border border-accent/40 cursor-default'
-                  : 'bg-accent text-on-accent hover:bg-accent-hover cursor-pointer',
+                'btn-primary btn-lg',
+                submitting && 'cursor-wait',
               )}
             >
               {submitting
-                ? 'POSTING…'
+                ? 'Posting…'
                 : currentUserId
-                ? 'POST JOB — FREE'
-                : 'CREATE FREE ACCOUNT & POST'}
+                ? 'Post job — free'
+                : 'Create free account & post'}
             </button>
           )}
         </div>

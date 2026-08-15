@@ -48,7 +48,7 @@ export default function VerifiedProPage() {
       <div className="max-w-4xl mx-auto px-4 py-16 sm:py-20">
         {/* Hero */}
         <div className="text-center mb-14">
-          <p className="font-mono text-xs uppercase tracking-widest text-success mb-3">
+          <p className="eyebrow text-success mb-3">
             Earned, not bought
           </p>
           <h1 className="text-4xl sm:text-5xl font-bold mb-5 text-strong">
@@ -71,7 +71,7 @@ export default function VerifiedProPage() {
                 key={item.title}
                 className="flex items-start gap-4 bg-surface border border-line rounded-xl p-5"
               >
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-success/15 border border-success/30 text-success font-mono text-sm flex items-center justify-center">
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-success/15 border border-success/30 text-success text-sm flex items-center justify-center">
                   {i + 1}
                 </span>
                 <div>

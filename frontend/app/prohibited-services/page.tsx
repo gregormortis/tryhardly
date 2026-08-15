@@ -7,7 +7,7 @@ const SUPPORT_EMAIL = 'support@tryhardly.com';
 export const metadata: Metadata = {
   title: 'Prohibited Services Policy',
   description:
-    'What you can and cannot offer or request on TryHardly. We support everyday local task-based work and prohibit services that are illegal, unsafe, regulated, deceptive, or restricted by our payment partners.',
+    'What you can and cannot offer or request on TryHardly. We support everyday local task-based work and prohibit services that are illegal, unsafe, regulated, or deceptive.',
   alternates: { canonical: '/prohibited-services' },
 };
 
@@ -23,9 +23,9 @@ export default function ProhibitedServicesPage() {
 
           <p>
             TryHardly is a marketplace for everyday local help — the kind of task-based work
-            neighbors hire each other for. To keep the community safe and to stay within the
-            rules of our payment partners, some services are not allowed. This page explains, in
-            plain language, what you can offer or request and what you can&apos;t. It works
+            neighbors hire each other for. To keep the community safe, legal, and clear about what
+            work needs a qualified professional, some services are not allowed. This page explains,
+            in plain language, what you can offer or request and what you can&apos;t. It works
             alongside our{' '}
             <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">Terms of Service</Link>{' '}
             and{' '}
@@ -33,10 +33,9 @@ export default function ProhibitedServicesPage() {
           </p>
 
           <p>
-            We may remove any listing, decline a transaction, or restrict an account when work
-            appears to be illegal, unsafe, regulated, deceptive, high-risk, or restricted by the
-            payment providers we rely on to move money. When we&apos;re unsure, we err on the side
-            of caution to protect everyone involved.
+            We may remove any listing or restrict an account when work appears to be illegal,
+            unsafe, regulated, deceptive, or high-risk. When we&apos;re unsure, we err on the side of
+            caution to protect everyone involved.
           </p>
 
           <section>
@@ -92,8 +91,8 @@ export default function ProhibitedServicesPage() {
             <h3 className="text-lg font-semibold text-strong mb-1">Drugs, cannabis, CBD, tobacco, and vape</h3>
             <p className="mb-4">
               Illegal drugs or paraphernalia, and the sale, delivery, or distribution of cannabis,
-              CBD, tobacco, nicotine, or vaping products — even where some of these are legal locally,
-              because they are restricted by our payment partners.
+              CBD, tobacco, nicotine, or vaping products — even where some of these are legal
+              locally.
             </p>
 
             <h3 className="text-lg font-semibold text-strong mb-1">Financial services and money handling</h3>
@@ -148,17 +147,17 @@ export default function ProhibitedServicesPage() {
 
             <h3 className="text-lg font-semibold text-strong mb-1">Off-platform payment or circumvention</h3>
             <p className="mb-4">
-              Arranging payment outside TryHardly to avoid fees or oversight after connecting through
-              the platform, or otherwise circumventing how the marketplace is meant to work.
+              Using TryHardly to misrepresent a job, hide material terms, or otherwise bypass the
+              marketplace&apos;s safety rules.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-accent-text mb-4">How we enforce this policy</h2>
             <p>
-              This list isn&apos;t exhaustive — if a service is illegal, unsafe, deceptive, or
-              restricted by our payment partners, it isn&apos;t allowed even if it isn&apos;t named
-              above. We may remove listings, decline transactions, warn users, or suspend accounts
+              This list isn&apos;t exhaustive. If a service is illegal, unsafe, deceptive, high-risk,
+              or requires a license or qualification the worker does not have, it isn&apos;t allowed
+              even if it isn&apos;t named above. We may remove listings, warn users, or suspend accounts
               for violations, and we may notify law enforcement when there is a risk to someone&apos;s
               safety.
             </p>

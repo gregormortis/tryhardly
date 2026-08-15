@@ -33,7 +33,10 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Account information (name, email, password)</li>
               <li>Profile information (skills, portfolio, bio)</li>
-              <li>Payment information (processed securely through third-party providers)</li>
+              <li>
+                TryHardly does not collect or process payment card information. Customers and
+                workers settle payment directly with each other.
+              </li>
               <li>Job and project information</li>
               <li>Communications and messages</li>
             </ul>
@@ -62,7 +65,7 @@ export default function PrivacyPage() {
             <p className="mb-2">We use the information we collect to:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Provide, maintain, and improve our services</li>
-              <li>Process transactions and send related information</li>
+              <li>Maintain job records and send related information</li>
               <li>Send technical notices and support messages</li>
               <li>Respond to your comments and questions</li>
               <li>Monitor and analyze usage patterns</li>
@@ -129,9 +132,9 @@ export default function PrivacyPage() {
             <p className="mb-2">
               When processed, we remove or anonymize your profile, contact details, account
               credentials, and the content you posted where removal doesn&apos;t break another
-              user&apos;s records. Some records — such as transaction and payout history — may be
-              retained where the law requires (for tax, accounting, fraud-prevention, and dispute
-              purposes). We aim to complete deletion requests within 30 days.
+              user&apos;s records. Some job and account records may be retained where the law requires
+              it or for fraud prevention and dispute purposes. We aim to complete deletion requests
+              within 30 days.
             </p>
             <p>
               Full details and a request button are on the{' '}

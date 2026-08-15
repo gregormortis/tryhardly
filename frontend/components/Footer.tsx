@@ -1,232 +1,99 @@
 import Link from "next/link";
 
+// The footer used to carry 23 links across four columns, including several
+// pages that only make sense once you are already a worker (Code of Craft,
+// Verified Pro, Trade standards) and two competing versions of the same funnel
+// (post-job-fast, request-help, service-packages). Those pages still exist and
+// are linked from where they are relevant — /trust and /how-it-works — but on a
+// site-wide footer they read as the main thing TryHardly is about, which buried
+// the two things a visitor is actually here to do.
+
+const columns: { heading: string; links: { href: string; label: string }[] }[] = [
+  {
+    heading: "Get started",
+    links: [
+      { href: "/post-a-job", label: "Post a job free" },
+      { href: "/jobs", label: "Browse local jobs" },
+      { href: "/work-alerts", label: "Get work alerts by email" },
+      { href: "/how-it-works", label: "How it works" },
+      { href: "/pricing", label: "Pricing" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { href: "/about", label: "About us" },
+      { href: "/redding", label: "TryHardly in Redding" },
+      { href: "/trust", label: "Trust & safety" },
+      { href: "/faq", label: "Common questions" },
+      { href: "/support", label: "Get help" },
+      { href: "/contact", label: "Contact us" },
+    ],
+  },
+  {
+    heading: "Legal",
+    links: [
+      { href: "/terms", label: "Terms of service" },
+      { href: "/privacy", label: "Privacy policy" },
+      { href: "/refunds", label: "Refunds & disputes" },
+      { href: "/community-guidelines", label: "Community guidelines" },
+      { href: "/prohibited-services", label: "What is not allowed" },
+      { href: "/account-deletion", label: "Delete your account" },
+    ],
+  },
+];
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-line bg-surface text-muted">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          <div className="space-y-4">
-            <Link href="/" className="text-lg font-bold text-strong">
+    <footer className="border-t border-line bg-surface">
+      <div className="mx-auto max-w-6xl px-6 py-14">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <Link href="/" className="text-xl font-bold text-strong">
               Try<span className="text-accent-text">hardly</span>
             </Link>
-            <p className="text-sm">
-              The marketplace AI can&apos;t touch. Real work. Real money. Real
-              local.
+            <p className="mt-4 text-base leading-relaxed text-body">
+              Local work, hired directly. We introduce you to people nearby and
+              keep the record of what was agreed. You pay each other.
+            </p>
+            <p className="mt-4 text-base text-body">
+              <a
+                href="mailto:support@tryhardly.com"
+                className="font-semibold text-accent-text underline underline-offset-2 hover:text-accent-text-hover"
+              >
+                support@tryhardly.com
+              </a>
             </p>
           </div>
 
-          <div>
-            <h3 className="mb-4 font-semibold text-strong">Marketplace</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="/jobs"
-                  className="transition-colors hover:text-strong"
-                >
-                  Browse jobs
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/post-a-job"
-                  className="transition-colors hover:text-strong"
-                >
-                  Post a job
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/post-job-fast"
-                  className="transition-colors hover:text-strong"
-                >
-                  Post your job in 60 seconds
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/find-work-fast"
-                  className="transition-colors hover:text-strong"
-                >
-                  Find local work
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/service-packages"
-                  className="transition-colors hover:text-strong"
-                >
-                  Services
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/request-help"
-                  className="transition-colors hover:text-strong"
-                >
-                  Request help (no account)
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/work-alerts"
-                  className="transition-colors hover:text-strong"
-                >
-                  Get work alerts
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/redding"
-                  className="transition-colors hover:text-strong"
-                >
-                  Redding launch
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/pricing"
-                  className="transition-colors hover:text-strong"
-                >
-                  Pricing
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* The ratings & badges page and Leaderboards are intentionally not linked
-              here. They are worker-reputation pages, and on the site-wide footer
-              they read as the main thing TryHardly is about. Both routes still
-              exist and stay linked from pricing, trade standards, and the code of
-              craft, where a worker is already reading about how ranking works. */}
-          <div>
-            <h3 className="mb-4 font-semibold text-strong">Resources</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="/code-of-craft"
-                  className="transition-colors hover:text-strong"
-                >
-                  Code of Craft
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/verified-pro"
-                  className="transition-colors hover:text-strong"
-                >
-                  Verified Pro
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/standards"
-                  className="transition-colors hover:text-strong"
-                >
-                  Trade standards
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="transition-colors hover:text-strong"
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="transition-colors hover:text-strong"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="transition-colors hover:text-strong"
-                >
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/support"
-                  className="transition-colors hover:text-strong"
-                >
-                  Support
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="mb-4 font-semibold text-strong">Legal</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="/privacy"
-                  className="transition-colors hover:text-strong"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="transition-colors hover:text-strong"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/refunds"
-                  className="transition-colors hover:text-strong"
-                >
-                  Refunds &amp; Disputes
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/trust"
-                  className="transition-colors hover:text-strong"
-                >
-                  Trust &amp; Safety
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/community-guidelines"
-                  className="transition-colors hover:text-strong"
-                >
-                  Community Guidelines
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/prohibited-services"
-                  className="transition-colors hover:text-strong"
-                >
-                  Prohibited Services
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/account-deletion"
-                  className="transition-colors hover:text-strong"
-                >
-                  Delete Account &amp; Data
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {columns.map(({ heading, links }) => (
+            <nav key={heading} aria-label={heading}>
+              <h2 className="mb-4 text-base font-bold text-strong">{heading}</h2>
+              <ul className="space-y-3">
+                {links.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      className="text-base text-body underline-offset-4 transition-colors hover:text-accent-text hover:underline"
+                    >
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        <div className="mt-12 border-t border-line pt-8 text-center text-sm">
-          <p>&copy; {currentYear} Tryhardly. All rights reserved.</p>
+        <div className="mt-12 space-y-2 border-t border-line pt-8 text-sm text-body">
+          <p>
+            TryHardly is a marketplace. We are not the service provider, we do
+            not process payments, and we cannot refund or reverse money paid
+            between a customer and a worker.
+          </p>
+          <p>&copy; {currentYear} TryHardly. Redding, California.</p>
         </div>
       </div>
     </footer>

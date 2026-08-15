@@ -35,15 +35,19 @@ type StatusKey = 'payments_paused' | 'maintenance';
 
 const STATUSES: Record<StatusKey, { headline: string; detail: string; href: string; cta: string }> =
   {
+    // Copy updated 2026-08-15. The two previous versions both promised a
+    // reopening: first "once the processor completes a review" (the review had
+    // already concluded, declined), then "the day booking reopens" (there is no
+    // date, and direct settlement is the model now rather than a stopgap).
+    // Promising a reopening we cannot schedule is the exact kind of thing this
+    // banner exists to prevent, so it now describes how the product works
+    // instead of apologising for how it doesn't.
     payments_paused: {
-      // Copy updated 2026-08-09: the processor review concluded and was
-      // declined, so "completes a review" became untrue the moment it landed.
-      // A status banner that is out of date is worse than none.
-      headline: 'Booking and payouts are temporarily unavailable.',
+      headline: 'You pay your worker directly on TryHardly.',
       detail:
-        'We are moving to a new payment processor. You can browse jobs, post a job, and join the worker list now, and everyone on the list gets an email the day booking reopens.',
-      href: '/support',
-      cta: 'Questions',
+        'We do not process payments and we take no cut. You agree a price here, then settle it between yourselves — which also means we cannot refund or reverse it.',
+      href: '/how-it-works',
+      cta: 'How this works',
     },
     maintenance: {
       headline: 'TryHardly is undergoing scheduled maintenance.',

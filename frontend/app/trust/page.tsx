@@ -4,13 +4,19 @@ import { FaqSchema, BreadcrumbSchema } from '@/components/StructuredData';
 
 export const metadata: Metadata = {
   title: 'Trust & Safety',
+  // This description used to claim payments are protected and that Stripe
+  // Identity ID checks are required before a worker can be paid. Neither is
+  // true: TryHardly does not process payments and does not run ID checks. It
+  // was the worst sentence on the site — an over-claim about screening, in the
+  // metadata of the page whose entire point is not over-claiming about
+  // screening.
   description:
-    'How TryHardly verifies workers, how payments are protected, and exactly what we do and do not check. Email verification and Stripe Identity ID checks are required before any worker can be paid.',
+    'What TryHardly checks, what it does not check, and why. We verify email addresses and check claimed professional licences against public state registries. We do not run background checks, and we do not handle your payment.',
   alternates: { canonical: '/trust' },
   openGraph: {
     title: 'Trust & Safety · TryHardly',
     description:
-      'How TryHardly verifies workers and protects payments — stated plainly, including what we do not check.',
+      'What we check and what we do not — stated plainly, including the limits.',
     url: '/trust',
   },
 };
@@ -120,7 +126,7 @@ export default function TrustPage() {
               >
                 <div className="flex flex-wrap items-center gap-3 mb-2">
                   <h3 className="text-base font-semibold text-strong">{c.title}</h3>
-                  <span className="font-mono text-[12px] uppercase tracking-wider text-accent-text-hover bg-accent/10 border border-accent/30 rounded px-2 py-0.5">
+                  <span className="eyebrow text-accent-text-hover bg-accent/10 border border-accent/30 rounded px-2 py-0.5">
                     {c.status}
                   </span>
                 </div>
@@ -183,21 +189,21 @@ export default function TrustPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/community-guidelines"
-              className="font-mono text-[12px] tracking-widest px-4 py-2.5 border border-line text-body rounded hover:border-accent/40 hover:text-accent-text transition-colors"
+              className="btn-secondary text-sm tracking-wide"
             >
-              COMMUNITY GUIDELINES
+              Community guidelines
             </Link>
             <Link
               href="/prohibited-services"
-              className="font-mono text-[12px] tracking-widest px-4 py-2.5 border border-line text-body rounded hover:border-accent/40 hover:text-accent-text transition-colors"
+              className="btn-secondary text-sm tracking-wide"
             >
-              PROHIBITED SERVICES
+              What is not allowed
             </Link>
             <Link
               href="/refunds"
-              className="font-mono text-[12px] tracking-widest px-4 py-2.5 border border-line text-body rounded hover:border-accent/40 hover:text-accent-text transition-colors"
+              className="btn-secondary text-sm tracking-wide"
             >
-              REFUNDS &amp; DISPUTES
+              Refunds &amp; disputes
             </Link>
           </div>
         </div>

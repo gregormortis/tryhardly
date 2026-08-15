@@ -4,10 +4,46 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AUTHORIZATION_NOT_A_CHARGE } from '@/lib/paymentCopy';
+import { PLATFORM_PAYMENTS_ENABLED } from '@/lib/paymentsMode';
+
+// This page is unreachable through any real flow in direct-settlement mode —
+// nothing creates a checkout session — but the URL is still typeable and
+// crawlable, and it was telling anyone who landed on it that their card had
+// been authorized and that TryHardly applies a 12% platform fee. Neither is
+// true today. Guarded rather than deleted so the platform-mode copy survives
+// intact behind PAYMENTS_MODE.
+function DirectSettlementNotice() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
+      <div className="w-full max-w-md text-center">
+        <div className="card space-y-5">
+          <h1 className="text-2xl font-bold text-strong">
+            TryHardly does not take payments
+          </h1>
+          <p className="text-base leading-relaxed text-body">
+            There is no checkout on TryHardly and nothing has been charged. You
+            and your worker agree a price on the job page, and then you pay each
+            other directly.
+          </p>
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-center">
+            <Link href="/how-it-works" className="btn-primary">
+              How this works
+            </Link>
+            <Link href="/jobs" className="btn-secondary">
+              Browse jobs
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function CheckoutSuccess() {
   const searchParams = useSearchParams();
   const questId = searchParams.get('quest') || '';
+
+  if (!PLATFORM_PAYMENTS_ENABLED) return <DirectSettlementNotice />;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-canvas">
