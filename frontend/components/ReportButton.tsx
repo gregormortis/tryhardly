@@ -85,7 +85,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report', c
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-strong/60 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/70 px-4"
           onClick={() => setOpen(false)}
         >
           <div

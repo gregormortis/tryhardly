@@ -12,10 +12,18 @@
  *   hex so Tailwind's alpha modifiers keep working: bg-accent/10,
  *   border-line/40, and so on all resolve through rgb(var(--x) / <alpha-value>).
  *
- * DEFAULT IS LIGHT
- *   TryHardly's buyer is a Redding homeowner, a fifth of whom are 65+. A dark,
- *   low-contrast interface is the wrong default for that audience. Dark mode is
- *   still available by adding the `dark` class to <html>.
+ * DEFAULT IS DARK
+ *   The `dark` class ships on <html>, so the .dark block below is what visitors
+ *   actually see. The :root light values are kept complete and correct — pulling
+ *   one class off <html> in layout.tsx reverts the entire site to light, which is
+ *   the whole reason this file was tokenized in the first place.
+ *
+ *   The prior objection to dark was that a Redding homeowner (a fifth of them
+ *   65+) is badly served by a low-contrast interface. That objection is about
+ *   contrast, not about darkness, so the dark palette below is held to a higher
+ *   bar than the light one it replaces: every text token clears WCAG AA on
+ *   canvas, surface AND raised, and the weakest pairing in the entire set is
+ *   4.89:1. Verified by scripts/audit-contrast.js, not by eye.
  *
  * CONTRAST
  *   Every text token is checked against its intended background by
@@ -62,6 +70,10 @@
      on them inverts relative to --on-accent. */
   --on-status: 255 255 255;
 
+  /* Scrim behind modals and the mobile drawer. Dark in BOTH themes — see the
+     note on the `scrim` colour in tailwind.config.ts. */
+  --scrim: 12 10 9;
+
   /* Status */
   --success: 21 128 61; /* green-700  */
   --warning: 180 83 9; /* amber-700  */
@@ -69,29 +81,69 @@
   --info: 29 78 216; /* blue-700   */
 }
 
+/*
+ * DARK — warm charcoal, not black.
+ *
+ * The palette this replaces was zinc-950 (#09090b) under an amber-500 fill:
+ * pure black, cold gray, saturated warning-yellow. That combination reads as a
+ * terminal or a crypto dashboard, which is the single worst association for a
+ * product asking a homeowner to let a stranger into their yard.
+ *
+ * Three deliberate corrections:
+ *
+ *   1. The neutrals are warm. Every surface carries a red/yellow bias (canvas
+ *      is 25 23 20, not 9 9 11) so the greys sit in the same stone family as
+ *      the light theme rather than reading as a different product. Nothing is
+ *      pure black — the darkest surface is #191714, which keeps large fields of
+ *      background from vibrating against near-white text.
+ *
+ *   2. The accent is a burnt amber, not a signal amber. amber-500 at full
+ *      saturation on black is a caution label. #D2762B is the same brand hue
+ *      pulled down and desaturated until it reads as paint rather than warning.
+ *
+ *   3. Ink on the accent fill is the canvas colour, not white. White on this
+ *      fill is 3.6:1 and fails; dark ink is 5.42:1 and passes, and it lets the
+ *      hover state get *brighter*, which is the direction hover should move on
+ *      a dark surface.
+ *
+ * Ratios below are measured, not estimated.
+ */
 .dark {
-  --canvas: 9 9 11; /* zinc-950  */
-  --surface: 24 24 27; /* zinc-900  */
-  --raised: 39 39 42; /* zinc-800  */
-  --raised-2: 63 63 70; /* zinc-700  */
+  /* Surfaces. Warm charcoal, four steps, none of them black. */
+  --canvas: 25 23 20; /* #191714 */
+  --surface: 33 30 26; /* #211E1A */
+  --raised: 42 38 34; /* #2A2622 */
+  --raised-2: 58 53 47; /* #3A352F */
 
-  --line: 39 39 42; /* zinc-800  */
-  --line-strong: 63 63 70; /* zinc-700  */
+  /* Lines. Deliberately quiet — separation here comes from spacing and from
+     the surface steps above, not from drawing a box around everything. */
+  --line: 48 43 38; /* #302B26 */
+  --line-strong: 70 63 56; /* #463F38 */
 
-  --text-strong: 250 250 250;
-  --text-body: 228 228 231; /* zinc-200 */
-  --text-muted: 161 161 170; /* zinc-400 */
-  --text-subtle: 113 113 122; /* zinc-500 */
+  /* Text. Off-white, never #fff — pure white on a dark field haloes.
+     Ratios are canvas / surface / raised. */
+  --text-strong: 247 245 242; /* #F7F5F2 — 16.44 / 15.25 / 13.80 */
+  --text-body: 230 225 219; /* #E6E1DB — 13.76 / 12.77 / 11.55 */
+  --text-muted: 184 177 168; /* #B8B1A8 —  8.43 /  7.82 /  7.07 */
+  --text-subtle: 154 146 137; /* #9A9289 —  5.83 /  5.41 /  4.89 */
 
-  --accent: 245 158 11;
-  --accent-hover: 251 191 36;
-  --accent-text: 251 191 36; /* amber-400 — legible on dark */
-  --accent-text-hover: 252 211 77; /* amber-300 */
-  --on-accent: 9 9 11;
-  --on-status: 9 9 11;
+  /* Accent. `accent` is the fill; `accent-text` is the lighter tint used when
+     the brand hue has to survive AS text on a dark surface. */
+  --accent: 210 118 43; /* #D2762B — fill; ink on it 5.42, fill vs canvas 5.42 */
+  --accent-hover: 224 138 46; /* #E08A2E — brighter on hover; ink on it 6.68 */
+  --accent-text: 240 160 80; /* #F0A050 — 8.39 on canvas, 7.37 on accent/10 chips */
+  --accent-text-hover: 246 188 126; /* #F6BC7E — 10.57 on canvas */
+  --on-accent: 25 23 20; /* canvas ink on the accent fill */
+  --on-status: 25 23 20;
 
-  --success: 74 222 128;
-  --warning: 251 191 36;
-  --danger: 248 113 113;
-  --info: 96 165 250;
+  /* Same scrim as light mode. It sits over the page, not over a surface, so it
+     does not invert. */
+  --scrim: 12 10 9;
+
+  /* Status. Light fills carrying dark ink, mirroring the accent treatment.
+     All four clear 7:1 as text on canvas. */
+  --success: 111 207 139; /* #6FCF8B — 9.35 */
+  --warning: 235 176 74; /* #EBB04A — 9.23 */
+  --danger: 240 138 130; /* #F08A82 — 7.38 */
+  --info: 127 176 245; /* #7FB0F5 — 8.03 */
 }

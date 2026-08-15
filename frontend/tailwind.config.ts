@@ -28,6 +28,11 @@ const config: Config = {
         'accent-text-hover': 'rgb(var(--accent-text-hover) / <alpha-value>)',
         'on-accent': 'rgb(var(--on-accent) / <alpha-value>)',
         'on-status': 'rgb(var(--on-status) / <alpha-value>)',
+        // Modal/drawer backdrop. Deliberately NOT derived from a text token:
+        // scrims were written as bg-strong/60, which is dark ink in light mode
+        // but near-white once --text-strong inverts, so every overlay turned
+        // into a white wash. A scrim stays dark in both themes.
+        scrim: 'rgb(var(--scrim) / <alpha-value>)',
         success: 'rgb(var(--success) / <alpha-value>)',
         warning: 'rgb(var(--warning) / <alpha-value>)',
         danger: 'rgb(var(--danger) / <alpha-value>)',

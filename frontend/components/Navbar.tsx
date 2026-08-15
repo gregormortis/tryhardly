@@ -186,7 +186,7 @@ export default function Navbar() {
           <div
             aria-hidden="true"
             onClick={() => setMenuOpen(false)}
-            className="fixed inset-0 top-16 z-40 bg-strong/60 md:hidden"
+            className="fixed inset-0 top-16 z-40 bg-scrim/70 md:hidden"
           />
         )}
 
