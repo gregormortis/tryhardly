@@ -242,7 +242,7 @@ export default function QuestDetailModal({
       <div
         onClick={onClose}
         className={clsx(
-          'fixed inset-0 z-[900] bg-strong/60 backdrop-blur-sm transition-opacity duration-300',
+          'fixed inset-0 z-[900] bg-scrim/70 backdrop-blur-sm transition-opacity duration-300',
           visible ? 'opacity-100' : 'opacity-0',
         )}
       />

@@ -80,8 +80,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#fafaf9',
-  colorScheme: 'light',
+  // Matches --canvas in the .dark block of tokens.css. If the `dark` class is
+  // ever pulled off <html>, both of these revert to '#fafaf9' / 'light'.
+  themeColor: '#191714',
+  colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
@@ -93,7 +95,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${dmMono.variable} ${syne.variable} ${inter.variable}`}>
+    // `dark` is the shipped default. Every colour in the app resolves through a
+    // token in tokens.css, so this one class is the entire theme switch — remove
+    // it and the site returns to the light palette with no other edits.
+    <html
+      lang="en"
+      className={`dark ${dmMono.variable} ${syne.variable} ${inter.variable}`}
+    >
       <head>
         {/* Plausible Analytics */}
         <script defer data-domain="tryhardly.com" src="https://plausible.io/js/script.js" />

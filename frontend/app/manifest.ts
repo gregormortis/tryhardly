@@ -12,8 +12,10 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#09090b',
-    theme_color: '#09090b',
+    // Warm charcoal --canvas from the .dark block in tokens.css. Was zinc-950,
+    // which no longer matches any surface in the app.
+    background_color: '#191714',
+    theme_color: '#191714',
     categories: ['business', 'productivity', 'shopping'],
     lang: 'en',
     dir: 'ltr',
