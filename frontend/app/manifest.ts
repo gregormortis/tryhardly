@@ -3,10 +3,10 @@ import type { MetadataRoute } from 'next';
 // Served at /manifest.webmanifest by Next.js.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'TryHardly — Local gigs, real people, real pay',
+    name: 'TryHardly — Local help in Redding, hired directly',
     short_name: 'TryHardly',
     description:
-      'Post local jobs or find paid work near you. Verified local workers, with secure payments and payouts powered by Stripe.',
+      'Post local jobs or find paid work in Redding. You and your worker settle directly. TryHardly takes no cut.',
     id: '/',
     start_url: '/',
     scope: '/',

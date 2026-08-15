@@ -1,239 +1,364 @@
-'use client';
-import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Briefcase, MapPin, Shield, Star, Users, Wrench, Hammer, Check, Banknote } from 'lucide-react';
+import type { Metadata } from 'next';
+import {
+  ArrowRight,
+  Leaf,
+  Truck,
+  Wrench,
+  Sparkles,
+  Package,
+  Boxes,
+  Check,
+  X,
+  HeartHandshake,
+  MessageSquare,
+  Mail,
+} from 'lucide-react';
 
-const stats = [
-  { value: 'Free', label: 'To post a job' },
-  { value: '100%', label: 'Workers keep their pay' },
-  { value: 'No fee', label: 'We take no cut' },
-  { value: 'Redding', label: 'First launch city' },
+export const metadata: Metadata = {
+  title: 'TryHardly — Local help in Redding, hired directly',
+  description:
+    'Post a local job free or get paid to do the work. You and your worker agree the price here and settle it directly. TryHardly takes no cut.',
+  alternates: { canonical: '/' },
+};
+
+// ─── Content ──────────────────────────────────────────────────────────────────
+//
+// The old homepage repeated the same "Post a job / Browse jobs" button pair four
+// separate times and offered a third variant (a ZIP search box) in between, so a
+// first-time visitor had to choose between seven links that all did two things.
+// This version states the two doors once, near the top, and then spends the rest
+// of the page answering the question people actually have: is this safe, and who
+// gets my money.
+
+const steps = [
+  {
+    title: 'Say what you need done',
+    detail:
+      'Describe the job in a sentence or two, add a photo if you have one, and say roughly what you want to spend. It is free and takes about a minute.',
+  },
+  {
+    title: 'Local workers send you a price',
+    detail:
+      'People nearby send a bid. You can see how many jobs they have finished on TryHardly and what other neighbors said about them.',
+  },
+  {
+    title: 'Shake on it, then pay them yourself',
+    detail:
+      'You both agree the price, the day, the place, and what is included. When the work is done, you pay your worker directly. TryHardly never touches the money.',
+  },
 ];
 
 const categories = [
-  { name: 'Lawn & Yard', icon: Hammer, jobs: 'Accepting requests' },
-  { name: 'Moving Help', icon: Briefcase, jobs: 'Accepting requests' },
-  { name: 'Handyman', icon: Wrench, jobs: 'Accepting requests' },
-  { name: 'Cleaning', icon: Star, jobs: 'Accepting requests' },
-  { name: 'Delivery & Errands', icon: MapPin, jobs: 'Accepting requests' },
-  { name: 'Assembly & Install', icon: Hammer, jobs: 'Accepting requests' },
+  { name: 'Yard work & mowing', icon: Leaf },
+  { name: 'Hauling & dump runs', icon: Truck },
+  { name: 'Handyman jobs', icon: Wrench },
+  { name: 'House cleaning', icon: Sparkles },
+  { name: 'Moving help', icon: Boxes },
+  { name: 'Errands & pickups', icon: Package },
 ];
 
-const howItWorks = [
-  { title: 'Post the job — free', desc: 'Describe the task, set your budget, and post it in minutes. Yard work, moving help, handyman jobs, cleaning, errands.' },
-  { title: 'Pick a local worker', desc: 'Nearby workers apply. Compare their bids, ratings, and completed jobs before you choose.' },
-  { title: 'Pay them directly', desc: 'Settle up with your worker however you both prefer once the job is done. TryHardly takes no cut of it.' },
+// The honest-limits list is the whole trust argument. Angi was fined $100k in
+// Vermont for implying screening it did not do, so this page says the "no" side
+// out loud and gives it the same visual weight as the "yes" side.
+const weDo = [
+  'Show you how many jobs a worker has actually finished here',
+  'Keep a written record of the price, date, and scope you both agreed to',
+  'Hold both sides to it — workers and customers are both rated',
+  'Check professional licences against public state registries when a worker claims one',
+  'Answer a real email, from a real person, in Redding',
 ];
 
-const trustSignals = [
-  { icon: Shield, title: 'No Cut Of Your Pay', desc: 'You pay your worker directly and they keep every dollar. TryHardly takes no commission and charges no fees.' },
-  { icon: Star, title: 'Reviews From Real Jobs', desc: 'Ratings and reviews come from jobs completed on TryHardly — not imported from anywhere else.' },
-  { icon: Users, title: 'Profiles That Earn Their History', desc: 'A worker profile grows as they complete jobs, so their track record is built here in the open.' },
-  { icon: Banknote, title: 'Clear Pay Up Front', desc: 'Every job lists its pay before anyone applies, so there is nothing to haggle over later.' },
-  { icon: Check, title: 'One Place To Manage It', desc: 'Post the work, review applicants, message, and close it out in the same place.' },
-  { icon: MapPin, title: 'Neighborhood Jobs Only', desc: 'Built for hands-on local work — errands, hauling, repairs, and help around the house.' },
+const weDoNot = [
+  'Take a cut of your job, or charge for leads',
+  'Handle, hold, or process your payment',
+  'Refund, reverse, or guarantee money between you and a worker',
+  'Run criminal background checks or verify government ID',
+  'Send you a stranger we have personally met',
 ];
 
 export default function HomePage() {
-  const [zip, setZip] = useState('');
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (zip.trim()) {
-      window.location.href = `/jobs?zip=${zip.trim()}`;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-canvas text-strong">
-
-      {/* Hero */}
-      <section className="mx-auto max-w-5xl px-6 py-14 sm:py-20 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent-text mb-5">
-          <MapPin className="h-3 w-3" /> Local jobs. Real neighbors. Real pay.
-        </div>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-5">
-          Hire local help,<br />or get paid to do the work
+    <div className="bg-canvas text-strong">
+      {/* ─── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-3xl px-6 pt-14 pb-4 text-center sm:pt-20">
+        <p className="eyebrow mb-4">Redding, California</p>
+        <h1 className="mb-6 text-4xl font-bold leading-[1.08] tracking-tight sm:text-6xl">
+          Need a hand?
+          <br />
+          Hire someone local.
         </h1>
-        <p className="mx-auto max-w-2xl text-base sm:text-lg text-body mb-3">
-          TryHardly connects neighbors who need a hand with people nearby who want paid work — yard work,
-          moving help, handyman tasks, cleaning, and errands.
+        <p className="mx-auto max-w-xl text-lg leading-relaxed text-body sm:text-xl">
+          TryHardly connects people in Redding who need work done with people
+          nearby who want to get paid to do it. Yard work, hauling, cleaning,
+          moving help, repairs, errands.
         </p>
-        <p className="mx-auto max-w-xl text-sm text-subtle mb-8">
-          Free to post. Free to work. You pay your worker directly.
-        </p>
+      </section>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md sm:max-w-xl mx-auto mb-6">
+      {/* Two doors. Stated once, large, and never repeated as competing pairs
+          further down the page. */}
+      <section className="mx-auto max-w-3xl px-6 pb-14 sm:pb-20">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Link
             href="/post-a-job"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-bold text-on-accent hover:bg-accent transition-colors"
+            className="group rounded-2xl border-2 border-accent bg-accent p-7 text-on-accent transition-colors hover:bg-accent-hover"
           >
-            Post a job free <ArrowRight className="h-4 w-4" />
+            <h2 className="mb-2 text-2xl font-bold">I need help with a job</h2>
+            <p className="mb-5 text-base leading-relaxed opacity-90">
+              Post it free. Local workers send you a price. No account needed to
+              start.
+            </p>
+            <span className="inline-flex items-center gap-2 text-base font-bold underline underline-offset-4">
+              Post a job free
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </span>
           </Link>
+
           <Link
             href="/jobs"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-6 py-3 text-sm font-bold text-strong hover:border-accent/50 hover:bg-surface transition-colors"
+            className="group rounded-2xl border-2 border-line-strong bg-surface p-7 transition-colors hover:border-accent"
           >
-            Find local work
+            <h2 className="mb-2 text-2xl font-bold text-strong">
+              I want to get paid to work
+            </h2>
+            <p className="mb-5 text-base leading-relaxed text-body">
+              See what people near you need done and send them your price. You
+              keep 100% of it.
+            </p>
+            <span className="inline-flex items-center gap-2 text-base font-bold text-accent-text underline underline-offset-4">
+              See local jobs
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </span>
           </Link>
         </div>
+      </section>
 
-        <form onSubmit={handleSearch} className="max-w-md mx-auto">
-          <label htmlFor="zip" className="block text-xs text-muted mb-2">
-            Enter your ZIP to open the local job board — every job lists its neighborhood and city.
-          </label>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-            <input
-              id="zip"
-              type="text"
-              value={zip}
-              onChange={(e) => setZip(e.target.value)}
-              placeholder="ZIP code"
-              maxLength={5}
-              className="flex-1 w-full rounded-lg border border-line-strong bg-surface px-4 py-2.5 text-sm text-strong placeholder-subtle focus:border-accent focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-5 py-2.5 text-sm font-semibold text-body hover:border-accent/50 hover:bg-surface transition-colors"
-            >
-              Browse local jobs <ArrowRight className="h-4 w-4" />
-            </button>
+      {/* ─── How it works ─────────────────────────────────────────────────── */}
+      <section className="border-y border-line bg-surface">
+        <div className="section">
+          <div className="mb-12 text-center">
+            <p className="eyebrow mb-3">How it works</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Three steps. No surprises.
+            </h2>
           </div>
-        </form>
-      </section>
 
-      {/* Stats */}
-      <section className="border-y border-line bg-surface py-12">
-        <div className="mx-auto max-w-4xl px-6 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-          {stats.map(({ value, label }) => (
-            <div key={label}>
-              <p className="text-3xl font-bold text-accent-text">{value}</p>
-              <p className="mt-1 text-sm text-muted">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+          <ol className="grid gap-10 sm:grid-cols-3">
+            {steps.map(({ title, detail }, i) => (
+              <li key={title}>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl font-bold text-on-accent">
+                  {i + 1}
+                </div>
+                <h3 className="mb-2 text-xl font-bold text-strong">{title}</h3>
+                <p className="text-base leading-relaxed text-body">{detail}</p>
+              </li>
+            ))}
+          </ol>
 
-      {/* How it works */}
-      <section id="how-it-works" className="mx-auto max-w-4xl px-6 py-20">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-12 text-center">How it works</h2>
-        <div className="grid sm:grid-cols-3 gap-8">
-          {howItWorks.map(({ title, desc }, i) => (
-            <div key={title} className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent-text text-lg font-bold">
-                {i + 1}
-              </div>
-              <h3 className="font-semibold text-strong mb-2">{title}</h3>
-              <p className="text-sm text-muted">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">Browse by category</h2>
-        <p className="mx-auto max-w-xl text-sm text-muted mb-10 text-center">
-          Post a request in any category today — local workers get alerts the moment your job goes live. More categories added weekly.
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {categories.map(({ name, icon: Icon, jobs }) => (
-            <Link
-              key={name}
-              href={`/post-a-job?category=${encodeURIComponent(name)}`}
-              className="rounded-xl border border-line-strong bg-raised p-6 hover:border-accent/50 hover:bg-raised transition-all group"
-            >
-              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-accent/10 text-accent-text">
-                <Icon className="h-5 w-5" />
-              </div>
-              <h3 className="font-semibold text-strong text-center">{name}</h3>
-              <p className="mt-1 text-xs font-medium text-accent-text text-center">{jobs}</p>
-              <p className="mt-2 text-sm text-muted text-center group-hover:text-body transition-colors">Request this service →</p>
+          <div className="mt-12 text-center">
+            <Link href="/how-it-works" className="btn-secondary">
+              Walk me through it in more detail
             </Link>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* How payments work */}
-      <section className="border-t border-line bg-surface py-16">
-        <div className="mx-auto max-w-4xl px-6">
-        <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-accent/5 p-6 sm:p-10">
-          <div className="flex items-center gap-2 mb-4">
-            <Banknote className="h-5 w-5 text-accent-text" />
-            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">How paying works</h2>
-          </div>
-          <p className="text-sm text-body mb-6">
-            TryHardly introduces you to local workers and keeps the record of how each job
-            went. We are not the service provider, and we do not handle the money. You and
-            your worker agree an amount here and settle it directly, which also means we
-            take no cut of it.
+      {/* ─── Money ────────────────────────────────────────────────────────── */}
+      <section className="section">
+        <div className="mx-auto max-w-3xl rounded-2xl border-2 border-accent/30 bg-accent/5 p-7 sm:p-10">
+          <p className="eyebrow mb-3">The money</p>
+          <h2 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
+            You pay your worker. Not us.
+          </h2>
+          <p className="mb-7 text-base leading-relaxed text-body sm:text-lg">
+            TryHardly does not process payments. You and your worker agree an
+            amount here, and then you settle it between yourselves — cash,
+            Venmo, Zelle, or a check. Whatever suits you both. Because the money
+            never comes through us, we take no cut of it, and the worker keeps
+            every dollar.
           </p>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-line-strong bg-surface p-4">
-              <p className="text-sm font-semibold text-strong mb-1">Posting is free</p>
-              <p className="text-xs text-muted">No posting fee, no booking fee, and no card on file. Describe the job and local workers respond.</p>
+          <div className="mb-7 grid gap-4 sm:grid-cols-3">
+            {[
+              ['Free to post', 'No posting fee, no booking fee, no card on file.'],
+              ['Workers keep 100%', 'No commission, and no charge for leads that go nowhere.'],
+              ['Agreed up front', 'Price and scope are written down before anyone starts.'],
+            ].map(([title, body]) => (
+              <div key={title} className="card p-5">
+                <p className="mb-1 font-bold text-strong">{title}</p>
+                <p className="text-sm leading-relaxed text-body">{body}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-base leading-relaxed text-body">
+            <strong className="font-bold text-strong">
+              The honest limit:
+            </strong>{' '}
+            because the payment never touches TryHardly, we cannot refund it,
+            reverse it, or guarantee it. Read the full{' '}
+            <Link
+              href="/pricing"
+              className="font-semibold text-accent-text underline underline-offset-2 hover:text-accent-text-hover"
+            >
+              pricing page
+            </Link>{' '}
+            before you post.
+          </p>
+        </div>
+      </section>
+
+      {/* ─── The Handshake ────────────────────────────────────────────────── */}
+      <section className="border-y border-line bg-surface">
+        <div className="section max-w-3xl text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent-text">
+            <HeartHandshake className="h-7 w-7" />
+          </div>
+          <h2 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
+            Everything is agreed in writing first
+          </h2>
+          <p className="text-base leading-relaxed text-body sm:text-lg">
+            Before any work starts, both of you confirm the same four things:
+            the price, the day and time, the address, and exactly what is
+            included. We call it the Handshake. It is timestamped and it does
+            not change unless you both change it — so nobody turns up expecting
+            a different job at a different price.
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-body">
+            If someone breaks it, that goes on their record here. Both sides are
+            rated. That works in your favour whichever side you are on.
+          </p>
+        </div>
+      </section>
+
+      {/* ─── Categories ───────────────────────────────────────────────────── */}
+      <section className="section">
+        <div className="mb-10 text-center">
+          <p className="eyebrow mb-3">What people hire for</p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Hands-on work, done by neighbors
+          </h2>
+        </div>
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map(({ name, icon: Icon }) => (
+            <li key={name}>
+              <Link
+                href={`/post-a-job?category=${encodeURIComponent(name)}`}
+                className="flex min-h-[72px] items-center gap-4 rounded-xl border border-line-strong bg-surface px-5 py-4 transition-colors hover:border-accent"
+              >
+                <span className="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-accent/10 text-accent-text">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="text-base font-semibold text-strong">
+                  {name}
+                </span>
+                <ArrowRight className="ml-auto h-5 w-5 flex-none text-subtle" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-center text-base text-body">
+          Something else? Post it anyway — describe the job in your own words.
+        </p>
+      </section>
+
+      {/* ─── What we do and don't do ──────────────────────────────────────── */}
+      <section className="border-y border-line bg-surface">
+        <div className="section">
+          <div className="mb-10 text-center">
+            <p className="eyebrow mb-3">Straight answers</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              What we do, and what we don&apos;t
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-base text-body">
+              Plenty of sites are vague about this on purpose. Here is the whole
+              of it.
+            </p>
+          </div>
+
+          <div className="mx-auto grid max-w-4xl gap-5 sm:grid-cols-2">
+            <div className="card">
+              <h3 className="mb-4 text-lg font-bold text-strong">
+                What TryHardly does
+              </h3>
+              <ul className="space-y-3">
+                {weDo.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <Check className="mt-0.5 h-5 w-5 flex-none text-success" />
+                    <span className="text-base leading-relaxed text-body">
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="rounded-xl border border-line-strong bg-surface p-4">
-              <p className="text-sm font-semibold text-strong mb-1">Workers keep 100%</p>
-              <p className="text-xs text-muted">No marketplace fee comes out of a worker&apos;s pay, and there is no charge for leads that go nowhere.</p>
-            </div>
-            <div className="rounded-xl border border-line-strong bg-surface p-4">
-              <p className="text-sm font-semibold text-strong mb-1">You settle directly</p>
-              <p className="text-xs text-muted">Cash, Venmo, Zelle, or check — whatever suits you both. Agree the amount and method before work starts.</p>
+
+            <div className="card">
+              <h3 className="mb-4 text-lg font-bold text-strong">
+                What TryHardly does not do
+              </h3>
+              <ul className="space-y-3">
+                {weDoNot.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <X className="mt-0.5 h-5 w-5 flex-none text-danger" />
+                    <span className="text-base leading-relaxed text-body">
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-          <Link
-            href="/pricing"
-            className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-text hover:text-accent-text-hover transition-colors"
-          >
-            See how it works <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+
+          <div className="mt-8 text-center">
+            <Link href="/trust" className="btn-secondary">
+              Read our trust &amp; safety page
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Trust signals */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-3 text-center">Built on trust</h2>
-        <p className="mx-auto max-w-2xl text-sm text-muted mb-10 text-center">
-          TryHardly is early. We are focused on local neighborhood jobs and growing one city at a time, starting in{' '}
-          <Link href="/redding" className="font-semibold text-accent-text hover:text-accent-text-hover transition-colors">Redding</Link>.
+      {/* ─── Where we are ─────────────────────────────────────────────────── */}
+      <section className="section max-w-3xl text-center">
+        <p className="eyebrow mb-3">Where we are right now</p>
+        <h2 className="mb-4 text-2xl font-bold tracking-tight sm:text-3xl">
+          We are new, and we are only in Redding
+        </h2>
+        <p className="text-base leading-relaxed text-body sm:text-lg">
+          There are not thousands of jobs and workers on here yet. That is the
+          honest truth, and we would rather say it than pad the numbers. We are
+          building one city and one kind of work at a time, starting with yard
+          work and cleanup in Redding, and the fastest way to make it useful is
+          for real neighbors to post real jobs.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {trustSignals.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="rounded-xl border border-line-strong bg-raised p-6 text-center sm:text-left">
-              <div className="mx-auto sm:mx-0 mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent-text">
-                <Icon className="h-5 w-5" />
-              </div>
-              <h3 className="text-sm font-semibold text-strong mb-1">{title}</h3>
-              <p className="text-xs text-muted">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="mx-auto max-w-3xl px-6 py-20 text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Ready to get something done?</h2>
-        <p className="mx-auto mt-4 max-w-xl text-muted mb-10">
-          Post the job you have been putting off, or start picking up paid work near you.
-        </p>
-        <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-          <Link
-            href="/post-a-job"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-8 py-3.5 font-semibold text-on-accent transition hover:bg-accent"
-          >
-            Post a job free <ArrowRight className="h-5 w-5" />
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link href="/post-a-job" className="btn-primary btn-lg">
+            Post a job free
+            <ArrowRight className="h-5 w-5" />
           </Link>
-          <Link
-            href="/jobs"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong px-8 py-3.5 font-semibold transition hover:border-accent/50 hover:bg-surface"
-          >
-            Browse local work
+          <Link href="/jobs" className="btn-secondary btn-lg">
+            See local jobs
           </Link>
         </div>
       </section>
 
+      {/* ─── Talk to a person ─────────────────────────────────────────────── */}
+      <section className="border-t border-line bg-surface">
+        <div className="mx-auto max-w-3xl px-6 py-14 text-center">
+          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent-text">
+            <MessageSquare className="h-6 w-6" />
+          </div>
+          <h2 className="mb-3 text-2xl font-bold tracking-tight">
+            Not sure? Ask us first.
+          </h2>
+          <p className="mb-6 text-base leading-relaxed text-body">
+            A person reads every message. If you would rather have someone walk
+            you through posting your first job, say so and we will.
+          </p>
+          <a href="mailto:support@tryhardly.com" className="btn-secondary">
+            <Mail className="h-5 w-5" />
+            support@tryhardly.com
+          </a>
+        </div>
+      </section>
     </div>
   );
 }

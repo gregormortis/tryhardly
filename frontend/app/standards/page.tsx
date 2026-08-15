@@ -25,7 +25,7 @@ export default function StandardsOverviewPage() {
       <div className="max-w-4xl mx-auto px-4 py-16 sm:py-20">
         {/* Hero */}
         <div className="text-center mb-14">
-          <p className="font-mono text-xs uppercase tracking-widest text-accent-text mb-3">
+          <p className="eyebrow mb-3">
             Trade checklists
           </p>
           <h1 className="text-4xl sm:text-5xl font-bold mb-5 text-strong">

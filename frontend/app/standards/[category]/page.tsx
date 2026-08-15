@@ -55,7 +55,7 @@ export default function StandardCategoryPage({ params }: { params: { category: s
 
         {/* Header */}
         <div className="mb-12">
-          <p className="font-mono text-xs uppercase tracking-widest text-accent-text mb-3">
+          <p className="eyebrow mb-3">
             Trade standard
           </p>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-strong">{std.label}</h1>

@@ -47,20 +47,69 @@
     font-family: var(--font-dm-mono), ui-monospace, monospace;
   }
 
-  .glow-text {
-    text-shadow: 0 0 10px rgba(245, 158, 11, 0.8),
-      0 0 20px rgba(245, 158, 11, 0.6),
-      0 0 30px rgba(245, 158, 11, 0.4);
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared UI primitives                                                */
+/*                                                                     */
+/* Every page used to hand-roll its own button and card out of a long  */
+/* Tailwind string, so no two CTAs were the same height, radius, or    */
+/* focus behaviour. These are the only button and card styles the site */
+/* should use. Tap targets are >=44px so they are usable on a phone    */
+/* and by someone who is not precise with a mouse.                     */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl
+           px-6 py-3 min-h-[48px] text-base font-semibold
+           transition-colors duration-150
+           focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-accent focus-visible:ring-offset-2
+           focus-visible:ring-offset-canvas
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  .glow-border {
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5),
-      0 0 30px rgba(245, 158, 11, 0.3),
-      inset 0 0 15px rgba(245, 158, 11, 0.1);
+
+  .btn-primary {
+    @apply btn bg-accent text-on-accent hover:bg-accent-hover;
   }
-  .card-glow {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
-      0 0 40px rgba(245, 158, 11, 0.15),
-      inset 0 0 20px rgba(0, 0, 0, 0.3);
+
+  .btn-secondary {
+    @apply btn border-2 border-line-strong bg-surface text-strong
+           hover:border-accent hover:text-accent-text;
+  }
+
+  .btn-lg {
+    @apply px-8 py-4 min-h-[56px] text-lg;
+  }
+
+  .btn-block {
+    @apply w-full;
+  }
+
+  .card {
+    @apply rounded-2xl border border-line-strong bg-surface p-6;
+  }
+
+  /* Small all-caps label above a heading. Replaces the monospace labels that
+     made the app screens read like a terminal next to the marketing pages. */
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.14em] text-accent-text;
+  }
+
+  /* Standard vertical rhythm for a marketing section. */
+  .section {
+    @apply mx-auto max-w-5xl px-6 py-16 sm:py-20;
+  }
+}
+
+/* Anything focusable gets a visible focus ring. The default outline was being
+   removed by Tailwind's reset without a replacement, which makes keyboard
+   navigation guesswork. */
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
   }
 }
 

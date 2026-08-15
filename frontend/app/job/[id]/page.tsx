@@ -198,10 +198,10 @@ export default function QuestDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-strong mb-2">Job not found</h2>
-          <p className="text-muted mb-6">This job is no longer listed.</p>
-          <Link href="/jobs" className="text-accent-text hover:text-accent-text-hover font-medium">
-            ← Back to all jobs
+          <h2 className="text-xl font-bold text-strong mb-2">Job not found</h2>
+          <p className="text-base text-muted mb-6">This job is no longer listed.</p>
+          <Link href="/jobs" className="btn-secondary">
+            Back to all jobs
           </Link>
         </div>
       </div>
@@ -263,13 +263,13 @@ export default function QuestDetailPage() {
                   card. It is derived from the budget, not from the poster or the
                   work, so it told a visitor nothing true about the job. */}
               <div className="flex items-start justify-between gap-3 mb-4">
-                <span className="text-xs text-muted bg-raised px-2 py-1 rounded">{jobCategory.label}</span>
+                <span className="text-sm text-muted bg-raised px-2 py-1 rounded">{jobCategory.label}</span>
                 {!isOwner && <ReportButton targetType="QUEST" targetId={quest.id} />}
               </div>
-              <h1 className="text-3xl font-bold text-strong mb-4">{quest.title}</h1>
+              <h1 className="text-xl font-bold text-strong mb-4">{quest.title}</h1>
               {quest.isRecurring && (
                 <div className="mb-4 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent-text-hover">
+                  <span className="inline-flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent-text-hover">
                     🔁 {recurrenceSummary(quest) || 'Recurring'}
                   </span>
                 </div>
@@ -287,7 +287,7 @@ export default function QuestDetailPage() {
               </div>
             </div>
 
-            {/* Post-acceptance next steps (owner) — authorize payment + share job
+            {/* Post-acceptance next steps (owner) — share the agreement and job
                 coordination details with the selected worker. Prominent and in
                 place so the poster isn't left guessing what to do next. */}
             {showAcceptedNextSteps && (
@@ -328,7 +328,7 @@ export default function QuestDetailPage() {
                 <div className="rounded-lg border border-dashed border-line-strong bg-raised px-4 py-8 text-center">
                   <div className="text-3xl mb-2">🖼️</div>
                   <p className="text-sm text-muted">No photos yet.</p>
-                  <p className="text-xs text-subtle mt-1">Photos can be added when posting a job.</p>
+                  <p className="text-sm text-subtle mt-1">Photos can be added when posting a job.</p>
                 </div>
               )}
             </div>
@@ -385,7 +385,7 @@ export default function QuestDetailPage() {
                 <h2 className="text-lg font-semibold text-strong mb-1">
                   Bids ({applications.length})
                 </h2>
-                <p className="text-xs text-subtle mb-4">
+                <p className="text-sm text-subtle mb-4">
                   Compare bids and accept one. Accepting a bid assigns that worker and sets the
                   agreed amount — no payment is arranged until you choose.
                 </p>
@@ -418,7 +418,7 @@ export default function QuestDetailPage() {
                       ${quest.reward?.toLocaleString()}
                     </div>
                     <div className="text-subtle text-sm mt-1">Client budget</div>
-                    <div className="text-subtle text-xs mt-1">Workers can bid with their own estimate</div>
+                    <div className="text-subtle text-sm mt-1">Workers can bid with their own estimate</div>
                   </>
                 )}
               </div>
@@ -443,15 +443,14 @@ export default function QuestDetailPage() {
                     onClick={() =>
                       router.push(`/auth/login?redirect=${encodeURIComponent(`/job/${quest.id}`)}`)
                     }
-                    className="w-full bg-accent hover:bg-accent text-on-accent font-black py-3 rounded-lg transition-colors text-lg"
+                    className="btn-primary btn-lg btn-block"
                   >
                     Sign in to bid
                   </button>
-                  <p className="text-xs text-muted leading-relaxed">
-                    Creating an account is free. Before you submit a bid you&apos;ll connect a Stripe
-                    Connect payout account — that&apos;s how TryHardly sends your money after the
-                    poster confirms the completed work. It takes a few minutes and you only do it
-                    once.
+                  <p className="text-base text-muted leading-relaxed">
+                    {PLATFORM_PAYMENTS_ENABLED
+                      ? 'Creating an account is free. Before you submit a bid you’ll connect a Stripe Connect payout account — that’s how TryHardly sends your money after the poster confirms the completed work. It takes a few minutes and you only do it once.'
+                      : 'Creating an account is free. If your bid is accepted, agree on the amount, payment method, and timing with the customer before you start. You collect payment directly and keep all of it.'}
                   </p>
                 </div>
               ) : isAssignedWorker ? (
@@ -464,16 +463,17 @@ export default function QuestDetailPage() {
                 </div>
               ) : (
                 <>
-                  {/* Set expectations before the form: a bid is a proposal, the
-                      poster chooses, and nothing is charged at this step. */}
+                  {/* Set expectations before the form: a bid is a proposal and the
+                      poster chooses the worker. */}
                   <div className="mb-4 rounded-lg border border-line bg-raised p-3">
-                    <p className="text-xs font-semibold text-body">How bidding works</p>
-                    <ol className="mt-1.5 space-y-1 text-xs text-muted leading-relaxed list-decimal list-inside">
+                    <p className="text-base font-semibold text-body">How bidding works</p>
+                    <ol className="mt-1.5 space-y-1 text-sm text-muted leading-relaxed list-decimal list-inside">
                       <li>Send a detailed bid — your price, materials, hours, and timeline.</li>
                       <li>The poster compares the bids they receive and picks the one they want.</li>
                       <li>
-                        If yours is chosen, the poster authorizes payment and your payout is
-                        processed after they confirm the completed work.
+                        {PLATFORM_PAYMENTS_ENABLED
+                          ? 'If yours is chosen, the poster authorizes payment and your payout is processed after they confirm the completed work.'
+                          : 'If yours is chosen, agree on the final price, payment method, and timing with the customer before work starts.'}
                       </li>
                     </ol>
                   </div>
@@ -514,10 +514,10 @@ export default function QuestDetailPage() {
             {/* Trust cues — same promise a worker sees on the board, restated at
                 the point they decide whether to bid. */}
             <div className="bg-surface border border-line rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">
+              <h3 className="eyebrow mb-3">
                 Getting paid
               </h3>
-              <ul className="space-y-2.5 text-xs text-muted leading-relaxed">
+              <ul className="space-y-2.5 text-sm text-muted leading-relaxed">
                 <li>The customer pays you directly, and you keep all of it.</li>
                 <li>
                   Agree the amount and how you will be paid before you start, and keep that
@@ -535,29 +535,30 @@ export default function QuestDetailPage() {
             {/* Recurring booking management (owner only) */}
             {isOwner && quest.isRecurring && (
               <div className="bg-surface border border-accent/30 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-accent-text-hover uppercase tracking-wider mb-2 flex items-center gap-2">
-                  🔁 Recurring job
+                <h3 className="eyebrow mb-2 flex items-center gap-2">
+                  Recurring job
                 </h3>
                 <p className="text-sm text-muted mb-1">{recurrenceSummary(quest)}</p>
                 {quest.nextOccurrenceAt ? (
-                  <p className="text-xs text-subtle mb-4">
+                  <p className="text-sm text-subtle mb-4">
                     Suggested next visit: {new Date(quest.nextOccurrenceAt).toLocaleDateString()}
                   </p>
                 ) : (
-                  <p className="text-xs text-subtle mb-4">
+                  <p className="text-sm text-subtle mb-4">
                     This series has reached its end date.
                   </p>
                 )}
                 <button
                   onClick={handleGenerateOccurrence}
                   disabled={generatingOccurrence}
-                  className="w-full bg-accent hover:bg-accent disabled:opacity-50 text-on-accent font-semibold py-2.5 rounded-lg transition-colors text-sm"
+                  className="btn-primary btn-block"
                 >
                   {generatingOccurrence ? 'Posting…' : 'Post next visit'}
                 </button>
-                <p className="text-[12px] text-subtle mt-3 leading-relaxed">
-                  Posts a fresh copy of this job to the board. You confirm and pay for each visit
-                  on completion — nothing is charged in advance.
+                <p className="text-sm text-subtle mt-3 leading-relaxed">
+                  {PLATFORM_PAYMENTS_ENABLED
+                    ? 'Posts a fresh copy of this job to the board. You confirm and pay for each visit on completion — nothing is charged in advance.'
+                    : 'Posts a fresh copy of this job to the board. You and the worker agree how each visit will be paid, then settle directly.'}
                 </p>
               </div>
             )}
@@ -567,7 +568,7 @@ export default function QuestDetailPage() {
                 a public job page. Real reputation lives on the linked profile. */}
             {poster && (
               <div className="bg-surface border border-line rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-4">Posted by</h3>
+                <h3 className="eyebrow mb-4">Posted by</h3>
                 <Link href={`/profile/${poster.username}`} className="flex items-center gap-3 group">
                   <div className="w-10 h-10 bg-accent/20 border border-accent/40 rounded-full flex items-center justify-center text-accent-text font-bold">
                     {poster.avatarUrl ? (
@@ -579,7 +580,7 @@ export default function QuestDetailPage() {
                   </div>
                   <div>
                     <div className="text-strong font-medium group-hover:text-accent-text">{poster.username}</div>
-                    <div className="text-subtle text-xs">View profile</div>
+                    <div className="text-subtle text-sm">View profile</div>
                   </div>
                 </Link>
 
@@ -587,7 +588,7 @@ export default function QuestDetailPage() {
                 {user && quest.assignedAdventurerId === user.id && (
                   <Link
                     href={`/messages/${quest.id}/${poster.id}`}
-                    className="mt-4 block text-center px-3 py-2 text-sm font-medium rounded-lg border border-line-strong text-body hover:border-accent hover:text-accent-text"
+                    className="btn-secondary btn-block mt-4"
                   >
                     Message the job poster
                   </Link>

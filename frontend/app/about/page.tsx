@@ -1,3 +1,11 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: { absolute: 'About TryHardly' },
+  description: 'Learn how TryHardly connects Redding neighbors with local workers for hands-on jobs settled directly.',
+  alternates: { canonical: '/about' },
+};
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-canvas">

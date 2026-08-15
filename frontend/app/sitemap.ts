@@ -16,13 +16,14 @@ const STATIC_PATHS: Array<{
   { path: '/jobs', priority: 0.9, changeFrequency: 'hourly' },
   { path: '/post-a-job', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/redding', priority: 0.9, changeFrequency: 'weekly' },
-  { path: '/find-work-fast', priority: 0.8, changeFrequency: 'weekly' },
-  { path: '/post-job-fast', priority: 0.8, changeFrequency: 'weekly' },
+  // /find-work-fast, /post-job-fast and /service-packages are now redirected
+  // into /jobs and /post-a-job, so they must not be advertised here — a sitemap
+  // full of 307s is a crawl-budget leak and a soft quality signal.
+  { path: '/how-it-works', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/request-help', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/work-alerts', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/trust', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/pricing', priority: 0.7, changeFrequency: 'monthly' },
-  { path: '/service-packages', priority: 0.6, changeFrequency: 'weekly' },
   { path: '/standards', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/verified-pro', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/code-of-craft', priority: 0.5, changeFrequency: 'yearly' },

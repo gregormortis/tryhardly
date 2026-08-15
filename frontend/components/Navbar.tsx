@@ -6,13 +6,15 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import NotificationBell from "./NotificationBell";
 
+// Five links, all of them real pages. "How it works" used to point at an
+// in-page anchor (/#how-it-works) while /how-it-works itself 404'd, and
+// "Redding launch" read like internal project news to a visitor. Both fixed.
 const navLinks = [
   { href: "/jobs", label: "Browse jobs" },
   { href: "/post-a-job", label: "Post a job" },
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
   { href: "/trust", label: "Trust & safety" },
-  { href: "/redding", label: "Redding launch" },
 ];
 
 export default function Navbar() {
@@ -58,7 +60,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-line bg-canvas backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="text-lg font-bold tracking-tight">
+          <Link href="/" className="text-xl font-bold tracking-tight">
             Try<span className="text-accent-text">hardly</span>
           </Link>
 
@@ -67,10 +69,10 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-base font-semibold transition-colors ${
                   pathname === link.href
                     ? "text-accent-text"
-                    : "text-muted hover:text-strong"
+                    : "text-body hover:text-accent-text"
                 }`}
               >
                 {link.label}
@@ -138,16 +140,16 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Link
                     href="/auth/login"
-                    className="text-sm text-muted transition-colors hover:text-strong"
+                    className="hidden text-base font-semibold text-body transition-colors hover:text-accent-text sm:block"
                   >
                     Log in
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent"
+                    className="btn-primary px-5 py-2 text-sm min-h-[40px]"
                   >
                     Sign up
                   </Link>
@@ -195,15 +197,24 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className={`block rounded px-2 py-2 text-sm transition-colors ${
+                className={`block rounded-lg px-3 py-3 text-base font-semibold transition-colors ${
                   pathname === link.href
                     ? "bg-surface text-accent-text"
-                    : "text-muted hover:text-strong"
+                    : "text-body hover:bg-surface"
                 }`}
               >
                 {link.label}
               </Link>
             ))}
+            {!loading && !user && (
+              <Link
+                href="/auth/login"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-lg px-3 py-3 text-base font-semibold text-body hover:bg-surface"
+              >
+                Log in
+              </Link>
+            )}
           </div>
         )}
       </div>

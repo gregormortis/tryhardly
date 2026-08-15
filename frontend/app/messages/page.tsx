@@ -56,28 +56,28 @@ export default function MessagesInboxPage() {
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-strong mb-1">Messages</h1>
-        <p className="text-sm text-subtle mb-6">Your quest conversations.</p>
+        <p className="eyebrow mb-1">Messages</p>
+        <h1 className="text-xl font-bold text-strong mb-1">Messages</h1>
+        <p className="text-base text-subtle mb-6">Conversations about your local jobs.</p>
 
-        <div className="bg-surface border border-line rounded-xl overflow-hidden">
+        <div className="card overflow-hidden p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             </div>
           ) : error ? (
-            <div className="text-center text-danger text-sm py-16">{error}</div>
+            <div className="text-center text-danger text-base py-16">We couldn’t load your messages. Please try again.</div>
           ) : threads.length === 0 ? (
             <div className="text-center py-16 px-6">
-              <div className="text-4xl mb-3">💬</div>
-              <p className="text-body font-medium">No conversations yet</p>
-              <p className="text-sm text-subtle mt-1">
-                Messages start when you apply to a quest or someone applies to yours.
+              <p className="text-base font-semibold text-strong">No conversations yet</p>
+              <p className="text-base text-subtle mt-1">
+                Messages start when you bid on a job or someone bids on yours.
               </p>
               <Link
                 href="/jobs"
-                className="inline-block mt-5 text-accent-text hover:text-accent-text-hover text-sm font-medium"
+                className="btn-primary mt-5"
               >
-                Browse the questboard →
+                Browse local jobs
               </Link>
             </div>
           ) : (
@@ -95,7 +95,7 @@ export default function MessagesInboxPage() {
                       </div>
                       <p className="text-sm text-subtle truncate">{t.lastMessage}</p>
                     </div>
-                    <span className="text-xs text-subtle flex-shrink-0">
+                    <span className="text-sm text-subtle flex-shrink-0">
                       {new Date(t.lastAt).toLocaleDateString()}
                     </span>
                   </Link>
