@@ -233,7 +233,8 @@ export default function BidComparison({
               app.toolsNeeded ||
               app.bidNotes ||
               app.coverLetter ||
-              app.proposedWalkthroughTimes) && (
+              app.proposedWalkthroughTimes ||
+              (app.bidPhotoUrls?.length ?? 0) > 0) && (
               <button
                 type="button"
                 onClick={() =>
@@ -308,6 +309,32 @@ export default function BidComparison({
                   <div>
                     <div className="text-xs font-semibold text-body mb-0.5">Cover note</div>
                     <p className="text-xs text-muted whitespace-pre-line">{app.coverLetter}</p>
+                  </div>
+                )}
+                {app.bidPhotoUrls && app.bidPhotoUrls.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-body mb-0.5">Photos of past work</div>
+                    <p className="text-xs text-muted">
+                      Provided by the worker. TryHardly has not verified these photos.
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {app.bidPhotoUrls.map((url, index) => (
+                        <a
+                          key={url}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block h-20 w-20 rounded-lg border border-line bg-surface overflow-hidden"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={url}
+                            alt={`Past work photo ${index + 1} from ${workerName}`}
+                            className="h-full w-full object-cover"
+                          />
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

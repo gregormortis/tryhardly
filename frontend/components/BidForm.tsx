@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { MaterialItem, WalkthroughType } from '@/lib/types';
 import { DIRECT_PAYMENT_WORKER } from '@/lib/paymentCopy';
+import ImageUploader from '@/components/ImageUploader';
 
 // Professional, non-gamified bid submission form for a worker applying to a job.
 // Collects a total bid, a material/labor breakdown, an itemized material list,
@@ -24,6 +25,7 @@ export interface BidPayload {
   walkthroughType: WalkthroughType;
   proposedWalkthroughTimes?: string;
   bidNotes?: string;
+  bidPhotoUrls?: string[];
   legalQualificationAck?: boolean;
 }
 
@@ -97,6 +99,7 @@ export default function BidForm({
   const [timeline, setTimeline] = useState('');
   const [bidNotes, setBidNotes] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
+  const [workPhotos, setWorkPhotos] = useState<string[]>([]);
 
   const [walkthroughType, setWalkthroughType] = useState<WalkthroughType>('NONE');
   const [proposedTimes, setProposedTimes] = useState('');
@@ -179,6 +182,7 @@ export default function BidForm({
           ? proposedTimes.trim()
           : undefined,
       bidNotes: bidNotes.trim() || undefined,
+      bidPhotoUrls: workPhotos.length > 0 ? workPhotos : undefined,
       legalQualificationAck: legalAck,
     });
   };
@@ -462,6 +466,46 @@ export default function BidForm({
           placeholder="A short intro to the client."
           className={`${inputClass} resize-none`}
         />
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-muted mb-1">
+          Photos of similar work you&apos;ve done (optional)
+        </label>
+        <p className="text-xs text-subtle mb-2">
+          Nothing builds trust faster than showing work you&apos;ve already finished. Up to 6 photos.
+        </p>
+        <ImageUploader
+          multiple
+          onUploaded={(url) =>
+            setWorkPhotos((prev) =>
+              prev.length >= 6 || prev.includes(url) ? prev : [...prev, url]
+            )
+          }
+          disabled={workPhotos.length >= 6}
+        />
+        {workPhotos.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {workPhotos.map((url, index) => (
+              <div key={url} className="relative h-16 w-16">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt={`Selected work photo ${index + 1}`}
+                  className="h-16 w-16 rounded-lg object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setWorkPhotos((prev) => prev.filter((photo) => photo !== url))}
+                  aria-label={`Remove work photo ${index + 1}`}
+                  className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full bg-surface border border-line text-xs leading-none text-muted hover:text-danger"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Contractor legal acknowledgement for contractor-scale jobs */}

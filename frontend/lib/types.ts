@@ -152,6 +152,7 @@ export interface Application {
   walkthroughType?: WalkthroughType;
   proposedWalkthroughTimes?: string | null;
   bidNotes?: string | null;
+  bidPhotoUrls?: string[];
   legalQualificationAck?: boolean;
   // An application freezes at ACCEPTED once the bid is won, so the quest's own
   // work status is what drives the label the worker sees from then on.

@@ -49,6 +49,7 @@ async function isWorkerPayoutReady(userId: string): Promise<boolean> {
 // Prisma WalkthroughType enum; kept local so we can validate request input
 // without importing enum runtime values.
 const WALKTHROUGH_TYPES = ['NONE', 'REMOTE', 'IN_PERSON'] as const;
+const MAX_BID_PHOTOS = 6;
 type WalkthroughTypeValue = (typeof WALKTHROUGH_TYPES)[number];
 
 // Coerce an incoming value into a non-negative number or undefined. Rejects
@@ -66,6 +67,31 @@ function toTrimmedString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeBidPhotoUrls(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  const photoUrls: string[] = [];
+  const seen = new Set<string>();
+  for (const rawUrl of value) {
+    if (typeof rawUrl !== 'string') continue;
+    const url = rawUrl.trim();
+    if (!url || url.length > 500 || seen.has(url)) continue;
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' || parsed.hostname !== 'res.cloudinary.com') continue;
+    } catch {
+      continue;
+    }
+
+    seen.add(url);
+    photoUrls.push(url);
+    if (photoUrls.length >= MAX_BID_PHOTOS) break;
+  }
+
+  return photoUrls;
 }
 
 // Normalize an itemized material list into a clean JSON-serializable array.
@@ -123,6 +149,7 @@ function buildBidData(body: Record<string, unknown>) {
     walkthroughType: walkthroughRequested ? walkthroughType ?? 'NONE' : 'NONE',
     proposedWalkthroughTimes: toTrimmedString(body.proposedWalkthroughTimes),
     bidNotes: toTrimmedString(body.bidNotes),
+    bidPhotoUrls: normalizeBidPhotoUrls(body.bidPhotoUrls),
     legalQualificationAck: body.legalQualificationAck === true,
   };
 }
