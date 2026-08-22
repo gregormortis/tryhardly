@@ -416,8 +416,9 @@ export async function completeQuest(req: Request, res: Response) {
       await createNotification({
         userId: quest.assignedAdventurerId,
         type: "QUEST_COMPLETED",
-        title: "Quest completed",
-        message: `"${quest.title}" was marked complete. Nice work, adventurer!`,
+        title: "Job completed",
+        message: `"${quest.title}" was marked complete. Nice work.`,
+        linkUrl: `/job/${req.params.id}`,
       });
     }
 

@@ -622,6 +622,10 @@ model Notification {
   title     String
   message   String
   read      Boolean          @default(false)
+  // In-app destination for this notification, as a root-relative path such as
+  // "/job/<id>". Nullable because not every notification has a place to go.
+  // Rendered as a link only when set; never populated with an absolute URL.
+  linkUrl   String?
 
   createdAt DateTime         @default(now())
 

@@ -90,6 +90,7 @@ export const submitCompletion = async (req: AuthRequest, res: Response): Promise
       type: 'COMPLETION_SUBMITTED',
       title: 'Work submitted for review',
       message: `The worker marked "${quest.title}" as done and submitted it for your review.`,
+      linkUrl: `/job/${quest.id}`,
     });
 
     const [giver, worker] = await Promise.all([
@@ -213,6 +214,7 @@ export const confirmCompletion = async (req: AuthRequest, res: Response): Promis
         type: 'COMPLETION_CONFIRMED',
         title: 'Task completion confirmed',
         message: `"${quest.title}" was confirmed complete. Nice work! Leave a review when you can.`,
+        linkUrl: `/job/${quest.id}`,
       });
 
       const worker = await prisma.user.findUnique({
@@ -269,6 +271,7 @@ export const requestChanges = async (req: AuthRequest, res: Response): Promise<v
         message: note
           ? `The client asked for changes on "${quest.title}": ${note}`
           : `The client asked for changes on "${quest.title}" before confirming completion.`,
+        linkUrl: `/job/${quest.id}`,
       });
 
       const worker = await prisma.user.findUnique({
