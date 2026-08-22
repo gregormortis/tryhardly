@@ -452,6 +452,9 @@ export default function BidForm({
         <label className="block text-xs font-medium text-muted mb-1">
           Cover note (optional)
         </label>
+        <p className="text-xs text-subtle mb-1">
+          How many similar jobs have you done? • What's your approach for this one? • Can you attach photos of past work?
+        </p>
         <textarea
           value={coverLetter}
           onChange={(e) => setCoverLetter(e.target.value)}
