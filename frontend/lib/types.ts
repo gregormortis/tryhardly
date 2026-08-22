@@ -174,10 +174,12 @@ export interface Application {
   adventurer?: {
     id: string;
     username: string;
+    displayName?: string;
     avatarUrl?: string;
     level: number;
     reputationScore?: number;
     adventurerClass?: string;
+    totalQuestsCompleted?: number;
   };
 }
 
