@@ -234,7 +234,7 @@ export default function BidComparison({
               app.bidNotes ||
               app.coverLetter ||
               app.proposedWalkthroughTimes ||
-              app.bidPhotoUrls?.length) && (
+              (app.bidPhotoUrls?.length ?? 0) > 0) && (
               <button
                 type="button"
                 onClick={() =>
@@ -311,7 +311,7 @@ export default function BidComparison({
                     <p className="text-xs text-muted whitespace-pre-line">{app.coverLetter}</p>
                   </div>
                 )}
-                {app.bidPhotoUrls?.length && (
+                {app.bidPhotoUrls && app.bidPhotoUrls.length > 0 && (
                   <div>
                     <div className="text-xs font-semibold text-body mb-0.5">Photos of past work</div>
                     <p className="text-xs text-muted">
