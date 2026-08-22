@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, MessageSquare, Video, MapPin, ShieldCheck } from 'lucide-react';
 import type { Application, WalkthroughType } from '@/lib/types';
-import { guildPathLabel } from '@/lib/guildPath';
 
 // Poster-facing comparison of all bids on a job. Shows each bidder with their
 // total bid, labor/material split, hours, timeline, walkthrough request and
@@ -51,6 +50,14 @@ function statusBadge(status: Application['status']): string {
   if (status === 'ACCEPTED') return 'bg-success/20 text-success';
   if (status === 'REJECTED') return 'bg-raised-2 text-muted';
   return 'bg-warning/20 text-warning';
+}
+
+function trustLine(adventurer: Application['adventurer']): string {
+  const completedJobs = adventurer?.totalQuestsCompleted ?? 0;
+  if (completedJobs > 0) {
+    return `${completedJobs} ${completedJobs === 1 ? 'job' : 'jobs'} completed on TryHardly`;
+  }
+  return 'New to TryHardly — no completed jobs yet';
 }
 
 function StatTile({ label, value }: { label: string; value: string }) {
@@ -128,6 +135,7 @@ export default function BidComparison({
             ? WALKTHROUGH_LABELS[app.walkthroughType]
             : null;
         const isSetAside = app.status === 'REJECTED';
+        const workerName = app.adventurer?.displayName || app.adventurer?.username || 'Worker';
 
         return (
           <div
@@ -146,16 +154,24 @@ export default function BidComparison({
                 href={`/profile/${app.adventurer?.username}`}
                 className="flex items-center gap-3 group min-w-0"
               >
-                <div className="w-10 h-10 bg-accent/20 border border-accent/40 rounded-full flex items-center justify-center text-accent-text font-bold text-sm shrink-0">
-                  {app.adventurer?.username?.[0]?.toUpperCase() || '?'}
+                <div className="w-10 h-10 bg-accent/20 border border-accent/40 rounded-full flex items-center justify-center text-accent-text font-bold text-sm shrink-0 overflow-hidden">
+                  {app.adventurer?.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={app.adventurer.avatarUrl}
+                      alt={`${workerName} profile photo`}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    workerName[0]?.toUpperCase() || '?'
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-strong font-medium group-hover:text-accent-text truncate">
-                    {app.adventurer?.username}
+                    {workerName}
                   </p>
-                  <p className="text-xs text-subtle truncate">
-                    Lv.{app.adventurer?.level} • {guildPathLabel(app.adventurer?.adventurerClass)}
-                  </p>
+                  <p className="text-xs text-subtle truncate">@{app.adventurer?.username || 'worker'}</p>
+                  <p className="text-xs text-subtle truncate">{trustLine(app.adventurer)}</p>
                 </div>
               </Link>
               <div className="text-right shrink-0">
