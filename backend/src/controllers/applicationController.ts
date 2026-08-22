@@ -263,6 +263,7 @@ export const applyToQuest = async (req: AuthRequest, res: Response): Promise<voi
       type: 'QUEST_APPLICATION',
       title: 'New bid',
       message: `${application.adventurer.username} submitted a bid on "${quest.title}".${bidSummary}`,
+      linkUrl: `/job/${questId}`,
     });
 
     const giver = await prisma.user.findUnique({
@@ -352,6 +353,7 @@ export const acceptApplication = async (req: AuthRequest, res: Response): Promis
       type: 'QUEST_ACCEPTED',
       title: 'Bid accepted',
       message: `Your bid for "${application.quest.title}" was accepted.${acceptedAmount} Time to get started!`,
+      linkUrl: `/job/${application.questId}`,
     });
 
     const accepted = await prisma.user.findUnique({
@@ -388,6 +390,7 @@ export const rejectApplication = async (req: AuthRequest, res: Response): Promis
       type: 'QUEST_APPLICATION',
       title: 'Application update',
       message: `Your application for "${application.quest.title}" was not selected this time.`,
+      linkUrl: `/job/${application.questId}`,
     });
 
     const rejected = await prisma.user.findUnique({

@@ -95,6 +95,7 @@ export const sendQuestMessage = async (req: AuthRequest, res: Response): Promise
       type: 'NEW_MESSAGE',
       title: 'New message',
       message: `${req.user!.username} sent you a message about "${quest.title}".`,
+      linkUrl: `/job/${questId}`,
     });
 
     const recipient = await prisma.user.findUnique({

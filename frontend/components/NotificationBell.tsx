@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 
 interface Notification {
@@ -9,6 +10,7 @@ interface Notification {
   title: string;
   message: string;
   read: boolean;
+  linkUrl?: string | null;
   createdAt: string;
 }
 
@@ -62,6 +64,23 @@ export default function NotificationBell() {
     }
   };
 
+  // Following a notification is the moment it has been seen, so mark just that
+  // one read and close the panel. Optimistic: the row should not stay
+  // highlighted while the page navigates, and a failed write is not worth
+  // interrupting the navigation over.
+  const openNotification = (n: Notification) => {
+    setOpen(false);
+    if (!n.read) {
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)),
+      );
+      setUnread((prev) => Math.max(0, prev - 1));
+      api.put(`/notifications/${n.id}/read`, {}).catch(() => {
+        // Silent: the next poll re-syncs the true read state.
+      });
+    }
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -96,16 +115,39 @@ export default function NotificationBell() {
             {!loading && notifications.length === 0 && (
               <div className="px-4 py-6 text-center text-sm text-subtle">No notifications yet.</div>
             )}
-            {!loading && notifications.map((n) => (
-              <div
-                key={n.id}
-                className={`border-b border-line/60 px-4 py-3 last:border-b-0 ${n.read ? '' : 'bg-accent/5'}`}
-              >
-                <p className="text-sm font-medium text-strong">{n.title}</p>
-                <p className="mt-0.5 text-xs text-muted">{n.message}</p>
-                <p className="mt-1 text-[12px] text-subtle">{new Date(n.createdAt).toLocaleString()}</p>
-              </div>
-            ))}
+            {!loading && notifications.map((n) => {
+              const rowClass = `block border-b border-line/60 px-4 py-3 last:border-b-0 ${
+                n.read ? '' : 'bg-accent/5'
+              }`;
+              const body = (
+                <>
+                  <p className="text-sm font-medium text-strong">{n.title}</p>
+                  <p className="mt-0.5 text-xs text-muted">{n.message}</p>
+                  <p className="mt-1 text-[12px] text-subtle">{new Date(n.createdAt).toLocaleString()}</p>
+                </>
+              );
+
+              // Older notifications predate linkUrl and stay non-interactive
+              // rather than rendering a link that goes nowhere.
+              if (!n.linkUrl) {
+                return (
+                  <div key={n.id} className={rowClass}>
+                    {body}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={n.id}
+                  href={n.linkUrl}
+                  onClick={() => openNotification(n)}
+                  className={`${rowClass} transition-colors hover:bg-raised`}
+                >
+                  {body}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
