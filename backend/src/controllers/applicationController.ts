@@ -262,7 +262,7 @@ export const getQuestApplications = async (req: AuthRequest, res: Response): Pro
     const applications = await prisma.application.findMany({
       where: { questId: req.params.questId },
       include: {
-        adventurer: { select: { id: true, username: true, avatarUrl: true, level: true, reputationScore: true, adventurerClass: true } },
+        adventurer: { select: { id: true, username: true, displayName: true, avatarUrl: true, level: true, reputationScore: true, adventurerClass: true, totalQuestsCompleted: true } },
       },
       orderBy: { appliedAt: 'desc' },
     });
