@@ -41,6 +41,8 @@ interface Guild {
 interface Adventurer {
   id: string;
   username: string;
+  displayName: string;
+  avatarUrl?: string;
   avatarInitials: string;
   tier: TierKey;
   staffBadge: StaffBadge | null;
@@ -236,7 +238,9 @@ function mapProfile(u: ApiUserProfile): Adventurer {
   const level = u.level ?? 1;
   return {
     id: u.id,
-    username: u.displayName || u.username,
+    username: u.username,
+    displayName: u.displayName || u.username,
+    avatarUrl: u.avatarUrl,
     avatarInitials: (u.displayName || u.username || '?').slice(0, 2).toUpperCase(),
     tier: tierFromLevel(level),
     staffBadge: staffBadgeFromRole(u.role),
@@ -510,17 +514,29 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
 
                 {/* Avatar — border uses dynamic tier color via inline style */}
                 <div
-                  className={clsx('w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 border-2 font-bold text-2xl', tier.avatarClasses)}
+                  className={clsx('w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 border-2 font-bold text-2xl overflow-hidden', tier.avatarClasses)}
                   style={{ boxShadow: `0 0 24px ${tier.ringColor}26` }}
                 >
-                  {adventurer.avatarInitials}
+                  {adventurer.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={adventurer.avatarUrl}
+                      alt={`${adventurer.displayName} profile photo`}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    adventurer.avatarInitials
+                  )}
                 </div>
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
-                    <h1 className="font-bold text-[26px] text-strong tracking-tight leading-none">
-                      {adventurer.username}
-                    </h1>
+                    <div>
+                      <h1 className="font-bold text-[26px] text-strong tracking-tight leading-none">
+                        {adventurer.displayName}
+                      </h1>
+                      <p className="font-mono text-[12px] text-subtle mt-1">@{adventurer.username}</p>
+                    </div>
                     {/* Staff accounts show their appointed platform status; everyone
                         else shows a neutral experience level, so no worker is
                         headlined by a rank name. */}
