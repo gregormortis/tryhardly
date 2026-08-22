@@ -98,24 +98,14 @@ Vercel hosts the Next.js frontend:
 
 ## 4. Error reporting with Sentry (optional)
 
-Error reporting is **off by default**. The backend includes a dependency-light
-hook ([`backend/src/lib/errorReporting.ts`](../backend/src/lib/errorReporting.ts))
-that is a complete no-op unless **both**:
-
-1. `SENTRY_DSN` is set, **and**
-2. the optional `@sentry/node` package is installed.
-
-We deliberately do **not** add `@sentry/node` to `package.json` so the default
-install stays lean and the build is unaffected.
+Error reporting is **off by default**. The backend includes
+[`@sentry/node`](../backend/package.json) and a dependency-light hook
+([`backend/src/lib/errorReporting.ts`](../backend/src/lib/errorReporting.ts))
+that remains a complete no-op until `SENTRY_DSN` is set.
 
 ### Enable backend Sentry
 
-```bash
-cd backend
-npm install @sentry/node      # adds the optional dependency
-```
-
-Then set on the backend host (Railway variables):
+Set this on the backend host (Railway variables):
 
 ```
 SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project>
@@ -123,10 +113,10 @@ SENTRY_ENVIRONMENT=production
 SENTRY_TRACES_SAMPLE_RATE=0      # raise (e.g. 0.1) only if you want tracing
 ```
 
-On boot you'll see `[errorReporting] Sentry initialized`. Unhandled errors that
-reach the Express error handler are then captured automatically via
-`reportError(err)` in `backend/src/app.ts`. If the DSN is set but the package is
-missing, the app logs a one-line warning and continues normally.
+`SENTRY_ENVIRONMENT` and `SENTRY_TRACES_SAMPLE_RATE` are optional. On boot
+you'll see `[errorReporting] Sentry initialized`. Unhandled errors that reach
+the Express error handler are then captured automatically via `reportError(err)`
+in `backend/src/app.ts`.
 
 ### Enable frontend Sentry (docs only — not pre-wired)
 
@@ -156,5 +146,6 @@ Set `NEXT_PUBLIC_SENTRY_DSN` as a Vercel environment variable.
 - [ ] Confirm uptime workflow runs green once (use **Run workflow** to trigger manually).
 - [ ] Configure Railway health check + notifications.
 - [ ] Configure Vercel deployment/error notifications.
-- [ ] (Optional) `npm install @sentry/node` in backend and set `SENTRY_DSN`.
+- [ ] (Optional) Set `SENTRY_DSN` on the Railway backend service (and optionally
+      `SENTRY_ENVIRONMENT` / `SENTRY_TRACES_SAMPLE_RATE`).
 - [ ] (Optional) Run the Sentry Next.js wizard for the frontend and set `NEXT_PUBLIC_SENTRY_DSN`.
