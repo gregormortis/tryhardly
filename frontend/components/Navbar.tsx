@@ -17,12 +17,28 @@ const navLinks = [
   { href: "/trust", label: "Trust & safety" },
 ];
 
+// Signed-in users get "My jobs" in first position. New bids on your own job are
+// the most time-sensitive thing on the platform, and they were previously three
+// clicks deep behind the account menu. Pricing swaps out rather than adding a
+// sixth item: the fee question (there is no fee) is a pre-signup concern, the
+// page stays reachable at /pricing, and the bar keeps its five-link layout.
+const MY_JOBS_LINK = { href: "/dashboard", label: "My jobs" };
+
+function linksFor(signedIn: boolean) {
+  if (!signedIn) return navLinks;
+  return [MY_JOBS_LINK, ...navLinks.filter((link) => link.href !== "/pricing")];
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Guard on !loading so the bar does not flash "My jobs" for a signed-out
+  // visitor, or Pricing for a signed-in one, while auth state resolves.
+  const visibleLinks = linksFor(!loading && Boolean(user));
 
   // Close the mobile menu on navigation. Without this the panel stays open
   // behind the new page when a link routes client-side.
@@ -65,7 +81,7 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden items-center gap-6 md:flex">
-            {navLinks.map((link) => (
+            {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -192,7 +208,7 @@ export default function Navbar() {
 
         {menuOpen && (
           <div className="relative z-50 space-y-1 border-t border-line bg-canvas py-3 md:hidden">
-            {navLinks.map((link) => (
+            {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
