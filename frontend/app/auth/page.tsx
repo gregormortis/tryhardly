@@ -65,8 +65,9 @@ export default function AuthPage() {
       // Store token in localStorage
       localStorage.setItem('token', response.token);
 
-      // Redirect to home page
-      router.push('/');
+      // Match /auth/login: a returning user lands on their own jobs and bids,
+      // not the marketing home page.
+      router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -91,8 +92,9 @@ export default function AuthPage() {
       // Store token in localStorage
       localStorage.setItem('token', response.token);
 
-      // Redirect to home page
-      router.push('/');
+      // Match /auth/register: a brand-new account has an empty dashboard, so
+      // send them to the board where there is something to look at.
+      router.push('/jobs');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {

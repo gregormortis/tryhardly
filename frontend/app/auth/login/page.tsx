@@ -44,7 +44,10 @@ function LoginForm() {
     setError('');
     try {
       await login(form.email, form.password);
-      router.push(redirect ?? '/jobs');
+      // A returning user's own jobs, bids, and new-bid activity are the reason
+      // they signed in. Landing on the public board buried all of it behind the
+      // account menu. An explicit ?redirect= still wins.
+      router.push(redirect ?? '/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
