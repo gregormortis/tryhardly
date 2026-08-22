@@ -392,6 +392,8 @@ model Application {
   proposedWalkthroughTimes String?
   // Bid breakdown notes / notes to the client.
   bidNotes             String?
+  // Worker-supplied photos of comparable past work. Not verified by TryHardly.
+  bidPhotoUrls         String[]          @default([])
   // Contractor/legal qualification acknowledgement for contractor-scale jobs.
   // Worker affirms they are responsible for only accepting work they are legally
   // qualified to perform. Does NOT imply TryHardly verifies legal status.
