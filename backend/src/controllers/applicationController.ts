@@ -290,11 +290,24 @@ export const getQuestApplications = async (req: AuthRequest, res: Response): Pro
     const applications = await prisma.application.findMany({
       where: { questId: req.params.questId },
       include: {
-        adventurer: { select: { id: true, username: true, displayName: true, avatarUrl: true, level: true, reputationScore: true, adventurerClass: true, totalQuestsCompleted: true } },
+        adventurer: {
+          select: {
+            id: true, username: true, displayName: true, avatarUrl: true, level: true,
+            reputationScore: true, adventurerClass: true,
+            _count: { select: { questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } } } },
+          },
+        },
       },
       orderBy: { appliedAt: 'desc' },
     });
-    res.json(applications);
+    res.json(applications.map((application) => ({
+      ...application,
+      adventurer: {
+        ...application.adventurer,
+        totalQuestsCompleted: application.adventurer._count.questsCompleted,
+        _count: undefined,
+      },
+    })));
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch applications' });
   }

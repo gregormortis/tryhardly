@@ -4,7 +4,7 @@ const mockPrisma = {
   servicePackage: { count: jest.fn() },
   professionalCredential: { count: jest.fn() },
   review: { aggregate: jest.fn() },
-  quest: { groupBy: jest.fn() },
+  quest: { count: jest.fn(), groupBy: jest.fn() },
 };
 
 jest.mock('../../app', () => ({ prisma: mockPrisma }));
@@ -80,11 +80,11 @@ describe('getWorkerPassport — DB gatherer', () => {
   it('reduces the Stripe account id to a boolean and counts repeat customers', async () => {
     mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
       createdAt: new Date('2025-03-01T00:00:00Z'),
-      totalQuestsCompleted: 5,
       codeOfCraftPledgedAt: new Date('2025-04-01T00:00:00Z'),
       stripeAccountId: 'acct_123',
       guild: { name: 'North State Guild' },
     });
+    mockPrisma.quest.count.mockResolvedValue(5);
     mockPrisma.application.count.mockResolvedValue(9);
     mockPrisma.servicePackage.count.mockResolvedValue(1);
     mockPrisma.professionalCredential.count

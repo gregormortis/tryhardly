@@ -131,11 +131,15 @@ export const getCurrentUser = async (req: AuthRequest, res: Response): Promise<v
         xp: true,
         adventurerClass: true,
         reputationScore: true,
-        totalQuestsPosted: true,
-        totalQuestsCompleted: true,
         verified: true,
         role: true,
         createdAt: true,
+        _count: {
+          select: {
+            questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } },
+            questsGiven: { where: { excludedFromStats: false } },
+          },
+        },
       },
     });
 
@@ -144,7 +148,12 @@ export const getCurrentUser = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    res.json(user);
+    res.json({
+      ...user,
+      totalQuestsCompleted: user._count.questsCompleted,
+      totalQuestsPosted: user._count.questsGiven,
+      _count: undefined,
+    });
   } catch (error) {
     console.error('Get current user error:', error);
     res.status(500).json({ error: 'Failed to get user' });

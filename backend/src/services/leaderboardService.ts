@@ -138,9 +138,12 @@ async function gatherWorkerSignals(poolSize: number): Promise<WorkerQualitySigna
   // Ordered by reputation so a capped pool still captures the strongest workers.
   const users = await prisma.user.findMany({
     where: {
-      OR: [{ reputationScore: { gt: 0 } }, { totalQuestsCompleted: { gt: 0 } }],
+      OR: [
+        { reputationScore: { gt: 0 } },
+        { questsCompleted: { some: { status: 'COMPLETED', excludedFromStats: false } } },
+      ],
     },
-    orderBy: [{ reputationScore: 'desc' }, { totalQuestsCompleted: 'desc' }],
+    orderBy: { reputationScore: 'desc' },
     take: poolSize,
     select: {
       id: true,
@@ -148,7 +151,11 @@ async function gatherWorkerSignals(poolSize: number): Promise<WorkerQualitySigna
       displayName: true,
       avatarUrl: true,
       reputationScore: true,
-      totalQuestsCompleted: true,
+      _count: {
+        select: {
+          questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } },
+        },
+      },
       verified: true,
       createdAt: true,
       // Hide appointed staff accounts from the earned-quality boards so seeded
@@ -169,7 +176,7 @@ async function gatherWorkerSignals(poolSize: number): Promise<WorkerQualitySigna
   const [ratingAgg, verifiedCreds, skillGroups] = await Promise.all([
     prisma.review.groupBy({
       by: ['revieweeId'],
-      where: { revieweeId: { in: ids } },
+      where: { revieweeId: { in: ids }, quest: { excludedFromStats: false } },
       _avg: { rating: true },
       _count: true,
     }),
@@ -180,7 +187,7 @@ async function gatherWorkerSignals(poolSize: number): Promise<WorkerQualitySigna
     }),
     prisma.skillRating.groupBy({
       by: ['workerId', 'skillSlug'],
-      where: { workerId: { in: ids } },
+      where: { workerId: { in: ids }, quest: { excludedFromStats: false } },
       _avg: { rating: true },
       _count: { _all: true },
     }),
@@ -210,7 +217,7 @@ async function gatherWorkerSignals(poolSize: number): Promise<WorkerQualitySigna
       reputationScore: u.reputationScore,
       averageRating: rating?.avg != null ? Number(rating.avg.toFixed(2)) : null,
       ratingCount: rating?.count ?? 0,
-      completedJobs: u.totalQuestsCompleted,
+      completedJobs: u._count.questsCompleted,
       verifiedCredentials: credsByUser.get(u.id) ?? 0,
       topSkillBadges: topBadgesByUser.get(u.id) ?? 0,
       verified: u.verified,
@@ -271,6 +278,7 @@ export async function getLeaderboards(limit = 25): Promise<LeaderboardsPayload> 
     gatherWorkerSignals(poolSize),
     prisma.skillRating.groupBy({
       by: ['workerId', 'skillSlug', 'skillName'],
+      where: { quest: { excludedFromStats: false } },
       _avg: { rating: true },
       _count: { _all: true },
     }),

@@ -13,9 +13,9 @@ export const getStats = async (_req: AuthRequest, res: Response): Promise<void> 
   try {
     const [users, quests, openQuests, completedQuests, applications] = await prisma.$transaction([
       prisma.user.count(),
-      prisma.quest.count(),
-      prisma.quest.count({ where: { status: QuestStatus.OPEN } }),
-      prisma.quest.count({ where: { status: QuestStatus.COMPLETED } }),
+      prisma.quest.count({ where: { excludedFromStats: false } }),
+      prisma.quest.count({ where: { status: QuestStatus.OPEN, excludedFromStats: false } }),
+      prisma.quest.count({ where: { status: QuestStatus.COMPLETED, excludedFromStats: false } }),
       prisma.application.count(),
     ]);
     res.json({ users, quests, openQuests, completedQuests, applications });

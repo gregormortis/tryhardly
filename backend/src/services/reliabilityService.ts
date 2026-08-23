@@ -57,17 +57,19 @@ export async function getReliability(userId: string): Promise<ReliabilityStats> 
     prisma.handshake.count({
       where: {
         status: 'HONORED',
+        quest: { excludedFromStats: false },
         OR: [{ posterId: userId }, { workerId: userId }],
       },
     }),
     prisma.handshake.count({
-      where: { status: 'BROKEN', brokenById: userId },
+      where: { status: 'BROKEN', brokenById: userId, quest: { excludedFromStats: false } },
     }),
     // Counted for context only. Deliberately NOT part of the score: being let
     // down by someone else says nothing about your own reliability.
     prisma.handshake.count({
       where: {
         status: 'BROKEN',
+        quest: { excludedFromStats: false },
         brokenById: { not: userId },
         OR: [{ posterId: userId }, { workerId: userId }],
       },
@@ -98,6 +100,7 @@ export async function getReliabilityForMany(
   const rows = await prisma.handshake.findMany({
     where: {
       status: { in: ['HONORED', 'BROKEN'] },
+      quest: { excludedFromStats: false },
       OR: [{ posterId: { in: unique } }, { workerId: { in: unique } }],
     },
     select: { posterId: true, workerId: true, status: true, brokenById: true },

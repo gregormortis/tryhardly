@@ -213,8 +213,12 @@ export async function getFullStats(userId: string): Promise<GamificationStats> {
         xp: true,
         adventurerClass: true,
         reputationScore: true,
-        totalQuestsCompleted: true,
-        totalQuestsPosted: true,
+        _count: {
+          select: {
+            questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } },
+            questsGiven: { where: { excludedFromStats: false } },
+          },
+        },
       },
     }),
     getXPProgress(userId),
@@ -222,9 +226,14 @@ export async function getFullStats(userId: string): Promise<GamificationStats> {
   ]);
 
   const tier = getReputationTier(user.reputationScore);
+  const { _count, ...userFields } = user;
 
   return {
-    user,
+    user: {
+      ...userFields,
+      totalQuestsCompleted: _count.questsCompleted,
+      totalQuestsPosted: _count.questsGiven,
+    },
     xpProgress: {
       xpForCurrentLevel: xpProgress.xpForCurrentLevel,
       xpForNextLevel: xpProgress.xpForNextLevel,

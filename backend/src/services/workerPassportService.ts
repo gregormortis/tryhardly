@@ -156,7 +156,7 @@ export function buildWorkerPassport(s: WorkerPassportSignals): WorkerPassport {
 async function countRepeatCustomers(userId: string): Promise<number> {
   const grouped = await prisma.quest.groupBy({
     by: ['questGiverId'],
-    where: { assignedAdventurerId: userId, status: 'COMPLETED' },
+    where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
     _count: { _all: true },
   });
   return grouped.filter((g) => g._count._all >= 2).length;
@@ -168,24 +168,26 @@ async function countRepeatCustomers(userId: string): Promise<number> {
  * doesn't exist (caller maps that to 404).
  */
 export async function getWorkerPassport(userId: string): Promise<WorkerPassport> {
-  const [user, applicationsSubmitted, activeServicePackages, verifiedCredentials, pendingCredentials, ratingAgg, repeatCustomers] =
+  const [user, completedJobs, applicationsSubmitted, activeServicePackages, verifiedCredentials, pendingCredentials, ratingAgg, repeatCustomers] =
     await Promise.all([
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
         select: {
           createdAt: true,
-          totalQuestsCompleted: true,
           codeOfCraftPledgedAt: true,
           stripeAccountId: true,
           guild: { select: { name: true } },
         },
       }),
-      prisma.application.count({ where: { adventurerId: userId } }),
+      prisma.quest.count({
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
+      }),
+      prisma.application.count({ where: { adventurerId: userId, quest: { excludedFromStats: false } } }),
       prisma.servicePackage.count({ where: { userId, active: true } }),
       prisma.professionalCredential.count({ where: { userId, status: 'VERIFIED' } }),
       prisma.professionalCredential.count({ where: { userId, status: 'PENDING' } }),
       prisma.review.aggregate({
-        where: { revieweeId: userId },
+        where: { revieweeId: userId, quest: { excludedFromStats: false } },
         _avg: { rating: true },
         _count: true,
       }),
@@ -194,7 +196,7 @@ export async function getWorkerPassport(userId: string): Promise<WorkerPassport>
 
   return buildWorkerPassport({
     memberSince: user.createdAt,
-    completedJobs: user.totalQuestsCompleted,
+    completedJobs,
     applicationsSubmitted,
     activeServicePackages,
     codeOfCraftPledged: user.codeOfCraftPledgedAt != null,
