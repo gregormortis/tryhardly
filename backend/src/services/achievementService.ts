@@ -135,16 +135,22 @@ async function isConditionMet(
   switch (key) {
     // ── Quest completion milestones ──
     case 'FIRST_BLOOD': {
-      const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { totalQuestsCompleted: true } });
-      return user.totalQuestsCompleted >= 1;
+      const completed = await prisma.quest.count({
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
+      });
+      return completed >= 1;
     }
     case 'QUEST_MASTER': {
-      const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { totalQuestsCompleted: true } });
-      return user.totalQuestsCompleted >= 10;
+      const completed = await prisma.quest.count({
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
+      });
+      return completed >= 10;
     }
     case 'LEGENDARY_HERO': {
-      const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { totalQuestsCompleted: true } });
-      return user.totalQuestsCompleted >= 50;
+      const completed = await prisma.quest.count({
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
+      });
+      return completed >= 50;
     }
 
     // ── Guild ──
@@ -155,11 +161,13 @@ async function isConditionMet(
     case 'TEAM_PLAYER': {
       // Count completed quests where the user was in a guild at completion time.
       // Simplified: user is currently in a guild and has completed >= 5 quests.
-      const user = await prisma.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: { guildId: true, totalQuestsCompleted: true },
-      });
-      return user.guildId != null && user.totalQuestsCompleted >= 5;
+      const [user, completed] = await Promise.all([
+        prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { guildId: true } }),
+        prisma.quest.count({
+          where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
+        }),
+      ]);
+      return user.guildId != null && completed >= 5;
     }
 
     // ── Reviews ──
@@ -172,7 +180,7 @@ async function isConditionMet(
       const count = await prisma.review.count({
         where: {
           rating: 5,
-          quest: { assignedAdventurerId: userId, status: 'COMPLETED' },
+          quest: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
         },
       });
       return count >= 5;
@@ -181,14 +189,14 @@ async function isConditionMet(
     // ── Earnings ──
     case 'GOLD_RUSH': {
       const result = await prisma.quest.aggregate({
-        where: { assignedAdventurerId: userId, status: 'COMPLETED' },
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
         _sum: { reward: true },
       });
       return Number(result._sum.reward ?? 0) >= 1000;
     }
     case 'WEALTHY': {
       const result = await prisma.quest.aggregate({
-        where: { assignedAdventurerId: userId, status: 'COMPLETED' },
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
         _sum: { reward: true },
       });
       return Number(result._sum.reward ?? 0) >= 10000;
@@ -197,8 +205,8 @@ async function isConditionMet(
     // ── Speed ──
     case 'SPEED_RUNNER': {
       if (event.type !== 'QUEST_COMPLETED') return false;
-      const quest = await prisma.quest.findUnique({
-        where: { id: event.questId },
+      const quest = await prisma.quest.findFirst({
+        where: { id: event.questId, excludedFromStats: false },
         select: { deadline: true, completedAt: true },
       });
       if (!quest?.deadline || !quest?.completedAt) return false;
@@ -207,7 +215,7 @@ async function isConditionMet(
     case 'EARLY_BIRD': {
       if (event.type !== 'APPLICATION_SUBMITTED') return false;
       const application = await prisma.application.findFirst({
-        where: { questId: event.questId, adventurerId: userId },
+        where: { questId: event.questId, adventurerId: userId, quest: { excludedFromStats: false } },
         select: { appliedAt: true, quest: { select: { createdAt: true } } },
         orderBy: { appliedAt: 'desc' },
       });
@@ -218,7 +226,7 @@ async function isConditionMet(
 
     // ── Quest giving ──
     case 'MENTOR': {
-      const count = await prisma.quest.count({ where: { questGiverId: userId } });
+      const count = await prisma.quest.count({ where: { questGiverId: userId, excludedFromStats: false } });
       return count >= 10;
     }
 
@@ -239,7 +247,7 @@ async function isConditionMet(
     // ── Category diversity ──
     case 'JACK_OF_ALL_TRADES': {
       const categories = await prisma.quest.findMany({
-        where: { assignedAdventurerId: userId, status: 'COMPLETED' },
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
         select: { category: true },
         distinct: ['category'],
       });
@@ -248,7 +256,7 @@ async function isConditionMet(
     case 'SPECIALIST': {
       const categories = await prisma.quest.groupBy({
         by: ['category'],
-        where: { assignedAdventurerId: userId, status: 'COMPLETED' },
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
         _count: true,
       });
       return categories.some((c) => c._count >= 10);
@@ -261,6 +269,7 @@ async function isConditionMet(
         where: {
           assignedAdventurerId: userId,
           status: { in: ['COMPLETED', 'CANCELLED'] },
+          excludedFromStats: false,
         },
         orderBy: { updatedAt: 'desc' },
         take: 5,
@@ -275,14 +284,14 @@ async function isConditionMet(
       const DIFFICULTY_ORDER: Record<string, number> = {
         NOVICE: 0, APPRENTICE: 1, JOURNEYMAN: 2, EXPERT: 3, MASTER: 4, LEGENDARY: 5,
       };
-      const quest = await prisma.quest.findUnique({
-        where: { id: event.questId },
+      const quest = await prisma.quest.findFirst({
+        where: { id: event.questId, excludedFromStats: false },
         select: { difficulty: true },
       });
       if (!quest) return false;
       // "Comfort level" = difficulty of the majority of completed quests (mode)
       const completedQuests = await prisma.quest.findMany({
-        where: { assignedAdventurerId: userId, status: 'COMPLETED' },
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
         select: { difficulty: true },
       });
       if (completedQuests.length <= 1) {

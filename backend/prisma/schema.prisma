@@ -188,6 +188,12 @@ model Quest {
 
   // Metadata
   tags            String[]
+  // Retained for audit and can be un-flagged by setting this back to false;
+  // deliberately not a delete.
+  excludedFromStats Boolean @default(false)
+  // Retained audit reason; clear this along with the boolean to un-flag rather
+  // than deleting the row.
+  excludedReason    String?
   // Cap on how many bids a job will take before it stops accepting more.
   // Enforced from this release. Bidding is unpaid work for the worker, and a
   // worker who writes five bids and wins none simply leaves — which a market
@@ -279,6 +285,7 @@ model Quest {
   @@index([questGiverId])
   @@index([assignedAdventurerId])
   @@index([status])
+  @@index([excludedFromStats])
   @@index([category])
   @@index([recurrenceParentId])
   @@index([isRecurring])

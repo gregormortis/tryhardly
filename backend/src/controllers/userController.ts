@@ -11,11 +11,12 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
       select: {
         id: true, username: true, displayName: true, bio: true, avatarUrl: true,
         level: true, xp: true, adventurerClass: true, reputationScore: true,
-        totalQuestsCompleted: true, verified: true, createdAt: true, role: true,
+        verified: true, createdAt: true, role: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
         codeOfCraftPledgedAt: true,
-        questsGiven: { where: { status: 'COMPLETED' }, select: { id: true, title: true, difficulty: true }, take: 5 },
-        questsCompleted: { where: { status: 'COMPLETED' }, select: { id: true, title: true, difficulty: true, reward: true }, take: 5 },
+        questsGiven: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true }, take: 5 },
+        questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true, reward: true }, take: 5 },
+        _count: { select: { questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } } } },
         guild: { select: { id: true, name: true, tag: true, badgeUrl: true } },
         achievements: { include: { achievement: true } },
       },
@@ -25,7 +26,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
       res.status(404).json({ error: 'User not found' });
       return;
     }
-    res.json(user);
+    res.json(user && { ...user, totalQuestsCompleted: user._count.questsCompleted, _count: undefined });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
@@ -70,14 +71,15 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       select: {
         id: true, username: true, email: true, displayName: true, bio: true, avatarUrl: true,
         level: true, xp: true, adventurerClass: true, role: true, reputationScore: true,
-        totalQuestsCompleted: true, verified: true, createdAt: true,
+        verified: true, createdAt: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
         codeOfCraftPledgedAt: true, stripeAccountId: true,
         guild: { select: { id: true, name: true, tag: true } },
         achievements: { include: { achievement: true } },
+        _count: { select: { questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } } } },
       },
     });
-    res.json(user);
+    res.json(user && { ...user, totalQuestsCompleted: user._count.questsCompleted, _count: undefined });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
@@ -143,10 +145,14 @@ export const getLeaderboard = async (_req: AuthRequest, res: Response): Promise<
       select: {
         id: true, username: true, displayName: true, avatarUrl: true,
         level: true, xp: true, adventurerClass: true, reputationScore: true,
-        totalQuestsCompleted: true,
+        _count: { select: { questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } } } },
       },
     });
-    res.json(users);
+    res.json(users.map((user) => ({
+      ...user,
+      totalQuestsCompleted: user._count.questsCompleted,
+      _count: undefined,
+    })));
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }

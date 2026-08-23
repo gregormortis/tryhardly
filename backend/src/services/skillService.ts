@@ -137,7 +137,7 @@ export function buildSkillBadge(
 export async function getWorkerSkillBadges(workerId: string): Promise<SkillBadge[]> {
   const grouped = await prisma.skillRating.groupBy({
     by: ['skillSlug', 'skillName'],
-    where: { workerId },
+    where: { workerId, quest: { excludedFromStats: false } },
     _avg: { rating: true },
     _count: { _all: true },
   });

@@ -558,14 +558,17 @@ export function getDemotionStatus(s: DemotionSignals): DemotionStatus {
 export async function gatherProgressionSignals(userId: string): Promise<ProgressionSignals> {
   const { getWorkerSkillBadges, countBadgesAtLeast } = await import('./skillService');
 
-  const [user, ratingAgg, verifiedCreds, ledGuild, officerOrLeader, severeDisputes, skillBadges] =
+  const [user, completedJobs, ratingAgg, verifiedCreds, ledGuild, officerOrLeader, severeDisputes, skillBadges] =
     await Promise.all([
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
-        select: { level: true, xp: true, totalQuestsCompleted: true, guildId: true, createdAt: true },
+        select: { level: true, xp: true, guildId: true, createdAt: true },
+      }),
+      prisma.quest.count({
+        where: { assignedAdventurerId: userId, status: 'COMPLETED', excludedFromStats: false },
       }),
       prisma.review.aggregate({
-        where: { revieweeId: userId },
+        where: { revieweeId: userId, quest: { excludedFromStats: false } },
         _avg: { rating: true },
         _count: true,
       }),
@@ -600,7 +603,7 @@ export async function gatherProgressionSignals(userId: string): Promise<Progress
   return {
     level: user.level,
     xp: user.xp,
-    completedJobs: user.totalQuestsCompleted,
+    completedJobs,
     averageRating: ratingAgg._avg.rating ?? null,
     ratingCount: ratingAgg._count,
     verifiedCredentials: verifiedCreds,

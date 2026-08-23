@@ -63,7 +63,7 @@ export async function getQuests(req: Request, res: Response) {
     const take = Math.min(parseInt(limit) || 20, 100);
     const skip = (Math.max(parseInt(page) || 1, 1) - 1) * take;
 
-    const where: any = {};
+    const where: any = { excludedFromStats: false };
 
     // Budget range filter. Reward is a Decimal; Prisma accepts numbers for gte/lte.
     // Silently ignore non-positive / non-numeric bounds so a bad query can't 500.

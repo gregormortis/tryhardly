@@ -136,7 +136,7 @@ export async function getReputationBreakdown(userId: string): Promise<Reputation
 
   // Get recent reviews on quests this user completed
   const recentReviews = await prisma.review.findMany({
-    where: { quest: { assignedAdventurerId: userId } },
+    where: { quest: { assignedAdventurerId: userId, excludedFromStats: false } },
     orderBy: { createdAt: 'desc' },
     take: 10,
     select: {

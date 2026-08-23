@@ -91,7 +91,7 @@ export const getLeaderboard = async (req: AuthRequest, res: Response): Promise<v
           xp: true,
           adventurerClass: true,
           reputationScore: true,
-          totalQuestsCompleted: true,
+          _count: { select: { questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } } } },
         },
       }),
       prisma.user.count(),
@@ -107,6 +107,8 @@ export const getLeaderboard = async (req: AuthRequest, res: Response): Promise<v
       return {
         rank: skip + idx + 1,
         ...user,
+        totalQuestsCompleted: user._count.questsCompleted,
+        _count: undefined,
         xpProgress: {
           xpIntoLevel,
           xpNeeded,
