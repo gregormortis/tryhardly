@@ -64,8 +64,6 @@ export const REDDING_AREA_ZIP_CITIES: Record<string, string> = {
   '96088': 'Shingletown',
 };
 
-// Hard cap on how many worker leads we email for a single job request. Keeps a
-// single submission from blasting the entire list. Overridable via env for ops.
 // Board-post tags include these additional local-service categories even though
 // the legacy QuestCategory enum persists them as OTHER.
 export const MATCHABLE_CATEGORY_SLUGS: ReadonlySet<string> = new Set([
@@ -75,6 +73,8 @@ export const MATCHABLE_CATEGORY_SLUGS: ReadonlySet<string> = new Set([
   'odd_jobs',
 ]);
 
+// Hard cap on how many worker leads we email for a single job request. Keeps a
+// single submission from blasting the entire list. Overridable via env for ops.
 export const DEFAULT_MAX_WORKER_EMAILS = 20;
 
 export function maxWorkerEmails(): number {
