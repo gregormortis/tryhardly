@@ -274,6 +274,7 @@ model Quest {
   messages        Message[]
   skillRatings    SkillRating[]
   proofOfWork     ProofOfWork[]
+  workerAlertNotifications LeadMatchNotification[] @relation("QuestWorkerAlerts")
 
   @@index([questGiverId])
   @@index([assignedAdventurerId])
@@ -1007,15 +1008,19 @@ model Lead {
   @@index([source])
 }
 
-// Records that a worker-alert lead was emailed about a specific job-request lead.
+// Records that a worker-alert lead was emailed about either a job-request lead or
+// a board quest.
 // Purely additive: backs the /work-alerts matching feature without altering any
-// existing flow. The unique [jobLeadId, workerLeadId] pair guarantees a worker
-// is never emailed twice for the same job, even under retries/races.
+// existing flow. The unique job/worker pairs guarantee a worker is never emailed
+// twice about the same lead or quest, even under retries/races.
 model LeadMatchNotification {
   id           String   @id @default(uuid())
 
-  jobLeadId    String
-  jobLead      Lead     @relation("JobLeadNotifications", fields: [jobLeadId], references: [id], onDelete: Cascade)
+  jobLeadId    String?
+  jobLead      Lead?    @relation("JobLeadNotifications", fields: [jobLeadId], references: [id], onDelete: Cascade)
+
+  questId      String?
+  quest        Quest?   @relation("QuestWorkerAlerts", fields: [questId], references: [id], onDelete: Cascade)
 
   workerLeadId String
   workerLead   Lead     @relation("WorkerLeadNotifications", fields: [workerLeadId], references: [id], onDelete: Cascade)
@@ -1029,7 +1034,9 @@ model LeadMatchNotification {
   sentAt       DateTime?
 
   @@unique([jobLeadId, workerLeadId])
+  @@unique([questId, workerLeadId])
   @@index([jobLeadId])
+  @@index([questId])
   @@index([workerLeadId])
 }
 

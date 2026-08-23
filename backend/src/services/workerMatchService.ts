@@ -12,8 +12,8 @@
  *     irrelevant or far-away worker. Blank/broad worker locations don't match.
  *   - No spam: a hard cap per job request, and a unique (jobLeadId, workerLeadId)
  *     row guarantees a worker is never emailed twice for the same job.
- *   - Never blocks the job-request submission. All work here is best-effort and
- *     all failures are swallowed/logged.
+ *   - Never blocks the job-request submission. All work here is best-effort;
+ *     failures are reported and logged for visible follow-up.
  *
  * The pure matching helpers (normalizeCity, cityMatches, skillMatches,
  * matchesWorker) are exported separately so they can be unit-tested without a DB.
@@ -30,6 +30,7 @@ import {
   smsTemplates as defaultSmsTemplates,
 } from './smsService';
 import { LeadType } from '@prisma/client';
+import { reportError } from '../lib/errorReporting';
 
 // Curated category slugs the product knows about. Kept in sync with the
 // frontend's lib/jobCategories.ts. "other" is the catch-all bucket. The labels
@@ -44,6 +45,21 @@ export const KNOWN_CATEGORY_LABELS: Record<string, string> = {
   pressure: 'Pressure Washing',
   errands: 'Errands',
   other: 'Odd Jobs',
+};
+
+// ZIPs served by the initial Redding-area launch. Kept intentionally explicit:
+// a board post carries ZIP + state, while worker alerts are matched by city.
+export const REDDING_AREA_ZIP_CITIES: Record<string, string> = {
+  '96001': 'Redding',
+  '96002': 'Redding',
+  '96003': 'Redding',
+  '96049': 'Redding',
+  '96007': 'Anderson',
+  '96019': 'Shasta Lake',
+  '96022': 'Cottonwood',
+  '96073': 'Palo Cedro',
+  '96087': 'Shasta',
+  '96088': 'Shingletown',
 };
 
 // Hard cap on how many worker leads we email for a single job request. Keeps a
@@ -129,6 +145,63 @@ export function cityMatches(
   const worker = normalizeCity(workerLocation);
   if (!job || !worker) return false;
   return job === worker;
+}
+
+/**
+ * Read the location encoded by the board posting form from the first Location:
+ * line. The display/pay suffix is deliberately excluded before matching.
+ */
+export function parseQuestLocation(description: string | null | undefined): string {
+  if (!description || typeof description !== 'string') return '';
+
+  const match = description.match(/(?:^|\r?\n)Location:\s*([^\r\n]*)/i);
+  if (!match) return '';
+
+  const location = match[1].split(' · ')[0].trim();
+  return location.toLowerCase() === 'online / remote' ? '' : location;
+}
+
+/**
+ * Resolve a board post's ZIP-based location to its local city. City-style
+ * locations remain untouched so normalizeCity retains its existing semantics.
+ */
+export function resolveQuestCity(description: string | null | undefined): string {
+  const location = parseQuestLocation(description);
+  if (!location) return '';
+
+  const firstSegment = location.split(',')[0].trim();
+  if (/^\d{5}$/.test(firstSegment) && REDDING_AREA_ZIP_CITIES[firstSegment]) {
+    return REDDING_AREA_ZIP_CITIES[firstSegment];
+  }
+  return location;
+}
+
+/**
+ * Recover the local-services category slug preserved in a board quest's tags.
+ * The legacy QuestCategory enum is not used because local-service categories
+ * currently all persist there as OTHER.
+ */
+export function questCategorySlug(tags: string[] | null | undefined): string | null {
+  const usableTags = (tags ?? [])
+    .filter((tag): tag is string => typeof tag === 'string')
+    .map((tag) => tag.trim().toLowerCase())
+    .filter((tag) =>
+      Boolean(tag) &&
+      !/^\d{5}$/.test(tag) &&
+      !/^[a-z]{2}$/.test(tag) &&
+      tag !== 'hourly' &&
+      tag !== 'flat' &&
+      !tag.includes(':'),
+    );
+
+  const known = usableTags.find((tag) =>
+    Object.prototype.hasOwnProperty.call(KNOWN_CATEGORY_LABELS, tag),
+  );
+  if (known) return known;
+
+  return usableTags.some((tag) => tag === 'fencing' || tag === 'labor' || tag === 'odd_jobs')
+    ? 'other'
+    : null;
 }
 
 function normalizeSlug(s: string): string {
@@ -255,7 +328,7 @@ export interface NotifyResult {
 }
 
 /**
- * Find worker-alert leads matching a freshly-created job-request lead and email
+ * Find worker-alert leads matching a freshly-created job lead or board quest and email
  * each match once. Best-effort: never throws, so the caller can fire-and-forget
  * without risking the job-request submission.
  *
@@ -272,6 +345,7 @@ export async function notifyMatchingWorkers(
     category?: string | null;
     budget?: string | null;
     timeline?: string | null;
+    kind?: 'lead' | 'quest';
   },
   deps: NotifyDeps = {},
 ): Promise<NotifyResult> {
@@ -281,6 +355,7 @@ export async function notifyMatchingWorkers(
   const sendSms = deps.sendSms ?? defaultSendSms;
   const smsEnabled = deps.smsEnabled ?? defaultSmsEnabled;
   const smsTemplates = deps.smsTemplates ?? defaultSmsTemplates;
+  const kind = jobLead.kind ?? 'lead';
 
   const result: NotifyResult = { matched: 0, notified: 0, texted: 0 };
   const smsActive = smsEnabled();
@@ -349,7 +424,7 @@ export async function notifyMatchingWorkers(
       try {
         await prisma.leadMatchNotification.create({
           data: {
-            jobLeadId: jobLead.id,
+            ...(kind === 'quest' ? { questId: jobLead.id } : { jobLeadId: jobLead.id }),
             workerLeadId: worker.id,
             email: worker.email || '',
             status: 'SENT',
@@ -391,15 +466,41 @@ export async function notifyMatchingWorkers(
       result.notified += 1;
     }
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(
-        `🔔 [worker-match] job ${jobLead.id}: ${result.matched} matched, ${result.notified} notified, ${result.texted} texted (cap ${effectiveCap}, sms ${smsActive ? 'on' : 'off'})`,
-      );
-    }
+    console.log(
+      `🔔 [worker-match] ${kind} ${jobLead.id}: ${result.matched} matched, ${result.notified} notified, ${result.texted} texted (cap ${effectiveCap}, sms ${smsActive ? 'on' : 'off'})`,
+    );
   } catch (error) {
     // Best-effort only — never let alert matching affect the submission.
     console.error('notifyMatchingWorkers error:', error);
+    reportError(error, { scope: 'notifyMatchingWorkers', jobId: jobLead.id, kind });
   }
 
   return result;
+}
+
+/**
+ * Adapt a freshly-created board quest to the existing worker-alert matcher.
+ * Keeping the delivery path shared preserves lead matching semantics.
+ */
+export async function notifyMatchingWorkersForQuest(
+  quest: {
+    id: string;
+    title?: string | null;
+    description?: string | null;
+    tags?: string[] | null;
+    reward?: unknown;
+  },
+  deps: NotifyDeps = {},
+): Promise<NotifyResult> {
+  return notifyMatchingWorkers(
+    {
+      id: quest.id,
+      title: quest.title,
+      location: resolveQuestCity(quest.description),
+      category: questCategorySlug(quest.tags),
+      budget: quest.reward == null ? null : String(quest.reward),
+      kind: 'quest',
+    },
+    deps,
+  );
 }

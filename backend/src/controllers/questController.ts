@@ -10,6 +10,7 @@ import {
   RecurrenceValidationError,
 } from "../services/recurrenceService";
 import { findQuestIdsReviewedBy } from "../services/reviewStatusService";
+import { notifyMatchingWorkersForQuest } from "../services/workerMatchService";
 
 const VALID_CATEGORIES = new Set(Object.values(QuestCategory));
 const VALID_STATUSES = new Set(Object.values(QuestStatus));
@@ -229,6 +230,9 @@ export async function createQuest(req: Request, res: Response) {
         nextOccurrenceAt,
       },
     });
+    if (quest.status === QuestStatus.OPEN) {
+      void notifyMatchingWorkersForQuest(quest);
+    }
     res.status(201).json(quest);
   } catch (error) {
     console.error("createQuest error:", error);
