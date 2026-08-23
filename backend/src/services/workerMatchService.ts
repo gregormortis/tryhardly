@@ -44,6 +44,8 @@ export const KNOWN_CATEGORY_LABELS: Record<string, string> = {
   painting: 'Painting',
   pressure: 'Pressure Washing',
   errands: 'Errands',
+  fencing: 'Fencing',
+  labor: 'General Labor',
   other: 'Odd Jobs',
 };
 
@@ -61,6 +63,15 @@ export const REDDING_AREA_ZIP_CITIES: Record<string, string> = {
   '96087': 'Shasta',
   '96088': 'Shingletown',
 };
+
+// Board-post tags include these additional local-service categories even though
+// the legacy QuestCategory enum persists them as OTHER.
+export const MATCHABLE_CATEGORY_SLUGS: ReadonlySet<string> = new Set([
+  ...Object.keys(KNOWN_CATEGORY_LABELS),
+  'fencing',
+  'labor',
+  'odd_jobs',
+]);
 
 // Hard cap on how many worker leads we email for a single job request. Keeps a
 // single submission from blasting the entire list. Overridable via env for ops.
@@ -133,7 +144,30 @@ export function normalizeCity(raw: string | null | undefined): string {
 }
 
 /**
- * Two locations match when both yield the same non-empty normalized city.
+ * Resolve free-form location text to a normalized city. Bare ZIPs are supported
+ * only when they belong to the explicitly curated Redding launch area.
+ */
+export function resolveCity(raw: string | null | undefined): string {
+  const city = normalizeCity(raw);
+  if (city) return city;
+
+  const zip = typeof raw === 'string' ? raw.match(/\b(\d{5})\b/)?.[1] : undefined;
+  if (zip && REDDING_AREA_ZIP_CITIES[zip]) {
+    return normalizeCity(REDDING_AREA_ZIP_CITIES[zip]);
+  }
+  return '';
+}
+
+// This is deliberately a bounded Redding-launch-zone rule, not general fuzzy
+// geography: workers opted into local alerts across these nearby launch cities.
+export const REDDING_LAUNCH_AREA_CITIES: ReadonlySet<string> = new Set(
+  Object.values(REDDING_AREA_ZIP_CITIES).map(normalizeCity),
+);
+export const AREA_WIDE_LOCATION_TOKENS: ReadonlySet<string> = new Set(['shasta county']);
+
+/**
+ * Two locations match when both resolve to the same non-empty city, or when
+ * they fall within the deliberate, bounded Redding launch-area rule above.
  * A blank or broad (state-only / unparseable) worker location never matches —
  * we'd rather miss than email someone a job two states away.
  */
@@ -141,10 +175,18 @@ export function cityMatches(
   jobLocation: string | null | undefined,
   workerLocation: string | null | undefined,
 ): boolean {
-  const job = normalizeCity(jobLocation);
-  const worker = normalizeCity(workerLocation);
+  const job = resolveCity(jobLocation);
+  const worker = resolveCity(workerLocation);
   if (!job || !worker) return false;
-  return job === worker;
+  if (job === worker) return true;
+
+  const jobInLaunchArea = REDDING_LAUNCH_AREA_CITIES.has(job);
+  const workerInLaunchArea = REDDING_LAUNCH_AREA_CITIES.has(worker);
+  return (
+    (AREA_WIDE_LOCATION_TOKENS.has(job) && workerInLaunchArea) ||
+    (AREA_WIDE_LOCATION_TOKENS.has(worker) && jobInLaunchArea) ||
+    (jobInLaunchArea && workerInLaunchArea)
+  );
 }
 
 /**
@@ -194,14 +236,7 @@ export function questCategorySlug(tags: string[] | null | undefined): string | n
       !tag.includes(':'),
     );
 
-  const known = usableTags.find((tag) =>
-    Object.prototype.hasOwnProperty.call(KNOWN_CATEGORY_LABELS, tag),
-  );
-  if (known) return known;
-
-  return usableTags.some((tag) => tag === 'fencing' || tag === 'labor' || tag === 'odd_jobs')
-    ? 'other'
-    : null;
+  return usableTags.find((tag) => MATCHABLE_CATEGORY_SLUGS.has(tag)) ?? null;
 }
 
 function normalizeSlug(s: string): string {
