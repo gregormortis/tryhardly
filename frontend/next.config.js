@@ -22,6 +22,58 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // --- Lead-gen alias domains -> the job board ---
+      // workinredding.com and reddingwork.com exist as memorable, self-
+      // explaining names for offline use: flyer QR codes, Craigslist gig
+      // posts, and the TikTok/Instagram bio, where the link is typed or
+      // scanned rather than clicked. "workinredding.com" tells a Redding
+      // reader what it is; "tryhardly.com" does not.
+      //
+      // They are aliases, never separate sites. Google's spam policy names
+      // "multiple domain names or pages targeted at specific regions or
+      // cities that funnel users to one page" as doorway abuse, so these
+      // domains must never serve their own content, their own landing pages,
+      // or any copy duplicated from tryhardly.com. A redirect with nothing
+      // indexable behind it cannot rank, which is exactly the point.
+      //
+      // These are host-conditional so they only fire for the alias domains
+      // and never touch tryhardly.com traffic. They land on /jobs rather
+      // than the homepage because the audience arriving from a flyer or a
+      // gig post is looking for work, not for a company explainer.
+      //
+      // REQUIRES: the alias domains must be attached to the Vercel project
+      // as normal domains that serve this app. If a domain is configured in
+      // Vercel as a platform-level "Redirect to another domain", Vercel
+      // answers at the edge and the request never reaches Next.js, so these
+      // entries are dead code for that domain. Platform-level redirects can
+      // only target a domain, not a path, which is why the path lives here.
+      //
+      // Deleting this block reverts to whatever Vercel is configured to do.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'workinredding.com' }],
+        destination: 'https://www.tryhardly.com/jobs',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.workinredding.com' }],
+        destination: 'https://www.tryhardly.com/jobs',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'reddingwork.com' }],
+        destination: 'https://www.tryhardly.com/jobs',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.reddingwork.com' }],
+        destination: 'https://www.tryhardly.com/jobs',
+        permanent: true,
+      },
+
       // --- Temporary gate: pages whose only content is seed/demo data ---
       // The leaderboard, guild directory, and progression ladder render
       // placeholder and stale test records rather than real activity. They
