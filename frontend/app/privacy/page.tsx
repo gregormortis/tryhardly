@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const LAST_UPDATED = 'August 4, 2026';
+const LAST_UPDATED = 'September 19, 2026';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -45,9 +45,14 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-bold text-accent-text mb-4">2. SMS / Text Messaging</h2>
             <p className="mb-2">
-              By providing your mobile number and opting in, you consent to receive SMS messages
-              from TryHardly, including one-time verification passcodes, account and gig status
-              notifications, appointment and job reminders, and service updates.
+              Text alerts are not live yet. Our{' '}
+              <Link href="/work-alerts" className="text-accent-text hover:text-accent-text-hover">work-alert form</Link>{' '}
+              lets you optionally opt in for recurring automated texts about local jobs matching
+              your preferences. A phone number alone is not consent. We record the phone number,
+              consent timestamp, disclosure text and version, and form URL with your opt-in.
+              SMS consent is separate from email alerts and is not a condition of purchase or
+              getting work. This opt-in does not cover verification codes, account notifications,
+              reminders, or promotional service updates. For help, contact support@tryhardly.com.
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>Message frequency varies.</li>

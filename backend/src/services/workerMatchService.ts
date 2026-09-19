@@ -31,6 +31,7 @@ import {
 } from './smsService';
 import { LeadType } from '@prisma/client';
 import { reportError } from '../lib/errorReporting';
+import { WORK_ALERT_SMS_VERSION, WORK_ALERT_SMS_SOURCE, normalizeWorkAlertPhone } from '../utils/workAlertConsent';
 
 // Curated category slugs the product knows about. Kept in sync with the
 // frontend's lib/jobCategories.ts. "other" is the catch-all bucket. The labels
@@ -332,19 +333,27 @@ export interface SmsEligibleWorker {
   smsAlertsOptIn?: boolean | null;
   phone?: string | null;
   smsConsentAt?: Date | string | null;
+  payload?: unknown;
 }
 
 /**
- * A worker is eligible for an SMS alert ONLY with all three pieces of explicit,
- * affirmative consent present: smsAlertsOptIn === true, a non-blank phone, and a
- * recorded smsConsentAt timestamp. Missing any one disqualifies SMS (email is
+ * A worker is eligible only with explicit opt-in, a normalized phone, a consent
+ * timestamp, and current versioned evidence bound to that phone. Old leads are
+ * not automatically enrolled. Missing any piece disqualifies SMS (email is
  * governed separately). Pure and side-effect free for easy unit testing.
  */
 export function smsEligible(worker: SmsEligibleWorker): boolean {
   if (worker.smsAlertsOptIn !== true) return false;
-  if (!worker.phone || !String(worker.phone).trim()) return false;
+  if (!worker.phone || normalizeWorkAlertPhone(worker.phone) !== worker.phone) return false;
   if (!worker.smsConsentAt) return false;
-  return true;
+  const payload = worker.payload as { smsConsent?: { version?: string; sourceUrl?: string; phone?: string; capturedAt?: string } } | null;
+  const consent = payload?.smsConsent;
+  const recordedAt = new Date(worker.smsConsentAt);
+  if (!Number.isFinite(recordedAt.getTime())) return false;
+  return consent?.version === WORK_ALERT_SMS_VERSION
+    && consent.sourceUrl === WORK_ALERT_SMS_SOURCE
+    && consent.phone === worker.phone
+    && consent.capturedAt === recordedAt.toISOString();
 }
 
 interface NotifyDeps {
@@ -422,6 +431,7 @@ export async function notifyMatchingWorkers(
         smsAlertsOptIn: true,
         phone: true,
         smsConsentAt: true,
+        payload: true,
       },
     });
 
