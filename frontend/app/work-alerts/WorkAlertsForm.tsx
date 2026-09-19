@@ -6,6 +6,11 @@ import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
 import { readLeadSource, type LeadSource } from '@/lib/leadSource';
+import {
+  WORK_ALERT_SMS_VERSION,
+  WORK_ALERT_SMS_DISCLOSURE,
+  normalizeWorkAlertPhone,
+} from '@/lib/workAlertConsent';
 
 interface FormState {
   name: string;
@@ -79,6 +84,9 @@ export default function WorkAlertsForm() {
     setError('');
     if (!data.name.trim()) return setError('Please add your name.');
     if (!validEmail) return setError('Please add a valid email so we can send you alerts.');
+    if (data.smsAlertsOptIn && !normalizeWorkAlertPhone(data.phone)) {
+      return setError('For text alerts, enter a valid US phone number or uncheck text alerts.');
+    }
 
     setSubmitting(true);
     try {
@@ -92,6 +100,7 @@ export default function WorkAlertsForm() {
         hasTools: data.hasTools,
         emailAlertsOptIn: data.emailAlertsOptIn,
         smsAlertsOptIn: data.smsAlertsOptIn,
+        smsConsentVersion: data.smsAlertsOptIn ? WORK_ALERT_SMS_VERSION : undefined,
         budgetMin: data.budgetMin.trim() || undefined,
         budgetMax: data.budgetMax.trim() || undefined,
         ...leadSource.current,
@@ -111,8 +120,11 @@ export default function WorkAlertsForm() {
           <CheckCircle size={48} className="text-success mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-strong mb-3">You&apos;re on the list</h1>
           <p className="text-muted leading-relaxed mb-6">
-            Thanks{data.name ? `, ${data.name.split(' ')[0]}` : ''}! We&apos;ll email{' '}
-            <span className="text-body">{data.email}</span> when local jobs that match come up.
+            Thanks{data.name ? `, ${data.name.split(' ')[0]}` : ''}!{' '}
+            {data.emailAlertsOptIn
+              ? `We'll email ${data.email} when matching local jobs come up.`
+              : 'Your preferences are saved. You have not signed up for email job alerts.'}
+            {data.smsAlertsOptIn && ' Your text-alert opt-in is saved. Text alerts are not live yet.'}
           </p>
           <p className="text-sm text-subtle mb-8">
             Want to start now? Live jobs are on the job board — applying takes an account.
@@ -181,7 +193,9 @@ export default function WorkAlertsForm() {
                 value={data.phone}
                 onChange={(e) => update('phone', e.target.value.slice(0, 40))}
                 className={inputClass}
-                placeholder="For faster job offers"
+                placeholder="US number for optional text alerts"
+                aria-label="Phone for optional text alerts"
+                required={data.smsAlertsOptIn}
               />
             </div>
             <div>
@@ -290,27 +304,23 @@ export default function WorkAlertsForm() {
               <input
                 type="checkbox"
                 checked={data.smsAlertsOptIn}
+                aria-describedby="sms-consent-disclosure"
                 onChange={(e) => update('smsAlertsOptIn', e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-line-strong bg-raised text-accent-text focus:ring-accent"
               />
               <span>
                 Text me job alerts
                 <span className="block text-xs text-subtle">
-                  Add your phone above and we&apos;ll include you when text alerts go live. Email alerts start right away.
+                  Optional. Add your phone above to opt in for when text alerts go live.
                 </span>
               </span>
             </label>
 
-            {data.smsAlertsOptIn && (
-              <p className="text-[12px] leading-relaxed text-subtle border-t border-line pt-3">
-                By opting in you agree to receive recurring automated job-alert texts from TryHardly at
-                the number you provide. Consent is not a condition of getting work. Message &amp; data
-                rates may apply. Reply <span className="text-muted font-medium">STOP</span> to cancel
-                or <span className="text-muted font-medium">HELP</span> for help. See our{' '}
-                <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">Terms</Link> and{' '}
-                <Link href="/privacy" className="text-accent-text hover:text-accent-text-hover">Privacy Policy</Link>.
-              </p>
-            )}
+            <p id="sms-consent-disclosure" className="text-sm leading-relaxed text-muted border-t border-line pt-3">
+              {WORK_ALERT_SMS_DISCLOSURE} Read our{' '}
+              <Link href="/terms" className="text-accent-text hover:text-accent-text-hover">Terms</Link> and{' '}
+              <Link href="/privacy" className="text-accent-text hover:text-accent-text-hover">Privacy Policy</Link>.
+            </p>
           </fieldset>
 
           {error && (

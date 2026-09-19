@@ -6,6 +6,12 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { sendEmail, emailTemplates } from '../services/mailerService';
 import { notifyMatchingWorkers } from '../services/workerMatchService';
 import {
+  WORK_ALERT_SMS_VERSION,
+  WORK_ALERT_SMS_SOURCE,
+  WORK_ALERT_SMS_DISCLOSURE,
+  normalizeWorkAlertPhone,
+} from '../utils/workAlertConsent';
+import {
   normalizeRecurrence,
   computeNextOccurrence,
   RecurrenceValidationError,
@@ -281,12 +287,24 @@ export const createWorkerAlert = async (req: Request, res: Response): Promise<vo
 
     // Delivery preferences. Email defaults ON (preserves the behavior every
     // existing worker-alert lead signed up for) unless the client explicitly
-    // sends emailAlertsOptIn=false. SMS is opt-in only and never sent — no SMS
-    // provider is configured — so we just record the consent + a timestamp.
+    // sends emailAlertsOptIn=false. This endpoint only records SMS consent;
+    // delivery has a separate default-off gate in smsService.
     const emailAlertsOptIn = req.body?.emailAlertsOptIn === undefined
       ? true
       : bool(req.body.emailAlertsOptIn);
-    const smsAlertsOptIn = bool(req.body?.smsAlertsOptIn);
+    // A string or truthy value must never manufacture SMS consent.
+    const smsAlertsOptIn = req.body?.smsAlertsOptIn === true;
+    const rawPhone = str(req.body?.phone, 40) ?? null;
+    const smsPhone = normalizeWorkAlertPhone(rawPhone);
+    if (smsAlertsOptIn && !smsPhone) {
+      res.status(400).json({ error: 'For text alerts, enter a valid US phone number or uncheck text alerts.' });
+      return;
+    }
+    if (smsAlertsOptIn && req.body?.smsConsentVersion !== WORK_ALERT_SMS_VERSION) {
+      res.status(400).json({ error: 'Please reload the work-alert form and review the current text-alert consent.' });
+      return;
+    }
+    const smsConsentAt = smsAlertsOptIn ? new Date() : null;
 
     // Desired pay range (whole dollars). Normalize so min <= max when both are
     // present; either may be omitted for "no preference".
@@ -301,16 +319,25 @@ export const createWorkerAlert = async (req: Request, res: Response): Promise<vo
         type: LeadType.WORKER_ALERT,
         name,
         email: email.toLowerCase(),
-        phone: str(req.body?.phone, 40) ?? null,
+        phone: smsAlertsOptIn ? smsPhone : rawPhone,
         location: str(req.body?.location, 200) ?? null,
         skills: strArray(req.body?.skills),
         availability: str(req.body?.availability, 200) ?? null,
         hasTools: bool(req.body?.hasTools),
         emailAlertsOptIn,
         smsAlertsOptIn,
-        // Record when SMS consent was captured so sending can be enabled later
-        // (behind a real provider) without re-collecting consent.
-        smsConsentAt: smsAlertsOptIn ? new Date() : null,
+        smsConsentAt,
+        // Server-authored evidence in the existing JSON field: no migration.
+        // Never accept arbitrary client payload or backfill old leads as consented.
+        payload: smsConsentAt ? {
+          smsConsent: {
+            version: WORK_ALERT_SMS_VERSION,
+            disclosure: WORK_ALERT_SMS_DISCLOSURE,
+            sourceUrl: WORK_ALERT_SMS_SOURCE,
+            phone: smsPhone,
+            capturedAt: smsConsentAt.toISOString(),
+          },
+        } : undefined,
         budgetMin: budgetMin ?? null,
         budgetMax: budgetMax ?? null,
         source: source ?? null,

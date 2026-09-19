@@ -7,12 +7,16 @@
 import { readTwilioConfig, selectSmsProvider, smsTemplates } from '../smsService';
 
 const FULL = {
+  WORKER_SMS_ENABLED: 'true',
   TWILIO_ACCOUNT_SID: 'ACxxxxxxxx',
   TWILIO_AUTH_TOKEN: 'secrettoken',
   TWILIO_FROM_NUMBER: '+15555550123',
 } as NodeJS.ProcessEnv;
 
 describe('readTwilioConfig', () => {
+  it.each([undefined, '', 'false', 'TRUE', '1', ' true '])('fails closed for activation value %s', (value) => {
+    expect(readTwilioConfig({ ...FULL, WORKER_SMS_ENABLED: value })).toBeNull();
+  });
   it('returns config only when all three vars are present', () => {
     expect(readTwilioConfig(FULL)).toEqual({
       accountSid: 'ACxxxxxxxx',
@@ -31,6 +35,17 @@ describe('readTwilioConfig', () => {
 });
 
 describe('selectSmsProvider', () => {
+  it('never calls the network with credentials present but activation disabled', async () => {
+    const network = jest.spyOn(global, 'fetch');
+    try {
+      const provider = selectSmsProvider({ ...FULL, WORKER_SMS_ENABLED: 'false' });
+      expect(provider.enabled).toBe(false);
+      await provider.send({ to: '+15305550123', body: 'must not send' });
+      expect(network).not.toHaveBeenCalled();
+    } finally {
+      network.mockRestore();
+    }
+  });
   it('is disabled (no-op) when Twilio is not configured', async () => {
     const provider = selectSmsProvider({} as NodeJS.ProcessEnv);
     expect(provider.enabled).toBe(false);
@@ -51,6 +66,8 @@ describe('smsTemplates.newLocalJobForWorker', () => {
     expect(msg.body).toMatch(/TryHardly/);
     expect(msg.body).toMatch(/Yard cleanup/);
     expect(msg.body).toMatch(/Reply STOP to opt out\./);
+    expect(msg.body).toContain('/jobs');
+    expect(msg.body).not.toContain('/questboard');
   });
 
   it('includes city and budget when available', () => {

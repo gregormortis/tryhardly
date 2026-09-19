@@ -6,9 +6,9 @@
  * disabled and every send is a safe no-op, so email alerts keep working and
  * nothing is ever texted by accident.
  *
- * Provider selection is implicit and env-driven (there is no EMAIL_PROVIDER-style
- * switch): if all of TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER
- * are set, the Twilio provider is active; otherwise SMS is disabled.
+ * Provider selection is explicit and fail-closed: WORKER_SMS_ENABLED must equal
+ * "true", and all three Twilio credentials below must be configured. Credentials
+ * alone do not activate sending. Enable only after separate launch approval.
  *
  *   TWILIO_ACCOUNT_SID   — Twilio account SID (starts with "AC...").
  *   TWILIO_AUTH_TOKEN    — Twilio auth token (secret; never logged).
@@ -42,10 +42,12 @@ export interface TwilioConfig {
 
 /**
  * Read Twilio config from the environment. Returns null (SMS disabled) unless
- * ALL three required vars are present and non-empty. This is the single gate
+ * WORKER_SMS_ENABLED is exactly "true" AND all three required vars are present.
+ * This is the single gate
  * that decides whether SMS is active in a given environment.
  */
 export function readTwilioConfig(env: NodeJS.ProcessEnv = process.env): TwilioConfig | null {
+  if (env.WORKER_SMS_ENABLED !== 'true') return null;
   const accountSid = (env.TWILIO_ACCOUNT_SID || '').trim();
   const authToken = (env.TWILIO_AUTH_TOKEN || '').trim();
   const fromNumber = (env.TWILIO_FROM_NUMBER || '').trim();
@@ -157,7 +159,7 @@ export const smsTemplates = {
     if (job.location) parts.push(`in ${job.location}`);
     if (job.budget) parts.push(`(${job.budget})`);
     const lead = parts.join(' ');
-    const body = `${lead}. See work: ${APP_URL()}/questboard\nReply STOP to opt out.`;
+    const body = `${lead}. See work: ${APP_URL()}/jobs\nReply STOP to opt out.`;
     return { to, body };
   },
 };

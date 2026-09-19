@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-const LAST_UPDATED = 'August 4, 2026';
+const LAST_UPDATED = 'September 19, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
 
 export const metadata: Metadata = {
@@ -60,11 +60,15 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold text-accent-text mb-4">4. SMS / Text Messaging</h2>
             <p className="mb-2">
-              By providing your mobile number and opting in, you consent to receive SMS messages
-              from TryHardly, including one-time verification passcodes, account and gig status
-              notifications, appointment and job reminders, and service updates. Message frequency
-              varies. Message and data rates may apply. Reply STOP to unsubscribe at any time, or
-              HELP for help. See our{' '}
+              Text alerts are not live yet. You can optionally opt in on our{' '}
+              <Link href="/work-alerts" className="text-accent-text hover:text-accent-text-hover">work-alert form</Link>{' '}
+              for recurring automated texts from TryHardly about local jobs matching your preferences.
+              Providing a phone number alone does not opt you in. SMS consent is separate from email
+              alerts and is not a condition of purchase or getting work. Message frequency varies.
+              Message and data rates may apply. Once text alerts are active, reply STOP to unsubscribe
+              or HELP for help. You can also contact support@tryhardly.com. This opt-in does not cover
+              verification codes, account notifications, reminders, or promotional service updates.
+              See our{' '}
               <Link href="/privacy" className="text-accent-text hover:text-accent-text-hover">Privacy Policy</Link>{' '}
               for details on how we handle mobile opt-in information.
             </p>

@@ -15,6 +15,16 @@ import {
   notifyMatchingWorkers,
   DEFAULT_MAX_WORKER_EMAILS,
 } from '../workerMatchService';
+import { WORK_ALERT_SMS_VERSION, WORK_ALERT_SMS_SOURCE } from '../../utils/workAlertConsent';
+
+function consentEvidence(phone = '+15555550123', at = new Date('2026-01-01T00:00:00Z')) {
+  return { smsConsent: {
+    version: WORK_ALERT_SMS_VERSION,
+    sourceUrl: WORK_ALERT_SMS_SOURCE,
+    phone,
+    capturedAt: at.toISOString(),
+  } };
+}
 
 describe('normalizeCity', () => {
   it('returns empty for blank/nullish input', () => {
@@ -145,7 +155,7 @@ describe('smsEligible', () => {
   const consent = new Date('2026-01-01T00:00:00Z');
 
   it('requires opt-in, a non-blank phone, AND a consent timestamp', () => {
-    expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123', smsConsentAt: consent })).toBe(true);
+    expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123', smsConsentAt: consent, payload: consentEvidence() })).toBe(true);
   });
 
   it('is false without explicit opt-in', () => {
@@ -161,6 +171,18 @@ describe('smsEligible', () => {
   it('is false without a recorded consent timestamp', () => {
     expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123', smsConsentAt: null })).toBe(false);
     expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123' })).toBe(false);
+  });
+
+  it.each([
+    undefined,
+    null,
+    {},
+    { smsConsent: { ...consentEvidence().smsConsent, version: 'legacy' } },
+    { smsConsent: { ...consentEvidence().smsConsent, phone: '+15305550123' } },
+    { smsConsent: { ...consentEvidence().smsConsent, sourceUrl: '/signup' } },
+    { smsConsent: { ...consentEvidence().smsConsent, capturedAt: 'invalid' } },
+  ])('rejects legacy or mismatched consent evidence', (payload) => {
+    expect(smsEligible({ smsAlertsOptIn: true, phone: '+15555550123', smsConsentAt: consent, payload })).toBe(false);
   });
 });
 
@@ -318,6 +340,7 @@ describe('notifyMatchingWorkers', () => {
           smsAlertsOptIn: true,
           phone: '+15555550123',
           smsConsentAt: CONSENT,
+          payload: consentEvidence(),
         },
       ],
       { smsEnabled: false },
@@ -342,6 +365,7 @@ describe('notifyMatchingWorkers', () => {
           smsAlertsOptIn: true,
           phone: '+15555550123',
           smsConsentAt: CONSENT,
+          payload: consentEvidence(),
         },
       ],
       { smsEnabled: true },
@@ -353,12 +377,12 @@ describe('notifyMatchingWorkers', () => {
   });
 
   it('does NOT text a matching worker missing any consent piece', async () => {
-    const base = { location: 'redding', skills: ['yard'], email: 'x@x.com' };
+    const base = { location: 'redding', skills: ['yard'], email: 'x@x.com', payload: consentEvidence('+15555550001', CONSENT) };
     const { deps, texted } = makeDeps(
       [
         { id: 'noOptIn', name: 'A', ...base, smsAlertsOptIn: false, phone: '+15555550001', smsConsentAt: CONSENT },
         { id: 'noPhone', name: 'B', ...base, smsAlertsOptIn: true, phone: null, smsConsentAt: CONSENT },
-        { id: 'noConsent', name: 'C', ...base, smsAlertsOptIn: true, phone: '+15555550003', smsConsentAt: null },
+        { id: 'noConsent', name: 'C', ...base, smsAlertsOptIn: true, phone: '+15555550003', smsConsentAt: null, payload: consentEvidence('+15555550003', CONSENT) },
       ],
       { smsEnabled: true },
     );
@@ -382,6 +406,7 @@ describe('notifyMatchingWorkers', () => {
           smsAlertsOptIn: true,
           phone: '+15555550123',
           smsConsentAt: CONSENT,
+          payload: consentEvidence(),
         },
       ],
       { smsEnabled: true },
@@ -391,6 +416,17 @@ describe('notifyMatchingWorkers', () => {
     expect(res.texted).toBe(1);
     expect(sent).toHaveLength(0); // email opt-out -> no email
     expect(texted).toHaveLength(1);
+  });
+
+  it('keeps legacy opt-ins on email only even when the SMS provider is enabled', async () => {
+    const { deps, sent, texted } = makeDeps([{
+      id: 'legacy', name: 'A', email: 'a@x.com', location: 'redding', skills: ['yard'],
+      smsAlertsOptIn: true, phone: '+15555550123', smsConsentAt: CONSENT,
+    }], { smsEnabled: true });
+    const res = await notifyMatchingWorkers(JOB, deps);
+    expect(res.texted).toBe(0);
+    expect(texted).toHaveLength(0);
+    expect(sent).toHaveLength(1);
   });
 
   it('does not re-notify (email or SMS) the same worker for the same job', async () => {
@@ -403,6 +439,7 @@ describe('notifyMatchingWorkers', () => {
       smsAlertsOptIn: true,
       phone: '+15555550123',
       smsConsentAt: CONSENT,
+      payload: consentEvidence(),
     };
     const { deps, sent, texted } = makeDeps([worker], { smsEnabled: true });
     await notifyMatchingWorkers(JOB, deps);

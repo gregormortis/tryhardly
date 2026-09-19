@@ -38,6 +38,7 @@ import {
   resendClaimLink,
 } from '../leadController';
 import { sendEmail, emailTemplates } from '../../services/mailerService';
+import { WORK_ALERT_SMS_VERSION, WORK_ALERT_SMS_DISCLOSURE, WORK_ALERT_SMS_SOURCE } from '../../utils/workAlertConsent';
 
 function mockRes() {
   const res: any = {};
@@ -368,12 +369,56 @@ describe('createWorkerAlert', () => {
     mockPrisma.lead.create.mockResolvedValue({ id: 'w1', status: 'NEW' });
     const res = mockRes();
     await createWorkerAlert(
-      { body: { name: 'Sam', email: 'sam@b.com', smsAlertsOptIn: true, phone: '555' } } as any,
+      { body: { name: 'Sam', email: 'sam@b.com', smsAlertsOptIn: true, phone: '(530) 555-0123', smsConsentVersion: WORK_ALERT_SMS_VERSION } } as any,
       res,
     );
     const arg = mockPrisma.lead.create.mock.calls[0][0];
     expect(arg.data.smsAlertsOptIn).toBe(true);
     expect(arg.data.smsConsentAt).toBeInstanceOf(Date);
+    expect(arg.data.phone).toBe('+15305550123');
+    expect(arg.data.payload.smsConsent).toEqual({
+      version: WORK_ALERT_SMS_VERSION,
+      disclosure: WORK_ALERT_SMS_DISCLOSURE,
+      sourceUrl: WORK_ALERT_SMS_SOURCE,
+      phone: '+15305550123',
+      capturedAt: arg.data.smsConsentAt.toISOString(),
+    });
+  });
+
+  it.each([undefined, '', '555', 'not a phone'])('rejects SMS consent without a usable phone: %s', async (phone) => {
+    const res = mockRes();
+    await createWorkerAlert({ body: {
+      name: 'Sam', email: 'sam@b.com', smsAlertsOptIn: true, phone,
+      smsConsentVersion: WORK_ALERT_SMS_VERSION,
+    } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockPrisma.lead.create).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, 'old-version'])('rejects missing or outdated disclosure version: %s', async (smsConsentVersion) => {
+    const res = mockRes();
+    await createWorkerAlert({ body: {
+      name: 'Sam', email: 'sam@b.com', smsAlertsOptIn: true,
+      phone: '5305550123', smsConsentVersion,
+    } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockPrisma.lead.create).not.toHaveBeenCalled();
+  });
+
+  it.each(['true', 1, false, undefined])('never treats %s as affirmative SMS consent', async (smsAlertsOptIn) => {
+    mockPrisma.lead.create.mockResolvedValue({ id: 'w1', status: 'NEW' });
+    const res = mockRes();
+    await createWorkerAlert({ body: {
+      name: 'Sam', email: 'sam@b.com', phone: '5305550123', smsAlertsOptIn,
+      smsConsentVersion: WORK_ALERT_SMS_VERSION,
+      payload: { smsConsent: { version: WORK_ALERT_SMS_VERSION } },
+    } } as any, res);
+    const { data } = mockPrisma.lead.create.mock.calls[0][0];
+    expect(data.smsAlertsOptIn).toBe(false);
+    expect(data.smsConsentAt).toBeNull();
+    expect(data.payload).toBeUndefined();
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 
   it('honors an explicit email opt-out', async () => {
