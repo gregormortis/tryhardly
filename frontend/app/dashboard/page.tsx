@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useRouter } from 'next/navigation';
@@ -131,7 +132,7 @@ function TestJobChip() {
 
 // A row in a job section: status, next step, and the money/scope facts that let
 // the viewer decide without opening the job.
-function JobRow({ job }: { job: DashboardJob }) {
+function JobRow({ job, onDelete }: { job: DashboardJob; onDelete?: () => void }) {
   const amount = money(job.amount);
   // Once a bid is accepted the reward field holds the amount that bid was won
   // at, so calling it a budget after that point would understate the commitment.
@@ -175,6 +176,21 @@ function JobRow({ job }: { job: DashboardJob }) {
           >
             {job.nextStep.cta} →
           </span>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            aria-label={`Delete ${job.title}`}
+            onClick={(e) => {
+              // The row itself is a link — don't navigate when deleting.
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="rounded px-2 py-1 text-sm text-danger/70 hover:text-danger hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+          >
+            Delete
+          </button>
         )}
       </div>
     </Link>
@@ -349,6 +365,28 @@ export default function DashboardPage() {
 
   const primaryRole = primaryDashboardRole(postedJobs.length, workerJobs.length);
 
+  // Owner-only deletion of a posted job, straight from the dashboard row.
+  // Same backend endpoint the job page uses (owner-only DELETE /quests/:id).
+  const handleDeletePostedJob = useCallback(async (job: DashboardJob) => {
+    const bidWarning =
+      job.applicationCount && job.applicationCount > 0
+        ? ` It has ${job.applicationCount} bid${job.applicationCount === 1 ? '' : 's'} that will be discarded.`
+        : '';
+    if (!confirm(`Delete "${job.title}"? This cannot be undone.${bidWarning}`)) return;
+    try {
+      await api.delete(`/quests/${job.questId}`);
+      setData((prev) =>
+        prev
+          ? { ...prev, postedQuests: prev.postedQuests.filter((q) => q.id !== job.questId) }
+          : prev
+      );
+      toast.success('Job deleted');
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      toast.error(e?.message || 'Failed to delete job');
+    }
+  }, []);
+
   const chips = [
     activeJobCount > 0
       ? { label: `${activeJobCount} active job${activeJobCount === 1 ? '' : 's'}`, tone: 'text-success border-success/30' }
@@ -377,7 +415,7 @@ export default function DashboardPage() {
         <>
           <div className="space-y-2">
             {postedJobs.slice(0, SECTION_LIMIT).map(job => (
-              <JobRow key={job.key} job={job} />
+              <JobRow key={job.key} job={job} onDelete={() => handleDeletePostedJob(job)} />
             ))}
           </div>
           {postedJobs.length > SECTION_LIMIT && (
