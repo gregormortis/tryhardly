@@ -295,7 +295,34 @@ export async function deleteQuest(req: Request, res: Response) {
     const quest = await prisma.quest.findUnique({ where: { id: req.params.id } });
     if (!quest) return res.status(404).json({ error: "Quest not found" });
     if (quest.questGiverId !== user.id) return res.status(403).json({ error: "Forbidden" });
-    await prisma.quest.delete({ where: { id: req.params.id } });
+    // Only unstarted jobs can be erased. Once a bid is accepted the job is
+    // someone's work in progress, and completed jobs carry reviews that are
+    // other people's trust records — neither may be deleted.
+    if (quest.status !== QuestStatus.OPEN && quest.status !== QuestStatus.CANCELLED) {
+      return res.status(400).json({
+        error: "Cannot delete job",
+        message: "This job can't be deleted because it's already in progress or completed.",
+      });
+    }
+    // Child rows (bids, messages, handshakes…) have no ON DELETE CASCADE, so
+    // a raw quest delete fails on the foreign key. Remove them first, then the
+    // quest, in a single transaction. Generated occurrences are unlinked rather
+    // than deleted so they survive as standalone jobs.
+    const questId = req.params.id;
+    await prisma.$transaction([
+      prisma.application.deleteMany({ where: { questId } }),
+      prisma.milestone.deleteMany({ where: { questId } }),
+      prisma.review.deleteMany({ where: { questId } }),
+      prisma.skillRating.deleteMany({ where: { questId } }),
+      prisma.message.deleteMany({ where: { questId } }),
+      prisma.proofOfWork.deleteMany({ where: { questId } }),
+      prisma.handshake.deleteMany({ where: { questId } }),
+      prisma.quest.updateMany({
+        where: { recurrenceParentId: questId },
+        data: { recurrenceParentId: null },
+      }),
+      prisma.quest.delete({ where: { id: questId } }),
+    ]);
     res.json({ message: "Quest deleted" });
   } catch (error) {
     console.error("deleteQuest error:", error);
