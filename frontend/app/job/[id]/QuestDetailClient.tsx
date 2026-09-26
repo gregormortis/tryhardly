@@ -23,6 +23,7 @@ import { resolveTradeStandard } from '@/lib/tradeStandards';
 import { jobCategoryFromTags } from '@/lib/jobCategories';
 import { timingLabel, bidCountLabel } from '@/lib/questCardCopy';
 import { recurrenceSummary } from '@/lib/recurrence';
+import { formatBidDelay } from '@/lib/timeFormat';
 
 // Dollar floor above which a fixed-price job reads as contractor-scale, matching
 // the poster-side LARGE_JOB_REWARD threshold. Used to surface the legal-
@@ -416,6 +417,20 @@ export default function QuestDetailClient({
                   Compare bids and accept one. Accepting a bid assigns that worker and sets the
                   agreed amount — no payment is arranged until you choose.
                 </p>
+                {/* Responsiveness proof — how quickly the first bid arrived
+                    after posting. Real data from this job's bids; only shown
+                    once at least one bid exists. */}
+                {applications.length > 0 && quest.createdAt && (() => {
+                  const firstBidAt = Math.min(
+                    ...applications.map((a) => new Date(a.appliedAt).getTime())
+                  );
+                  const delay = formatBidDelay(firstBidAt - new Date(quest.createdAt).getTime());
+                  return delay ? (
+                    <p className="font-mono text-[12px] text-accent-text mb-4">
+                      First bid arrived within {delay} of posting
+                    </p>
+                  ) : null;
+                })()}
                 <BidComparison
                   applications={applications}
                   questId={quest.id}
@@ -465,15 +480,30 @@ export default function QuestDetailClient({
                   ✓ Bid submitted! The client will review it.
                 </div>
               ) : !user ? (
-                <div className="space-y-3">
-                  <button
-                    onClick={() =>
-                      router.push(`/auth/login?redirect=${encodeURIComponent(`/job/${quest.id}`)}`)
-                    }
-                    className="btn-primary btn-lg btn-block"
-                  >
-                    Sign in to bid
-                  </button>
+                <div className="space-y-4">
+                  {/* Bid-wall softening: signed-out visitors see the real bid
+                      form (read-only preview) instead of a bare sign-in gate,
+                      so they can judge the effort before committing. The
+                      account gate stays at submit — preview never submits. */}
+                  <div className="rounded-lg border border-line bg-raised p-3">
+                    <p className="text-base font-semibold text-body">How bidding works</p>
+                    <ol className="mt-1.5 space-y-1 text-sm text-muted leading-relaxed list-decimal list-inside">
+                      <li>Send a detailed bid — your price, materials, hours, and timeline.</li>
+                      <li>The poster compares the bids they receive and picks the one they want.</li>
+                      <li>
+                        {PLATFORM_PAYMENTS_ENABLED
+                          ? 'If yours is chosen, the poster authorizes payment and your payout is processed after they confirm the completed work.'
+                          : 'If yours is chosen, agree on the final price, payment method, and timing with the customer before work starts.'}
+                      </li>
+                    </ol>
+                  </div>
+                  <BidForm
+                    contractorScale={isContractorScale}
+                    submitting={false}
+                    onSubmit={() => {}}
+                    preview
+                    previewSignInHref={`/auth/login?redirect=${encodeURIComponent(`/job/${quest.id}`)}`}
+                  />
                   <p className="text-base text-muted leading-relaxed">
                     {PLATFORM_PAYMENTS_ENABLED
                       ? 'Creating an account is free. Before you submit a bid you’ll connect a Stripe Connect payout account — that’s how TryHardly sends your money after the poster confirms the completed work. It takes a few minutes and you only do it once.'

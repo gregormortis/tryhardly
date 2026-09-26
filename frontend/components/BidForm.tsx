@@ -35,6 +35,13 @@ interface BidFormProps {
   contractorScale: boolean;
   submitting: boolean;
   onSubmit: (payload: BidPayload) => void;
+  // Preview mode for signed-out visitors: the full form renders read-only so
+  // they can see exactly what bidding involves, and the submit button becomes
+  // a sign-in CTA. The account gate stays at submit — preview never submits.
+  preview?: boolean;
+  // Where the preview sign-in CTA sends the visitor (should carry a redirect
+  // back to the job so they land where they started).
+  previewSignInHref?: string;
   // Account-readiness gating. A worker may draft a bid freely, but Submit Bid is
   // disabled until their required account setup is ready. When
   // `payoutReady` is undefined the status is still loading; when false we block
@@ -83,6 +90,8 @@ export default function BidForm({
   contractorScale,
   submitting,
   onSubmit,
+  preview = false,
+  previewSignInHref = '/auth/login',
   payoutReady = true,
   payoutStatusLoading = false,
   payoutSetupHref = '/dashboard',
@@ -188,12 +197,17 @@ export default function BidForm({
   };
 
   return (
-    <fieldset disabled={disabled} className="min-w-0 space-y-5 border-0 p-0 m-0">
+    <fieldset disabled={disabled || preview} className="min-w-0 space-y-5 border-0 p-0 m-0">
       <div>
         <h3 className="text-base font-semibold text-strong">Submit your bid</h3>
         <p className="text-xs text-subtle mt-1">
           Give the client a clear estimate. {DIRECT_PAYMENT_WORKER}
         </p>
+        {preview && (
+          <p className="text-xs text-accent-text mt-2">
+            Preview — sign in to fill this out and send your bid.
+          </p>
+        )}
         {bidCount !== undefined && (
           <p className="text-xs text-muted mt-2">
             {maxBids !== undefined && maxBids > 0
@@ -524,8 +538,9 @@ export default function BidForm({
       )}
 
       {/* Account-readiness gate: draft freely, but Submit is blocked until the
-          worker's required account setup is ready. */}
-      {!payoutStatusLoading && !payoutReady && (
+          worker's required account setup is ready. Not shown in preview — a
+          signed-out visitor has no account setup to finish. */}
+      {!preview && !payoutStatusLoading && !payoutReady && (
         <div className="rounded-lg border border-accent/40 bg-accent/5 p-3">
           <p className="text-xs text-accent-text leading-relaxed">{PAYOUT_SETUP_COPY}</p>
           <Link
@@ -537,6 +552,19 @@ export default function BidForm({
         </div>
       )}
 
+      {preview ? (
+        <div className="space-y-2">
+          <Link
+            href={previewSignInHref}
+            className="block w-full bg-accent hover:bg-accent text-on-accent font-bold py-3 rounded-lg transition-colors text-center"
+          >
+            Sign in to submit your bid
+          </Link>
+          <p className="text-xs text-subtle text-center">
+            Creating an account is free — you keep 100% of what you earn.
+          </p>
+        </div>
+      ) : (
       <button
         type="button"
         onClick={handleSubmit}
@@ -555,6 +583,7 @@ export default function BidForm({
           ? `Submit bid · ${fmt(totalNum)}`
           : 'Submit bid'}
       </button>
+      )}
     </fieldset>
   );
 }
