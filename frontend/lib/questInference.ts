@@ -16,6 +16,7 @@ export type CategoryId =
   | 'painting'
   | 'pressure'
   | 'fencing'
+  | 'labor'
   | 'other';
 
 const CATEGORY_LABELS: Record<CategoryId, string> = {
@@ -27,6 +28,7 @@ const CATEGORY_LABELS: Record<CategoryId, string> = {
   painting: 'Painting',
   pressure: 'Pressure Washing',
   fencing: 'Fencing',
+  labor: 'Labor Only',
   other: 'Odd Jobs',
 };
 
@@ -59,6 +61,16 @@ const CATEGORY_KEYWORDS: { id: CategoryId; keywords: string[] }[] = [
       'fence', 'fencing', 't-post', 't post', 'tpost', 'woven wire', 'woven',
       'goat fence', 'field fence', 'no climb', 'no-climb', 'hog wire',
       'welded wire', 'chain link', 'chain-link', 'barbed wire', 'barb wire',
+    ],
+  },
+  {
+    // Unskilled extra hands. Declared after the specialist categories so a
+    // job with real trade signals (e.g. "fix the fence, need an extra pair
+    // of hands") still lands on the trade, not here.
+    id: 'labor',
+    keywords: [
+      'general labor', 'day labor', 'laborer', 'extra hands', 'pair of hands',
+      'heavy lifting', 'lift', 'lifting', 'muscle', 'strong back',
     ],
   },
   {

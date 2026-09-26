@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 
 // Keep authenticated, transactional and operational surfaces out of the index.
 // Everything else — the board, category and city landing pages, and the policy

@@ -1,4 +1,4 @@
-import { JOB_CATEGORIES, jobCategoryFromTags } from './jobCategories';
+import { JOB_CATEGORIES, jobCategoryFromTags, resolveCategoryAlias } from './jobCategories';
 
 describe('jobCategoryFromTags', () => {
   it('reads the category slug the posting form wrote into tags', () => {
@@ -19,5 +19,24 @@ describe('JOB_CATEGORIES', () => {
       expect(category.shortLabel.length).toBeGreaterThan(0);
       expect(category.shortLabel.length).toBeLessThanOrEqual(category.label.length);
     }
+  });
+});
+
+describe('resolveCategoryAlias', () => {
+  it('maps friendly URL variants to the canonical slug', () => {
+    expect(resolveCategoryAlias('yard-work')).toBe('yard');
+    expect(resolveCategoryAlias('pressure-washing')).toBe('pressure');
+    expect(resolveCategoryAlias('junk-removal')).toBe('hauling');
+    expect(resolveCategoryAlias('general-labor')).toBe('labor');
+  });
+
+  it('passes canonical slugs through untouched', () => {
+    expect(resolveCategoryAlias('yard')).toBe('yard');
+    expect(resolveCategoryAlias('fencing')).toBe('fencing');
+  });
+
+  it('is case-insensitive and leaves unknown slugs alone', () => {
+    expect(resolveCategoryAlias('Yard-Work')).toBe('yard');
+    expect(resolveCategoryAlias('tree-trimming')).toBe('tree-trimming');
   });
 });

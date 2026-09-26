@@ -10,7 +10,7 @@
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
 import { SERVICE_AREAS, type ServiceArea } from '@/lib/serviceAreas';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 
 function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (

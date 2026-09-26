@@ -5,7 +5,7 @@ import { SERVICE_AREAS, getServiceArea, formatCitySlug } from '@/lib/serviceArea
 import QuestBoard from '@/components/Questboard';
 import { ServiceSchema, BreadcrumbSchema, FaqSchema } from '@/components/StructuredData';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 
 interface PageProps {
   params: { category: string; city: string };
