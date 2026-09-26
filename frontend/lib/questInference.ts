@@ -161,31 +161,58 @@ function inferRecurring(text: string, cadence: RecurrenceCadence | null): boolea
 
 function matchCategory(text: string): CategoryId | null {
   const lower = text.toLowerCase();
+  let best: CategoryId | null = null;
+  let bestScore = 0;
   for (const { id, keywords } of CATEGORY_KEYWORDS) {
+    let score = 0;
     for (const kw of keywords) {
       // Word-boundary-ish match: keyword must be bounded by a non-letter or
       // string edge so "paint" doesn't fire on "painstaking".
-      const re = new RegExp(`(^|[^a-z])${escapeRegExp(kw)}([^a-z]|$)`);
-      if (re.test(lower)) return id;
+      const re = new RegExp(`(^|[^a-z])${escapeRegExp(kw)}([^a-z]|$)`, 'g');
+      const hits = lower.match(re);
+      if (hits) score += hits.length;
+    }
+    // Highest keyword-hit count wins; ties keep the declared order
+    // (most-specific first), so e.g. "pressure wash the deck" still lands on
+    // pressure washing over handyman. A lone "haul away the clippings" in a
+    // yard job no longer outranks three yard signals.
+    if (score > bestScore) {
+      bestScore = score;
+      best = id;
     }
   }
-  return null;
+  return best;
 }
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Leading filler people type before the actual job ("I need", "looking for
+// someone to", ...). Stripped so the suggested title starts at the work.
+const LEADING_FILLER =
+  /^(?:i['’]m|i am|i need|i want|looking for|need|want|seeking|searching for)(?:\s+(?:for\s+)?(?:someone|anyone)(?:\s+to)?)?\s+/i;
+const LEADING_ARTICLE = /^(?:the|a|an)\s+/i;
+
 // Build a short, title-cased title from the first sentence/clause of the input.
+// Never cuts mid-word: capped at 8 words / 60 chars on word boundaries.
 function inferTitle(text: string): string | null {
   const trimmed = text.trim();
   if (!trimmed) return null;
-  // First sentence or first line, whichever comes first.
-  const firstChunk = trimmed.split(/[.\n!?]/)[0].trim();
-  const source = firstChunk || trimmed;
-  const words = source.split(/\s+/).slice(0, 10);
+  // First sentence or clause, whichever comes first.
+  const firstChunk = trimmed.split(/[.\n!?—–:;]/)[0].trim();
+  let source = firstChunk || trimmed;
+  source = source.replace(LEADING_FILLER, '').replace(LEADING_ARTICLE, '').trim();
+  if (!source) return null;
+  const words = source.split(/\s+/).slice(0, 8);
   let title = words.join(' ');
-  if (title.length > 80) title = title.slice(0, 77).trimEnd() + '…';
+  if (title.length > 60) {
+    title = title.slice(0, 60);
+    // Back up to the last word boundary so we never cut mid-word.
+    const lastSpace = title.lastIndexOf(' ');
+    if (lastSpace > 20) title = title.slice(0, lastSpace);
+    title = title.trimEnd();
+  }
   // Capitalize first letter; leave the rest as the poster typed it.
   return title.charAt(0).toUpperCase() + title.slice(1);
 }
