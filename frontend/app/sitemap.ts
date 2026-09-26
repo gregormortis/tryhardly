@@ -3,6 +3,7 @@ import { JOB_CATEGORIES } from '@/lib/jobCategories';
 import { SERVICE_AREAS } from '@/lib/serviceAreas';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 // Static, indexable pages. Deliberately excludes anything gated behind auth,
 // anything transactional, and the pages currently redirected because they only
@@ -38,7 +39,7 @@ const STATIC_PATHS: Array<{
   { path: '/prohibited-services', priority: 0.3, changeFrequency: 'yearly' },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
   const staticEntries = STATIC_PATHS.map((e) => ({
@@ -76,5 +77,37 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.5,
   }));
 
-  return [...staticEntries, ...categoryEntries, ...cityEntries, ...standardEntries];
+  // Individual open job postings (/job/<id>). These are the pages Google Jobs
+  // reads for JobPosting rich results, and they were previously undiscoverable
+  // — nothing linked them from the sitemap. Only OPEN postings are listed so
+  // the sitemap never advertises dead jobs. Fails open: if the API is down,
+  // the static entries above are still served.
+  let jobEntries: MetadataRoute.Sitemap = [];
+  try {
+    const res = await fetch(`${apiUrl}/quests?status=OPEN&limit=100`, {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      const body = (await res.json()) as {
+        data?: Array<{ id: string; updatedAt?: string; createdAt: string }>;
+      };
+      const jobs = Array.isArray(body?.data) ? body.data : [];
+      jobEntries = jobs.map((q) => ({
+        url: `${siteUrl}/job/${q.id}`,
+        lastModified: q.updatedAt ? new Date(q.updatedAt) : new Date(q.createdAt),
+        changeFrequency: 'daily' as const,
+        priority: 0.7,
+      }));
+    }
+  } catch {
+    jobEntries = [];
+  }
+
+  return [
+    ...staticEntries,
+    ...categoryEntries,
+    ...cityEntries,
+    ...standardEntries,
+    ...jobEntries,
+  ];
 }
