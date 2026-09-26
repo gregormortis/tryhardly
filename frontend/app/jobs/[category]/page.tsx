@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { JOB_CATEGORIES, resolveJobCategory } from '@/lib/jobCategories';
+import { permanentRedirect } from 'next/navigation';
+import { JOB_CATEGORIES, resolveJobCategory, resolveCategoryAlias } from '@/lib/jobCategories';
 import { SERVICE_AREAS } from '@/lib/serviceAreas';
 import QuestBoard from '@/components/Questboard';
 import { ServiceSchema, BreadcrumbSchema } from '@/components/StructuredData';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 
 interface PageProps {
   params: { category: string };
@@ -16,7 +17,7 @@ export function generateStaticParams() {
 }
 
 export function generateMetadata({ params }: PageProps): Metadata {
-  const cat = resolveJobCategory(params.category);
+  const cat = resolveJobCategory(resolveCategoryAlias(params.category));
   const title = cat.known ? `${cat.label} — Find Local Help` : `${cat.label} — Local Jobs`;
   const description = `${cat.blurb} Post a job free or find paid ${cat.label.toLowerCase()} near you on TryHardly.`;
   return {
@@ -32,7 +33,13 @@ export function generateMetadata({ params }: PageProps): Metadata {
 }
 
 export default function JobCategoryPage({ params }: PageProps) {
-  const cat = resolveJobCategory(params.category);
+  // Friendly URL variants (e.g. /jobs/yard-work) 308 to the canonical slug
+  // so the category chip filter engages instead of a dead search fallback.
+  const canonicalSlug = resolveCategoryAlias(params.category);
+  if (canonicalSlug !== params.category.toLowerCase()) {
+    permanentRedirect(`/jobs/${canonicalSlug}`);
+  }
+  const cat = resolveJobCategory(canonicalSlug);
   const url = `${siteUrl}/jobs/${cat.slug}`;
 
   return (

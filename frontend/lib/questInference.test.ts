@@ -61,6 +61,22 @@ describe('inferQuestFromText: category', () => {
   it('returns null category when nothing matches', () => {
     expect(inferQuestFromText('do something for me please').category).toBeNull();
   });
+
+  it('suggests labor for extra-hands jobs', () => {
+    const { category, categoryLabel } = inferQuestFromText(
+      'need an extra pair of hands for heavy lifting Saturday'
+    );
+    expect(category).toBe('labor');
+    expect(categoryLabel).toBe('Labor Only');
+  });
+
+  it('a trade job mentioning extra hands stays on the trade', () => {
+    // One signal each for fencing, labor, and handyman: fencing is declared
+    // first and wins the tie, so the specialist category is never drowned
+    // out by a generic "extra hands" mention.
+    const { category } = inferQuestFromText('fix the fence, need an extra pair of hands');
+    expect(category).toBe('fencing');
+  });
 });
 
 describe('inferQuestFromText: existing behaviors intact', () => {

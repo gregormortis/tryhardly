@@ -28,7 +28,7 @@ const syne = Syne({
   variable: '--font-syne',
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 const title = 'TryHardly — Local help in Redding, hired directly';
 const description =
   'Post a local job free or find paid work near you in Redding. You and your worker agree the price here and settle it directly. TryHardly takes no cut.';

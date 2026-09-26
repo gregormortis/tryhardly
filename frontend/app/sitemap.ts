@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { JOB_CATEGORIES } from '@/lib/jobCategories';
 import { SERVICE_AREAS } from '@/lib/serviceAreas';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 // Static, indexable pages. Deliberately excludes anything gated behind auth,

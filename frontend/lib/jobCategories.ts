@@ -90,6 +90,27 @@ export function getJobCategory(slug: string): JobCategory | undefined {
   return JOB_CATEGORIES.find((c) => c.slug === slug.toLowerCase());
 }
 
+// Natural-language URL variants people (and Google) try, mapped to the
+// canonical slug. Before this, /jobs/yard-work fell through to the search
+// fallback and showed "0 jobs" for a live category; now it 308s to /jobs/yard.
+export const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  'yard-work': 'yard',
+  'lawn-care': 'yard',
+  'lawn-mowing': 'yard',
+  'junk-removal': 'hauling',
+  'pressure-washing': 'pressure',
+  'power-washing': 'pressure',
+  'handy-man': 'handyman',
+  'odd-jobs': 'other',
+  'general-labor': 'labor',
+  'manual-labor': 'labor',
+};
+
+export function resolveCategoryAlias(slug: string): string {
+  const lower = slug.toLowerCase();
+  return CATEGORY_SLUG_ALIASES[lower] ?? lower;
+}
+
 const CATEGORY_SLUGS = new Set(JOB_CATEGORIES.map((c) => c.slug));
 
 // The backend Quest.category enum still holds legacy digital-work values, so the

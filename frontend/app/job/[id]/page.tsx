@@ -3,7 +3,7 @@ import QuestDetailClient from './QuestDetailClient';
 import type { Quest } from '@/lib/types';
 import { parseLocationLine } from '@/lib/jobLocation';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 // Server-side fetch of the public quest endpoint (GET /quests/:id needs no

@@ -1,7 +1,7 @@
 // Shared constants for the Redding, CA local launch package.
 // Used by the landing page and the printable flyers so links + copy stay in sync.
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tryhardly.com';
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 
 export const REDDING = {
   city: 'Redding',
