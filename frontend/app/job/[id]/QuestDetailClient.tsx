@@ -50,6 +50,7 @@ export default function QuestDetailClient({
   const [applications, setApplications] = useState<Application[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [generatingOccurrence, setGeneratingOccurrence] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   // Worker-side payout readiness: in platform-payments mode a worker may draft
   // a bid but can only submit once their own payout account is onboarded. In
   // direct mode there is no payout account to onboard — the worker collects
@@ -170,6 +171,27 @@ export default function QuestDetailClient({
       toast.error(err.message || 'Failed to update bid');
     } finally {
       setActioningId(null);
+    }
+  };
+
+  // Owner-only job deletion. The backend already authorizes this (owner-only
+  // DELETE /quests/:id) — the UI simply never exposed it, so posters had no
+  // way to remove a stale job before reposting a new version.
+  const handleDelete = async () => {
+    if (!quest) return;
+    const bidWarning =
+      applications.length > 0
+        ? ` It has ${applications.length} bid${applications.length === 1 ? '' : 's'} that will be discarded.`
+        : '';
+    if (!confirm(`Delete this job? This cannot be undone.${bidWarning}`)) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/quests/${quest.id}`);
+      toast.success('Job deleted');
+      router.push('/jobs');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete job');
+      setDeleting(false);
     }
   };
 
@@ -472,9 +494,18 @@ export default function QuestDetailClient({
               )}
 
               {isOwner ? (
-                <div className="text-center p-3 bg-info/30 border border-info rounded-lg text-info text-sm">
-                  This is your job
-                </div>
+                <>
+                  <div className="text-center p-3 bg-info/30 border border-info rounded-lg text-info text-sm">
+                    This is your job
+                  </div>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="mt-3 w-full text-center text-sm text-danger/80 hover:text-danger underline underline-offset-2 disabled:opacity-50 transition-colors"
+                  >
+                    {deleting ? 'Deleting…' : 'Delete this job'}
+                  </button>
+                </>
               ) : applied ? (
                 <div className="text-center p-3 bg-success/30 border border-success rounded-lg text-success">
                   ✓ Bid submitted! The client will review it.
