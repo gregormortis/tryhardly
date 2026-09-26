@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { JOB_CATEGORIES, resolveJobCategory } from '@/lib/jobCategories';
+import { JOB_CATEGORIES, resolveJobCategory, resolveCategoryAlias } from '@/lib/jobCategories';
 import { SERVICE_AREAS, getServiceArea, formatCitySlug } from '@/lib/serviceAreas';
 import QuestBoard from '@/components/Questboard';
 import { ServiceSchema, BreadcrumbSchema, FaqSchema } from '@/components/StructuredData';
@@ -20,7 +20,9 @@ export function generateStaticParams() {
 }
 
 export function generateMetadata({ params }: PageProps): Metadata {
-  const cat = resolveJobCategory(params.category);
+  // Resolve friendly aliases (e.g. yard-work) so metadata and canonicals
+  // always name the canonical category, matching the parent category page.
+  const cat = resolveJobCategory(resolveCategoryAlias(params.category));
   const city = formatCitySlug(params.city);
   const title = `${cat.label} in ${city}`;
   const description = `Find or post ${cat.label.toLowerCase()} in ${city}. Post a job free, get bids from local workers, and settle payment directly with the worker you choose.`;
@@ -37,7 +39,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
 }
 
 export default function JobCategoryCityPage({ params }: PageProps) {
-  const cat = resolveJobCategory(params.category);
+  const cat = resolveJobCategory(resolveCategoryAlias(params.category));
   const area = getServiceArea(params.city);
   const city = formatCitySlug(params.city);
   const cityName = area?.city ?? city;
@@ -93,6 +95,9 @@ export default function JobCategoryCityPage({ params }: PageProps) {
             {cat.label} in {city}
           </h1>
           <p className="text-muted max-w-2xl leading-relaxed">{cat.blurb}</p>
+          {area && (
+            <p className="text-muted max-w-2xl leading-relaxed mt-3">{area.blurb}</p>
+          )}
 
           <p className="mt-5 font-mono text-[12px] text-subtle max-w-2xl leading-relaxed">
             {area?.primary
