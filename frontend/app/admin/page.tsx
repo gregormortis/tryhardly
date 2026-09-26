@@ -15,6 +15,12 @@ interface Stats {
   openQuests: number;
   completedQuests: number;
   applications: number;
+  // Growth trends (rolling windows). Optional so the page still renders
+  // against a backend that predates them.
+  newUsers24h?: number;
+  newUsers7d?: number;
+  newQuests7d?: number;
+  workers?: number;
 }
 
 interface AdminUser {
@@ -331,6 +337,28 @@ export default function AdminPage() {
                 <div className="text-xs text-subtle uppercase tracking-wider mt-1">{card.label}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Trends */}
+        {(stats.newUsers24h !== undefined || stats.workers !== undefined) && (
+          <div className="mb-10">
+            <h2 className="text-sm font-semibold text-subtle uppercase tracking-wider mb-3">
+              Growth
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'New users · 24h', value: stats.newUsers24h ?? 0 },
+                { label: 'New users · 7d', value: stats.newUsers7d ?? 0 },
+                { label: 'Workers · placed a bid', value: stats.workers ?? 0 },
+                { label: 'New jobs · 7d', value: stats.newQuests7d ?? 0 },
+              ].map((card) => (
+                <div key={card.label} className="bg-surface border border-line rounded-xl p-5 text-center">
+                  <div className="text-3xl font-bold text-accent-text">{card.value}</div>
+                  <div className="text-xs text-subtle uppercase tracking-wider mt-1">{card.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
