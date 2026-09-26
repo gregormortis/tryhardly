@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Zap, Shield, Briefcase, Award, BadgeCheck } from 'lucide-react';
+import { Zap, Shield, Briefcase, Award, BadgeCheck, Mail } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { guildPathLabel } from '@/lib/guildPath';
 import ReportButton from '@/components/ReportButton';
 import ServicePackageCard from '@/components/ServicePackageCard';
+import { countRecent } from '@/lib/timeFormat';
 import type {
   PublicCredential,
   CredentialType,
@@ -31,6 +32,7 @@ interface CompletedJob {
   id: string;
   title: string;
   reward: number;
+  completedAt: string | null;
 }
 
 interface Guild {
@@ -57,6 +59,7 @@ interface Adventurer {
   guild: Guild | null;
   memberSince: string;
   verified: boolean;
+  emailVerified: boolean;
   codeOfCraftPledgedAt: string | null;
   recentJobs: CompletedJob[];
 }
@@ -224,16 +227,18 @@ interface ApiUserProfile {
   favoriteSkills?: string[];
   role?: string;
   verified?: boolean;
+  emailVerified?: boolean;
   codeOfCraftPledgedAt?: string | null;
   createdAt?: string;
   guild?: { id: string; name: string; tag?: string } | null;
-  questsCompleted?: Array<{ id: string; title: string; difficulty?: string; reward?: number }>;
+  questsCompleted?: Array<{ id: string; title: string; difficulty?: string; reward?: number; completedAt?: string | null }>;
 }
 
 // Map the backend profile payload to the component's view model. Only fields the
 // schema actually tracks are carried over: the endpoint returns just the five
-// most recent completed jobs, so no lifetime earnings total is derived from them,
-// and per-job ratings/dates aren't available at all.
+// most recent completed jobs, so no lifetime earnings total is derived from them.
+// Per-job completion dates are available (for the 30-day recency signal); per-job
+// ratings are not.
 function mapProfile(u: ApiUserProfile): Adventurer {
   const level = u.level ?? 1;
   return {
@@ -255,11 +260,13 @@ function mapProfile(u: ApiUserProfile): Adventurer {
     guild: u.guild ? { id: u.guild.id, name: u.guild.name } : null,
     memberSince: u.createdAt || new Date().toISOString(),
     verified: !!u.verified,
+    emailVerified: !!u.emailVerified,
     codeOfCraftPledgedAt: u.codeOfCraftPledgedAt ?? null,
     recentJobs: (u.questsCompleted ?? []).map((q) => ({
       id: q.id,
       title: q.title,
       reward: q.reward ?? 0,
+      completedAt: q.completedAt ?? null,
     })),
   };
 }
@@ -565,6 +572,14 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                         </span>
                       )
                     )}
+                    {/* Email confirmation — a verification rung the worker earned
+                        on day one, shown separately from the generic VERIFIED
+                        badge so posters see the ladder, not just the top. */}
+                    {adventurer.emailVerified && (
+                      <span className="flex items-center gap-1 font-mono text-[11px] font-semibold tracking-widest text-muted bg-surface border border-line rounded-sm px-2 py-0.5 uppercase">
+                        <Mail size={9} /> Email confirmed
+                      </span>
+                    )}
                     {credentials.map((c) => (
                       <span
                         key={`badge-${c.id}`}
@@ -647,6 +662,18 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                     </>
                   )}
                 </div>
+                {/* Recency proof — "2 completed in the last 30 days" is the
+                    micro-proof posters actually decide on. Only rendered when
+                    there is at least one recent completion, so a quiet month
+                    never displays a discouraging zero. */}
+                {(() => {
+                  const recent = countRecent(adventurer.recentJobs, (j) => j.completedAt, 30);
+                  return recent > 0 ? (
+                    <p className="font-mono text-[12px] text-accent-text mt-2">
+                      {recent} completed in the last 30 days
+                    </p>
+                  ) : null;
+                })()}
               </div>
 
               {/* Worker Passport — a real-data proof-of-work / reliability

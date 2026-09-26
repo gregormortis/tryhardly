@@ -10,6 +10,7 @@ import { JOB_CATEGORIES, jobCategoryFromTags } from '@/lib/jobCategories';
 import { timingLabel, bidCountLabel } from '@/lib/questCardCopy';
 import { parseLocationLine } from '@/lib/jobLocation';
 import { DIRECT_PAYMENT_LIMIT, DIRECT_PAYMENT_SHORT } from '@/lib/paymentCopy';
+import { countRecent } from '@/lib/timeFormat';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,10 @@ interface Quest {
   postedBy: string;
   jobsPosted: number;
   isRecurring: boolean;
+  // Raw ISO timestamp from the backend, kept alongside the derived `posted`
+  // minutes-ago value so the board can compute real recency signals (e.g.
+  // "3 jobs posted in the last 7 days").
+  createdAt: string;
   // Decision info a worker scans before opening a job.
   bidCount: number;
   deadline: string | null;
@@ -113,6 +118,7 @@ function mapBackendQuest(q: BackendQuest): Quest {
     pay: isNaN(rewardNum) ? 0 : rewardNum,
     payType,
     posted: minutesSince(q.createdAt),
+    createdAt: q.createdAt,
     urgent: false,
     quoteNeeded: !!q.tags?.includes('quote-needed'),
     tools: [],
@@ -381,6 +387,17 @@ export default function QuestBoard({ initialCategory, initialSearch }: QuestBoar
                 jobs, cleaning, and errands. Open a job to see the details and send the poster a
                 bid with your price.
               </p>
+              {/* Local activity proof — a real count of jobs posted in the last
+                  7 days. Only rendered when there is at least one, so an empty
+                  week never displays a discouraging zero. */}
+              {(() => {
+                const recent = countRecent(quests, (q) => q.createdAt, 7);
+                return recent > 0 ? (
+                  <p className="mt-2 font-mono text-[12px] text-accent-text">
+                    {recent} job{recent === 1 ? '' : 's'} posted in the last 7 days
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             <div className="flex flex-col items-start gap-2.5">

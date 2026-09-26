@@ -13,9 +13,9 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
         level: true, xp: true, adventurerClass: true, reputationScore: true,
         verified: true, createdAt: true, role: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
-        codeOfCraftPledgedAt: true,
+        codeOfCraftPledgedAt: true, emailVerifiedAt: true,
         questsGiven: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true }, take: 5 },
-        questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true, reward: true }, take: 5 },
+        questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true, reward: true, completedAt: true }, take: 5 },
         _count: { select: { questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } } } },
         guild: { select: { id: true, name: true, tag: true, badgeUrl: true } },
         achievements: { include: { achievement: true } },
@@ -26,7 +26,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
       res.status(404).json({ error: 'User not found' });
       return;
     }
-    res.json(user && { ...user, totalQuestsCompleted: user._count.questsCompleted, _count: undefined });
+    res.json(user && { ...user, totalQuestsCompleted: user._count.questsCompleted, _count: undefined, emailVerified: !!user.emailVerifiedAt, emailVerifiedAt: undefined });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
