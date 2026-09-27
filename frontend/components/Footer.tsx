@@ -8,6 +8,15 @@ import Link from "next/link";
 // site-wide footer they read as the main thing TryHardly is about, which buried
 // the two things a visitor is actually here to do.
 
+const socialLinks = [
+  {
+    href: "https://www.facebook.com/profile.php?id=61594434652679",
+    label: "Facebook",
+  },
+  { href: "https://www.instagram.com/tryhardlyhq/", label: "Instagram" },
+  { href: "https://www.tiktok.com/@tryhardlyhq", label: "TikTok" },
+];
+
 const columns: { heading: string; links: { href: string; label: string }[] }[] = [
   {
     heading: "Get started",
@@ -66,6 +75,21 @@ export default function Footer() {
                 support@tryhardly.com
               </a>
             </p>
+            <p className="mt-4 text-base font-bold text-strong">Follow along</p>
+            <ul className="mt-2 space-y-3">
+              {socialLinks.map(({ href, label }) => (
+                <li key={href}>
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-base text-body underline-offset-4 transition-colors hover:text-accent-text hover:underline"
+                  >
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {columns.map(({ heading, links }) => (
