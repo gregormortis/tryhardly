@@ -8,17 +8,46 @@ import {
   adminRevokeAchievement,
 } from '../services/achievementService';
 
-// GET /api/admin/stats - high-level platform counts
+// GET /api/admin/stats - high-level platform counts + growth trends.
+// Trend windows are rolling (last 24h / last 7d) so they need no timezone math.
+// "workers" = users who have placed at least one bid (application).
 export const getStats = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const [users, quests, openQuests, completedQuests, applications] = await prisma.$transaction([
+    const now = Date.now();
+    const dayAgo = new Date(now - 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    const [
+      users,
+      quests,
+      openQuests,
+      completedQuests,
+      applications,
+      newUsers24h,
+      newUsers7d,
+      newQuests7d,
+      workerRows,
+    ] = await prisma.$transaction([
       prisma.user.count(),
       prisma.quest.count({ where: { excludedFromStats: false } }),
       prisma.quest.count({ where: { status: QuestStatus.OPEN, excludedFromStats: false } }),
       prisma.quest.count({ where: { status: QuestStatus.COMPLETED, excludedFromStats: false } }),
       prisma.application.count(),
+      prisma.user.count({ where: { createdAt: { gte: dayAgo } } }),
+      prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
+      prisma.quest.count({ where: { createdAt: { gte: weekAgo }, excludedFromStats: false } }),
+      prisma.application.findMany({ select: { adventurerId: true }, distinct: ['adventurerId'] }),
     ]);
-    res.json({ users, quests, openQuests, completedQuests, applications });
+    res.json({
+      users,
+      quests,
+      openQuests,
+      completedQuests,
+      applications,
+      newUsers24h,
+      newUsers7d,
+      newQuests7d,
+      workers: workerRows.length,
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
