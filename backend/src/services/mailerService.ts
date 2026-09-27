@@ -158,6 +158,14 @@ export const emailTemplates = {
     return { to, subject: `New message about "${questTitle}"`, text, html };
   },
 
+  newDirectMessage(to: string, senderName: string): EmailMessage {
+    const { text, html } = wrap(
+      'New message',
+      `${senderName} sent you a direct message on TryHardly. Read it at ${APP_URL()}/messages.`,
+    );
+    return { to, subject: 'New direct message on TryHardly', text, html };
+  },
+
   applicationAccepted(to: string, questTitle: string): EmailMessage {
     const { text, html } = wrap(
       'Application accepted',

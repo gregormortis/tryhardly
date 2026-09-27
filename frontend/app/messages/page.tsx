@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
 interface Thread {
-  questId: string;
+  questId: string | null;
   questTitle: string;
   counterpartyId: string;
   lastMessage: string;
@@ -83,9 +83,9 @@ export default function MessagesInboxPage() {
           ) : (
             <ul className="divide-y divide-line">
               {threads.map((t) => (
-                <li key={`${t.questId}:${t.counterpartyId}`}>
+                <li key={`${t.questId ?? 'direct'}:${t.counterpartyId}`}>
                   <Link
-                    href={`/messages/${t.questId}/${t.counterpartyId}`}
+                    href={t.questId ? `/messages/${t.questId}/${t.counterpartyId}` : `/messages/direct/${t.counterpartyId}`}
                     className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-raised transition-colors"
                   >
                     <div className="min-w-0">

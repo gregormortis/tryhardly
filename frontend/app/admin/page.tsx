@@ -859,6 +859,13 @@ export default function AdminPage() {
                       {u.verified && (
                         <span className="text-xs px-2 py-1 rounded-full bg-info/20 text-info">Verified</span>
                       )}
+                      <Link
+                        href={`/messages/direct/${u.id}`}
+                        className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-accent hover:text-accent-text"
+                        title="Message this user directly (no bid needed)"
+                      >
+                        Message
+                      </Link>
                       <button
                         onClick={() => handleToggleVerify(u)}
                         className="text-xs px-2 py-1 rounded border border-line-strong text-body hover:border-accent hover:text-accent-text"
