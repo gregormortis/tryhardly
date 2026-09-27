@@ -17,9 +17,11 @@ const STATIC_PATHS: Array<{
   { path: '/jobs', priority: 0.9, changeFrequency: 'hourly' },
   { path: '/post-a-job', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/redding', priority: 0.9, changeFrequency: 'weekly' },
-  // /find-work-fast, /post-job-fast and /service-packages are now redirected
-  // into /jobs and /post-a-job, so they must not be advertised here — a sitemap
-  // full of 307s is a crawl-budget leak and a soft quality signal.
+  { path: '/workers', priority: 0.9, changeFrequency: 'weekly' },
+  // /find-work-fast, /post-job-fast and /service-packages are redirected
+  // (the first two into /workers and /post-a-job), so they must not be
+  // advertised here — a sitemap full of 307s is a crawl-budget leak and a
+  // soft quality signal.
   { path: '/how-it-works', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/request-help', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/work-alerts', priority: 0.8, changeFrequency: 'monthly' },

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import FindWorkFastLanding from './FindWorkFastLanding';
+// /find-work-fast now redirects to /workers; this page is kept compiling but
+// is not reachable.
+import WorkersLanding from '../workers/WorkersLanding';
 
 const title = 'Find local work you can actually do';
 const description =
@@ -35,5 +37,5 @@ export const metadata: Metadata = {
 };
 
 export default function FindWorkFastPage() {
-  return <FindWorkFastLanding />;
+  return <WorkersLanding />;
 }

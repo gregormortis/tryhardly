@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -106,13 +106,30 @@ const groupPost = `Looking for local gigs you can actually do? 🛠️
 I'm finding side work on TryHardly instead of refreshing the feed and dropping "interested" on posts that get buried. You browse local jobs with the pay listed up front, apply in one tap, and build a profile + reviews so you get picked faster next time.
 
 It's free to sign up and browse:
-https://tryhardly.com/find-work-fast
+https://www.tryhardly.com/workers
 
 Yard work, hauling, cleaning, moving help, handyman, errands — if you're handy and reliable, take a look.`;
 
-export default function FindWorkFastLanding() {
+export default function WorkersLanding() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [copied, setCopied] = useState(false);
+  const [openJobs, setOpenJobs] = useState<number | null>(null);
+
+  // Live proof: how many jobs are actually open right now. Hidden on failure —
+  // a missing number is better than a wrong one.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/quests?status=open&limit=1')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        const total = json?.meta?.total;
+        if (!cancelled && typeof total === 'number') setOpenJobs(total);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const copyGroupPost = async () => {
     try {
@@ -129,7 +146,7 @@ export default function FindWorkFastLanding() {
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-6 py-14 sm:py-20 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent-text mb-5">
-          <MessagesSquare className="h-3 w-3" /> For workers hunting gigs in local Facebook groups
+          <MessagesSquare className="h-3 w-3" /> Why try hard when you can TryHardly?
         </div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-5">
           Find local work you can actually do
@@ -160,6 +177,15 @@ export default function FindWorkFastLanding() {
         <p className="mt-4 font-mono text-[12px] text-subtle">
           Free to sign up &middot; No app to download &middot; Early access &mdash; starter listings, growing locally
         </p>
+        {openJobs !== null && openJobs > 0 && (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-semibold text-accent-text">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+            </span>
+            {openJobs} open {openJobs === 1 ? 'job' : 'jobs'} in Redding right now
+          </p>
+        )}
       </section>
 
       {/* Problem with Facebook gig hunting */}
@@ -344,6 +370,9 @@ export default function FindWorkFastLanding() {
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent-text">
             <CircleDollarSign className="h-5 w-5" />
           </div>
+          <p className="mb-3 text-sm font-semibold text-accent-text">
+            Why try hard when you can TryHardly?
+          </p>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
             Start finding work today
           </h2>

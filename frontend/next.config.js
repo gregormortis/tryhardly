@@ -132,12 +132,14 @@ const nextConfig = {
       // /post-job-fast, /find-work-fast, /redding, /request-help and
       // /work-alerts. Every one of them restated the same pitch with a
       // different headline, which is the single biggest reason the site felt
-      // like a pile of pages rather than a product. There are now two: post a
-      // job, or browse jobs. The Facebook/Craigslist campaign landers redirect
-      // into them rather than competing with them.
+      // like a pile of pages rather than a product. The rule now: exactly one
+      // lander per side of the marketplace. /post-a-job is the poster lander;
+      // /workers is the worker lander (the home for social traffic — TikTok /
+      // Instagram bios and reels point here, not at a bare job list). The old
+      // campaign aliases redirect into them rather than competing with them.
       //
-      // The page files are still in the tree. Deleting these four entries
-      // brings them back if a campaign genuinely needs its own lander.
+      // The page files are still in the tree. Deleting these entries brings
+      // them back if a campaign genuinely needs its own lander.
       {
         source: '/post-job-fast',
         destination: '/post-a-job',
@@ -145,7 +147,7 @@ const nextConfig = {
       },
       {
         source: '/find-work-fast',
-        destination: '/jobs',
+        destination: '/workers',
         permanent: false,
       },
       // /service-packages renders raw seed data in production (a "trim" listing
@@ -162,13 +164,8 @@ const nextConfig = {
         permanent: false,
       },
       {
-        source: '/workers',
-        destination: '/jobs',
-        permanent: false,
-      },
-      {
         source: '/find-work',
-        destination: '/jobs',
+        destination: '/workers',
         permanent: false,
       },
       // Routes people type or that other pages implied but which never existed.
