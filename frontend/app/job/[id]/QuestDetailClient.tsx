@@ -147,6 +147,7 @@ export default function QuestDetailClient({
   };
 
   const isOwner = user && quest && quest.questGiverId === user.id;
+  const isAdmin = user?.role === 'ADMIN';
 
   const handleAccept = async (appId: string) => {
     setActioningId(appId);
@@ -679,6 +680,17 @@ export default function QuestDetailClient({
                     className="btn-secondary btn-block mt-4"
                   >
                     Message the job poster
+                  </Link>
+                )}
+
+                {/* Admins can message any poster directly, no bid needed. */}
+                {isAdmin && !isOwner && poster?.id && (
+                  <Link
+                    href={`/messages/direct/${poster.id}`}
+                    className="btn-secondary btn-block mt-4"
+                    title="Message this poster directly (admin)"
+                  >
+                    Message poster
                   </Link>
                 )}
               </div>
