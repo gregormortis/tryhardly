@@ -84,9 +84,9 @@ export default function HomePage() {
       <section className="mx-auto max-w-3xl px-6 pt-14 pb-4 text-center sm:pt-20">
         <p className="eyebrow mb-4">Redding, California</p>
         <h1 className="mb-6 text-4xl font-bold leading-[1.08] tracking-tight sm:text-6xl">
-          Need a hand?
+          Why try hard
           <br />
-          Hire someone local.
+          when you can TryHardly?
         </h1>
         <p className="mx-auto max-w-xl text-lg leading-relaxed text-body sm:text-xl">
           TryHardly connects people in Redding who need work done with people
