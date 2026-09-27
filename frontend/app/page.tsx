@@ -115,7 +115,7 @@ export default function HomePage() {
           </Link>
 
           <Link
-            href="/jobs"
+            href="/workers"
             className="group rounded-2xl border-2 border-line-strong bg-surface p-7 transition-colors hover:border-accent"
           >
             <h2 className="mb-2 text-2xl font-bold text-strong">
@@ -126,7 +126,7 @@ export default function HomePage() {
               keep 100% of it.
             </p>
             <span className="inline-flex items-center gap-2 text-base font-bold text-accent-text underline underline-offset-4">
-              See local jobs
+              How it pays
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </span>
           </Link>
