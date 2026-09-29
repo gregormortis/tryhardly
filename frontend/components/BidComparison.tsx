@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Check, MessageSquare, Video, MapPin, ShieldCheck } from 'lucide-react';
+import { Check, MessageSquare, Video, MapPin, ShieldCheck, ExternalLink } from 'lucide-react';
 import type { Application, WalkthroughType } from '@/lib/types';
 
 // Poster-facing comparison of all bids on a job. Shows each bidder with their
@@ -189,6 +189,23 @@ export default function BidComparison({
                 </span>
               </div>
             </div>
+
+            {/* Self-reported Google Business Profile link — validated as a
+                Google business page (ownership not verified), so posters can
+                check real-world reviews. Rendered outside the profile Link
+                above to avoid nested anchors. */}
+            {app.adventurer?.googleBusinessUrl && (
+              <a
+                href={app.adventurer.googleBusinessUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="mt-2 inline-flex items-center gap-1 text-[12px] text-accent-text hover:underline"
+              >
+                <ExternalLink size={11} />
+                Google Business Profile
+              </a>
+            )}
 
             {/* Comparison badges */}
             {(isLowest || walkthrough || app.legalQualificationAck) && (

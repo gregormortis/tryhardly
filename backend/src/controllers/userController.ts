@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { getWorkerPassport } from '../services/workerPassportService';
+import { cleanGoogleBusinessUrl } from '../utils/googleBusiness';
 
 // GET /api/users/:username - Public profile
 export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -13,6 +14,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
         level: true, xp: true, adventurerClass: true, reputationScore: true,
         verified: true, createdAt: true, role: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
+        googleBusinessUrl: true,
         codeOfCraftPledgedAt: true, emailVerifiedAt: true,
         questsGiven: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true }, take: 5 },
         questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true, reward: true, completedAt: true }, take: 5 },
@@ -73,6 +75,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         level: true, xp: true, adventurerClass: true, role: true, reputationScore: true,
         verified: true, createdAt: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
+        googleBusinessUrl: true,
         codeOfCraftPledgedAt: true, stripeAccountId: true,
         guild: { select: { id: true, name: true, tag: true } },
         achievements: { include: { achievement: true } },
@@ -88,7 +91,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 // PUT /api/users/me - Update current user
 export const updateMe = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { displayName, bio, avatarUrl, adventurerClass, businessName, serviceArea, yearsExperience } =
+    const { displayName, bio, avatarUrl, adventurerClass, businessName, serviceArea, yearsExperience, googleBusinessUrl } =
       req.body as {
         displayName?: string;
         bio?: string;
@@ -97,6 +100,7 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
         businessName?: string;
         serviceArea?: string;
         yearsExperience?: number | string | null;
+        googleBusinessUrl?: string | null;
       };
 
     // yearsExperience is optional; coerce to a non-negative int or clear it.
@@ -114,6 +118,15 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
       }
     }
 
+    // googleBusinessUrl is optional; must be a Google business-listing URL or blank (cleared).
+    let gbpUrl: string | null | undefined;
+    try {
+      gbpUrl = cleanGoogleBusinessUrl(googleBusinessUrl);
+    } catch (e: any) {
+      res.status(400).json({ error: e.message || 'Invalid Google Business link' });
+      return;
+    }
+
     const updated = await prisma.user.update({
       where: { id: req.user!.id },
       data: {
@@ -124,10 +137,11 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
         businessName,
         serviceArea,
         ...(years !== undefined ? { yearsExperience: years } : {}),
+        ...(gbpUrl !== undefined ? { googleBusinessUrl: gbpUrl } : {}),
       },
       select: {
         id: true, username: true, displayName: true, bio: true, avatarUrl: true, adventurerClass: true,
-        businessName: true, serviceArea: true, yearsExperience: true,
+        businessName: true, serviceArea: true, yearsExperience: true, googleBusinessUrl: true,
       },
     });
     res.json(updated);

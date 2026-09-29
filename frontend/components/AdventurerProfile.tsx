@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Zap, Shield, Briefcase, Award, BadgeCheck, Mail } from 'lucide-react';
+import { Zap, Shield, Briefcase, Award, BadgeCheck, Mail, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -53,6 +53,7 @@ interface Adventurer {
   xpToNextLevel: number;
   reputationScore: number; // 0–100
   bio: string;
+  googleBusinessUrl?: string | null;
   skills: string[];
   favoriteSkills: string[];
   jobsCompleted: number;
@@ -228,6 +229,7 @@ interface ApiUserProfile {
   role?: string;
   verified?: boolean;
   emailVerified?: boolean;
+  googleBusinessUrl?: string | null;
   codeOfCraftPledgedAt?: string | null;
   createdAt?: string;
   guild?: { id: string; name: string; tag?: string } | null;
@@ -254,6 +256,7 @@ function mapProfile(u: ApiUserProfile): Adventurer {
     xpToNextLevel: (level + 1) * 100,
     reputationScore: u.reputationScore ?? 0,
     bio: u.bio || '',
+    googleBusinessUrl: u.googleBusinessUrl || null,
     skills: u.adventurerClass ? [guildPathLabel(u.adventurerClass)] : [],
     favoriteSkills: Array.isArray(u.favoriteSkills) ? u.favoriteSkills : [],
     jobsCompleted: u.totalQuestsCompleted ?? 0,
@@ -857,6 +860,28 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                 <div>
                   <SectionLabel>About</SectionLabel>
                   <p className="font-mono text-[13px] text-subtle leading-relaxed">{adventurer.bio}</p>
+                </div>
+              )}
+
+              {/* Google Business Profile — self-reported link so posters can
+                  check real-world reviews. Validated as a Google business
+                  page, but ownership is not verified, so it is never labeled
+                  "verified" — the caption says who linked it. */}
+              {adventurer.googleBusinessUrl && (
+                <div>
+                  <SectionLabel>Business reviews</SectionLabel>
+                  <a
+                    href={adventurer.googleBusinessUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 font-mono text-[13px] text-accent-text hover:underline"
+                  >
+                    <ExternalLink size={13} />
+                    Google Business Profile
+                  </a>
+                  <p className="font-mono text-[11px] text-subtle mt-1">
+                    Linked by this worker — check their Google reviews before hiring.
+                  </p>
                 </div>
               )}
 
