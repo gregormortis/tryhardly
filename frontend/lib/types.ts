@@ -19,6 +19,7 @@ export interface User {
   businessName?: string | null;
   serviceArea?: string | null;
   yearsExperience?: number | null;
+  googleBusinessUrl?: string | null;
   codeOfCraftPledgedAt?: string | null;
   guild?: { id: string; name: string; tag: string; badgeUrl?: string } | null;
   achievements?: UserAchievement[];
@@ -181,6 +182,7 @@ export interface Application {
     reputationScore?: number;
     adventurerClass?: string;
     totalQuestsCompleted?: number;
+    googleBusinessUrl?: string | null;
   };
 }
 

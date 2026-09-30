@@ -73,6 +73,13 @@ model User {
   serviceArea     String?
   yearsExperience Int?
 
+  // Self-reported link to the worker's Google Business Profile. Displayed on
+  // the public profile and next to bids so posters can check real-world
+  // reviews. Self-reported: we validate that it points at a Google-owned
+  // business-listing host, but we do NOT verify ownership of the listing —
+  // the UI must never label this "verified". Additive and nullable.
+  googleBusinessUrl String?
+
   // Worker-curated "favorite" skill slugs surfaced on the public profile. Purely
   // additive; defaults to empty so existing rows are unaffected. The badge tier
   // for each skill is always derived from real SkillRating data, never from this

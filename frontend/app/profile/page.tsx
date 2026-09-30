@@ -28,6 +28,7 @@ export default function ProfilePage() {
     businessName: '',
     serviceArea: '',
     yearsExperience: '',
+    googleBusinessUrl: '',
   });
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function ProfilePage() {
         serviceArea: profileData.serviceArea || '',
         yearsExperience:
           profileData.yearsExperience != null ? String(profileData.yearsExperience) : '',
+        googleBusinessUrl: profileData.googleBusinessUrl || '',
       });
     } catch {
       toast.error('Failed to load profile');
@@ -217,6 +219,19 @@ export default function ProfilePage() {
                     placeholder="Optional"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-body mb-1">Google Business Profile</label>
+                <input
+                  type="url"
+                  value={editForm.googleBusinessUrl}
+                  onChange={e => setEditForm({ ...editForm, googleBusinessUrl: e.target.value })}
+                  className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
+                  placeholder="https://g.page/your-business…"
+                />
+                <p className="text-xs text-subtle mt-1">
+                  Link your Google Business listing — posters see it next to your bids and can check your reviews.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-body mb-2">Guild Path</label>
