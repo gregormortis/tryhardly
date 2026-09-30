@@ -207,6 +207,21 @@ export default function BidComparison({
               </a>
             )}
 
+            {/* Self-reported personal website / social profile link. Rendered
+                outside the profile Link above to avoid nested anchors. */}
+            {app.adventurer?.websiteUrl && (
+              <a
+                href={app.adventurer.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="mt-2 inline-flex items-center gap-1 text-[12px] text-accent-text hover:underline"
+              >
+                <ExternalLink size={11} />
+                Website
+              </a>
+            )}
+
             {/* Comparison badges */}
             {(isLowest || walkthrough || app.legalQualificationAck) && (
               <div className="mt-2.5 flex flex-wrap gap-1.5">

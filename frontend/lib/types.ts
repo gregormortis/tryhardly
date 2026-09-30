@@ -20,6 +20,7 @@ export interface User {
   serviceArea?: string | null;
   yearsExperience?: number | null;
   googleBusinessUrl?: string | null;
+  websiteUrl?: string | null;
   codeOfCraftPledgedAt?: string | null;
   guild?: { id: string; name: string; tag: string; badgeUrl?: string } | null;
   achievements?: UserAchievement[];
@@ -183,6 +184,7 @@ export interface Application {
     adventurerClass?: string;
     totalQuestsCompleted?: number;
     googleBusinessUrl?: string | null;
+    websiteUrl?: string | null;
   };
 }
 

@@ -3,6 +3,7 @@ import { prisma } from '../app';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { getWorkerPassport } from '../services/workerPassportService';
 import { cleanGoogleBusinessUrl } from '../utils/googleBusiness';
+import { cleanWebsiteUrl } from '../utils/websiteUrl';
 
 // GET /api/users/:username - Public profile
 export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -14,7 +15,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
         level: true, xp: true, adventurerClass: true, reputationScore: true,
         verified: true, createdAt: true, role: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
-        googleBusinessUrl: true,
+        googleBusinessUrl: true, websiteUrl: true,
         codeOfCraftPledgedAt: true, emailVerifiedAt: true,
         questsGiven: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true }, take: 5 },
         questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false }, select: { id: true, title: true, difficulty: true, reward: true, completedAt: true }, take: 5 },
@@ -75,7 +76,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         level: true, xp: true, adventurerClass: true, role: true, reputationScore: true,
         verified: true, createdAt: true,
         businessName: true, serviceArea: true, yearsExperience: true, favoriteSkills: true,
-        googleBusinessUrl: true,
+        googleBusinessUrl: true, websiteUrl: true,
         codeOfCraftPledgedAt: true, stripeAccountId: true,
         guild: { select: { id: true, name: true, tag: true } },
         achievements: { include: { achievement: true } },
@@ -91,7 +92,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 // PUT /api/users/me - Update current user
 export const updateMe = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { displayName, bio, avatarUrl, adventurerClass, businessName, serviceArea, yearsExperience, googleBusinessUrl } =
+    const { displayName, bio, avatarUrl, adventurerClass, businessName, serviceArea, yearsExperience, googleBusinessUrl, websiteUrl } =
       req.body as {
         displayName?: string;
         bio?: string;
@@ -101,6 +102,7 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
         serviceArea?: string;
         yearsExperience?: number | string | null;
         googleBusinessUrl?: string | null;
+        websiteUrl?: string | null;
       };
 
     // yearsExperience is optional; coerce to a non-negative int or clear it.
@@ -127,6 +129,15 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
       return;
     }
 
+    // websiteUrl is optional; must be an http(s) URL or blank (cleared).
+    let siteUrl: string | null | undefined;
+    try {
+      siteUrl = cleanWebsiteUrl(websiteUrl);
+    } catch (e: any) {
+      res.status(400).json({ error: e.message || 'Invalid website link' });
+      return;
+    }
+
     const updated = await prisma.user.update({
       where: { id: req.user!.id },
       data: {
@@ -138,10 +149,11 @@ export const updateMe = async (req: AuthRequest, res: Response): Promise<void> =
         serviceArea,
         ...(years !== undefined ? { yearsExperience: years } : {}),
         ...(gbpUrl !== undefined ? { googleBusinessUrl: gbpUrl } : {}),
+        ...(siteUrl !== undefined ? { websiteUrl: siteUrl } : {}),
       },
       select: {
         id: true, username: true, displayName: true, bio: true, avatarUrl: true, adventurerClass: true,
-        businessName: true, serviceArea: true, yearsExperience: true, googleBusinessUrl: true,
+        businessName: true, serviceArea: true, yearsExperience: true, googleBusinessUrl: true, websiteUrl: true,
       },
     });
     res.json(updated);
