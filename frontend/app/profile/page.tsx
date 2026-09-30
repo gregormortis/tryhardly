@@ -29,6 +29,7 @@ export default function ProfilePage() {
     serviceArea: '',
     yearsExperience: '',
     googleBusinessUrl: '',
+    websiteUrl: '',
   });
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function ProfilePage() {
         yearsExperience:
           profileData.yearsExperience != null ? String(profileData.yearsExperience) : '',
         googleBusinessUrl: profileData.googleBusinessUrl || '',
+        websiteUrl: profileData.websiteUrl || '',
       });
     } catch {
       toast.error('Failed to load profile');
@@ -231,6 +233,19 @@ export default function ProfilePage() {
                 />
                 <p className="text-xs text-subtle mt-1">
                   Link your Google Business listing — posters see it next to your bids and can check your reviews.
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-body mb-1">Website / social profile</label>
+                <input
+                  type="url"
+                  value={editForm.websiteUrl}
+                  onChange={e => setEditForm({ ...editForm, websiteUrl: e.target.value })}
+                  className="w-full bg-raised border border-line-strong rounded-lg px-4 py-2.5 text-strong focus:outline-none focus:border-accent"
+                  placeholder="https://your-website.com…"
+                />
+                <p className="text-xs text-subtle mt-1">
+                  Your personal site, Facebook, Instagram, or portfolio — posters see it on your profile and bids.
                 </p>
               </div>
               <div>

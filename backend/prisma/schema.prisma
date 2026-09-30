@@ -80,6 +80,12 @@ model User {
   // the UI must never label this "verified". Additive and nullable.
   googleBusinessUrl String?
 
+  // Self-reported personal website / social profile link (personal site,
+  // Facebook, Instagram, portfolio…). Displayed on the public profile and next
+  // to bids. Any http(s) URL is accepted; self-reported, so the UI must never
+  // label this "verified". Additive and nullable.
+  websiteUrl String?
+
   // Worker-curated "favorite" skill slugs surfaced on the public profile. Purely
   // additive; defaults to empty so existing rows are unaffected. The badge tier
   // for each skill is always derived from real SkillRating data, never from this

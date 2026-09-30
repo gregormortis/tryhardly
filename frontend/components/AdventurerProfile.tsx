@@ -54,6 +54,7 @@ interface Adventurer {
   reputationScore: number; // 0–100
   bio: string;
   googleBusinessUrl?: string | null;
+  websiteUrl?: string | null;
   skills: string[];
   favoriteSkills: string[];
   jobsCompleted: number;
@@ -230,6 +231,7 @@ interface ApiUserProfile {
   verified?: boolean;
   emailVerified?: boolean;
   googleBusinessUrl?: string | null;
+  websiteUrl?: string | null;
   codeOfCraftPledgedAt?: string | null;
   createdAt?: string;
   guild?: { id: string; name: string; tag?: string } | null;
@@ -257,6 +259,7 @@ function mapProfile(u: ApiUserProfile): Adventurer {
     reputationScore: u.reputationScore ?? 0,
     bio: u.bio || '',
     googleBusinessUrl: u.googleBusinessUrl || null,
+    websiteUrl: u.websiteUrl || null,
     skills: u.adventurerClass ? [guildPathLabel(u.adventurerClass)] : [],
     favoriteSkills: Array.isArray(u.favoriteSkills) ? u.favoriteSkills : [],
     jobsCompleted: u.totalQuestsCompleted ?? 0,
@@ -881,6 +884,33 @@ export default function AdventurerProfile({ userId }: AdventurerProfileProps) {
                   </a>
                   <p className="font-mono text-[11px] text-subtle mt-1">
                     Linked by this worker — check their Google reviews before hiring.
+                  </p>
+                </div>
+              )}
+
+              {/* Personal website / social profile — self-reported link to the
+                  worker's own site or social page. Never labeled "verified" —
+                  the caption says who linked it. */}
+              {adventurer.websiteUrl && (
+                <div>
+                  <SectionLabel>Website</SectionLabel>
+                  <a
+                    href={adventurer.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 font-mono text-[13px] text-accent-text hover:underline"
+                  >
+                    <ExternalLink size={13} />
+                    {(() => {
+                      try {
+                        return new URL(adventurer.websiteUrl as string).hostname.replace(/^www\./, '');
+                      } catch {
+                        return 'Personal website';
+                      }
+                    })()}
+                  </a>
+                  <p className="font-mono text-[11px] text-subtle mt-1">
+                    Linked by this worker.
                   </p>
                 </div>
               )}

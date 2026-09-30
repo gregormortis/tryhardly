@@ -293,7 +293,7 @@ export const getQuestApplications = async (req: AuthRequest, res: Response): Pro
         adventurer: {
           select: {
             id: true, username: true, displayName: true, avatarUrl: true, level: true,
-            reputationScore: true, adventurerClass: true, googleBusinessUrl: true,
+            reputationScore: true, adventurerClass: true, googleBusinessUrl: true, websiteUrl: true,
             _count: { select: { questsCompleted: { where: { status: 'COMPLETED', excludedFromStats: false } } } },
           },
         },
