@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { canonicalUrl } from '@/lib/seo';
 
 const LAST_UPDATED = 'September 19, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
     'The terms that govern your use of TryHardly, a local services marketplace. Plain-language startup terms — not legal advice.',
-  alternates: { canonical: '/terms' },
+  alternates: { canonical: canonicalUrl('/terms') },
 };
 
 export default function TermsPage() {

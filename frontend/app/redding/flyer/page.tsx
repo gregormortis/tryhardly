@@ -2,11 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Printer, ArrowRight } from 'lucide-react';
 import { routes } from '../config';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Redding launch flyers',
   description: 'Printable flyers for the TryHardly launch in Redding, CA.',
-  alternates: { canonical: '/redding/flyer' },
+  alternates: { canonical: canonicalUrl('/redding/flyer') },
   robots: { index: false, follow: false },
 };
 

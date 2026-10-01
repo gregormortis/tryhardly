@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import RequestHelpForm from './RequestHelpForm';
+import { canonicalUrl } from '@/lib/seo';
 
 const title = 'Request help — no account needed';
 const description =
@@ -9,7 +10,7 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: '/request-help' },
+  alternates: { canonical: canonicalUrl('/request-help') },
   keywords: [
     'request local help',
     'hire help near me no account',

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Verified Pro — the TryHardly trust checklist',
   description:
     'Verified Pro is an earned trust signal on TryHardly: complete your profile, pledge to the Code of Craft, verify a credential, complete jobs, earn strong reviews, and keep a clean record. It is derived from real activity — never bought.',
+  alternates: { canonical: canonicalUrl('/verified-pro') },
 };
 
 const CHECKLIST = [

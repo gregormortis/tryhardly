@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { TRADE_STANDARDS, getTradeStandard, TradeStandard } from '@/lib/tradeStandards';
+import { canonicalUrl } from '@/lib/seo';
 
 export function generateStaticParams() {
   return TRADE_STANDARDS.map((s) => ({ category: s.slug }));
@@ -16,7 +17,7 @@ export function generateMetadata({ params }: { params: { category: string } }): 
   return {
     title,
     description,
-    alternates: { canonical: `/standards/${std.slug}` },
+    alternates: { canonical: canonicalUrl(`/standards/${std.slug}`) },
     openGraph: {
       title: `${title} · TryHardly`,
       description,

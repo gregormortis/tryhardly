@@ -14,12 +14,13 @@ import {
   MessageSquare,
   Mail,
 } from 'lucide-react';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'TryHardly — Local help in Redding, hired directly',
   description:
     'Post a local job free or get paid to do the work. You and your worker agree the price here and settle it directly. TryHardly takes no cut.',
-  alternates: { canonical: '/' },
+  alternates: { canonical: canonicalUrl('/') },
 };
 
 // ─── Content ──────────────────────────────────────────────────────────────────

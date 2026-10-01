@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ArrowRight, Check, HeartHandshake, ShieldAlert, Mail } from 'lucide-react';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'How it works',
   description:
     'Exactly how TryHardly works for customers and for workers: post a job free, compare bids, agree the terms in a Handshake, and pay your worker directly.',
-  alternates: { canonical: '/how-it-works' },
+  alternates: { canonical: canonicalUrl('/how-it-works') },
 };
 
 // This page did not exist. The navbar linked to /#how-it-works (a homepage

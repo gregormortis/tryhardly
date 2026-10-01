@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'The Code of Craft — professional standards on TryHardly',
   description:
     'The Code of Craft is the professional standard every TryHardly worker can pledge to: show up, communicate clearly, protect property, document the work, honor the agreed scope, clean up, respect people, and resolve issues professionally.',
+  alternates: { canonical: canonicalUrl('/code-of-craft') },
 };
 
 const PRINCIPLES = [

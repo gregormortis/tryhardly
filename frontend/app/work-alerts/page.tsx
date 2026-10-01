@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import WorkAlertsForm from './WorkAlertsForm';
+import { canonicalUrl } from '@/lib/seo';
 
 const title = 'Get local work alerts — no account needed';
 const description =
@@ -8,7 +9,7 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: '/work-alerts' },
+  alternates: { canonical: canonicalUrl('/work-alerts') },
   keywords: [
     'local work alerts',
     'gig work near me',

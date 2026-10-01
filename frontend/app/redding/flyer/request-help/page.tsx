@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Flyer from '../Flyer';
 import { links, shortLinks } from '../../config';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Redding flyer — Need help with a job?',
   description: 'Printable flyer for posting local jobs in Redding, CA on TryHardly.',
-  alternates: { canonical: '/redding/flyer/request-help' },
+  alternates: { canonical: canonicalUrl('/redding/flyer/request-help') },
   robots: { index: false, follow: false },
 };
 

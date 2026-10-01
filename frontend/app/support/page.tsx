@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Mail, LifeBuoy, ShieldCheck, ScrollText, HelpCircle, MapPin } from 'lucide-react';
+import { canonicalUrl } from '@/lib/seo';
 
 const SUPPORT_EMAIL = 'support@tryhardly.com';
 
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Support',
   description:
     'Get help with TryHardly. Email support@tryhardly.com for account, job, payment, or safety questions. Early access support for our local services marketplace.',
-  alternates: { canonical: '/support' },
+  alternates: { canonical: canonicalUrl('/support') },
 };
 
 const helpTopics = [

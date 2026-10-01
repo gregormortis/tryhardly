@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import QuestDetailClient from './QuestDetailClient';
 import type { Quest } from '@/lib/types';
 import { parseLocationLine } from '@/lib/jobLocation';
+import { canonicalUrl } from '@/lib/seo';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -63,7 +64,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/job/${quest.id}` },
+    alternates: { canonical: canonicalUrl(`/job/${quest.id}`) },
     openGraph: {
       title,
       description,
