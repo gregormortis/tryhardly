@@ -14,13 +14,13 @@ import {
   MessageSquare,
   Mail,
 } from 'lucide-react';
-import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'TryHardly — Local help in Redding, hired directly',
   description:
     'Post a local job free or get paid to do the work. You and your worker agree the price here and settle it directly. TryHardly takes no cut.',
-  alternates: { canonical: canonicalUrl('/') },
+  // NOTE: canonical is rendered explicitly in the page JSX below (not via
+  // alternates) to guarantee the exact href. See 2026-10-01 notes.
 };
 
 // ─── Content ──────────────────────────────────────────────────────────────────
@@ -80,6 +80,11 @@ const weDoNot = [
 
 export default function HomePage() {
   return (
+    <>
+      {/* Explicit canonical with trailing slash. Rendered here (not via
+          metadata alternates) to guarantee the exact href — Next.js hoists
+          this <link> into <head>. */}
+      <link rel="canonical" href="https://www.tryhardly.com/" />
     <div className="bg-canvas text-strong">
       {/* ─── Hero ─────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-3xl px-6 pt-14 pb-4 text-center sm:pt-20">
@@ -361,5 +366,6 @@ export default function HomePage() {
         </div>
       </section>
     </div>
+    </>
   );
 }
