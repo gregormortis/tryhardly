@@ -5,6 +5,7 @@ import { JOB_CATEGORIES, resolveJobCategory, resolveCategoryAlias } from '@/lib/
 import { SERVICE_AREAS } from '@/lib/serviceAreas';
 import QuestBoard from '@/components/Questboard';
 import { ServiceSchema, BreadcrumbSchema } from '@/components/StructuredData';
+import { canonicalUrl } from '@/lib/seo';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tryhardly.com';
 
@@ -23,7 +24,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
   return {
     title,
     description,
-    alternates: { canonical: `/jobs/${cat.slug}` },
+    alternates: { canonical: canonicalUrl(`/jobs/${cat.slug}`) },
     openGraph: {
       title: `${title} · TryHardly`,
       description,

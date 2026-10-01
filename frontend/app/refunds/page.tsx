@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { canonicalUrl } from '@/lib/seo';
 
 const LAST_UPDATED = 'June 9, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Refund & Dispute Policy',
   description:
     'How refunds, cancellations, and disputes work on TryHardly. Honest, plain-language policy for our local services marketplace.',
-  alternates: { canonical: '/refunds' },
+  alternates: { canonical: canonicalUrl('/refunds') },
 };
 
 export default function RefundsPage() {

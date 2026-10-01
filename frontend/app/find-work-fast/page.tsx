@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 // /find-work-fast now redirects to /workers; this page is kept compiling but
 // is not reachable.
 import WorkersLanding from '../workers/WorkersLanding';
+import { canonicalUrl } from '@/lib/seo';
 
 const title = 'Find local work you can actually do';
 const description =
@@ -10,7 +11,7 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: '/find-work-fast' },
+  alternates: { canonical: canonicalUrl('/find-work-fast') },
   keywords: [
     'find local work',
     'side gigs near me',

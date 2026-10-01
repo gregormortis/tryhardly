@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Pricing — free, and you pay your worker directly',
   description:
     'TryHardly is free to post and free to work. You and your worker settle payment directly, and the worker keeps 100% of it. No marketplace fee, no cut.',
+  alternates: { canonical: canonicalUrl('/pricing') },
 };
 
 export default function PricingPage() {

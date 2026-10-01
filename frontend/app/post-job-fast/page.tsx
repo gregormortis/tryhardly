@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import PostJobFastLanding from './PostJobFastLanding';
+import { canonicalUrl } from '@/lib/seo';
 
 const title = 'Post your job in 60 seconds';
 const description =
@@ -8,7 +9,7 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: '/post-job-fast' },
+  alternates: { canonical: canonicalUrl('/post-job-fast') },
   keywords: [
     'post a local job',
     'hire help near me',

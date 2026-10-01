@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { canonicalUrl } from '@/lib/seo';
 
 const LAST_UPDATED = 'May 30, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Community Guidelines',
   description:
     'The rules that keep TryHardly safe and fair for everyone — job posters and workers. Plain-language community standards for our local services marketplace.',
-  alternates: { canonical: '/community-guidelines' },
+  alternates: { canonical: canonicalUrl('/community-guidelines') },
 };
 
 export default function CommunityGuidelinesPage() {

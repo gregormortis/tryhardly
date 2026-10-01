@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import AccountDeletionRequest from '@/components/AccountDeletionRequest';
+import { canonicalUrl } from '@/lib/seo';
 
 const SUPPORT_EMAIL = 'support@tryhardly.com';
 
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Account & Data Deletion',
   description:
     'How to delete your TryHardly account and personal data. Request deletion from the app or web, or by email.',
-  alternates: { canonical: '/account-deletion' },
+  alternates: { canonical: canonicalUrl('/account-deletion') },
 };
 
 export default function AccountDeletionPage() {

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { canonicalUrl } from '@/lib/seo';
 
 const LAST_UPDATED = 'June 11, 2026';
 const SUPPORT_EMAIL = 'support@tryhardly.com';
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Prohibited Services Policy',
   description:
     'What you can and cannot offer or request on TryHardly. We support everyday local task-based work and prohibit services that are illegal, unsafe, regulated, or deceptive.',
-  alternates: { canonical: '/prohibited-services' },
+  alternates: { canonical: canonicalUrl('/prohibited-services') },
 };
 
 export default function ProhibitedServicesPage() {

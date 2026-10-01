@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'How ratings, badges, and worker reputation work — TryHardly',
   description:
     'How experience levels, skill badges, verified credentials, and worker teams build a worker reputation on TryHardly. Reputation is earned from completed jobs and client reviews — it earns visibility and trust.',
+  alternates: { canonical: canonicalUrl('/progression') },
 };
 
 const LEVELS = [

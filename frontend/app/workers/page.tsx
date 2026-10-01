@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import WorkersLanding from './WorkersLanding';
+import { canonicalUrl } from '@/lib/seo';
 
 const title = 'Find local work in Redding — bid your price, keep 100%';
 const description =
@@ -8,7 +9,7 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: '/workers' },
+  alternates: { canonical: canonicalUrl('/workers') },
   keywords: [
     'find work Redding CA',
     'side gigs Redding',

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { canonicalUrl } from '@/lib/seo';
 
 const LAST_UPDATED = 'September 19, 2026';
 
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
     'How TryHardly collects, uses, and protects your information. Plain-language privacy policy for our local services marketplace.',
-  alternates: { canonical: '/privacy' },
+  alternates: { canonical: canonicalUrl('/privacy') },
 };
 
 export default function PrivacyPage() {

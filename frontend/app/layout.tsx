@@ -41,7 +41,10 @@ export const metadata: Metadata = {
     template: '%s · TryHardly',
   },
   description,
-  alternates: { canonical: '/' },
+  // NOTE: no blanket `alternates.canonical` here on purpose. A layout-level
+  // canonical of '/' stamped every page without its own metadata as a
+  // duplicate of the homepage (Google flagged it). Each indexable page
+  // declares its own absolute canonical via canonicalUrl() in lib/seo.ts.
   robots: {
     index: true,
     follow: true,

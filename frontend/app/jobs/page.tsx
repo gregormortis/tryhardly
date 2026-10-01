@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import QuestboardClient from './QuestboardClient';
+import { canonicalUrl } from '@/lib/seo';
 
 // The board previously inherited the homepage's title tag, so Google saw two
 // different pages with the same title. This gives /jobs its own title and
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Open gig jobs in Redding, CA — yard work, hauling, cleaning',
   description:
     'Browse open local jobs in Redding, California: yard work, hauling, moving help, handyman, cleaning and errands. Bid your price; workers keep 100%.',
-  alternates: { canonical: '/jobs' },
+  alternates: { canonical: canonicalUrl('/jobs') },
 };
 
 export default function JobsPage() {

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { TRADE_STANDARDS } from '@/lib/tradeStandards';
+import { canonicalUrl } from '@/lib/seo';
 
 const title = 'Work standards & trade checklists';
 const description =
@@ -9,7 +10,7 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: '/standards' },
+  alternates: { canonical: canonicalUrl('/standards') },
   openGraph: {
     title: `${title} · TryHardly`,
     description,

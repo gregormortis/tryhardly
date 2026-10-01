@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FaqSchema, BreadcrumbSchema } from '@/components/StructuredData';
+import { canonicalUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Trust & Safety',
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   // screening.
   description:
     'What TryHardly checks, what it does not check, and why. We verify email addresses and check claimed professional licences against public state registries. We do not run background checks, and we do not handle your payment.',
-  alternates: { canonical: '/trust' },
+  alternates: { canonical: canonicalUrl('/trust') },
   openGraph: {
     title: 'Trust & Safety · TryHardly',
     description:
