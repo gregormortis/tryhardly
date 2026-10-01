@@ -33,3 +33,8 @@ export function canonicalUrl(path: string): string {
   const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${base}${normalized.replace(/\/+$/, '')}`;
 }
+
+// NOTE (2026-10-01): Vercel reuses a previous deployment's build output when
+// a push leaves the file tree unchanged, so an empty "redeploy" commit does
+// not regenerate prerendered pages. This comment exists to force a real
+// rebuild after the #147 deploy served stale homepage/progression HTML.
